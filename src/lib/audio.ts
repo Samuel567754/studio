@@ -77,28 +77,65 @@ export function playNotificationSound(): void {
   playSoundWrapper('triangle', 500, 0.12, 0.1);
 }
 
-export function speakText(textToSpeak: string): void {
+export function speakText(
+  textToSpeak: string, 
+  onBoundary?: (event: SpeechSynthesisEvent) => void,
+  onEnd?: () => void,
+  onError?: (event: SpeechSynthesisErrorEvent) => void
+): SpeechSynthesisUtterance | null {
   if (typeof window === 'undefined' || !window.speechSynthesis || !textToSpeak) {
-    return;
+    return null;
   }
-  const soundEffectsEnabled = useAppSettingsStore.getState().soundEffectsEnabled;
+  const { soundEffectsEnabled, speechRate, speechPitch, selectedVoiceURI } = useAppSettingsStore.getState();
+  
   if (!soundEffectsEnabled) {
-    // If general sound effects are off, don't speak either.
-    // Could be a separate setting in the future.
-    return;
+    return null;
   }
 
   try {
-    // Cancel any ongoing speech to prevent overlap
-    window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel(); // Cancel any ongoing speech
     
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    // utterance.lang = 'en-US'; // Optional: specify language if needed
-    // utterance.rate = 1; // Optional: control speed
-    // utterance.pitch = 1; // Optional: control pitch
+    utterance.rate = speechRate;
+    utterance.pitch = speechPitch;
+
+    if (selectedVoiceURI) {
+      const voices = window.speechSynthesis.getVoices();
+      const voice = voices.find(v => v.voiceURI === selectedVoiceURI);
+      if (voice) {
+        utterance.voice = voice;
+      }
+    }
+    
+    if (onBoundary) utterance.onboundary = onBoundary;
+    if (onEnd) utterance.onend = onEnd;
+    if (onError) utterance.onerror = onError;
+    else {
+      utterance.onerror = (event) => {
+         if (event.error === 'interrupted' || event.error === 'canceled') {
+          console.warn("Speech synthesis event:", event.error);
+        } else {
+          console.error("Speech synthesis error in speakText default handler:", event.error);
+        }
+      };
+    }
+
+
     window.speechSynthesis.speak(utterance);
+    return utterance;
   } catch (error) {
-    console.error("Error in speakText:", error);
-    // Optionally, provide feedback to the user if speech synthesis fails
+    console.error("Error in speakText setup:", error);
+    if (onError) {
+      // Simulate an error event if setup fails before an utterance object exists
+      const synthErrorEvent = new SpeechSynthesisErrorEvent("error", {
+          utterance: null as any, // No utterance object if setup failed early
+          charIndex: 0,
+          elapsedTime: 0,
+          name: "",
+          error: "setup_failed"
+      });
+      onError(synthErrorEvent);
+    }
+    return null;
   }
 }

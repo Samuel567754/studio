@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC, ReactNode } from 'react';
 import { useState, useCallback, useEffect } from 'react';
@@ -7,49 +8,31 @@ import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/f
 import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { playSuccessSound, playErrorSound, playNotificationSound } from '@/lib/audio';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
+import { cn } from '@/lib/utils';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
+
 
 interface ReadingPracticeProps {
   wordsToPractice: string[];
   readingLevel: string;
 }
 
-const highlightWords = (text: string, words: string[]): ReactNode[] => {
-  if (!words.length || !text) return [text];
-  const sortedWords = [...words].sort((a, b) => b.length - a.length);
-  const regex = new RegExp(`\\b(${sortedWords.map(word => word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})\\b`, 'gi');
-  
-  const parts: ReactNode[] = [];
-  let lastIndex = 0;
-
-  text.replace(regex, (match, ...args) => {
-    const offset = args[args.length - 2]; 
-    if (offset > lastIndex) {
-      parts.push(text.substring(lastIndex, offset));
-    }
-    parts.push(
-      <strong key={`match-${offset}`} className="text-primary font-bold underline decoration-wavy decoration-primary/50 underline-offset-2">
-        {match}
-      </strong>
-    );
-    lastIndex = offset + match.length;
-    return match; 
-  });
-
-  if (lastIndex < text.length) {
-    parts.push(text.substring(lastIndex));
-  }
-  
-  return parts.length > 0 ? parts : [text]; 
-};
-
+interface SpokenWordInfo {
+  charIndex: number;
+  charLength: number;
+}
 
 export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, readingLevel }) => {
   const [passage, setPassage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [currentSpokenWordInfo, setCurrentSpokenWordInfo] = useState<SpokenWordInfo | null>(null);
+  
   const { toast } = useToast();
+  const soundEffectsEnabled = useAppSettingsStore(state => state.soundEffectsEnabled);
 
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -57,7 +40,38 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     }
     setIsSpeaking(false);
     setIsPaused(false);
+    setCurrentUtterance(null);
+    setCurrentSpokenWordInfo(null); 
   }, []);
+
+  const handleSpeechBoundary = useCallback((event: SpeechSynthesisEvent) => {
+    if (event.name === 'word') {
+      setCurrentSpokenWordInfo({ charIndex: event.charIndex, charLength: event.charLength });
+    }
+  }, []);
+
+  const handleSpeechEnd = useCallback(() => {
+    setIsSpeaking(false);
+    setIsPaused(false);
+    setCurrentUtterance(null);
+    setCurrentSpokenWordInfo(null);
+  }, []);
+  
+  const handleSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
+      if (event.error === 'interrupted' || event.error === 'canceled') {
+          console.warn("Speech synthesis event in ReadingPractice:", event.error);
+      } else {
+          console.error("Speech synthesis error in ReadingPractice:", event.error);
+          toast({ variant: "destructive", title: "Audio Error", description: "Could not play audio for the passage." });
+          playErrorSound();
+      }
+      // Ensure UI state is reset
+      setIsSpeaking(false);
+      setIsPaused(false);
+      setCurrentUtterance(null);
+      setCurrentSpokenWordInfo(null);
+  }, [toast]);
+
 
   const fetchPassage = useCallback(async () => {
     if (wordsToPractice.length === 0) {
@@ -70,7 +84,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       return;
     }
 
-    stopSpeech(); // Stop any ongoing speech before fetching new passage
+    stopSpeech(); 
     setIsLoading(true);
     setPassage(null);
     try {
@@ -96,67 +110,96 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   }, [wordsToPractice, readingLevel, toast, stopSpeech]);
 
   const toggleSpeech = useCallback(() => {
-    if (typeof window === 'undefined' || !window.speechSynthesis || !passage) return;
+    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis || !passage) return;
 
     const speech = window.speechSynthesis;
 
-    if (isSpeaking && !isPaused) { // Currently speaking, so pause
+    if (isSpeaking && !isPaused) { 
       speech.pause();
       setIsPaused(true);
       playNotificationSound();
-    } else if (isSpeaking && isPaused) { // Currently paused, so resume
+    } else if (isSpeaking && isPaused) { 
       speech.resume();
       setIsPaused(false);
       playNotificationSound();
-    } else { // Not speaking, so start
-      speech.cancel(); // Clear any previous queue
-      const utterance = new SpeechSynthesisUtterance(passage);
-      utterance.onstart = () => {
+    } else { 
+      const utterance = speakText(passage, handleSpeechBoundary, handleSpeechEnd, handleSpeechError);
+      if (utterance) {
+        setCurrentUtterance(utterance);
         setIsSpeaking(true);
         setIsPaused(false);
-        playNotificationSound();
-      };
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        setIsPaused(false);
-      };
-      utterance.onpause = () => {
-        // This might be triggered by external factors, ensure state consistency
-        if (speech.speaking) { // If speech.pause() was called, speech.speaking is still true
-             setIsPaused(true);
-        } else { // If speech was cancelled or finished abruptly
-            setIsSpeaking(false);
-            setIsPaused(false);
-        }
-      };
-      utterance.onresume = () => {
-        setIsSpeaking(true);
-        setIsPaused(false);
-      };
-      utterance.onerror = (event) => {
-        // "interrupted" and "canceled" are often due to user action (e.g., stopping speech, fetching new passage)
-        // and might not need an aggressive error display.
-        if (event.error === 'interrupted' || event.error === 'canceled') {
-          console.warn("Speech synthesis event:", event.error);
-        } else {
-          console.error("Speech synthesis error:", event.error);
-          toast({ variant: "destructive", title: "Audio Error", description: "Could not play audio for the passage." });
-          playErrorSound();
-        }
-        // Always reset state regardless of error type to ensure UI consistency
-        setIsSpeaking(false);
-        setIsPaused(false);
-      };
-      speech.speak(utterance);
+        // playNotificationSound(); // speakText might play its own notification or we might not want one on start
+      }
     }
-  }, [passage, isSpeaking, isPaused, toast]);
+  }, [passage, isSpeaking, isPaused, soundEffectsEnabled, handleSpeechBoundary, handleSpeechEnd, handleSpeechError]);
 
   useEffect(() => {
-    // Cleanup speech synthesis on component unmount
     return () => {
       stopSpeech();
     };
   }, [stopSpeech]);
+
+  const renderHighlightedPassage = (): ReactNode[] => {
+    if (!passage) return [];
+  
+    const elements: ReactNode[] = [];
+    let keyCounter = 0;
+  
+    const processTextSegment = (textSegment: string, segmentContainsSpokenWord: boolean) => {
+      if (!textSegment) return;
+  
+      // Regex to split by words while keeping delimiters.
+      // It captures sequences of word characters, or sequences of non-word/non-space characters (punctuation), or sequences of spaces.
+      const tokens = textSegment.split(/(\b\w+\b|[^\w\s]+|\s+)/g).filter(Boolean);
+  
+      let currentPosInSegment = 0;
+      for (const token of tokens) {
+        const isWordToken = /\b\w+\b/.test(token);
+        const isPracticeWord = isWordToken && wordsToPractice.some(pWord => pWord.toLowerCase() === token.toLowerCase());
+        
+        // For overall spoken word highlight, we rely on segmentContainsSpokenWord passed from the main split.
+        // The charIndex/charLength from onboundary refers to the original full passage string.
+        // We are highlighting the entire word that onboundary identified, if that word is inside this current segment.
+        
+        // Here, segmentContainsSpokenWord means the *current token* being processed is the *exact word* returned by onboundary.
+        // This is already handled by splitting the passage into before/spoken/after.
+        // So, if segmentContainsSpokenWord is true, this *entire textSegment* is the spoken word.
+
+        elements.push(
+          <span
+            key={`token-${keyCounter++}`}
+            className={cn({
+              // Style for the word that is currently being spoken by TTS
+              'bg-accent/80 dark:bg-accent/60 text-accent-foreground px-0.5 rounded transition-all duration-100': segmentContainsSpokenWord && isWordToken,
+              // Style for practice words that are NOT currently being spoken
+              'text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2': isPracticeWord && !segmentContainsSpokenWord,
+              // Style for practice words that ARE currently being spoken (combines both)
+              'text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2 bg-accent/80 dark:bg-accent/60 text-accent-foreground px-0.5 rounded transition-all duration-100': isPracticeWord && segmentContainsSpokenWord && isWordToken,
+            })}
+          >
+            {token}
+          </span>
+        );
+        currentPosInSegment += token.length;
+      }
+    };
+  
+    if (currentSpokenWordInfo && passage) {
+      const { charIndex, charLength } = currentSpokenWordInfo;
+      const before = passage.substring(0, charIndex);
+      const spoken = passage.substring(charIndex, charIndex + charLength);
+      const after = passage.substring(charIndex + charLength);
+  
+      processTextSegment(before, false);
+      processTextSegment(spoken, true); // This segment is the spoken word
+      processTextSegment(after, false);
+    } else if (passage) {
+      processTextSegment(passage, false); // No specific word is being spoken, just process for practice words
+    }
+  
+    return elements;
+  };
+
 
   return (
     <Card className="shadow-lg w-full">
@@ -165,7 +208,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           <BookMarked className="mr-2 h-5 w-5" /> Practice Reading
         </CardTitle>
         <CardDescription>
-          Read a short passage generated by AI using some of your practice words. You can also listen to it.
+          Read a short passage generated by AI using some of your practice words. You can also listen to it. Current spoken words will be highlighted.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -183,7 +226,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
               </>
             )}
           </Button>
-          {passage && !isLoading && (
+          {passage && !isLoading && soundEffectsEnabled && (
             <div className="flex gap-2">
               <Button onClick={toggleSpeech} variant="outline" size="lg" className="w-full sm:w-auto" aria-label={isSpeaking && !isPaused ? "Pause reading" : (isPaused ? "Resume reading" : "Read passage aloud")}>
                 {isSpeaking && !isPaused ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
@@ -206,10 +249,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         {passage && !isLoading && (
           <Alert variant="default" className="bg-card/50 dark:bg-card/30 border-primary/30">
              <AlertTitle className="text-lg font-semibold text-primary">Your Reading Passage:</AlertTitle>
-            <AlertDescription className="text-base leading-relaxed text-foreground/90 dark:text-foreground/80 py-2">
-              {highlightWords(passage, wordsToPractice).map((part, index) => (
-                <span key={index}>{part}</span>
-              ))}
+            <AlertDescription className="text-base leading-relaxed text-foreground/90 dark:text-foreground/80 py-2 whitespace-pre-line">
+              {renderHighlightedPassage().map((node, index) => <React.Fragment key={index}>{node}</React.Fragment>)}
             </AlertDescription>
           </Alert>
         )}
@@ -234,7 +275,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       </CardContent>
       {passage && !isLoading && (
         <CardFooter>
-            <p className="text-xs text-muted-foreground">Passage generated by AI. Words from your list are <strong className="text-primary">highlighted</strong>.</p>
+            <p className="text-xs text-muted-foreground">Passage generated by AI. Words from your list are <strong className="text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2">highlighted</strong>. Spoken words are <span className="bg-accent/80 dark:bg-accent/60 text-accent-foreground px-0.5 rounded">highlighted like this</span>.</p>
         </CardFooter>
       )}
     </Card>
