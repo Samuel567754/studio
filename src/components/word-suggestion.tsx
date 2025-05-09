@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC } from 'react';
 import { useState } from 'react';
@@ -133,9 +134,8 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({ onWordSelected, curren
             {suggestedWordsList.map((word, index) => (
               <Button
                 key={index}
-                variant="outline"
+                variant="secondary"
                 onClick={() => onWordSelected(word)}
-                className="bg-accent/10 hover:bg-accent/20 border-accent text-accent-foreground"
               >
                 {word}
               </Button>
@@ -146,3 +146,4 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({ onWordSelected, curren
     </Card>
   );
 };
+
