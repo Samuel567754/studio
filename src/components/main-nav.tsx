@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FC } from 'react';
@@ -7,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet'; // Added SheetTrigger
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
@@ -56,15 +55,14 @@ export const MainNav: FC = () => {
   
   const handleResetProgress = () => {
     if (typeof window !== 'undefined') {
-        if(confirm("This will clear your learned words, reading level, and word length preferences. Are you sure?")) {
-            clearProgressStoredData(); // Clears only progress-related data
+        if(confirm("This will clear your learned words, mastered words, reading level, and word length preferences. Are you sure?")) {
+            clearProgressStoredData(); 
             setIsMobileMenuOpen(false);
             toast({
                 title: "Progress Reset",
-                description: "Your learning data (words, level, length) has been cleared.",
+                description: "Your learning data (learned words, mastered words, reading level, and word length preferences) has been cleared.",
                 variant: "info"
             });
-            // Optionally, force reload or navigate to ensure UI updates if dependent on this data
              window.location.href = '/'; 
         }
     }
@@ -148,7 +146,7 @@ export const MainNav: FC = () => {
                       <Trash2 className="mr-2 h-4 w-4" />
                       Reset Learning Progress
                   </Button>
-                  <p className="text-xs text-muted-foreground mt-2 text-center">This resets learned words, reading level, and word length preferences. Theme and sound settings remain unchanged.</p>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">This resets learned words, mastered words, reading level, and word length preferences. Theme and sound settings remain unchanged.</p>
               </div>
             </SheetContent>
           </Sheet>

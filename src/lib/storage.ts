@@ -1,4 +1,3 @@
-
 'use client';
 
 // Keys for localStorage items
@@ -6,6 +5,7 @@ const WORD_LIST_KEY = 'sightwords_wordList_v1';
 const READING_LEVEL_KEY = 'sightwords_readingLevel_v1';
 const WORD_LENGTH_KEY = 'sightwords_wordLength_v1';
 const CURRENT_INDEX_KEY = 'sightwords_currentIndex_v1';
+const MASTERED_WORDS_KEY = 'sightwords_masteredWords_v1'; // New key for mastered words
 
 // --- Word List ---
 export const getStoredWordList = (): string[] => {
@@ -31,8 +31,6 @@ export const storeWordList = (wordList: string[]): void => {
 // --- Reading Level ---
 export const getStoredReadingLevel = (defaultValue = "beginner"): string => {
   if (typeof window === 'undefined') return defaultValue;
-  // This value is also managed by WordSuggestion and its form,
-  // but direct access might be needed elsewhere or for initialization.
   return localStorage.getItem(READING_LEVEL_KEY) || defaultValue;
 };
 
@@ -44,7 +42,6 @@ export const storeReadingLevel = (level: string): void => {
 // --- Word Length ---
 export const getStoredWordLength = (defaultValue = 3): number => {
   if (typeof window === 'undefined') return defaultValue;
-  // Similar to reading level, managed by WordSuggestion form.
   const stored = localStorage.getItem(WORD_LENGTH_KEY);
   const value = stored ? parseInt(stored, 10) : defaultValue;
   return isNaN(value) ? defaultValue : value;
@@ -68,6 +65,37 @@ export const storeCurrentIndex = (index: number): void => {
   localStorage.setItem(CURRENT_INDEX_KEY, String(index));
 };
 
+// --- Mastered Words ---
+export const getStoredMasteredWords = (): string[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(MASTERED_WORDS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error("Error parsing mastered words from localStorage:", error);
+    return [];
+  }
+};
+
+export const storeMasteredWords = (words: string[]): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(MASTERED_WORDS_KEY, JSON.stringify(words));
+  } catch (error) {
+    console.error("Error storing mastered words to localStorage:", error);
+  }
+};
+
+export const addMasteredWord = (word: string): void => {
+  if (typeof window === 'undefined') return;
+  const masteredWords = getStoredMasteredWords();
+  const lowerCaseWord = word.toLowerCase();
+  if (!masteredWords.map(w => w.toLowerCase()).includes(lowerCaseWord)) {
+    masteredWords.push(word); // Store with original casing, but check with lowercase
+    storeMasteredWords(masteredWords);
+  }
+};
+
 // --- Utility to clear only progress-related stored data ---
 export const clearProgressStoredData = (): void => {
   if (typeof window === 'undefined') return;
@@ -75,14 +103,6 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(READING_LEVEL_KEY);
   localStorage.removeItem(WORD_LENGTH_KEY);
   localStorage.removeItem(CURRENT_INDEX_KEY);
-  console.log("Cleared all user progress-related stored data.");
+  localStorage.removeItem(MASTERED_WORDS_KEY); // Clear mastered words as well
+  console.log("Cleared all user progress-related stored data including mastered words.");
 };
-
-// Note: Theme settings (fontSize, fontFamily, theme mode) are managed by useThemeStore (theme-store.ts)
-// and persisted under 'theme-settings-storage'.
-// App settings (like soundEffectsEnabled) will be managed by useAppSettingsStore (app-settings-store.ts)
-// and persisted under 'app-settings-storage'.
-// The `clearProgressStoredData` function specifically targets user learning progress, not app-wide settings.
-// The old `clearAllStoredData` was renamed to `clearProgressStoredData` for clarity.
-// If a full app reset is needed, individual store reset functions should be called,
-// or localStorage keys for those stores manually cleared.

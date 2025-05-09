@@ -1,7 +1,6 @@
-
 "use client";
 import type { FC } from 'react';
-import { useState, useEffect, useMemo } from 'react'; // Added useMemo
+import { useState, useEffect, useMemo } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,6 +14,7 @@ import { Loader2, Wand2, Lightbulb, CheckCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { playSuccessSound, playErrorSound } from '@/lib/audio';
+import { getStoredMasteredWords } from '@/lib/storage'; // Import getStoredMasteredWords
 
 const suggestionFormSchema = z.object({
   readingLevel: z.string().min(1, "Reading level is required."),
@@ -69,7 +69,12 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
     setIsLoading(true);
     setDisplayedSuggestedWords([]); 
     try {
-      const result = await suggestWords(data as SuggestWordsInput);
+      const masteredWords = getStoredMasteredWords();
+      const input: SuggestWordsInput = { 
+        ...data, 
+        masteredWords: masteredWords.length > 0 ? masteredWords : undefined 
+      };
+      const result = await suggestWords(input);
       if (result.suggestedWords && result.suggestedWords.length > 0) {
         setDisplayedSuggestedWords(result.suggestedWords);
         onNewSuggestedWordsList(result.suggestedWords); 

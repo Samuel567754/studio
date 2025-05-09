@@ -1,4 +1,3 @@
-
 "use client";
 import type { FC, FormEvent } from 'react';
 import { useState, useEffect } from 'react';
@@ -7,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, XCircle, Sparkles, InfoIcon } from 'lucide-react'; // Added InfoIcon
+import { CheckCircle2, XCircle, Sparkles, InfoIcon } from 'lucide-react';
 import { playErrorSound } from '@/lib/audio';
+import { addMasteredWord } from '@/lib/storage'; // Import addMasteredWord
 
 interface SpellingPracticeProps {
   wordToSpell: string;
@@ -33,6 +33,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
 
     if (attempt.trim().toLowerCase() === wordToSpell.toLowerCase()) {
       setFeedback({type: 'success', message: 'Excellent! You spelled it right.'});
+      addMasteredWord(wordToSpell); // Add word to mastered list
       onCorrectSpell(); // This will trigger success sound from parent
       setTimeout(() => {
         setAttempt('');
