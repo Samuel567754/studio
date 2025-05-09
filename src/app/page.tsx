@@ -15,7 +15,7 @@ import { Trash2, CheckCircle, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card'; // Renamed to avoid conflict
 import { cn } from '@/lib/utils';
-import { playSuccessSound, playNavigationSound, playNotificationSound, speakText } from '@/lib/audio';
+import { playSuccessSound, playNotificationSound, speakText } from '@/lib/audio';
 
 
 export default function LearnWordsPage() {
@@ -82,7 +82,7 @@ export default function LearnWordsPage() {
     updateWordList(newWordList); 
 
     toast({ variant: "info", title: "Word Removed", description: `"${wordToRemove}" removed from your practice list.` });
-    playNavigationSound();
+    playNotificationSound(); // Changed from playNavigationSound
 
     if (newWordList.length === 0) {
         setCurrentPracticingWord('');

@@ -58,23 +58,28 @@ const playSoundWrapper = (
 
 
 export function playClickSound(): void {
-  playSoundWrapper('triangle', 200, 0.05, 0.05); 
+  // Short, crisp, pleasant 'sine' pluck (A4)
+  playSoundWrapper('sine', 440, 0.03, 0.05); 
 }
 
 export function playSuccessSound(): void {
+  // Ascending sweep, positive confirmation
   playSoundWrapper('sine', { start: 600, end: 880, bendDuration: 0.05 }, 0.15, 0.2);
 }
 
 export function playErrorSound(): void {
+  // Low, descending 'square' wave for a more "buzz" or "thud" error sound
   playSoundWrapper('square', { start: 150, end: 100, bendDuration: 0.1 }, 0.15, 0.25);
 }
 
 export function playNavigationSound(): void {
-  playSoundWrapper('sine', 350, 0.08, 0.05);
+  // Gentle upward sweep for non-button navigation (e.g., next/prev word)
+  playSoundWrapper('sine', { start: 380, end: 550, bendDuration: 0.05 }, 0.04, 0.1);
 }
 
 export function playNotificationSound(): void {
-  playSoundWrapper('triangle', 500, 0.12, 0.1);
+  // Clear, mellow 'sine' ping (C5) for toasts, settings changes, general feedback
+  playSoundWrapper('sine', 523.25, 0.07, 0.15);
 }
 
 export function speakText(
@@ -108,17 +113,26 @@ export function speakText(
     }
     
     if (onBoundary) utterance.onboundary = onBoundary;
-    if (onEnd) utterance.onend = onEnd;
-    if (onError) utterance.onerror = onError;
-    else {
-      utterance.onerror = (event) => {
-         if (event.error === 'interrupted' || event.error === 'canceled') {
-          console.warn("Speech synthesis event:", event.error);
+    
+    // Centralized end handling
+    const handleEnd = () => {
+        if (onEnd) onEnd();
+    };
+    utterance.onend = handleEnd;
+
+    // Centralized error handling
+    const handleError = (event: SpeechSynthesisErrorEvent) => {
+        if (event.error === 'interrupted' || event.error === 'canceled') {
+            console.warn("Speech synthesis event in speakText:", event.error);
+            // 'canceled' will also trigger 'onend', so specific handling for 'onend' ensures cleanup.
+            // 'interrupted' might not always trigger 'onend' if it's a recoverable interruption by the browser,
+            // but often it means the utterance stops. If onEnd is used for cleanup, it should handle this.
         } else {
-          console.error("Speech synthesis error in speakText default handler:", event.error);
+            console.error("Speech synthesis error in speakText default handler:", event.error, event.utterance?.text.substring(event.charIndex));
         }
-      };
-    }
+        if (onError) onError(event); // Call the provided error handler
+    };
+    utterance.onerror = handleError;
 
 
     window.speechSynthesis.speak(utterance);
@@ -139,3 +153,4 @@ export function speakText(
     return null;
   }
 }
+
