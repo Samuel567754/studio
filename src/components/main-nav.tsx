@@ -7,9 +7,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet'; // Added SheetTrigger
 import { cn } from '@/lib/utils';
-import { clearProgressStoredData } from '@/lib/storage'; 
+import { clearProgressStoredData } from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
 
 
