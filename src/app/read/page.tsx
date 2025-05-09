@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ReadingPractice } from '@/components/reading-practice';
-import { getStoredWordList, getStoredReadingLevel } from '@/lib/storage';
+import { getStoredWordList, getStoredReadingLevel, getStoredMasteredWords } from '@/lib/storage';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,14 @@ import { Card } from '@/components/ui/card';
 
 export default function ReadingPage() {
   const [wordList, setWordList] = useState<string[]>([]);
+  const [masteredWords, setMasteredWords] = useState<string[]>([]);
   const [readingLevel, setReadingLevel] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
 
   const loadReadingData = useCallback(() => {
     setWordList(getStoredWordList());
-    setReadingLevel(getStoredReadingLevel("beginner")); // Ensure a default if not set
+    setMasteredWords(getStoredMasteredWords());
+    setReadingLevel(getStoredReadingLevel("beginner")); 
   }, []);
   
   useEffect(() => {
@@ -25,7 +27,9 @@ export default function ReadingPage() {
     setIsMounted(true);
 
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'sightwords_wordList_v1' || event.key === 'sightwords_readingLevel_v1') {
+      if (event.key === 'sightwords_wordList_v1' || 
+          event.key === 'sightwords_readingLevel_v1' ||
+          event.key === 'sightwords_masteredWords_v1') {
         loadReadingData();
       }
     };
@@ -69,8 +73,11 @@ export default function ReadingPage() {
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
-      <ReadingPractice wordsToPractice={wordList} readingLevel={readingLevel} />
+      <ReadingPractice 
+        wordsToPractice={wordList} 
+        readingLevel={readingLevel} 
+        masteredWords={masteredWords} 
+      />
     </div>
   );
 }
-

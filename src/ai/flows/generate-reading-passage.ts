@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getStoredMasteredWords } from '@/lib/storage'; // Import to use in the flow
 
 const GenerateReadingPassageInputSchema = z.object({
   words: z
@@ -18,6 +19,12 @@ const GenerateReadingPassageInputSchema = z.object({
     .string()
     .describe(
       'The target reading level for the passage (e.g., beginner, intermediate, advanced).'
+    ),
+  masteredWords: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'An optional list of words the user has already mastered. The AI can use this to subtly adjust complexity.'
     ),
 });
 export type GenerateReadingPassageInput = z.infer<
@@ -36,7 +43,13 @@ export type GenerateReadingPassageOutput = z.infer<
 export async function generateReadingPassage(
   input: GenerateReadingPassageInput
 ): Promise<GenerateReadingPassageOutput> {
-  return generateReadingPassageFlow(input);
+  // Augment input with mastered words if not already provided by client
+  const allMasteredWords = getStoredMasteredWords();
+  const augmentedInput = {
+    ...input,
+    masteredWords: input.masteredWords || (allMasteredWords.length > 0 ? allMasteredWords : undefined),
+  };
+  return generateReadingPassageFlow(augmentedInput);
 }
 
 const prompt = ai.definePrompt({
@@ -52,12 +65,20 @@ const prompt = ai.definePrompt({
   - {{{this}}}
   {{/each}}
 
-  Please generate a passage that is 5-8 sentences long. Ensure the vocabulary and sentence structure are suitable for the reading level.
+  {{#if masteredWords}}
+  The learner has already mastered the following words:
+  {{#each masteredWords}}
+  - {{{this}}}
+  {{/each}}
+  Given this, you can subtly increase the complexity of the surrounding text or use a slightly richer vocabulary, while staying true to the overall '{{{readingLevel}}}' reading level. The primary goal is still to use the 'Words to include' list.
+  {{/if}}
+
+  Please generate a passage that is 7-10 sentences long. Ensure the vocabulary and sentence structure are suitable for the reading level.
   The passage should make sense and be interesting for a learner.
   Output only the passage itself.`,
   config: {
     temperature: 0.7, // Allow for some creativity
-     safetySettings: [ // Add safety settings to prevent harmful content
+     safetySettings: [ 
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',
         threshold: 'BLOCK_MEDIUM_AND_ABOVE',
@@ -92,4 +113,3 @@ const generateReadingPassageFlow = ai.defineFlow(
     return output!;
   }
 );
-

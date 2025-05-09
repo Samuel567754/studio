@@ -7,12 +7,14 @@ import {
   getStoredWordList, storeWordList,
   getStoredReadingLevel, storeReadingLevel,
   getStoredWordLength, storeWordLength,
-  storeCurrentIndex, getStoredCurrentIndex
+  storeCurrentIndex, getStoredCurrentIndex,
+  getStoredMasteredWords,
+  getProgressionSuggestionDismissed, storeProgressionSuggestionDismissed
 } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { Trash2, CheckCircle, Info, CheckCircle2 } from 'lucide-react'; // Added CheckCircle2 for success toast
+import { Trash2, CheckCircle, Info, CheckCircle2, AlertTriangle, CornerRightUp } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card'; // Renamed to avoid conflict
+import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { playSuccessSound, playNotificationSound, speakText } from '@/lib/audio';
 
@@ -21,26 +23,62 @@ export default function LearnWordsPage() {
   const [readingLevel, setReadingLevel] = useState<string>('');
   const [wordLength, setWordLength] = useState<number>(0);
   const [wordList, setWordList] = useState<string[]>([]);
+  const [masteredWords, setMasteredWords] = useState<string[]>([]);
   const [currentPracticingWord, setCurrentPracticingWord] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
+  const [showProgressionAlert, setShowProgressionAlert] = useState(false);
 
   const { toast } = useToast();
 
   // Load initial state from localStorage
   useEffect(() => {
-    setReadingLevel(getStoredReadingLevel());
-    setWordLength(getStoredWordLength());
+    const storedLevel = getStoredReadingLevel();
+    const storedLength = getStoredWordLength();
     const storedList = getStoredWordList();
+    const storedMasteredList = getStoredMasteredWords();
+    
+    setReadingLevel(storedLevel);
+    setWordLength(storedLength);
     setWordList(storedList);
+    setMasteredWords(storedMasteredList);
+
     const storedIndex = getStoredCurrentIndex();
     if (storedList.length > 0 && storedIndex >= 0 && storedIndex < storedList.length) {
         setCurrentPracticingWord(storedList[storedIndex]);
-    } else if (storedList.length > 0) { // if index is invalid but list exists
+    } else if (storedList.length > 0) { 
         setCurrentPracticingWord(storedList[0]);
         storeCurrentIndex(0);
     }
     setIsMounted(true);
   }, []);
+
+  // Effect for progression suggestion alert
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const isDismissed = getProgressionSuggestionDismissed(readingLevel, wordLength);
+    if (isDismissed) {
+      setShowProgressionAlert(false);
+      return;
+    }
+
+    if (wordList.length > 5) { // Only suggest if there's a decent number of words
+      const currentWordsMasteredCount = wordList.filter(w => masteredWords.includes(w)).length;
+      const masteredThreshold = Math.ceil(wordList.length * 0.7); // 70% mastery of current list
+
+      if (currentWordsMasteredCount >= masteredThreshold) {
+        if ((readingLevel === "beginner" || readingLevel === "intermediate") || wordLength < 5) { // Simple condition for now
+           setShowProgressionAlert(true);
+        }
+      } else {
+        setShowProgressionAlert(false);
+      }
+    } else {
+      setShowProgressionAlert(false);
+    }
+
+  }, [wordList, masteredWords, readingLevel, wordLength, isMounted]);
+
 
   const updateWordList = useCallback((newWordList: string[]) => {
     setWordList(newWordList);
@@ -62,13 +100,11 @@ export default function LearnWordsPage() {
       description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` 
     });
     playSuccessSound();
-    speakText(word); // Say the word aloud
+    speakText(word); 
   }, [wordList, updateWordList, toast]);
   
   const handleNewSuggestedWordsList = useCallback((suggestedWords: string[]) => {
     // This callback is mostly for information or future use.
-    // WordSuggestion component handles displaying these.
-    // Actual addition to practice list is via onWordSelected.
   }, []);
 
   const handleSettingsChange = useCallback((level: string, length: number) => {
@@ -76,6 +112,9 @@ export default function LearnWordsPage() {
     storeReadingLevel(level);
     setWordLength(length);
     storeWordLength(length);
+    // When settings change, new progression suggestion for the new settings should not be dismissed by default
+    storeProgressionSuggestionDismissed(level, length, false); 
+    setShowProgressionAlert(false); // Hide any current alert as settings are changing
     toast({ 
       variant: "info", 
       title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Preferences Updated</div>, 
@@ -93,7 +132,7 @@ export default function LearnWordsPage() {
       title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Word Removed</div>, 
       description: `"${wordToRemove}" removed from your practice list.` 
     });
-    playNotificationSound(); // Changed from playNavigationSound
+    playNotificationSound(); 
 
     if (newWordList.length === 0) {
         setCurrentPracticingWord('');
@@ -112,10 +151,15 @@ export default function LearnWordsPage() {
     }
   };
 
+  const handleDismissProgressionAlert = () => {
+    storeProgressionSuggestionDismissed(readingLevel, wordLength, true);
+    setShowProgressionAlert(false);
+    playNotificationSound();
+  };
+
   if (!isMounted) {
     return (
       <div className="space-y-6 md:space-y-8">
-        {/* Skeleton for WordSuggestion */}
         <Card className="shadow-lg animate-pulse">
             <CardHeader className="p-4 md:p-6">
                 <div className="h-6 w-3/4 bg-muted rounded"></div>
@@ -135,7 +179,6 @@ export default function LearnWordsPage() {
                 <div className="h-12 bg-primary/50 rounded"></div>
             </CardContent>
         </Card>
-         {/* Skeleton for Word List (conditionally shown) */}
         <Card className="shadow-lg animate-pulse">
             <CardHeader className="p-4 md:p-6">
                 <div className="h-6 w-1/2 bg-muted rounded"></div>
@@ -162,6 +205,29 @@ export default function LearnWordsPage() {
         onSettingsChange={handleSettingsChange}
         currentPracticingWord={currentPracticingWord}
       />
+
+      {showProgressionAlert && (
+        <Alert variant="default" className="border-accent bg-accent/10 text-accent-foreground animate-in fade-in-0 zoom-in-95 duration-500">
+           <AlertTriangle className="h-5 w-5 text-accent" />
+           <AlertTitle className="font-semibold text-lg text-accent">Ready for a New Challenge?</AlertTitle>
+           <AlertDescription className="text-base">
+             You're doing great and have mastered many words at the current settings! 
+             Consider trying a higher reading level or different word length in the "AI Word Suggestions" panel above to keep growing.
+           </AlertDescription>
+           <div className="mt-4 flex gap-2 justify-end">
+            <Button variant="outline" size="sm" onClick={() => {
+                const wordSuggestionCard = document.querySelector('[class*="shadow-xl"]'); // A bit hacky, consider a ref
+                wordSuggestionCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setShowProgressionAlert(false); // Hide after interaction
+                playNotificationSound();
+            }}>
+                <CornerRightUp className="mr-2 h-4 w-4"/>
+                Update Settings
+             </Button>
+             <Button variant="ghost" size="sm" onClick={handleDismissProgressionAlert}>Maybe Later</Button>
+           </div>
+        </Alert>
+      )}
 
       {wordList.length > 0 && (
         <Card className="shadow-lg border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
@@ -212,7 +278,7 @@ export default function LearnWordsPage() {
         </Card>
       )}
 
-      {wordList.length === 0 && isMounted && (
+      {wordList.length === 0 && isMounted && !showProgressionAlert && (
         <Alert variant="info" className="bg-card/90 border-accent/20 shadow animate-in fade-in-0 zoom-in-95 duration-500 ease-out">
           <Info className="h-5 w-5" />
           <AlertTitle className="font-semibold text-lg">Welcome to SightWords AI!</AlertTitle>

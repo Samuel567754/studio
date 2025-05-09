@@ -5,7 +5,9 @@ const WORD_LIST_KEY = 'sightwords_wordList_v1';
 const READING_LEVEL_KEY = 'sightwords_readingLevel_v1';
 const WORD_LENGTH_KEY = 'sightwords_wordLength_v1';
 const CURRENT_INDEX_KEY = 'sightwords_currentIndex_v1';
-const MASTERED_WORDS_KEY = 'sightwords_masteredWords_v1'; // New key for mastered words
+const MASTERED_WORDS_KEY = 'sightwords_masteredWords_v1'; 
+const PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX = 'sightwords_progressionSuggestionDismissed_v1_';
+
 
 // --- Word List ---
 export const getStoredWordList = (): string[] => {
@@ -96,6 +98,28 @@ export const addMasteredWord = (word: string): void => {
   }
 };
 
+// --- Progression Suggestion Dismissal ---
+const getProgressionDismissalKey = (level: string, length: number): string => {
+  return `${PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX}${level}_${length}`;
+};
+
+export const getProgressionSuggestionDismissed = (level: string, length: number): boolean => {
+  if (typeof window === 'undefined') return false;
+  const key = getProgressionDismissalKey(level, length);
+  return localStorage.getItem(key) === 'true';
+};
+
+export const storeProgressionSuggestionDismissed = (level: string, length: number, dismissed: boolean): void => {
+  if (typeof window === 'undefined') return;
+  const key = getProgressionDismissalKey(level, length);
+  if (dismissed) {
+    localStorage.setItem(key, 'true');
+  } else {
+    localStorage.removeItem(key); // Remove if not dismissed, to keep localStorage clean
+  }
+};
+
+
 // --- Utility to clear only progress-related stored data ---
 export const clearProgressStoredData = (): void => {
   if (typeof window === 'undefined') return;
@@ -103,6 +127,13 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(READING_LEVEL_KEY);
   localStorage.removeItem(WORD_LENGTH_KEY);
   localStorage.removeItem(CURRENT_INDEX_KEY);
-  localStorage.removeItem(MASTERED_WORDS_KEY); // Clear mastered words as well
-  console.log("Cleared all user progress-related stored data including mastered words.");
+  localStorage.removeItem(MASTERED_WORDS_KEY); 
+  
+  // Clear all progression dismissal flags
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith(PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX)) {
+      localStorage.removeItem(key);
+    }
+  });
+  console.log("Cleared all user progress-related stored data including mastered words and progression dismissal flags.");
 };
