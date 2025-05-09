@@ -140,7 +140,7 @@ export default function SettingsPage() {
       <Card className="shadow-lg border-border/30 animate-in fade-in-0 slide-in-from-bottom-8 duration-700 ease-out">
         <CardHeader>
           <CardTitle className="text-3xl font-bold flex items-center text-primary">
-            <SettingsIcon className="mr-3 h-8 w-8" />
+            <SettingsIcon className="mr-3 h-8 w-8" aria-hidden="true" />
             Application Settings
           </CardTitle>
           <CardDescription className="text-base">
@@ -150,17 +150,17 @@ export default function SettingsPage() {
         <CardContent className="space-y-10">
           {/* Appearance Settings */}
           <section className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500 delay-100">
-            <h3 className="text-xl font-semibold mb-4 flex items-center"><Palette className="mr-2 h-6 w-6 text-accent"/>Appearance</h3>
+            <h3 className="text-xl font-semibold mb-4 flex items-center"><Palette className="mr-2 h-6 w-6 text-accent" aria-hidden="true"/>Appearance</h3>
             <div className="space-y-6 pl-2 border-l-2 border-accent/30">
               <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-200">
                 <Label htmlFor="theme-selector" className="text-lg font-medium flex items-center">
-                  <Sun className="mr-2 h-5 w-5 text-muted-foreground" /> Theme
+                  <Sun className="mr-2 h-5 w-5 text-muted-foreground" aria-hidden="true" /> Theme
                 </Label>
-                <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
+                <div id="theme-selector" className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
                   {[
-                    { value: "light", label: "Light", icon: <Sun className="w-4 h-4" /> },
-                    { value: "dark", label: "Dark", icon: <Moon className="w-4 h-4" /> },
-                    { value: "system", label: "System", icon: <Laptop className="w-4 h-4" /> },
+                    { value: "light", label: "Light", icon: <Sun className="w-4 h-4" aria-hidden="true" /> },
+                    { value: "dark", label: "Dark", icon: <Moon className="w-4 h-4" aria-hidden="true" /> },
+                    { value: "system", label: "System", icon: <Laptop className="w-4 h-4" aria-hidden="true" /> },
                   ].map((item) => (
                     <Button
                       key={item.value}
@@ -168,6 +168,7 @@ export default function SettingsPage() {
                       onClick={() => handleThemeChange(item.value)}
                       className="w-full justify-center py-2 text-sm"
                       aria-pressed={theme === item.value}
+                      aria-label={`Set theme to ${item.label}`}
                     >
                       {item.icon}
                       <span className="ml-2">{item.label}</span>
@@ -178,10 +179,10 @@ export default function SettingsPage() {
 
               <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-300">
                 <Label htmlFor="font-family-selector" className="text-lg font-medium flex items-center">
-                  <Type className="mr-2 h-5 w-5 text-muted-foreground" /> Font Family
+                  <Type className="mr-2 h-5 w-5 text-muted-foreground" aria-hidden="true" /> Font Family
                 </Label>
                 <Select value={fontFamily} onValueChange={handleFontFamilyChange}>
-                  <SelectTrigger id="font-family-selector" className="w-full h-11 text-base shadow-sm">
+                  <SelectTrigger id="font-family-selector" className="w-full h-11 text-base shadow-sm" aria-label="Select font family">
                     <SelectValue placeholder="Select font family" />
                   </SelectTrigger>
                   <SelectContent>
@@ -196,7 +197,7 @@ export default function SettingsPage() {
 
               <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-400">
                 <Label htmlFor="font-size-slider" className="text-lg font-medium flex items-center">
-                  <CaseSensitive className="mr-2 h-5 w-5 text-muted-foreground" /> Font Size: <span className="text-primary ml-2 font-bold">{fontSize}px</span>
+                  <CaseSensitive className="mr-2 h-5 w-5 text-muted-foreground" aria-hidden="true" /> Font Size: <span className="text-primary ml-2 font-bold">{fontSize}px</span>
                 </Label>
                 <Slider
                   id="font-size-slider"
@@ -206,8 +207,13 @@ export default function SettingsPage() {
                   value={[fontSize]}
                   onValueChange={handleFontSizeChange}
                   className="w-full [&>span:first-child]:h-3 [&>span:first-child_>span]:h-3 [&>span:last-child]:h-6 [&>span:last-child]:w-6"
+                  aria-label="Adjust font size"
+                  aria-valuemin={12}
+                  aria-valuemax={20}
+                  aria-valuenow={fontSize}
+                  aria-valuetext={`${fontSize} pixels`}
                 />
-                <div className="flex justify-between text-xs text-muted-foreground px-1">
+                <div className="flex justify-between text-xs text-muted-foreground px-1" aria-hidden="true">
                   <span>12px (Small)</span>
                   <span>20px (Large)</span>
                 </div>
@@ -217,18 +223,18 @@ export default function SettingsPage() {
 
           {/* Audio & Speech Settings */}
           <section className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500 delay-200">
-             <h3 className="text-xl font-semibold mb-4 flex items-center"><Mic2 className="mr-2 h-6 w-6 text-accent"/>Audio & Speech</h3>
+             <h3 className="text-xl font-semibold mb-4 flex items-center"><Mic2 className="mr-2 h-6 w-6 text-accent" aria-hidden="true"/>Audio & Speech</h3>
              <div className="space-y-6 pl-2 border-l-2 border-accent/30">
                 <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-300">
-                  <Label className="text-lg font-medium flex items-center">
-                    {soundEffectsEnabled ? <Volume2 className="mr-2 h-5 w-5 text-muted-foreground" /> : <VolumeX className="mr-2 h-5 w-5 text-muted-foreground" />} Sound Effects & Speech
+                  <Label className="text-lg font-medium flex items-center" id="sound-effects-label">
+                    {soundEffectsEnabled ? <Volume2 className="mr-2 h-5 w-5 text-muted-foreground" aria-hidden="true" /> : <VolumeX className="mr-2 h-5 w-5 text-muted-foreground" aria-hidden="true" />} Sound Effects & Speech
                   </Label>
                   <div className="flex items-center space-x-2 rounded-lg border p-3 shadow-sm">
                     <Switch
                       id="sound-effects-toggle"
                       checked={soundEffectsEnabled}
                       onCheckedChange={handleSoundToggle}
-                      aria-label="Toggle sound effects and speech"
+                      aria-labelledby="sound-effects-label"
                     />
                     <Label htmlFor="sound-effects-toggle" className="text-base flex-grow">
                       {soundEffectsEnabled ? "Enabled" : "Disabled"}
@@ -250,8 +256,13 @@ export default function SettingsPage() {
                         onValueChange={handleSpeechRateChange}
                         disabled={!soundEffectsEnabled}
                         className="w-full [&>span:first-child]:h-3 [&>span:first-child_>span]:h-3 [&>span:last-child]:h-6 [&>span:last-child]:w-6"
+                        aria-label="Adjust speech rate"
+                        aria-valuemin={0.5}
+                        aria-valuemax={2}
+                        aria-valuenow={speechRate}
+                        aria-valuetext={`${speechRate.toFixed(1)}x normal speed`}
                     />
-                    <div className="flex justify-between text-xs text-muted-foreground px-1">
+                    <div className="flex justify-between text-xs text-muted-foreground px-1" aria-hidden="true">
                         <span>0.5x (Slower)</span>
                         <span>2.0x (Faster)</span>
                     </div>
@@ -268,8 +279,13 @@ export default function SettingsPage() {
                         onValueChange={handleSpeechPitchChange}
                         disabled={!soundEffectsEnabled}
                         className="w-full [&>span:first-child]:h-3 [&>span:first-child_>span]:h-3 [&>span:last-child]:h-6 [&>span:last-child]:w-6"
+                        aria-label="Adjust speech pitch"
+                        aria-valuemin={0}
+                        aria-valuemax={2}
+                        aria-valuenow={speechPitch}
+                        aria-valuetext={`${speechPitch.toFixed(1)} pitch`}
                     />
-                     <div className="flex justify-between text-xs text-muted-foreground px-1">
+                     <div className="flex justify-between text-xs text-muted-foreground px-1" aria-hidden="true">
                         <span>0.0 (Low)</span>
                         <span>2.0 (High)</span>
                     </div>
@@ -277,10 +293,10 @@ export default function SettingsPage() {
                 
                 <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-600">
                     <Label htmlFor="voice-selector" className="text-lg font-medium flex items-center">
-                       <ChevronDown className="mr-2 h-5 w-5 text-muted-foreground" /> Speaking Voice
+                       <ChevronDown className="mr-2 h-5 w-5 text-muted-foreground" aria-hidden="true" /> Speaking Voice
                     </Label>
                     <Select value={selectedVoiceURI || ""} onValueChange={handleVoiceChange} disabled={!soundEffectsEnabled || availableVoices.length === 0}>
-                        <SelectTrigger id="voice-selector" className="w-full h-11 text-base shadow-sm">
+                        <SelectTrigger id="voice-selector" className="w-full h-11 text-base shadow-sm" aria-label="Select speaking voice">
                             <SelectValue placeholder={availableVoices.length === 0 ? "Loading voices..." : "Select voice"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -301,7 +317,7 @@ export default function SettingsPage() {
         </CardContent>
         <CardFooter className="border-t border-border/20 pt-6">
            <Button variant="outline" onClick={handleResetSettings} className="w-full md:w-auto animate-in fade-in-0 zoom-in-95 duration-300 delay-700">
-              <RefreshCw className="mr-2 h-4 w-4" /> Reset All Settings to Defaults
+              <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" /> Reset All Settings to Defaults
            </Button>
         </CardFooter>
       </Card>

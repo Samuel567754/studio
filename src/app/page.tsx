@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -96,7 +97,7 @@ export default function LearnWordsPage() {
     setCurrentPracticingWord(word);
     toast({ 
       variant: "success", 
-      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Word Selected!</div>, 
+      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />Word Selected!</div>, 
       description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` 
     });
     playSuccessSound();
@@ -117,7 +118,7 @@ export default function LearnWordsPage() {
     setShowProgressionAlert(false); // Hide any current alert as settings are changing
     toast({ 
       variant: "info", 
-      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Preferences Updated</div>, 
+      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />Preferences Updated</div>, 
       description: `Suggestions will now target ${level} level, ${length}-letter words.` 
     });
     playNotificationSound();
@@ -129,7 +130,7 @@ export default function LearnWordsPage() {
 
     toast({ 
       variant: "info", 
-      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Word Removed</div>, 
+      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />Word Removed</div>, 
       description: `"${wordToRemove}" removed from your practice list.` 
     });
     playNotificationSound(); 
@@ -159,7 +160,7 @@ export default function LearnWordsPage() {
 
   if (!isMounted) {
     return (
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-6 md:space-y-8" aria-live="polite" aria-busy="true">
         <Card className="shadow-lg animate-pulse">
             <CardHeader className="p-4 md:p-6">
                 <div className="h-6 w-3/4 bg-muted rounded"></div>
@@ -191,6 +192,7 @@ export default function LearnWordsPage() {
                 </div>
             </CardContent>
         </Card>
+        <p className="sr-only">Loading learning page...</p>
       </div>
     );
   }
@@ -207,8 +209,8 @@ export default function LearnWordsPage() {
       />
 
       {showProgressionAlert && (
-        <Alert variant="default" className="border-accent bg-accent/10 text-accent-foreground animate-in fade-in-0 zoom-in-95 duration-500">
-           <AlertTriangle className="h-5 w-5 text-accent" />
+        <Alert variant="default" className="border-accent bg-accent/10 text-accent-foreground animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
+           <AlertTriangle className="h-5 w-5 text-accent" aria-hidden="true" />
            <AlertTitle className="font-semibold text-lg text-accent">Ready for a New Challenge?</AlertTitle>
            <AlertDescription className="text-base">
              You're doing great and have mastered many words at the current settings! 
@@ -221,7 +223,7 @@ export default function LearnWordsPage() {
                 setShowProgressionAlert(false); // Hide after interaction
                 playNotificationSound();
             }}>
-                <CornerRightUp className="mr-2 h-4 w-4"/>
+                <CornerRightUp className="mr-2 h-4 w-4" aria-hidden="true"/>
                 Update Settings
              </Button>
              <Button variant="ghost" size="sm" onClick={handleDismissProgressionAlert}>Maybe Later</Button>
@@ -232,16 +234,16 @@ export default function LearnWordsPage() {
       {wordList.length > 0 && (
         <Card className="shadow-lg border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold text-primary">Your Practice Word List</CardTitle>
+            <CardTitle className="text-xl font-semibold text-primary" id="practice-list-heading">Your Practice Word List</CardTitle>
             <UiCardDescription className="text-base">
               Words you've selected. Click a word to make it active for spelling, or remove it.
             </UiCardDescription>
           </CardHeader>
           <CardContent>
             {wordList.length > 0 ? (
-              <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex flex-wrap gap-3 items-center" role="list" aria-labelledby="practice-list-heading">
                 {wordList.map((word, index) => (
-                  <div key={index} className="relative group rounded-full shadow-sm hover:shadow-md transition-all duration-200 ease-in-out hover:scale-105">
+                  <div key={index} className="relative group rounded-full shadow-sm hover:shadow-md transition-all duration-200 ease-in-out hover:scale-105" role="listitem">
                     <Button
                       variant={currentPracticingWord === word ? "default" : "secondary"}
                       size="sm" 
@@ -252,8 +254,9 @@ export default function LearnWordsPage() {
                           !(currentPracticingWord === word) && "bg-secondary/70 hover:bg-secondary border border-transparent hover:border-primary/30"
                       )}
                       aria-pressed={currentPracticingWord === word}
+                      aria-label={`Select word: ${word}. ${currentPracticingWord === word ? 'Currently selected.' : ''}`}
                     >
-                      {currentPracticingWord === word && <CheckCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-70" />}
+                      {currentPracticingWord === word && <CheckCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-70" aria-hidden="true" />}
                       <span className={cn(currentPracticingWord === word && "ml-3")}>{word}</span>
                     </Button>
                     <Button
@@ -266,7 +269,7 @@ export default function LearnWordsPage() {
                       onClick={(e) => { e.stopPropagation(); handleRemoveWord(word); }}
                       aria-label={`Remove ${word} from practice list`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 ))}
@@ -279,8 +282,8 @@ export default function LearnWordsPage() {
       )}
 
       {wordList.length === 0 && isMounted && !showProgressionAlert && (
-        <Alert variant="info" className="bg-card/90 border-accent/20 shadow animate-in fade-in-0 zoom-in-95 duration-500 ease-out">
-          <Info className="h-5 w-5" />
+        <Alert variant="info" className="bg-card/90 border-accent/20 shadow animate-in fade-in-0 zoom-in-95 duration-500 ease-out" aria-live="polite">
+          <Info className="h-5 w-5" aria-hidden="true" />
           <AlertTitle className="font-semibold text-lg">Welcome to SightWords AI!</AlertTitle>
           <AlertDescription className="text-base">
             Start your learning journey:

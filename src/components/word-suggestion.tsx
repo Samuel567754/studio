@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC } from 'react';
 import { useState, useEffect, useMemo } from 'react';
@@ -115,7 +116,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
   return (
     <Card className="shadow-xl w-full border-primary/20 bg-gradient-to-br from-card via-card to-secondary/10 dark:from-card dark:via-card dark:to-secondary/5 animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
       <CardHeader>
-        <CardTitle className="flex items-center text-2xl font-semibold text-primary"><Wand2 className="mr-2 h-6 w-6"/>AI Word Suggestions</CardTitle>
+        <CardTitle className="flex items-center text-2xl font-semibold text-primary"><Wand2 className="mr-2 h-6 w-6" aria-hidden="true"/>AI Word Suggestions</CardTitle>
         <CardDescription className="text-base">
           Set your preferences, and let AI find words for you. Click suggested words to add them to your practice list.
         </CardDescription>
@@ -139,7 +140,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
                       disabled={isLoading}
                     >
                       <FormControl>
-                        <SelectTrigger className="bg-background/80 hover:border-primary/50 focus:ring-primary/50 text-base h-11 shadow-sm">
+                        <SelectTrigger className="bg-background/80 hover:border-primary/50 focus:ring-primary/50 text-base h-11 shadow-sm" aria-label="Select your reading level">
                           <SelectValue placeholder="Select reading level" />
                         </SelectTrigger>
                       </FormControl>
@@ -171,6 +172,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
                         }}
                         disabled={isLoading}
                         className="bg-background/80 hover:border-primary/50 focus:ring-primary/50 text-base h-11 shadow-sm"
+                        aria-label="Enter preferred word length"
                       />
                     </FormControl>
                     <FormMessage />
@@ -178,15 +180,15 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
                 )}
               />
             </div>
-           <Button type="submit" disabled={isLoading || !form.formState.isDirty && displayedSuggestedWords.length === 0 } className="w-full !text-lg py-3 mt-2" size="lg">
+           <Button type="submit" disabled={isLoading || !form.formState.isDirty && displayedSuggestedWords.length === 0 } className="w-full !text-lg py-3 mt-2" size="lg" aria-disabled={isLoading || !form.formState.isDirty && displayedSuggestedWords.length === 0}>
              {isLoading ? (
                <>
-                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                 <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
                  Thinking...
                </>
              ) : (
                <>
-                 <Lightbulb className="mr-2 h-5 w-5" />
+                 <Lightbulb className="mr-2 h-5 w-5" aria-hidden="true" />
                  Get New Word Ideas
                </>
              )}
@@ -196,11 +198,12 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
       </Form>
       {displayedSuggestedWords.length > 0 && (
         <CardFooter className="flex flex-col items-start gap-4 pt-6 border-t border-primary/10 animate-in fade-in-0 duration-300">
-          <h4 className="font-semibold text-foreground text-lg">AI Suggestions (click to add to your list):</h4>
-          <div className="flex flex-wrap gap-2 items-center">
+          <h4 className="font-semibold text-foreground text-lg" id="suggested-words-heading">AI Suggestions (click to add to your list):</h4>
+          <div className="flex flex-wrap gap-2 items-center" role="list" aria-labelledby="suggested-words-heading">
             {displayedSuggestedWords.map((word, index) => (
               <Button
                 key={index}
+                role="listitem"
                 variant={currentPracticingWord === word ? "default" : "outline"}
                 size="sm"
                 onClick={() => {
@@ -215,8 +218,9 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
                 )}
                 style={isMounted ? { animationDelay: `${index * 50}ms` } : {}}
                 aria-pressed={currentPracticingWord === word}
+                aria-label={`Select word: ${word}. ${currentPracticingWord === word ? 'Currently selected.' : ''}`}
               >
-                {currentPracticingWord === word && <CheckCircle className="mr-2 h-4 w-4" />}
+                {currentPracticingWord === word && <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />}
                 {word}
               </Button>
             ))}

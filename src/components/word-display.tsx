@@ -30,6 +30,7 @@ export const WordDisplay: FC<WordDisplayProps> = ({ word }) => {
                      drop-shadow-lg py-2
                      select-none
                      animate-in fade-in zoom-in-90 duration-300 ease-out"
+          aria-live="polite" // Announce when the word changes
         >
           {word || "----"}
         </h2>
@@ -39,8 +40,9 @@ export const WordDisplay: FC<WordDisplayProps> = ({ word }) => {
           size="lg" 
           disabled={!word} 
           className="shadow-md hover:shadow-lg transform transition-transform hover:scale-105 active:scale-95 duration-200 ease-in-out btn-glow"
+          aria-label={word ? `Listen to the word ${word}` : "No word selected to listen to"}
         >
-          <Volume2 className="mr-2 h-6 w-6" />
+          <Volume2 className="mr-2 h-6 w-6" aria-hidden="true" />
           Say Word
         </Button>
       </CardContent>

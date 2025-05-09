@@ -29,7 +29,7 @@ export const BottomNav: FC = () => {
   }
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-t-lg">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-t-lg" aria-label="Mobile bottom navigation">
       <div className="mx-auto flex h-16 max-w-full items-center justify-around px-1">
         {navItems.map((item) => (
           <Link
@@ -43,7 +43,7 @@ export const BottomNav: FC = () => {
             )}
             aria-current={pathname === item.href ? "page" : undefined}
           >
-            <item.icon className={cn("h-5 w-5 mb-0.5 transition-transform duration-200", pathname === item.href ? "scale-110" : "")} />
+            <item.icon className={cn("h-5 w-5 mb-0.5 transition-transform duration-200", pathname === item.href ? "scale-110" : "")} aria-hidden="true" />
             <span className="text-[10px] font-medium">{item.label}</span>
           </Link>
         ))}

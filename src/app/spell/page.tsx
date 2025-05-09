@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -70,7 +71,7 @@ export default function SpellingPage() {
   const handleCorrectSpell = () => {
     toast({
       variant: "success",
-      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Great Job!</div>,
+      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />Great Job!</div>,
       description: `You spelled "${currentWord}" correctly!`,
     });
     playSuccessSound();
@@ -79,7 +80,7 @@ export default function SpellingPage() {
     } else if (wordList.length === 1) {
         toast({
             variant: "success",
-            title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />List Complete!</div>,
+            title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />List Complete!</div>,
             description: "You've spelled the only word in your list. Add more words to continue!",
             duration: 4000,
         });
@@ -88,7 +89,7 @@ export default function SpellingPage() {
   
   if (!isMounted) {
     return (
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-6 md:space-y-8" aria-live="polite" aria-busy="true">
         <Card className="shadow-lg animate-pulse">
             <CardHeader><div className="h-6 w-1/3 bg-muted rounded"></div></CardHeader>
             <CardContent className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
@@ -106,14 +107,15 @@ export default function SpellingPage() {
                 <div className="h-12 bg-primary/50 rounded"></div>
             </CardContent>
         </Card>
+        <p className="sr-only">Loading spelling page...</p>
       </div>
     );
   }
 
   if (wordList.length === 0) {
     return (
-      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
-        <Info className="h-6 w-6 mx-auto mb-2" />
+      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
+        <Info className="h-6 w-6 mx-auto mb-2" aria-hidden="true" />
         <AlertTitle className="text-xl font-semibold mb-2">No Words to Spell!</AlertTitle>
         <AlertDescription className="text-base">
           Your spelling list is empty. Please go to the{' '}
@@ -135,13 +137,13 @@ export default function SpellingPage() {
         <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
             <CardContent className="p-4 flex justify-between items-center gap-2 md:gap-4">
             <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="flex-1 md:flex-none">
-                <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" /> Previous
+                <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
             </Button>
-            <span className="text-muted-foreground text-sm whitespace-nowrap font-medium">
+            <span className="text-muted-foreground text-sm whitespace-nowrap font-medium" aria-live="polite" aria-atomic="true">
                 Word {currentIndex + 1} / {wordList.length}
             </span>
             <Button variant="outline" size="lg" onClick={() => navigateWord('next')} aria-label="Next word" className="flex-1 md:flex-none">
-                Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" />
+                Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
             </Button>
             </CardContent>
         </Card>

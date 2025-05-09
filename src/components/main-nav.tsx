@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC } from 'react';
@@ -45,8 +46,8 @@ export const MainNav: FC = () => {
           )}
           onClick={() => isMobile && setIsMobileMenuOpen(false)}
         >
-          <Link href={link.href} className="flex items-center gap-2">
-            <link.icon className="h-5 w-5" />
+          <Link href={link.href} className="flex items-center gap-2" aria-current={pathname === link.href ? "page" : undefined}>
+            <link.icon className="h-5 w-5" aria-hidden="true" />
             {link.label}
           </Link>
         </Button>
@@ -98,15 +99,15 @@ export const MainNav: FC = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-          <BookOpenText className="h-7 w-7 text-primary" />
+          <BookOpenText className="h-7 w-7 text-primary" aria-hidden="true" />
           <h1 className="text-xl font-bold text-primary hidden sm:block">SightWords</h1>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+        <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
           <NavLinkItems />
           <Button variant="default" size="sm" asChild className="ml-2">
             <Link href="/">
-              <Brain className="mr-2 h-4 w-4" /> Quick Learn
+              <Brain className="mr-2 h-4 w-4" aria-hidden="true" /> Quick Learn
             </Link>
           </Button>
         </nav>
@@ -114,38 +115,36 @@ export const MainNav: FC = () => {
         <div className="md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full aspect-square">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Open navigation menu</span>
+              <Button variant="ghost" size="icon" className="rounded-full aspect-square" aria-label="Open navigation menu" aria-expanded={isMobileMenuOpen}>
+                <Menu className="h-6 w-6" aria-hidden="true" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full max-w-xs p-0 flex flex-col">
               <SheetHeader className="flex flex-row items-center justify-between p-4 border-b">
                 <SheetTitle asChild>
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                    <BookOpenText className="h-7 w-7 text-primary" />
+                    <BookOpenText className="h-7 w-7 text-primary" aria-hidden="true"/>
                     <h1 className="text-xl font-bold text-primary">SightWords</h1>
                   </Link>
                 </SheetTitle>
                 <SheetClose asChild>
-                   <Button variant="ghost" size="icon" className="rounded-full aspect-square">
-                      <X className="h-6 w-6" />
-                      <span className="sr-only">Close navigation menu</span>
+                   <Button variant="ghost" size="icon" className="rounded-full aspect-square" aria-label="Close navigation menu">
+                      <X className="h-6 w-6" aria-hidden="true" />
                     </Button>
                 </SheetClose>
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for SightWords application.</SheetDescription>
-              <nav className="flex flex-col gap-2 p-4">
+              <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
                 <NavLinkItems isMobile />
                 <Button variant="default" size="lg" asChild className="mt-4 w-full">
                   <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Brain className="mr-2 h-5 w-5" /> Quick Learn
+                    <Brain className="mr-2 h-5 w-5" aria-hidden="true" /> Quick Learn
                   </Link>
                 </Button>
               </nav>
                <div className="mt-auto p-4 border-t">
                   <Button variant="destructive" className="w-full" onClick={handleResetProgress}>
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                       Reset Learning Progress
                   </Button>
                   <p className="text-xs text-muted-foreground mt-2 text-center">This resets learned words, mastered words, reading level, and word length preferences. Theme and sound settings remain unchanged.</p>
