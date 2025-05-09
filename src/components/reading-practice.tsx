@@ -1,7 +1,6 @@
 
 "use client";
-import type { FC, ReactNode } from 'react';
-import { useState, useCallback, useEffect } from 'react';
+import React, { FC, ReactNode, useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
@@ -152,19 +151,10 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       // It captures sequences of word characters, or sequences of non-word/non-space characters (punctuation), or sequences of spaces.
       const tokens = textSegment.split(/(\b\w+\b|[^\w\s]+|\s+)/g).filter(Boolean);
   
-      let currentPosInSegment = 0;
       for (const token of tokens) {
         const isWordToken = /\b\w+\b/.test(token);
         const isPracticeWord = isWordToken && wordsToPractice.some(pWord => pWord.toLowerCase() === token.toLowerCase());
         
-        // For overall spoken word highlight, we rely on segmentContainsSpokenWord passed from the main split.
-        // The charIndex/charLength from onboundary refers to the original full passage string.
-        // We are highlighting the entire word that onboundary identified, if that word is inside this current segment.
-        
-        // Here, segmentContainsSpokenWord means the *current token* being processed is the *exact word* returned by onboundary.
-        // This is already handled by splitting the passage into before/spoken/after.
-        // So, if segmentContainsSpokenWord is true, this *entire textSegment* is the spoken word.
-
         elements.push(
           <span
             key={`token-${keyCounter++}`}
@@ -180,7 +170,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             {token}
           </span>
         );
-        currentPosInSegment += token.length;
       }
     };
   
@@ -281,3 +270,4 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     </Card>
   );
 };
+
