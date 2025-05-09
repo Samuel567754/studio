@@ -52,7 +52,7 @@ const prompt = ai.definePrompt({
   - {{{this}}}
   {{/each}}
 
-  Please generate a passage that is 2-4 sentences long. Ensure the vocabulary and sentence structure are suitable for the reading level.
+  Please generate a passage that is 5-8 sentences long. Ensure the vocabulary and sentence structure are suitable for the reading level.
   The passage should make sense and be interesting for a learner.
   Output only the passage itself.`,
   config: {
@@ -92,3 +92,4 @@ const generateReadingPassageFlow = ai.defineFlow(
     return output!;
   }
 );
+
