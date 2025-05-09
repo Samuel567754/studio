@@ -6,7 +6,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { MainNav } from '@/components/main-nav';
 import { BottomNav } from '@/components/bottom-nav';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '@/components/settings/theme-provider';
 
 
 export const metadata: Metadata = {
@@ -44,3 +44,4 @@ export default function RootLayout({
     </html>
   );
 }
+
