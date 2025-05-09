@@ -62,18 +62,18 @@
     --sidebar-border: 210 20% 85%; /* Slightly darker than main border */
     --sidebar-ring: var(--ring); /* Use main ring */
 
-    /* Duolingo-inspired Toast Colors */
-    --toast-success-bg-raw: 175 70% 45%; /* Vibrant Teal from --primary */
-    --toast-success-fg-raw: 40 100% 98%; /* Light Cream from --primary-foreground */
-    --toast-success-border-l-raw: 175 70% 38%; /* Slightly darker teal */
+    /* Duolingo-inspired Toast Colors - Light Mode */
+    --toast-success-bg-raw: 130 55% 50%; /* Clear Positive Green */
+    --toast-success-fg-raw: 0 0% 100%;   /* White */
+    --toast-success-border-l-raw: 130 55% 40%; /* Slightly Darker Green */
 
-    --toast-info-bg-raw: 200 80% 55%; /* Friendly vibrant blue */
+    --toast-info-bg-raw: 205 80% 55%; /* Friendly Informative Blue */
     --toast-info-fg-raw: 0 0% 100%;   /* White */
-    --toast-info-border-l-raw: 200 80% 48%; /* Slightly darker blue */
+    --toast-info-border-l-raw: 205 80% 45%; /* Slightly Darker Blue */
     
-    --toast-destructive-bg-raw: 0 75% 60%; /* Softer Red from --destructive */
-    --toast-destructive-fg-raw: 0 0% 98%; /* From --destructive-foreground */
-    --toast-destructive-border-l-raw: 0 75% 50%; /* Slightly darker red */
+    --toast-destructive-bg-raw: 0 75% 60%; /* Clear, Not Overly Harsh Red */
+    --toast-destructive-fg-raw: 0 0% 100%; /* White */
+    --toast-destructive-border-l-raw: 0 75% 50%; /* Slightly Darker Red */
 
     /* Duolingo-inspired Alert Colors */
     --alert-success-bg-raw: var(--primary); /* Vibrant Teal */
@@ -157,18 +157,18 @@
     --sidebar-border: 210 25% 20%;    /* Slightly lighter than main dark border */
     --sidebar-ring: var(--ring);
 
-     /* Duolingo-inspired Toast Colors - Dark Mode (Ensure good contrast) */
-    --toast-success-bg-raw: 175 70% 55%; /* Brighter Vibrant Teal from --primary (dark) */
-    --toast-success-fg-raw: 210 30% 10%; /* Deep Navy from --primary-foreground (dark) */
-    --toast-success-border-l-raw: 175 70% 45%; 
+     /* Duolingo-inspired Toast Colors - Dark Mode (Consistent with Light Mode for strong feedback) */
+    --toast-success-bg-raw: 130 55% 50%; /* Clear Positive Green */
+    --toast-success-fg-raw: 0 0% 100%;   /* White */
+    --toast-success-border-l-raw: 130 55% 40%; /* Slightly Darker Green */
 
-    --toast-info-bg-raw: 200 75% 60%; /* Slightly adjusted blue for dark mode */
-    --toast-info-fg-raw: 0 0% 100%;   
-    --toast-info-border-l-raw: 200 75% 50%; 
+    --toast-info-bg-raw: 205 80% 55%; /* Friendly Informative Blue */
+    --toast-info-fg-raw: 0 0% 100%;   /* White */
+    --toast-info-border-l-raw: 205 80% 45%; /* Slightly Darker Blue */
     
-    --toast-destructive-bg-raw: 0 70% 55%; /* From --destructive (dark) */
-    --toast-destructive-fg-raw: 0 0% 95%; /* From --destructive-foreground (dark) */
-    --toast-destructive-border-l-raw: 0 70% 48%;
+    --toast-destructive-bg-raw: 0 75% 60%; /* Clear, Not Overly Harsh Red */
+    --toast-destructive-fg-raw: 0 0% 100%; /* White */
+    --toast-destructive-border-l-raw: 0 75% 50%; /* Slightly Darker Red */
 
     /* Duolingo-inspired Alert Colors - Dark Mode */
     --alert-success-bg-raw: var(--primary); /* Brighter Vibrant Teal */

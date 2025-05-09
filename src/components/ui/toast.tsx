@@ -25,17 +25,17 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full border-l-4", // Added border-l-4 base style
   {
     variants: {
       variant: {
-        default: "border-border bg-background text-foreground border-l-4 border-l-[hsl(var(--muted-foreground))]",
+        default: "border-border bg-background text-foreground border-l-[hsl(var(--muted-foreground))]", // Specific left border for default
         destructive:
-          "destructive group border-transparent bg-[hsl(var(--toast-destructive-bg))] text-[hsl(var(--toast-destructive-fg))] border-l-4 border-l-[hsl(var(--toast-destructive-border-l))]",
+          "destructive group border-transparent bg-[hsl(var(--toast-destructive-bg))] text-[hsl(var(--toast-destructive-fg))] border-l-[hsl(var(--toast-destructive-border-l))]",
         success:
-          "success group border-transparent bg-[hsl(var(--toast-success-bg))] text-[hsl(var(--toast-success-fg))] border-l-4 border-l-[hsl(var(--toast-success-border-l))]",
+          "success group border-transparent bg-[hsl(var(--toast-success-bg))] text-[hsl(var(--toast-success-fg))] border-l-[hsl(var(--toast-success-border-l))]",
         info:
-          "info group border-transparent bg-[hsl(var(--toast-info-bg))] text-[hsl(var(--toast-info-fg))] border-l-4 border-l-[hsl(var(--toast-info-border-l))]",
+          "info group border-transparent bg-[hsl(var(--toast-info-bg))] text-[hsl(var(--toast-info-fg))] border-l-[hsl(var(--toast-info-border-l))]",
       },
     },
     defaultVariants: {
@@ -67,9 +67,12 @@ const ToastAction = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      "group-[.destructive]:border-destructive-foreground/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive/90 group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive",
-      "group-[.success]:border-primary-foreground/40 group-[.success]:hover:border-primary-foreground/30 group-[.success]:hover:bg-primary-foreground/10 group-[.success]:text-primary-foreground group-[.success]:focus:ring-primary-foreground", // Adjusted for success variant with solid bg
-      "group-[.info]:border-white/40 group-[.info]:hover:border-white/30 group-[.info]:hover:bg-white/10 group-[.info]:text-white group-[.info]:focus:ring-white", // Adjusted for info variant with solid bg
+      // Destructive variant: ensure text and borders are visible on the destructive toast background
+      "group-[.destructive]:border-[hsl(var(--toast-destructive-fg))]/40 group-[.destructive]:hover:border-[hsl(var(--toast-destructive-fg))]/30 group-[.destructive]:hover:bg-[hsl(var(--toast-destructive-fg))]/10 group-[.destructive]:text-[hsl(var(--toast-destructive-fg))] group-[.destructive]:focus:ring-[hsl(var(--toast-destructive-fg))]",
+      // Success variant: ensure text and borders are visible on the success toast background
+      "group-[.success]:border-[hsl(var(--toast-success-fg))]/40 group-[.success]:hover:border-[hsl(var(--toast-success-fg))]/30 group-[.success]:hover:bg-[hsl(var(--toast-success-fg))]/10 group-[.success]:text-[hsl(var(--toast-success-fg))] group-[.success]:focus:ring-[hsl(var(--toast-success-fg))]",
+      // Info variant: ensure text and borders are visible on the info toast background
+      "group-[.info]:border-[hsl(var(--toast-info-fg))]/40 group-[.info]:hover:border-[hsl(var(--toast-info-fg))]/30 group-[.info]:hover:bg-[hsl(var(--toast-info-fg))]/10 group-[.info]:text-[hsl(var(--toast-info-fg))] group-[.info]:focus:ring-[hsl(var(--toast-info-fg))]",
       className
     )}
     {...props}
@@ -85,9 +88,12 @@ const ToastClose = React.forwardRef<
     ref={ref}
     className={cn(
       "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
-      "group-[.destructive]:text-destructive-foreground/70 group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive-foreground group-[.destructive]:focus:ring-offset-destructive",
-      "group-[.success]:text-primary-foreground/70 group-[.success]:hover:text-primary-foreground group-[.success]:focus:ring-primary-foreground group-[.success]:focus:ring-offset-[hsl(var(--toast-success-bg))]",
-      "group-[.info]:text-white/70 group-[.info]:hover:text-white group-[.info]:focus:ring-white group-[.info]:focus:ring-offset-[hsl(var(--toast-info-bg))]",
+      // Destructive variant: ensure icon is visible on the destructive toast background
+      "group-[.destructive]:text-[hsl(var(--toast-destructive-fg))]/70 group-[.destructive]:hover:text-[hsl(var(--toast-destructive-fg))] group-[.destructive]:focus:ring-[hsl(var(--toast-destructive-fg))] group-[.destructive]:focus:ring-offset-[hsl(var(--toast-destructive-bg))]",
+      // Success variant: ensure icon is visible on the success toast background
+      "group-[.success]:text-[hsl(var(--toast-success-fg))]/70 group-[.success]:hover:text-[hsl(var(--toast-success-fg))] group-[.success]:focus:ring-[hsl(var(--toast-success-fg))] group-[.success]:focus:ring-offset-[hsl(var(--toast-success-bg))]",
+      // Info variant: ensure icon is visible on the info toast background
+      "group-[.info]:text-[hsl(var(--toast-info-fg))]/70 group-[.info]:hover:text-[hsl(var(--toast-info-fg))] group-[.info]:focus:ring-[hsl(var(--toast-info-fg))] group-[.info]:focus:ring-offset-[hsl(var(--toast-info-bg))]",
       className
     )}
     toast-close=""
