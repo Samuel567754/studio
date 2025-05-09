@@ -50,9 +50,6 @@ const playSoundWrapper = (
   duration: number,
   rampType: 'linear' | 'exponential' = 'exponential'
 ) => {
-  // Zustand hooks must be called at the top level of a component or a custom hook.
-  // We get the state directly here for simplicity within this module.
-  // This approach is okay for client-side utility functions that are not React components.
   const soundEffectsEnabled = useAppSettingsStore.getState().soundEffectsEnabled;
   if (soundEffectsEnabled) {
     playSoundInternal(type, frequencyConfig, volume, duration, rampType);
@@ -78,4 +75,30 @@ export function playNavigationSound(): void {
 
 export function playNotificationSound(): void {
   playSoundWrapper('triangle', 500, 0.12, 0.1);
+}
+
+export function speakText(textToSpeak: string): void {
+  if (typeof window === 'undefined' || !window.speechSynthesis || !textToSpeak) {
+    return;
+  }
+  const soundEffectsEnabled = useAppSettingsStore.getState().soundEffectsEnabled;
+  if (!soundEffectsEnabled) {
+    // If general sound effects are off, don't speak either.
+    // Could be a separate setting in the future.
+    return;
+  }
+
+  try {
+    // Cancel any ongoing speech to prevent overlap
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    // utterance.lang = 'en-US'; // Optional: specify language if needed
+    // utterance.rate = 1; // Optional: control speed
+    // utterance.pitch = 1; // Optional: control pitch
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.error("Error in speakText:", error);
+    // Optionally, provide feedback to the user if speech synthesis fails
+  }
 }

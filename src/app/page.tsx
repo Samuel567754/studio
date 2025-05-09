@@ -15,7 +15,7 @@ import { Trash2, CheckCircle, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card'; // Renamed to avoid conflict
 import { cn } from '@/lib/utils';
-import { playSuccessSound, playNavigationSound, playNotificationSound } from '@/lib/audio';
+import { playSuccessSound, playNavigationSound, playNotificationSound, speakText } from '@/lib/audio';
 
 
 export default function LearnWordsPage() {
@@ -59,6 +59,7 @@ export default function LearnWordsPage() {
     setCurrentPracticingWord(word);
     toast({ variant: "success", title: "Word Selected!", description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` });
     playSuccessSound();
+    speakText(word); // Say the word aloud
   }, [wordList, updateWordList, toast]);
   
   const handleNewSuggestedWordsList = useCallback((suggestedWords: string[]) => {
@@ -218,3 +219,4 @@ export default function LearnWordsPage() {
     </div>
   );
 }
+

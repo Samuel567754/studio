@@ -4,17 +4,16 @@ import type { FC } from 'react';
 import { Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { speakText } from '@/lib/audio';
 
 interface WordDisplayProps {
   word: string;
 }
 
 export const WordDisplay: FC<WordDisplayProps> = ({ word }) => {
-  const speakWord = () => {
-    if (typeof window !== 'undefined' && window.speechSynthesis && word) {
-      const utterance = new SpeechSynthesisUtterance(word);
-      // utterance.lang = 'en-US'; // Optional: specify language
-      window.speechSynthesis.speak(utterance);
+  const handleSpeakWord = () => {
+    if (word) {
+      speakText(word);
     }
   };
 
@@ -33,7 +32,7 @@ export const WordDisplay: FC<WordDisplayProps> = ({ word }) => {
           {word || "----"}
         </h2>
         <Button 
-          onClick={speakWord} 
+          onClick={handleSpeakWord} 
           variant="default" 
           size="lg" 
           disabled={!word} 
@@ -46,3 +45,4 @@ export const WordDisplay: FC<WordDisplayProps> = ({ word }) => {
     </Card>
   );
 };
+
