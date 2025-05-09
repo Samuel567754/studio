@@ -54,8 +54,8 @@ export default function ReadingPage() {
 
   if (wordList.length === 0) {
     return (
-      <Alert variant="default" className="max-w-xl mx-auto text-center bg-card shadow-md border-primary/20">
-        <Info className="h-6 w-6 mx-auto mb-2 text-primary" />
+      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20">
+        <Info className="h-6 w-6 mx-auto mb-2" />
         <AlertTitle className="text-xl font-semibold mb-2">No Words for Reading Practice!</AlertTitle>
         <AlertDescription className="text-base">
           To generate a reading passage, you need some words in your practice list.

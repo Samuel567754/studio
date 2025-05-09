@@ -62,7 +62,7 @@ export const MainNav: FC = () => {
             toast({
                 title: "Progress Reset",
                 description: "All your learning data has been cleared.",
-                variant: "default"
+                variant: "info"
             });
             window.location.href = '/';
         }

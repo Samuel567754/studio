@@ -5,7 +5,7 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
-import { Loader2, BookMarked, RefreshCcw } from 'lucide-react';
+import { Loader2, BookMarked, RefreshCcw, Info } from 'lucide-react'; // Added Info
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { playSuccessSound, playErrorSound, playNotificationSound } from '@/lib/audio';
@@ -55,10 +55,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       toast({
         title: "No Words to Practice",
         description: "Please get some word suggestions and select a word first.",
-        variant: "default",
+        variant: "info",
       });
       setPassage("Please get some word suggestions and select a word first. Then, try generating a passage.");
-      // No specific sound here, toast is sufficient.
       return;
     }
 
@@ -69,17 +68,17 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       const result = await generateReadingPassage(input);
       if (result.passage) {
         setPassage(result.passage);
-        toast({ title: "Passage Generated!", description: "Happy reading!" });
+        toast({ variant: "success", title: "Passage Generated!", description: "Happy reading!" });
         playSuccessSound();
       } else {
         setPassage("Could not generate a passage with the current words and settings. Try again or change words.");
-        toast({ title: "No Passage Generated", description: "Try different words or settings.", variant: "default" });
+        toast({ variant: "info", title: "No Passage Generated", description: "Try different words or settings." });
         playNotificationSound(); 
       }
     } catch (error) {
       console.error("Error generating passage:", error);
       setPassage("An error occurred while generating the passage. Please try again.");
-      toast({ title: "Generation Error", description: "Could not generate a passage at this time.", variant: "destructive" });
+      toast({ variant: "destructive", title: "Generation Error", description: "Could not generate a passage at this time." });
       playErrorSound();
     } finally {
       setIsLoading(false);
@@ -126,7 +125,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           </Alert>
         )}
         {!passage && !isLoading && wordsToPractice.length === 0 && (
-           <Alert variant="default">
+           <Alert variant="info">
+             <Info className="h-5 w-5" />
              <AlertTitle>Ready to Read?</AlertTitle>
              <AlertDescription>
                First, get some word suggestions from the "AI Word Suggestions" panel and select a word. Once you have words in your practice list, you can generate a reading passage here.
@@ -134,7 +134,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
            </Alert>
         )}
          {!passage && !isLoading && wordsToPractice.length > 0 && (
-           <Alert variant="default">
+           <Alert variant="info">
+            <Info className="h-5 w-5" />
              <AlertTitle>Generate a Passage</AlertTitle>
              <AlertDescription>
                Click the "Generate New Passage" button above to create a story with your practice words!

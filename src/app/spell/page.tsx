@@ -70,6 +70,7 @@ export default function SpellingPage() {
 
   const handleCorrectSpell = () => {
     toast({
+      variant: "success",
       title: "Great Job!",
       description: `You spelled "${currentWord}" correctly!`,
     });
@@ -78,6 +79,7 @@ export default function SpellingPage() {
       setTimeout(() => navigateWord('next'), 1200); 
     } else if (wordList.length === 1) {
         toast({
+            variant: "success",
             title: "List Complete!",
             description: "You've spelled the only word in your list. Add more words to continue!",
             duration: 4000,
@@ -111,8 +113,8 @@ export default function SpellingPage() {
 
   if (wordList.length === 0) {
     return (
-      <Alert variant="default" className="max-w-xl mx-auto text-center bg-card shadow-md border-primary/20">
-        <Info className="h-6 w-6 mx-auto mb-2 text-primary" />
+      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20">
+        <Info className="h-6 w-6 mx-auto mb-2" />
         <AlertTitle className="text-xl font-semibold mb-2">No Words to Spell!</AlertTitle>
         <AlertDescription className="text-base">
           Your spelling list is empty. Please go to the{' '}

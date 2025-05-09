@@ -73,17 +73,16 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
       if (result.suggestedWords && result.suggestedWords.length > 0) {
         setDisplayedSuggestedWords(result.suggestedWords);
         onNewSuggestedWordsList(result.suggestedWords); 
-        toast({ title: "Words Suggested!", description: `${result.suggestedWords.length} new words for you to consider.` });
+        toast({ variant: "success", title: "Words Suggested!", description: `${result.suggestedWords.length} new words for you to consider.` });
         playSuccessSound();
       } else {
         setDisplayedSuggestedWords([]);
         onNewSuggestedWordsList([]); 
-        toast({ title: "No Words Found", description: "Try different settings or broaden your criteria.", variant: "default" });
-        // No specific error sound here as it's a valid empty result.
+        toast({ variant: "info", title: "No Words Found", description: "Try different settings or broaden your criteria." });
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
-      toast({ title: "Suggestion Error", description: "Could not fetch word suggestions. Please try again.", variant: "destructive" });
+      toast({ variant: "destructive", title: "Suggestion Error", description: "Could not fetch word suggestions. Please try again." });
       playErrorSound();
       setDisplayedSuggestedWords([]);
       onNewSuggestedWordsList([]); 

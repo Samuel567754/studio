@@ -57,7 +57,7 @@ export default function LearnWordsPage() {
     const wordIndex = newWordList.indexOf(word);
     storeCurrentIndex(wordIndex);
     setCurrentPracticingWord(word);
-    toast({ title: "Word Selected!", description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` });
+    toast({ variant: "success", title: "Word Selected!", description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` });
     playSuccessSound();
   }, [wordList, updateWordList, toast]);
   
@@ -72,7 +72,7 @@ export default function LearnWordsPage() {
     storeReadingLevel(level);
     setWordLength(length);
     storeWordLength(length);
-    toast({ title: "Preferences Updated", description: `Suggestions will now target ${level} level, ${length}-letter words.` });
+    toast({ variant: "info", title: "Preferences Updated", description: `Suggestions will now target ${level} level, ${length}-letter words.` });
     playNotificationSound();
   }, [toast]);
 
@@ -80,7 +80,7 @@ export default function LearnWordsPage() {
     const newWordList = wordList.filter(w => w !== wordToRemove);
     updateWordList(newWordList); 
 
-    toast({ title: "Word Removed", description: `"${wordToRemove}" removed from your practice list.` });
+    toast({ variant: "info", title: "Word Removed", description: `"${wordToRemove}" removed from your practice list.` });
     playNavigationSound();
 
     if (newWordList.length === 0) {
@@ -201,9 +201,9 @@ export default function LearnWordsPage() {
       )}
 
       {wordList.length === 0 && isMounted && (
-        <Alert variant="default" className="bg-card/90 border-primary/20 shadow">
-          <Info className="h-5 w-5 text-primary" />
-          <AlertTitle className="font-semibold text-lg text-primary">Welcome to SightWords AI!</AlertTitle>
+        <Alert variant="info" className="bg-card/90 border-accent/20 shadow">
+          <Info className="h-5 w-5" />
+          <AlertTitle className="font-semibold text-lg">Welcome to SightWords AI!</AlertTitle>
           <AlertDescription className="text-base">
             Start your learning journey:
             <ol className="list-decimal list-inside mt-2 space-y-1">

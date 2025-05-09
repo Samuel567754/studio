@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, XCircle, Sparkles } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, InfoIcon } from 'lucide-react'; // Added InfoIcon
 import { playErrorSound } from '@/lib/audio';
 
 interface SpellingPracticeProps {
@@ -17,7 +17,7 @@ interface SpellingPracticeProps {
 
 export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCorrectSpell }) => {
   const [attempt, setAttempt] = useState('');
-  const [feedback, setFeedback] = useState<{type: 'correct' | 'incorrect' | 'info', message: string} | null>(null);
+  const [feedback, setFeedback] = useState<{type: 'success' | 'destructive' | 'info', message: string} | null>(null);
 
   useEffect(() => {
     setAttempt('');
@@ -32,14 +32,14 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     }
 
     if (attempt.trim().toLowerCase() === wordToSpell.toLowerCase()) {
-      setFeedback({type: 'correct', message: 'Excellent! You spelled it right.'});
+      setFeedback({type: 'success', message: 'Excellent! You spelled it right.'});
       onCorrectSpell(); // This will trigger success sound from parent
       setTimeout(() => {
         setAttempt('');
          // setFeedback(null); // Optionally clear feedback after more time
       }, 2500);
     } else {
-      setFeedback({type: 'incorrect', message: `Not quite. The word is "${wordToSpell}". Keep trying!`});
+      setFeedback({type: 'destructive', message: `Not quite. The word is "${wordToSpell}". Keep trying!`});
       playErrorSound();
     }
   };
@@ -77,18 +77,19 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
               aria-label={`Spell the word ${wordToSpell}`}
               autoCapitalize="none"
               autoCorrect="off"
-              disabled={feedback?.type === 'correct'}
+              disabled={feedback?.type === 'success'}
             />
           </div>
-          <Button type="submit" className="w-full" size="lg" disabled={feedback?.type === 'correct'}>Check Spelling</Button>
+          <Button type="submit" className="w-full" size="lg" disabled={feedback?.type === 'success'}>Check Spelling</Button>
         </form>
       </CardContent>
       {feedback && (
         <CardFooter>
-          <Alert variant={feedback.type === 'correct' ? 'default' : feedback.type === 'incorrect' ? 'destructive' : 'default'} className="w-full">
-            {feedback.type === 'correct' && <CheckCircle2 className="h-5 w-5" />}
-            {feedback.type === 'incorrect' && <XCircle className="h-5 w-5" />}
-            <AlertTitle>{feedback.type === 'correct' ? 'Correct!' : feedback.type === 'incorrect' ? 'Try Again!' : 'Hint'}</AlertTitle>
+          <Alert variant={feedback.type} className="w-full">
+            {feedback.type === 'success' && <CheckCircle2 className="h-5 w-5" />}
+            {feedback.type === 'destructive' && <XCircle className="h-5 w-5" />}
+            {feedback.type === 'info' && <InfoIcon className="h-5 w-5" />}
+            <AlertTitle>{feedback.type === 'success' ? 'Correct!' : feedback.type === 'destructive' ? 'Try Again!' : 'Hint'}</AlertTitle>
             <AlertDescription>{feedback.message}</AlertDescription>
           </Alert>
         </CardFooter>
