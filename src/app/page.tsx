@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -74,29 +73,27 @@ export default function LearnWordsPage() {
 
   const handleRemoveWord = (wordToRemove: string) => {
     const newWordList = wordList.filter(w => w !== wordToRemove);
-    updateWordList(newWordList);
+    updateWordList(newWordList); // This also calls storeWordList via setWordList
+
     toast({ title: "Word Removed", description: `"${wordToRemove}" removed from your practice list.` });
 
-    if (currentPracticingWord === wordToRemove) {
-        if (newWordList.length > 0) {
-            storeCurrentIndex(0); // Focus on the first word of the new list
-            setCurrentPracticingWord(newWordList[0]);
-        } else {
-            storeCurrentIndex(0); // Reset index
-            setCurrentPracticingWord(''); // No word to practice
-        }
-    } else {
-      // If the removed word wasn't the current one, update index if current word is still in list
-      const newIndexOfCurrent = newWordList.indexOf(currentPracticingWord);
-      if (newIndexOfCurrent !== -1) {
-        storeCurrentIndex(newIndexOfCurrent);
-      } else if (newWordList.length > 0) { // Current word was removed, but list not empty
-        storeCurrentIndex(0);
-        setCurrentPracticingWord(newWordList[0]);
-      } else { // List is now empty
-        storeCurrentIndex(0);
+    if (newWordList.length === 0) {
         setCurrentPracticingWord('');
-      }
+        storeCurrentIndex(0); 
+    } else {
+        // Determine the new word to focus on
+        let newSelectedWord = currentPracticingWord;
+        let newIndex = newWordList.indexOf(newSelectedWord);
+
+        // If the currentPracticingWord was the one removed, or if it's no longer in the list (e.g. list was cleared and repopulated by another means)
+        // or if currentPracticingWord was empty (e.g. after removing the last word)
+        if (newIndex === -1 || currentPracticingWord === wordToRemove) {
+            newSelectedWord = newWordList[0]; // Default to the first word in the new list
+            newIndex = 0;
+        }
+        
+        setCurrentPracticingWord(newSelectedWord);
+        storeCurrentIndex(newIndex);
     }
   };
 
