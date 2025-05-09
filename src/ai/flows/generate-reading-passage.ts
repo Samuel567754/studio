@@ -44,6 +44,8 @@ export type GenerateReadingPassageOutput = z.infer<
 export async function generateReadingPassage(
   input: GenerateReadingPassageInput
 ): Promise<GenerateReadingPassageOutput> {
+  // The client should provide masteredWords if available.
+  // This flow will use what's provided in the input.
   return generateReadingPassageFlow(input);
 }
 
@@ -71,9 +73,11 @@ const prompt = ai.definePrompt({
   Please generate a passage that is 10-15 sentences long. Ensure the vocabulary and sentence structure are suitable for the reading level.
   The passage should make sense and be interesting for a learner.
 
-  Additionally, formulate one simple comprehension question based *only* on the content of the passage you just generated. Also, provide a concise answer to this question.
-  The question should test understanding of the passage's key information.
-  Output only the passage itself, the comprehension question, and the answer in the specified structured format.`,
+  After the passage, if you are able to generate a relevant comprehension question:
+  1. Provide a 'comprehensionQuestion' that is simple and tests understanding of key information *only* from the passage.
+  2. Provide a concise 'comprehensionAnswer' for that question, also based *only* on the passage.
+  If you provide a 'comprehensionQuestion', you MUST also provide a 'comprehensionAnswer'. If you cannot formulate a suitable question and answer pair, omit both fields or ensure they are empty.
+  Ensure your entire output is structured according to the requested format, including the 'passage', and optionally 'comprehensionQuestion' and 'comprehensionAnswer'.`,
   config: {
     temperature: 0.7, // Allow for some creativity
      safetySettings: [ 
@@ -112,6 +116,17 @@ const generateReadingPassageFlow = ai.defineFlow(
         };
     }
     const {output} = await prompt(input);
+    // Ensure that if a question is present but answer is missing (e.g. empty string from LLM, not caught by Zod optional),
+    // we treat it as answer not available.
+    // Zod handles optional: if field is missing, it's undefined. If present and empty string, it's "".
+    // The component handles `null` or `""` for comprehensionAnswer gracefully.
+    if (output && output.comprehensionQuestion && (output.comprehensionAnswer === undefined || output.comprehensionAnswer.trim() === "")) {
+        return {
+            ...output,
+            comprehensionAnswer: undefined // Force undefined if question exists but answer is effectively missing
+        };
+    }
     return output!;
   }
 );
+
