@@ -4,7 +4,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon } from 'lucide-react';
+import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ const navLinks = [
   { href: '/', label: 'Learn Words', icon: Lightbulb },
   { href: '/spell', label: 'Spell Practice', icon: Edit3 },
   { href: '/read', label: 'Read Passages', icon: BookMarked },
+  { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
@@ -85,6 +86,7 @@ export const MainNav: FC = () => {
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
+                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* Added for profile */}
                 <div className="h-8 w-24 bg-muted rounded-md animate-pulse ml-2"></div>
             </div>
         </div>
