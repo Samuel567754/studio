@@ -37,41 +37,45 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const { toast } = useToast();
   const soundEffectsEnabled = useAppSettingsStore(state => state.soundEffectsEnabled);
 
+  const resetSpeechState = useCallback(() => {
+    setIsSpeaking(false);
+    setIsPaused(false);
+    setCurrentUtterance(null);
+    setCurrentSpokenWordInfo(null);
+  }, []);
+
+  const stopSpeech = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel(); // This should trigger onEnd or onError for the utterance
+    }
+    // resetSpeechState(); // onEnd/onError handlers should manage this.
+                           // If cancel() doesn't reliably trigger them, call resetSpeechState() here.
+                           // SpeechSynthesis.cancel() typically triggers onend.
+  }, []);
+
+
   const resetStateForNewPassage = () => {
     setPassage(null);
     setCurrentSpokenWordInfo(null);
     setComprehensionQuestion(null);
     setComprehensionAnswer(null);
     setShowComprehensionAnswer(false);
+    resetSpeechState();
   };
 
-  const stopSpeech = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel(); 
-    }
-    setIsSpeaking(false);
-    setIsPaused(false);
-    setCurrentUtterance(null);
-    setCurrentSpokenWordInfo(null); 
-  }, []);
 
   const handleSpeechBoundary = useCallback((event: SpeechSynthesisEvent) => {
-    if (event.name === 'word') {
+    if (event.name === 'word' && event.charLength > 0) {
       setCurrentSpokenWordInfo({ charIndex: event.charIndex, charLength: event.charLength });
     }
   }, []); 
 
   const handleSpeechEnd = useCallback(() => {
-    setIsSpeaking(false);
-    setIsPaused(false);
-    setCurrentUtterance(null);
-    setCurrentSpokenWordInfo(null);
-  }, []);
+    resetSpeechState();
+  }, [resetSpeechState]);
   
   const handleSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
-      if (event.error === 'interrupted' || event.error === 'canceled') {
-          console.warn("Speech synthesis event in ReadingPractice:", event.error);
-      } else {
+      if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
           console.error("Speech synthesis error in ReadingPractice:", event.error, passage?.substring(event.charIndex));
           toast({ 
             variant: "destructive", 
@@ -79,12 +83,11 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             description: `Could not play audio: ${event.error}.` 
           });
           playErrorSound();
+      } else if (event.error) {
+        console.warn("Speech synthesis event (interrupted/canceled) in ReadingPractice:", event.error);
       }
-      setIsSpeaking(false);
-      setIsPaused(false);
-      setCurrentUtterance(null);
-      setCurrentSpokenWordInfo(null);
-  }, [toast, passage]);
+      resetSpeechState(); // Always reset state on error or interruption
+  }, [toast, passage, resetSpeechState]);
 
 
   const fetchPassage = useCallback(async () => {
@@ -101,7 +104,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       return;
     }
 
-    stopSpeech(); 
+    if (isSpeaking) {
+       stopSpeech(); 
+    }
     setIsLoading(true);
     resetStateForNewPassage();
 
@@ -140,38 +145,41 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     } finally {
       setIsLoading(false);
     }
-  }, [wordsToPractice, readingLevel, masteredWords, toast, stopSpeech]);
+  }, [wordsToPractice, readingLevel, masteredWords, toast, stopSpeech, isSpeaking]);
 
   const toggleSpeech = useCallback(() => {
-    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis || !passage) return;
+    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis || !passage) {
+        if (!passage && soundEffectsEnabled) {
+             toast({ variant: "info", title: "No Passage", description: "Generate a passage first to read aloud." });
+        }
+        return;
+    }
 
     const speech = window.speechSynthesis;
 
-    if (currentUtterance && isSpeaking && !isPaused) { 
-      speech.pause();
-      setIsPaused(true);
-      setIsSpeaking(true); // Keep isSpeaking true, but paused
-      playNotificationSound();
-    } else if (currentUtterance && isSpeaking && isPaused) { 
-      speech.resume();
-      setIsPaused(false); 
-      setIsSpeaking(true); // Still speaking
-      playNotificationSound();
-    } else { 
-      speech.cancel(); 
+    if (isSpeaking) { // Utterance is active (could be playing or paused)
+        if (isPaused) { // Currently paused -> Resume
+            speech.resume();
+            setIsPaused(false);
+            playNotificationSound();
+        } else { // Currently playing -> Pause
+            speech.pause();
+            setIsPaused(true);
+            playNotificationSound();
+        }
+    } else { // Not speaking (no active utterance or it finished/stopped) -> Start new speech
+      // speech.cancel(); // Ensure any residual queue is cleared. speakText also does this.
       const utterance = speakText(passage, handleSpeechBoundary, handleSpeechEnd, handleSpeechError);
       if (utterance) {
         setCurrentUtterance(utterance);
         setIsSpeaking(true);
         setIsPaused(false);
       } else {
-        // if speakText returns null (e.g. soundEffectsEnabled is false after check, or other error)
-        setIsSpeaking(false);
-        setIsPaused(false);
-        setCurrentUtterance(null);
+        // speakText might return null if soundEffectsEnabled was toggled off or other issue
+        resetSpeechState();
       }
     }
-  }, [passage, currentUtterance, isSpeaking, isPaused, soundEffectsEnabled, handleSpeechBoundary, handleSpeechEnd, handleSpeechError]);
+  }, [passage, isSpeaking, isPaused, soundEffectsEnabled, handleSpeechBoundary, handleSpeechEnd, handleSpeechError, resetSpeechState, toast]);
   
   const handleCopyPassage = useCallback(() => {
     if (passage && navigator.clipboard) {
@@ -205,9 +213,13 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   useEffect(() => {
     return () => {
-      stopSpeech();
+      // Ensure speech is stopped and states are reset when component unmounts
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      resetSpeechState();
     };
-  }, [stopSpeech]);
+  }, [resetSpeechState]);
 
   const renderHighlightedPassage = (): ReactNode[] => {
     if (!passage) return [];
@@ -239,7 +251,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       }
     };
   
-    if (currentSpokenWordInfo && passage) {
+    if (isSpeaking && currentSpokenWordInfo && passage) { // Only highlight if isSpeaking is true
       const { charIndex, charLength } = currentSpokenWordInfo;
       const validCharIndex = Math.max(0, charIndex);
       const validCharLength = Math.max(0, charLength);
@@ -267,6 +279,12 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     if (isSpeaking && !isPaused) return "Pause reading passage aloud";
     if (isSpeaking && isPaused) return "Resume reading passage aloud";
     return "Read passage aloud";
+  };
+  
+  const playPauseButtonText = () => {
+    if (isSpeaking && !isPaused) return 'Pause';
+    if (isSpeaking && isPaused) return 'Resume';
+    return 'Read Aloud';
   };
 
   return (
@@ -315,7 +333,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
                     disabled={!passage}
                   >
                     {isSpeaking && !isPaused ? <Pause className="mr-2 h-5 w-5" aria-hidden="true" /> : <Play className="mr-2 h-5 w-5" aria-hidden="true" />}
-                    {isSpeaking && !isPaused ? 'Pause' : (isPaused ? 'Resume' : 'Read Aloud')}
+                    {playPauseButtonText()}
                   </Button>
                   {isSpeaking && ( 
                     <Button 
@@ -411,3 +429,4 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     </Card>
   );
 };
+

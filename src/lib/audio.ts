@@ -88,7 +88,13 @@ export function speakText(
   onEnd?: () => void,
   onError?: (event: SpeechSynthesisErrorEvent) => void
 ): SpeechSynthesisUtterance | null {
-  if (typeof window === 'undefined' || !window.speechSynthesis || !textToSpeak) {
+  if (typeof window === 'undefined' || !window.speechSynthesis || !textToSpeak.trim()) {
+    if (onError && textToSpeak.trim() === '') {
+       const emptyTextError = new SpeechSynthesisErrorEvent("error", {
+          utterance: null as any, charIndex: 0, elapsedTime: 0, name: "", error: "empty-text"
+      });
+      onError(emptyTextError);
+    }
     return null;
   }
   const { soundEffectsEnabled, speechRate, speechPitch, selectedVoiceURI } = useAppSettingsStore.getState();
@@ -98,7 +104,9 @@ export function speakText(
   }
 
   try {
-    window.speechSynthesis.cancel(); // Cancel any ongoing speech
+    // It's important to cancel before creating a new utterance if there's a chance
+    // an old one is speaking or paused, as some browsers handle queueing differently.
+    window.speechSynthesis.cancel(); 
     
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = speechRate;
@@ -122,15 +130,18 @@ export function speakText(
 
     // Centralized error handling
     const handleError = (event: SpeechSynthesisErrorEvent) => {
-        if (event.error === 'interrupted' || event.error === 'canceled') {
-            console.warn("Speech synthesis event in speakText:", event.error);
-            // 'canceled' will also trigger 'onend', so specific handling for 'onend' ensures cleanup.
-            // 'interrupted' might not always trigger 'onend' if it's a recoverable interruption by the browser,
-            // but often it means the utterance stops. If onEnd is used for cleanup, it should handle this.
+        // The calling component (e.g., ReadingPractice) will decide how to log/toast.
+        // We just forward the event.
+        if (onError) {
+          onError(event);
         } else {
-            console.error("Speech synthesis error in speakText default handler:", event.error, event.utterance?.text.substring(event.charIndex));
+          // Fallback console logging if no specific onError handler is provided
+           if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
+             console.error("Unhandled Speech synthesis error in speakText:", event.error, event.utterance?.text.substring(event.charIndex));
+           } else if (event.error) {
+             console.warn("Unhandled Speech synthesis event (interrupted/canceled) in speakText:", event.error);
+           }
         }
-        if (onError) onError(event); // Call the provided error handler
     };
     utterance.onerror = handleError;
 
@@ -140,9 +151,8 @@ export function speakText(
   } catch (error) {
     console.error("Error in speakText setup:", error);
     if (onError) {
-      // Simulate an error event if setup fails before an utterance object exists
       const synthErrorEvent = new SpeechSynthesisErrorEvent("error", {
-          utterance: null as any, // No utterance object if setup failed early
+          utterance: null as any, 
           charIndex: 0,
           elapsedTime: 0,
           name: "",
