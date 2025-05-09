@@ -4,7 +4,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User } from 'lucide-react';
+import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info } from 'lucide-react'; // Added Info
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -60,7 +60,7 @@ export const MainNav: FC = () => {
             clearProgressStoredData(); 
             setIsMobileMenuOpen(false);
             toast({
-                title: "Progress Reset",
+                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Progress Reset</div>,
                 description: "Your learning data (learned words, mastered words, reading level, and word length preferences) has been cleared.",
                 variant: "info"
             });

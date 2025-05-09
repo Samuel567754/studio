@@ -1,10 +1,9 @@
-
 "use client";
 import React, { FC, ReactNode, useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
-import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle } from 'lucide-react';
+import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle } from 'lucide-react'; // Added CheckCircle2, XCircle
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
@@ -67,7 +66,11 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           // If 'interrupted' is triggered by `pause()`, that would be a browser bug. Pause shouldn't be an error.
       } else {
           console.error("Speech synthesis error in ReadingPractice:", event.error, passage?.substring(event.charIndex));
-          toast({ variant: "destructive", title: "Audio Error", description: `Could not play audio: ${event.error}.` });
+          toast({ 
+            variant: "destructive", 
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, 
+            description: `Could not play audio: ${event.error}.` 
+          });
           playErrorSound();
           // Reset state for actual errors that prevent continuation
           setIsSpeaking(false);
@@ -81,9 +84,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const fetchPassage = useCallback(async () => {
     if (wordsToPractice.length === 0) {
       toast({
-        title: "No Words to Practice",
-        description: "Please get some word suggestions and select a word first.",
         variant: "info",
+        title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />No Words to Practice</div>,
+        description: "Please get some word suggestions and select a word first.",
       });
       setPassage("Please get some word suggestions and select a word first. Then, try generating a passage.");
       return;
@@ -97,17 +100,29 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       const result = await generateReadingPassage(input);
       if (result.passage) {
         setPassage(result.passage);
-        toast({ variant: "success", title: "Passage Generated!", description: "Happy reading!" });
+        toast({ 
+          variant: "success", 
+          title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Passage Generated!</div>, 
+          description: "Happy reading!" 
+        });
         playSuccessSound();
       } else {
         setPassage("Could not generate a passage with the current words and settings. Try again or change words.");
-        toast({ variant: "info", title: "No Passage Generated", description: "Try different words or settings." });
+        toast({ 
+          variant: "info", 
+          title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />No Passage Generated</div>, 
+          description: "Try different words or settings." 
+        });
         playNotificationSound(); 
       }
     } catch (error) {
       console.error("Error generating passage:", error);
       setPassage("An error occurred while generating the passage. Please try again.");
-      toast({ variant: "destructive", title: "Generation Error", description: "Could not generate a passage at this time." });
+      toast({ 
+        variant: "destructive", 
+        title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Generation Error</div>, 
+        description: "Could not generate a passage at this time." 
+      });
       playErrorSound();
     } finally {
       setIsLoading(false);

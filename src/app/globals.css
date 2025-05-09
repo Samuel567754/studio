@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -62,6 +61,53 @@
     --sidebar-accent-foreground: var(--accent-foreground); /* Use main accent-foreground */
     --sidebar-border: 210 20% 85%; /* Slightly darker than main border */
     --sidebar-ring: var(--ring); /* Use main ring */
+
+    /* Duolingo-inspired Toast Colors */
+    --toast-success-bg-raw: 175 70% 45%; /* Vibrant Teal from --primary */
+    --toast-success-fg-raw: 40 100% 98%; /* Light Cream from --primary-foreground */
+    --toast-success-border-l-raw: 175 70% 38%; /* Slightly darker teal */
+
+    --toast-info-bg-raw: 200 80% 55%; /* Friendly vibrant blue */
+    --toast-info-fg-raw: 0 0% 100%;   /* White */
+    --toast-info-border-l-raw: 200 80% 48%; /* Slightly darker blue */
+    
+    --toast-destructive-bg-raw: 0 75% 60%; /* Softer Red from --destructive */
+    --toast-destructive-fg-raw: 0 0% 98%; /* From --destructive-foreground */
+    --toast-destructive-border-l-raw: 0 75% 50%; /* Slightly darker red */
+
+    /* Duolingo-inspired Alert Colors */
+    --alert-success-bg-raw: var(--primary); /* Vibrant Teal */
+    --alert-success-fg-raw: var(--primary-foreground);
+    --alert-success-icon-color-raw: var(--primary-foreground);
+
+    --alert-info-bg-raw: 200 80% 55%; /* Vibrant blue */
+    --alert-info-fg-raw: 0 0% 100%;
+    --alert-info-icon-color-raw: 0 0% 100%;
+    
+    --alert-destructive-bg-raw: var(--destructive);
+    --alert-destructive-fg-raw: var(--destructive-foreground);
+    --alert-destructive-icon-color-raw: var(--destructive-foreground);
+
+    /* Convert raw HSL to usable CSS vars */
+    --toast-success-bg: hsl(var(--toast-success-bg-raw));
+    --toast-success-fg: hsl(var(--toast-success-fg-raw));
+    --toast-success-border-l: hsl(var(--toast-success-border-l-raw));
+    --toast-info-bg: hsl(var(--toast-info-bg-raw));
+    --toast-info-fg: hsl(var(--toast-info-fg-raw));
+    --toast-info-border-l: hsl(var(--toast-info-border-l-raw));
+    --toast-destructive-bg: hsl(var(--toast-destructive-bg-raw));
+    --toast-destructive-fg: hsl(var(--toast-destructive-fg-raw));
+    --toast-destructive-border-l: hsl(var(--toast-destructive-border-l-raw));
+
+    --alert-success-bg: hsl(var(--alert-success-bg-raw));
+    --alert-success-fg: hsl(var(--alert-success-fg-raw));
+    --alert-success-icon-color: hsl(var(--alert-success-icon-color-raw));
+    --alert-info-bg: hsl(var(--alert-info-bg-raw));
+    --alert-info-fg: hsl(var(--alert-info-fg-raw));
+    --alert-info-icon-color: hsl(var(--alert-info-icon-color-raw));
+    --alert-destructive-bg: hsl(var(--alert-destructive-bg-raw));
+    --alert-destructive-fg: hsl(var(--alert-destructive-fg-raw));
+    --alert-destructive-icon-color: hsl(var(--alert-destructive-icon-color-raw));
   }
 
   .dark {
@@ -110,6 +156,32 @@
     --sidebar-accent-foreground: var(--accent-foreground);
     --sidebar-border: 210 25% 20%;    /* Slightly lighter than main dark border */
     --sidebar-ring: var(--ring);
+
+     /* Duolingo-inspired Toast Colors - Dark Mode (Ensure good contrast) */
+    --toast-success-bg-raw: 175 70% 55%; /* Brighter Vibrant Teal from --primary (dark) */
+    --toast-success-fg-raw: 210 30% 10%; /* Deep Navy from --primary-foreground (dark) */
+    --toast-success-border-l-raw: 175 70% 45%; 
+
+    --toast-info-bg-raw: 200 75% 60%; /* Slightly adjusted blue for dark mode */
+    --toast-info-fg-raw: 0 0% 100%;   
+    --toast-info-border-l-raw: 200 75% 50%; 
+    
+    --toast-destructive-bg-raw: 0 70% 55%; /* From --destructive (dark) */
+    --toast-destructive-fg-raw: 0 0% 95%; /* From --destructive-foreground (dark) */
+    --toast-destructive-border-l-raw: 0 70% 48%;
+
+    /* Duolingo-inspired Alert Colors - Dark Mode */
+    --alert-success-bg-raw: var(--primary); /* Brighter Vibrant Teal */
+    --alert-success-fg-raw: var(--primary-foreground);
+    --alert-success-icon-color-raw: var(--primary-foreground);
+
+    --alert-info-bg-raw: 200 75% 60%; /* Vibrant blue for dark mode */
+    --alert-info-fg-raw: 0 0% 100%;
+    --alert-info-icon-color-raw: 0 0% 100%;
+    
+    --alert-destructive-bg-raw: var(--destructive);
+    --alert-destructive-fg-raw: var(--destructive-foreground);
+    --alert-destructive-icon-color-raw: var(--destructive-foreground);
   }
 }
 

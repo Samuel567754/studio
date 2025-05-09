@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -11,7 +10,7 @@ import {
   storeCurrentIndex, getStoredCurrentIndex
 } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { Trash2, CheckCircle, Info } from 'lucide-react';
+import { Trash2, CheckCircle, Info, CheckCircle2 } from 'lucide-react'; // Added CheckCircle2 for success toast
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card'; // Renamed to avoid conflict
 import { cn } from '@/lib/utils';
@@ -57,7 +56,11 @@ export default function LearnWordsPage() {
     const wordIndex = newWordList.indexOf(word);
     storeCurrentIndex(wordIndex);
     setCurrentPracticingWord(word);
-    toast({ variant: "success", title: "Word Selected!", description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` });
+    toast({ 
+      variant: "success", 
+      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Word Selected!</div>, 
+      description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` 
+    });
     playSuccessSound();
     speakText(word); // Say the word aloud
   }, [wordList, updateWordList, toast]);
@@ -73,7 +76,11 @@ export default function LearnWordsPage() {
     storeReadingLevel(level);
     setWordLength(length);
     storeWordLength(length);
-    toast({ variant: "info", title: "Preferences Updated", description: `Suggestions will now target ${level} level, ${length}-letter words.` });
+    toast({ 
+      variant: "info", 
+      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Preferences Updated</div>, 
+      description: `Suggestions will now target ${level} level, ${length}-letter words.` 
+    });
     playNotificationSound();
   }, [toast]);
 
@@ -81,7 +88,11 @@ export default function LearnWordsPage() {
     const newWordList = wordList.filter(w => w !== wordToRemove);
     updateWordList(newWordList); 
 
-    toast({ variant: "info", title: "Word Removed", description: `"${wordToRemove}" removed from your practice list.` });
+    toast({ 
+      variant: "info", 
+      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Word Removed</div>, 
+      description: `"${wordToRemove}" removed from your practice list.` 
+    });
     playNotificationSound(); // Changed from playNavigationSound
 
     if (newWordList.length === 0) {
@@ -219,4 +230,3 @@ export default function LearnWordsPage() {
     </div>
   );
 }
-

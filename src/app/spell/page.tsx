@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -7,7 +6,7 @@ import { SpellingPractice } from '@/components/spelling-practice';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, CheckCircle2 } from 'lucide-react'; // Added CheckCircle2
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,7 +70,7 @@ export default function SpellingPage() {
   const handleCorrectSpell = () => {
     toast({
       variant: "success",
-      title: "Great Job!",
+      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Great Job!</div>,
       description: `You spelled "${currentWord}" correctly!`,
     });
     playSuccessSound();
@@ -80,7 +79,7 @@ export default function SpellingPage() {
     } else if (wordList.length === 1) {
         toast({
             variant: "success",
-            title: "List Complete!",
+            title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />List Complete!</div>,
             description: "You've spelled the only word in your list. Add more words to continue!",
             duration: 4000,
         });
@@ -150,4 +149,3 @@ export default function SpellingPage() {
     </div>
   );
 }
-

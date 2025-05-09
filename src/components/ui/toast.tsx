@@ -29,13 +29,13 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-border bg-background text-foreground border-l-4 border-l-muted-foreground",
+        default: "border-border bg-background text-foreground border-l-4 border-l-[hsl(var(--muted-foreground))]",
         destructive:
-          "destructive group border-destructive/50 bg-destructive text-destructive-foreground border-l-4 border-l-destructive-foreground",
+          "destructive group border-transparent bg-[hsl(var(--toast-destructive-bg))] text-[hsl(var(--toast-destructive-fg))] border-l-4 border-l-[hsl(var(--toast-destructive-border-l))]",
         success:
-          "success group border-primary/50 bg-background text-primary border-l-4 border-l-primary",
+          "success group border-transparent bg-[hsl(var(--toast-success-bg))] text-[hsl(var(--toast-success-fg))] border-l-4 border-l-[hsl(var(--toast-success-border-l))]",
         info:
-          "info group border-accent/50 bg-background text-accent border-l-4 border-l-accent",
+          "info group border-transparent bg-[hsl(var(--toast-info-bg))] text-[hsl(var(--toast-info-fg))] border-l-4 border-l-[hsl(var(--toast-info-border-l))]",
       },
     },
     defaultVariants: {
@@ -68,8 +68,8 @@ const ToastAction = React.forwardRef<
     className={cn(
       "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
       "group-[.destructive]:border-destructive-foreground/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive/90 group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive",
-      "group-[.success]:border-primary/40 group-[.success]:hover:border-primary/30 group-[.success]:hover:bg-primary/10 group-[.success]:focus:ring-primary",
-      "group-[.info]:border-accent/40 group-[.info]:hover:border-accent/30 group-[.info]:hover:bg-accent/10 group-[.info]:focus:ring-accent",
+      "group-[.success]:border-primary-foreground/40 group-[.success]:hover:border-primary-foreground/30 group-[.success]:hover:bg-primary-foreground/10 group-[.success]:text-primary-foreground group-[.success]:focus:ring-primary-foreground", // Adjusted for success variant with solid bg
+      "group-[.info]:border-white/40 group-[.info]:hover:border-white/30 group-[.info]:hover:bg-white/10 group-[.info]:text-white group-[.info]:focus:ring-white", // Adjusted for info variant with solid bg
       className
     )}
     {...props}
@@ -86,8 +86,8 @@ const ToastClose = React.forwardRef<
     className={cn(
       "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
       "group-[.destructive]:text-destructive-foreground/70 group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive-foreground group-[.destructive]:focus:ring-offset-destructive",
-      "group-[.success]:text-primary/70 group-[.success]:hover:text-primary group-[.success]:focus:ring-primary",
-      "group-[.info]:text-accent/70 group-[.info]:hover:text-accent group-[.info]:focus:ring-accent",
+      "group-[.success]:text-primary-foreground/70 group-[.success]:hover:text-primary-foreground group-[.success]:focus:ring-primary-foreground group-[.success]:focus:ring-offset-[hsl(var(--toast-success-bg))]",
+      "group-[.info]:text-white/70 group-[.info]:hover:text-white group-[.info]:focus:ring-white group-[.info]:focus:ring-offset-[hsl(var(--toast-info-bg))]",
       className
     )}
     toast-close=""

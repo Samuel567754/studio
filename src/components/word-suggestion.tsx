@@ -1,4 +1,3 @@
-
 "use client";
 import type { FC } from 'react';
 import { useState, useEffect, useMemo } from 'react';
@@ -11,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { suggestWords, type SuggestWordsInput } from '@/ai/flows/suggest-words';
-import { Loader2, Wand2, Lightbulb, CheckCircle } from 'lucide-react';
+import { Loader2, Wand2, Lightbulb, CheckCircle, CheckCircle2, Info, XCircle } from 'lucide-react'; // Added icons
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { playSuccessSound, playErrorSound } from '@/lib/audio';
@@ -83,16 +82,28 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
       if (result.suggestedWords && result.suggestedWords.length > 0) {
         setDisplayedSuggestedWords(result.suggestedWords);
         onNewSuggestedWordsList(result.suggestedWords); 
-        toast({ variant: "success", title: "Words Suggested!", description: `${result.suggestedWords.length} new words for you to consider.` });
+        toast({ 
+          variant: "success", 
+          title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Words Suggested!</div>, 
+          description: `${result.suggestedWords.length} new words for you to consider.` 
+        });
         playSuccessSound();
       } else {
         setDisplayedSuggestedWords([]);
         onNewSuggestedWordsList([]); 
-        toast({ variant: "info", title: "No Words Found", description: "Try different settings or broaden your criteria." });
+        toast({ 
+          variant: "info", 
+          title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />No Words Found</div>, 
+          description: "Try different settings or broaden your criteria." 
+        });
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
-      toast({ variant: "destructive", title: "Suggestion Error", description: "Could not fetch word suggestions. Please try again." });
+      toast({ 
+        variant: "destructive", 
+        title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Suggestion Error</div>, 
+        description: "Could not fetch word suggestions. Please try again." 
+      });
       playErrorSound();
       setDisplayedSuggestedWords([]);
       onNewSuggestedWordsList([]); 
