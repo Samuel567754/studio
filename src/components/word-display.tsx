@@ -18,16 +18,18 @@ export const WordDisplay: FC<WordDisplayProps> = ({ word }) => {
   };
 
   return (
-    <Card className="shadow-lg w-full bg-gradient-to-br from-card via-card/80 to-secondary/20 dark:from-card dark:via-card/90 dark:to-secondary/10">
+    <Card className="shadow-lg w-full bg-gradient-to-br from-card via-card/80 to-secondary/20 dark:from-card dark:via-card/90 dark:to-secondary/10 animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
       <CardHeader>
         <CardTitle className="text-xl font-semibold text-primary">Current Word</CardTitle>
       </CardHeader>
       <CardContent className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
         <h2 
+          key={word} // Add key to re-trigger animation on word change
           className="text-7xl md:text-9xl font-bold tracking-wide break-all text-center 
                      text-gradient-primary-accent 
                      drop-shadow-lg py-2
-                     select-none"
+                     select-none
+                     animate-in fade-in zoom-in-90 duration-300 ease-out"
         >
           {word || "----"}
         </h2>

@@ -113,7 +113,7 @@ export default function SpellingPage() {
 
   if (wordList.length === 0) {
     return (
-      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20">
+      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
         <Info className="h-6 w-6 mx-auto mb-2" />
         <AlertTitle className="text-xl font-semibold mb-2">No Words to Spell!</AlertTitle>
         <AlertDescription className="text-base">
@@ -128,10 +128,12 @@ export default function SpellingPage() {
   return (
     <div className="space-y-6 md:space-y-8">
       <WordDisplay word={currentWord} />
-      <SpellingPractice wordToSpell={currentWord} onCorrectSpell={handleCorrectSpell} />
+      <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
+        <SpellingPractice wordToSpell={currentWord} onCorrectSpell={handleCorrectSpell} />
+      </div>
       
       {wordList.length > 1 && (
-        <Card className="shadow-md border-primary/10">
+        <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
             <CardContent className="p-4 flex justify-between items-center gap-2 md:gap-4">
             <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="flex-1 md:flex-none">
                 <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" /> Previous
@@ -148,3 +150,4 @@ export default function SpellingPage() {
     </div>
   );
 }
+

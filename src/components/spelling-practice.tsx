@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC, FormEvent } from 'react';
 import { useState, useEffect } from 'react';
@@ -47,7 +48,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
 
   if (!wordToSpell) {
     return (
-       <Card className="shadow-lg w-full">
+       <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
          <CardHeader>
            <CardTitle className="flex items-center text-xl font-semibold text-primary"><Sparkles className="mr-2 h-5 w-5"/>Spell the Word</CardTitle>
          </CardHeader>
@@ -85,7 +86,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
         </form>
       </CardContent>
       {feedback && (
-        <CardFooter>
+        <CardFooter className="animate-in fade-in-0 zoom-in-95 duration-300">
           <Alert variant={feedback.type} className="w-full">
             {feedback.type === 'success' && <CheckCircle2 className="h-5 w-5" />}
             {feedback.type === 'destructive' && <XCircle className="h-5 w-5" />}

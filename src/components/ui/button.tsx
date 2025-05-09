@@ -56,7 +56,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(
           buttonVariants({ variant, size, className }),
-          "transform transition-all duration-75 ease-in-out active:scale-95 active:brightness-95" // Combined visual feedback
+          "transform transition-all duration-150 ease-in-out active:scale-95 active:brightness-95" // Adjusted duration
         )}
         ref={ref}
         onClick={handleClick}

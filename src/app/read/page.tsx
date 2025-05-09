@@ -54,7 +54,7 @@ export default function ReadingPage() {
 
   if (wordList.length === 0) {
     return (
-      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20">
+      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
         <Info className="h-6 w-6 mx-auto mb-2" />
         <AlertTitle className="text-xl font-semibold mb-2">No Words for Reading Practice!</AlertTitle>
         <AlertDescription className="text-base">
@@ -68,8 +68,9 @@ export default function ReadingPage() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
       <ReadingPractice wordsToPractice={wordList} readingLevel={readingLevel} />
     </div>
   );
 }
+

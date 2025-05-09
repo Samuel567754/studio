@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC } from 'react';
 import { useState, useEffect, useMemo } from 'react';
@@ -43,6 +44,10 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
   const [displayedSuggestedWords, setDisplayedSuggestedWords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => setIsMounted(true), []);
+
 
   const defaultFormValues = useMemo(() => ({
     readingLevel: currentReadingLevel || "beginner",
@@ -97,7 +102,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
   };
 
   return (
-    <Card className="shadow-xl w-full border-primary/20 bg-gradient-to-br from-card via-card to-secondary/10 dark:from-card dark:via-card dark:to-secondary/5">
+    <Card className="shadow-xl w-full border-primary/20 bg-gradient-to-br from-card via-card to-secondary/10 dark:from-card dark:via-card dark:to-secondary/5 animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
       <CardHeader>
         <CardTitle className="flex items-center text-2xl font-semibold text-primary"><Wand2 className="mr-2 h-6 w-6"/>AI Word Suggestions</CardTitle>
         <CardDescription className="text-base">
@@ -179,7 +184,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
         </form>
       </Form>
       {displayedSuggestedWords.length > 0 && (
-        <CardFooter className="flex flex-col items-start gap-4 pt-6 border-t border-primary/10">
+        <CardFooter className="flex flex-col items-start gap-4 pt-6 border-t border-primary/10 animate-in fade-in-0 duration-300">
           <h4 className="font-semibold text-foreground text-lg">AI Suggestions (click to add to your list):</h4>
           <div className="flex flex-wrap gap-2 items-center">
             {displayedSuggestedWords.map((word, index) => (
@@ -190,11 +195,14 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
                 onClick={() => {
                   onWordSelected(word);
                 }}
-                className={cn(`px-4 py-2 text-sm md:text-base transition-all duration-150 ease-in-out hover:shadow-md rounded-full shadow-sm`,
+                className={cn(
+                    `px-4 py-2 text-sm md:text-base transition-all duration-150 ease-in-out hover:shadow-md rounded-full shadow-sm`,
+                    isMounted ? 'animate-in fade-in-0 zoom-in-95' : 'opacity-0',
                     currentPracticingWord === word 
                         ? 'bg-primary text-primary-foreground ring-2 ring-primary-foreground dark:ring-primary ring-offset-2 ring-offset-primary dark:ring-offset-background scale-105' 
                         : 'bg-card hover:bg-secondary/60 text-foreground hover:text-accent-foreground border-primary/30 hover:border-primary'
                 )}
+                style={isMounted ? { animationDelay: `${index * 50}ms` } : {}}
                 aria-pressed={currentPracticingWord === word}
               >
                 {currentPracticingWord === word && <CheckCircle className="mr-2 h-4 w-4" />}

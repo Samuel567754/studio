@@ -265,7 +265,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           </div>
         )}
         {passage && !isLoading && (
-          <Alert variant="default" className="bg-card/50 dark:bg-card/30 border-primary/30">
+          <Alert variant="default" className="bg-card/50 dark:bg-card/30 border-primary/30 animate-in fade-in-0 zoom-in-95 duration-500">
              <AlertTitle className="text-lg font-semibold text-primary">Your Reading Passage:</AlertTitle>
             <AlertDescription className="text-base leading-relaxed text-foreground/90 dark:text-foreground/80 py-2 whitespace-pre-line">
               {renderHighlightedPassage().map((node, index) => <React.Fragment key={index}>{node}</React.Fragment>)}
@@ -273,7 +273,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           </Alert>
         )}
         {!passage && !isLoading && wordsToPractice.length === 0 && (
-           <Alert variant="info">
+           <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300">
              <Info className="h-5 w-5" />
              <AlertTitle>Ready to Read?</AlertTitle>
              <AlertDescription>
@@ -282,7 +282,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
            </Alert>
         )}
          {!passage && !isLoading && wordsToPractice.length > 0 && (
-           <Alert variant="info">
+           <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300">
             <Info className="h-5 w-5" />
              <AlertTitle>Generate a Passage</AlertTitle>
              <AlertDescription>

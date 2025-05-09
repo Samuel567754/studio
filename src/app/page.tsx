@@ -153,7 +153,7 @@ export default function LearnWordsPage() {
       />
 
       {wordList.length > 0 && (
-        <Card className="shadow-lg border-primary/10">
+        <Card className="shadow-lg border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-primary">Your Practice Word List</CardTitle>
             <UiCardDescription className="text-base">
@@ -164,7 +164,7 @@ export default function LearnWordsPage() {
             {wordList.length > 0 ? (
               <div className="flex flex-wrap gap-3 items-center">
                 {wordList.map((word, index) => (
-                  <div key={index} className="relative group rounded-full shadow-sm hover:shadow-md transition-shadow">
+                  <div key={index} className="relative group rounded-full shadow-sm hover:shadow-md transition-all duration-200 ease-in-out hover:scale-105">
                     <Button
                       variant={currentPracticingWord === word ? "default" : "secondary"}
                       size="sm" 
@@ -183,7 +183,7 @@ export default function LearnWordsPage() {
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        "absolute top-1/2 right-1 transform -translate-y-1/2 h-8 w-8 p-0 opacity-60 group-hover:opacity-100 rounded-full",
+                        "absolute top-1/2 right-1 transform -translate-y-1/2 h-8 w-8 p-0 opacity-60 group-hover:opacity-100 rounded-full transition-opacity",
                         currentPracticingWord === word ? "text-primary-foreground hover:bg-primary/80" : "text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
                       )}
                       onClick={(e) => { e.stopPropagation(); handleRemoveWord(word); }}
@@ -202,7 +202,7 @@ export default function LearnWordsPage() {
       )}
 
       {wordList.length === 0 && isMounted && (
-        <Alert variant="info" className="bg-card/90 border-accent/20 shadow">
+        <Alert variant="info" className="bg-card/90 border-accent/20 shadow animate-in fade-in-0 zoom-in-95 duration-500 ease-out">
           <Info className="h-5 w-5" />
           <AlertTitle className="font-semibold text-lg">Welcome to SightWords AI!</AlertTitle>
           <AlertDescription className="text-base">

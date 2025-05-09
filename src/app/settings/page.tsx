@@ -137,7 +137,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
-      <Card className="shadow-lg border-border/30">
+      <Card className="shadow-lg border-border/30 animate-in fade-in-0 slide-in-from-bottom-8 duration-700 ease-out">
         <CardHeader>
           <CardTitle className="text-3xl font-bold flex items-center text-primary">
             <SettingsIcon className="mr-3 h-8 w-8" />
@@ -149,10 +149,10 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-10">
           {/* Appearance Settings */}
-          <section>
+          <section className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500 delay-100">
             <h3 className="text-xl font-semibold mb-4 flex items-center"><Palette className="mr-2 h-6 w-6 text-accent"/>Appearance</h3>
             <div className="space-y-6 pl-2 border-l-2 border-accent/30">
-              <div className="space-y-3">
+              <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-200">
                 <Label htmlFor="theme-selector" className="text-lg font-medium flex items-center">
                   <Sun className="mr-2 h-5 w-5 text-muted-foreground" /> Theme
                 </Label>
@@ -176,7 +176,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-300">
                 <Label htmlFor="font-family-selector" className="text-lg font-medium flex items-center">
                   <Type className="mr-2 h-5 w-5 text-muted-foreground" /> Font Family
                 </Label>
@@ -194,7 +194,7 @@ export default function SettingsPage() {
                 </Select>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-400">
                 <Label htmlFor="font-size-slider" className="text-lg font-medium flex items-center">
                   <CaseSensitive className="mr-2 h-5 w-5 text-muted-foreground" /> Font Size: <span className="text-primary ml-2 font-bold">{fontSize}px</span>
                 </Label>
@@ -216,10 +216,10 @@ export default function SettingsPage() {
           </section>
 
           {/* Audio & Speech Settings */}
-          <section>
+          <section className="animate-in fade-in-0 slide-in-from-bottom-4 duration-500 delay-200">
              <h3 className="text-xl font-semibold mb-4 flex items-center"><Mic2 className="mr-2 h-6 w-6 text-accent"/>Audio & Speech</h3>
              <div className="space-y-6 pl-2 border-l-2 border-accent/30">
-                <div className="space-y-3">
+                <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-300">
                   <Label className="text-lg font-medium flex items-center">
                     {soundEffectsEnabled ? <Volume2 className="mr-2 h-5 w-5 text-muted-foreground" /> : <VolumeX className="mr-2 h-5 w-5 text-muted-foreground" />} Sound Effects & Speech
                   </Label>
@@ -239,7 +239,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-400">
                     <Label htmlFor="speech-rate-slider" className="text-lg font-medium flex items-center">
                         Speech Rate: <span className="text-primary ml-2 font-bold">{speechRate.toFixed(1)}x</span>
                     </Label>
@@ -257,7 +257,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-500">
                     <Label htmlFor="speech-pitch-slider" className="text-lg font-medium flex items-center">
                         Speech Pitch: <span className="text-primary ml-2 font-bold">{speechPitch.toFixed(1)}</span>
                     </Label>
@@ -275,7 +275,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
                 
-                <div className="space-y-3">
+                <div className="space-y-3 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-600">
                     <Label htmlFor="voice-selector" className="text-lg font-medium flex items-center">
                        <ChevronDown className="mr-2 h-5 w-5 text-muted-foreground" /> Speaking Voice
                     </Label>
@@ -300,7 +300,7 @@ export default function SettingsPage() {
           
         </CardContent>
         <CardFooter className="border-t border-border/20 pt-6">
-           <Button variant="outline" onClick={handleResetSettings} className="w-full md:w-auto">
+           <Button variant="outline" onClick={handleResetSettings} className="w-full md:w-auto animate-in fade-in-0 zoom-in-95 duration-300 delay-700">
               <RefreshCw className="mr-2 h-4 w-4" /> Reset All Settings to Defaults
            </Button>
         </CardFooter>
