@@ -1,8 +1,10 @@
 
 'use client';
 
+import { useAppSettingsStore } from '@/stores/app-settings-store';
+
 // Helper function to create and play a sound
-const playSound = (
+const playSoundInternal = (
   type: OscillatorType,
   frequencyConfig: number | { start: number; end?: number; bendDuration?: number },
   volume: number,
@@ -24,7 +26,6 @@ const playSound = (
     } else {
       oscillator.frequency.setValueAtTime(frequencyConfig.start, audioContext.currentTime);
       if (frequencyConfig.end && frequencyConfig.bendDuration) {
-        // Ensure end frequency is not zero for exponential ramp
         const targetFrequency = frequencyConfig.end === 0 ? 0.0001 : frequencyConfig.end;
         if (rampType === 'linear') {
              oscillator.frequency.linearRampToValueAtTime(targetFrequency, audioContext.currentTime + frequencyConfig.bendDuration);
@@ -35,37 +36,46 @@ const playSound = (
     }
     
     gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-    // Ensure target gain is not zero for exponential ramp
     gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
-
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + duration);
   }
 };
 
-// Existing click sound - made quieter and shorter
+const playSoundWrapper = (
+  type: OscillatorType,
+  frequencyConfig: number | { start: number; end?: number; bendDuration?: number },
+  volume: number,
+  duration: number,
+  rampType: 'linear' | 'exponential' = 'exponential'
+) => {
+  // Zustand hooks must be called at the top level of a component or a custom hook.
+  // We get the state directly here for simplicity within this module.
+  // This approach is okay for client-side utility functions that are not React components.
+  const soundEffectsEnabled = useAppSettingsStore.getState().soundEffectsEnabled;
+  if (soundEffectsEnabled) {
+    playSoundInternal(type, frequencyConfig, volume, duration, rampType);
+  }
+};
+
+
 export function playClickSound(): void {
-  playSound('triangle', 200, 0.05, 0.05); 
+  playSoundWrapper('triangle', 200, 0.05, 0.05); 
 }
 
-// New sounds
 export function playSuccessSound(): void {
-  // A pleasant, short, ascending chime
-  playSound('sine', { start: 600, end: 880, bendDuration: 0.05 }, 0.15, 0.2);
+  playSoundWrapper('sine', { start: 600, end: 880, bendDuration: 0.05 }, 0.15, 0.2);
 }
 
 export function playErrorSound(): void {
-  // A short, low, slightly dissonant buzz
-  playSound('square', { start: 150, end: 100, bendDuration: 0.1 }, 0.15, 0.25);
+  playSoundWrapper('square', { start: 150, end: 100, bendDuration: 0.1 }, 0.15, 0.25);
 }
 
 export function playNavigationSound(): void {
-  // A very subtle, short "tick"
-  playSound('sine', 350, 0.08, 0.05);
+  playSoundWrapper('sine', 350, 0.08, 0.05);
 }
 
 export function playNotificationSound(): void {
-  // A neutral, clear "pop" or "ding"
-  playSound('triangle', 500, 0.12, 0.1);
+  playSoundWrapper('triangle', 500, 0.12, 0.1);
 }

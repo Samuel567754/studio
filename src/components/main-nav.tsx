@@ -7,9 +7,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { clearAllStoredData } from '@/lib/storage'; 
+import { clearProgressStoredData } from '@/lib/storage'; 
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -56,15 +56,16 @@ export const MainNav: FC = () => {
   
   const handleResetProgress = () => {
     if (typeof window !== 'undefined') {
-        if(confirm("This will clear all your learned words and settings. Are you sure?")) {
-            clearAllStoredData();
+        if(confirm("This will clear your learned words, reading level, and word length preferences. Are you sure?")) {
+            clearProgressStoredData(); // Clears only progress-related data
             setIsMobileMenuOpen(false);
             toast({
                 title: "Progress Reset",
-                description: "All your learning data has been cleared.",
+                description: "Your learning data (words, level, length) has been cleared.",
                 variant: "info"
             });
-            window.location.href = '/';
+            // Optionally, force reload or navigate to ensure UI updates if dependent on this data
+             window.location.href = '/'; 
         }
     }
   };
@@ -85,7 +86,7 @@ export const MainNav: FC = () => {
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* Added for Settings */}
+                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-24 bg-muted rounded-md animate-pulse ml-2"></div>
             </div>
         </div>
@@ -145,8 +146,9 @@ export const MainNav: FC = () => {
                <div className="mt-auto p-4 border-t">
                   <Button variant="destructive" className="w-full" onClick={handleResetProgress}>
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Reset Progress
+                      Reset Learning Progress
                   </Button>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">This resets learned words, reading level, and word length preferences. Theme and sound settings remain unchanged.</p>
               </div>
             </SheetContent>
           </Sheet>

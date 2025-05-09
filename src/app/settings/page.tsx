@@ -4,12 +4,14 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from "next-themes";
 import { useThemeStore } from '@/stores/theme-store';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Sun, Moon, Laptop, Palette, Type, CaseSensitive } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Sun, Moon, Laptop, Palette, Type, CaseSensitive, Volume2, VolumeX, RefreshCw } from "lucide-react";
 import { playNotificationSound } from '@/lib/audio';
 
 const fontFamilies = [
@@ -21,6 +23,7 @@ const fontFamilies = [
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { fontSize, fontFamily, setFontSize, setFontFamily, resetThemeSettings } = useThemeStore();
+  const { soundEffectsEnabled, setSoundEffectsEnabled, resetSoundSettings } = useAppSettingsStore();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function SettingsPage() {
             <div className="h-4 w-3/4 bg-muted rounded mt-2"></div>
           </CardHeader>
           <CardContent className="space-y-8">
-            {[1, 2, 3].map(i => (
+            {[1, 2, 3, 4].map(i => ( // Added one more for sound setting
               <div key={i} className="space-y-3">
                 <div className="h-5 w-1/4 bg-muted rounded"></div>
                 <div className="h-10 bg-muted rounded"></div>
@@ -64,10 +67,16 @@ export default function SettingsPage() {
     setFontSize(newSize[0]);
     playNotificationSound();
   };
+
+  const handleSoundToggle = (enabled: boolean) => {
+    setSoundEffectsEnabled(enabled);
+    playNotificationSound();
+  }
   
   const handleResetSettings = () => {
     resetThemeSettings();
-    setTheme("system"); // Reset next-themes to system default
+    resetSoundSettings();
+    setTheme("system"); 
     playNotificationSound();
   };
 
@@ -78,10 +87,10 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="text-3xl font-bold flex items-center text-primary">
             <Palette className="mr-3 h-8 w-8" />
-            Appearance Settings
+            Application Settings
           </CardTitle>
           <CardDescription className="text-base">
-            Customize the look and feel of the application to your liking.
+            Customize the appearance and behavior of the application.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -148,15 +157,34 @@ export default function SettingsPage() {
               <span>20px (Large)</span>
             </div>
           </div>
-          
-          {/* Reset Settings Button */}
-          <div className="pt-4 border-t border-border/20">
-             <Button variant="outline" onClick={handleResetSettings} className="w-full md:w-auto">
-                Reset to Defaults
-             </Button>
-          </div>
 
+          {/* Sound Effects Settings */}
+          <div className="space-y-3">
+            <Label className="text-lg font-semibold flex items-center">
+              {soundEffectsEnabled ? <Volume2 className="mr-2 h-5 w-5 text-accent" /> : <VolumeX className="mr-2 h-5 w-5 text-accent" />} Sound Effects
+            </Label>
+            <div className="flex items-center space-x-2 rounded-lg border p-3 shadow-sm">
+              <Switch
+                id="sound-effects-toggle"
+                checked={soundEffectsEnabled}
+                onCheckedChange={handleSoundToggle}
+                aria-label="Toggle sound effects"
+              />
+              <Label htmlFor="sound-effects-toggle" className="text-base flex-grow">
+                {soundEffectsEnabled ? "Enabled" : "Disabled"}
+              </Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Toggle all application sound effects on or off.
+            </p>
+          </div>
+          
         </CardContent>
+        <CardFooter className="border-t border-border/20 pt-6">
+           <Button variant="outline" onClick={handleResetSettings} className="w-full md:w-auto">
+              <RefreshCw className="mr-2 h-4 w-4" /> Reset All Settings to Defaults
+           </Button>
+        </CardFooter>
       </Card>
     </div>
   );
