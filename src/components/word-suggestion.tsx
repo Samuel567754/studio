@@ -26,9 +26,16 @@ interface WordSuggestionProps {
   currentReadingLevel: string;
   currentWordLength: number;
   onSettingsChange: (level: string, length: number) => void;
+  currentPracticingWord?: string; // To highlight the active word
 }
 
-export const WordSuggestion: FC<WordSuggestionProps> = ({ onWordSelected, currentReadingLevel, currentWordLength, onSettingsChange }) => {
+export const WordSuggestion: FC<WordSuggestionProps> = ({ 
+  onWordSelected, 
+  currentReadingLevel, 
+  currentWordLength, 
+  onSettingsChange,
+  currentPracticingWord 
+}) => {
   const [suggestedWordsList, setSuggestedWordsList] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -39,7 +46,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({ onWordSelected, curren
       readingLevel: currentReadingLevel,
       wordLength: currentWordLength,
     },
-    values: { // Make form reactive to external changes
+    values: { 
         readingLevel: currentReadingLevel,
         wordLength: currentWordLength,
     }
@@ -48,7 +55,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({ onWordSelected, curren
   const onSubmit: SubmitHandler<SuggestionFormValues> = async (data) => {
     setIsLoading(true);
     setSuggestedWordsList([]);
-    onSettingsChange(data.readingLevel, data.wordLength); // Update parent state
+    onSettingsChange(data.readingLevel, data.wordLength); 
     try {
       const result = await suggestWords(data as SuggestWordsInput);
       if (result.suggestedWords && result.suggestedWords.length > 0) {
@@ -128,14 +135,18 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({ onWordSelected, curren
         </form>
       </Form>
       {suggestedWordsList.length > 0 && (
-        <CardFooter className="flex flex-col items-start gap-3 pt-4 border-t">
-          <h4 className="font-semibold text-foreground">Practice these words:</h4>
-          <div className="flex flex-wrap gap-2">
+        <CardFooter className="flex flex-col items-start gap-4 pt-6 border-t">
+          <h4 className="font-semibold text-foreground text-lg">Practice these words:</h4>
+          <div className="flex flex-wrap gap-2 items-center">
             {suggestedWordsList.map((word, index) => (
               <Button
                 key={index}
-                variant="secondary"
-                onClick={() => onWordSelected(word)}
+                variant={currentPracticingWord === word ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  onWordSelected(word);
+                }}
+                className="px-3 py-1.5"
               >
                 {word}
               </Button>
@@ -146,4 +157,3 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({ onWordSelected, curren
     </Card>
   );
 };
-

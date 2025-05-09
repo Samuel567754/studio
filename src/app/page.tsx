@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -77,6 +78,7 @@ export default function SightWordsPage() {
               currentReadingLevel={readingLevel}
               currentWordLength={wordLength}
               onSettingsChange={handleSettingsChange}
+              currentPracticingWord={currentWord}
             />
           </div>
         </div>
@@ -99,3 +101,4 @@ export default function SightWordsPage() {
     </>
   );
 }
+
