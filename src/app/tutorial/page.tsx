@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
@@ -20,8 +21,8 @@ interface TutorialSection {
 const tutorialSections: TutorialSection[] = [
   {
     id: 'welcome',
-    title: 'Welcome to SightWords AI!',
-    content: "This guide will walk you through the main features of the SightWords AI application, helping you make the most of your learning experience. Let's get started!",
+    title: 'Welcome to ChillLearn AI!',
+    content: "This guide will walk you through the main features of the ChillLearn AI application, helping you make the most of your learning experience. Let's get started!",
     ariaLabel: 'Welcome section introduction'
   },
   {
@@ -51,7 +52,7 @@ const tutorialSections: TutorialSection[] = [
   {
     id: 'settings',
     title: 'Settings Page (Customize Your App)',
-    content: "Tailor the SightWords AI app to your liking on the 'Settings' page.\nYou can adjust:\n- Theme: Choose between light, dark, or system default.\n- Font: Select your preferred font family and size.\n- Audio: Enable or disable sound effects, and fine-tune speech settings like voice, rate, and pitch for the read-aloud features.",
+    content: "Tailor the ChillLearn AI app to your liking on the 'Settings' page.\nYou can adjust:\n- Theme: Choose between light, dark, or system default.\n- Font: Select your preferred font family and size.\n- Audio: Enable or disable sound effects, and fine-tune speech settings like voice, rate, and pitch for the read-aloud features.",
     ariaLabel: "Details on the Settings page for customizing appearance and audio preferences."
   },
   {
@@ -177,7 +178,7 @@ export default function TutorialPage() {
       <header className="text-center space-y-2 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <HelpCircle className="h-16 w-16 mx-auto text-primary animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
         <h1 className="text-4xl font-bold text-gradient-primary-accent">App Tutorial & Guide</h1>
-        <p className="text-lg text-muted-foreground">Learn how to use SightWords AI effectively.</p>
+        <p className="text-lg text-muted-foreground">Learn how to use ChillLearn AI effectively.</p>
       </header>
 
       {currentSpeechUtterance && (isAudioPlaying || isAudioPaused) && (

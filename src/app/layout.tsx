@@ -11,8 +11,8 @@ import { QuickLinkFAB } from '@/components/quicklink-fab';
 
 
 export const metadata: Metadata = {
-  title: 'SightWords AI Learning',
-  description: 'Learn sight words, practice spelling, and read AI-generated passages.',
+  title: 'ChillLearn: AI Learning',
+  description: 'Learn sight words, practice spelling, and read AI-generated passages with ChillLearn.',
 };
 
 export default function RootLayout({
@@ -39,7 +39,7 @@ export default function RootLayout({
             <BottomNav />
             <QuickLinkFAB /> {/* Added QuickLinkFAB */}
             <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border/30 hidden md:block">
-               © {new Date().getFullYear()} SightWords App. AI-Powered Learning.
+               © {new Date().getFullYear()} ChillLearn App. AI-Powered Learning.
             </footer>
           </div>
           <Toaster />
@@ -48,3 +48,4 @@ export default function RootLayout({
     </html>
   );
 }
+

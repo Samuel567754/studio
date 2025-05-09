@@ -1,22 +1,24 @@
+
 "use client";
 
 import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle } from 'lucide-react'; // Added HelpCircle
+import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
+import { playNotificationSound } from '@/lib/audio';
 
 
 const navLinks = [
   { href: '/', label: 'Learn Words', icon: Lightbulb },
   { href: '/spell', label: 'Spell Practice', icon: Edit3 },
   { href: '/read', label: 'Read Passages', icon: BookMarked },
-  { href: '/tutorial', label: 'Tutorial', icon: HelpCircle }, // Added Tutorial Link
+  { href: '/tutorial', label: 'Tutorial', icon: HelpCircle },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -65,6 +67,7 @@ export const MainNav: FC = () => {
                 description: "Your learning data (learned words, mastered words, reading level, and word length preferences) has been cleared.",
                 variant: "info"
             });
+            playNotificationSound();
              window.location.href = '/'; 
         }
     }
@@ -76,20 +79,20 @@ export const MainNav: FC = () => {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
             <div className="flex items-center gap-2">
-                <div className="h-7 w-7 bg-muted rounded-full animate-pulse"></div>
-                <div className="h-6 w-24 bg-muted rounded-md animate-pulse hidden sm:block"></div>
+                <div className="h-8 w-8 bg-muted rounded-full animate-pulse"></div>
+                <div className="h-7 w-28 bg-muted rounded-md animate-pulse hidden sm:block"></div>
             </div>
             <div className="flex items-center gap-2 md:hidden">
-                 <div className="h-8 w-8 bg-muted rounded-full animate-pulse"></div>
+                 <div className="h-9 w-9 bg-muted rounded-full animate-pulse"></div>
             </div>
-            <div className="hidden md:flex items-center gap-1"> {/* Adjusted gap for more items */}
+            <div className="hidden md:flex items-center gap-1">
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* For Tutorial */}
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* For Profile */}
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* For Settings */}
-                <div className="h-8 w-24 bg-muted rounded-md animate-pulse ml-2"></div>
+                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
+                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
+                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
+                <div className="h-9 w-28 bg-primary/50 rounded-md animate-pulse ml-2"></div>
             </div>
         </div>
       </header>
@@ -97,16 +100,16 @@ export const MainNav: FC = () => {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-          <BookOpenText className="h-7 w-7 text-primary" aria-hidden="true" />
-          <h1 className="text-xl font-bold text-primary hidden sm:block">SightWords</h1>
+        <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
+          <BookOpenText className="h-8 w-8 text-primary group-hover:text-accent transition-colors duration-300 ease-in-out" aria-hidden="true" />
+          <h1 className="text-2xl font-bold text-primary group-hover:text-accent transition-colors duration-300 ease-in-out hidden sm:block">ChillLearn</h1>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
           <NavLinkItems />
-          <Button variant="default" size="sm" asChild className="ml-2">
+          <Button variant="default" size="sm" asChild className="ml-2 btn-glow">
             <Link href="/">
               <Brain className="mr-2 h-4 w-4" aria-hidden="true" /> Quick Learn
             </Link>
@@ -116,34 +119,34 @@ export const MainNav: FC = () => {
         <div className="md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full aspect-square" aria-label="Open navigation menu" aria-expanded={isMobileMenuOpen}>
-                <Menu className="h-6 w-6" aria-hidden="true" />
+              <Button variant="ghost" size="icon" className="rounded-full aspect-square h-10 w-10 hover:bg-accent/20" aria-label="Open navigation menu" aria-expanded={isMobileMenuOpen}>
+                <Menu className="h-6 w-6 text-foreground" aria-hidden="true" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-full max-w-xs p-0 flex flex-col">
-              <SheetHeader className="flex flex-row items-center justify-between p-4 border-b">
+            <SheetContent side="right" className="w-full max-w-xs p-0 flex flex-col bg-card/95 backdrop-blur-md">
+              <SheetHeader className="flex flex-row items-center justify-between p-4 border-b border-border/30">
                 <SheetTitle asChild>
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <BookOpenText className="h-7 w-7 text-primary" aria-hidden="true"/>
-                    <h1 className="text-xl font-bold text-primary">SightWords</h1>
+                    <h1 className="text-xl font-bold text-primary">ChillLearn</h1>
                   </Link>
                 </SheetTitle>
                 <SheetClose asChild>
-                   <Button variant="ghost" size="icon" className="rounded-full aspect-square" aria-label="Close navigation menu">
-                      <X className="h-6 w-6" aria-hidden="true" />
+                   <Button variant="ghost" size="icon" className="rounded-full aspect-square hover:bg-accent/20" aria-label="Close navigation menu">
+                      <X className="h-6 w-6 text-foreground" aria-hidden="true" />
                     </Button>
                 </SheetClose>
               </SheetHeader>
-              <SheetDescription className="sr-only">Main navigation menu for SightWords application.</SheetDescription>
+              <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
                 <NavLinkItems isMobile />
-                <Button variant="default" size="lg" asChild className="mt-4 w-full">
+                <Button variant="default" size="lg" asChild className="mt-4 w-full btn-glow">
                   <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
                     <Brain className="mr-2 h-5 w-5" aria-hidden="true" /> Quick Learn
                   </Link>
                 </Button>
               </nav>
-               <div className="mt-auto p-4 border-t">
+               <div className="mt-auto p-4 border-t border-border/30">
                   <Button variant="destructive" className="w-full" onClick={handleResetProgress}>
                       <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                       Reset Learning Progress

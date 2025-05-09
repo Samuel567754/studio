@@ -284,7 +284,7 @@ export default function LearnWordsPage() {
       {wordList.length === 0 && isMounted && !showProgressionAlert && (
         <Alert variant="info" className="bg-card/90 border-accent/20 shadow animate-in fade-in-0 zoom-in-95 duration-500 ease-out" aria-live="polite">
           <Info className="h-5 w-5" aria-hidden="true" />
-          <AlertTitle className="font-semibold text-lg">Welcome to SightWords AI!</AlertTitle>
+          <AlertTitle className="font-semibold text-lg">Welcome to ChillLearn AI!</AlertTitle>
           <AlertDescription className="text-base">
             Start your learning journey:
             <ol className="list-decimal list-inside mt-2 space-y-1">
@@ -299,3 +299,4 @@ export default function LearnWordsPage() {
     </div>
   );
 }
+
