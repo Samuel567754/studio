@@ -1,7 +1,6 @@
-
 "use client";
 import type { FC } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react'; // Added useMemo
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -43,18 +42,27 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // Memoize default values to ensure stable reference for useForm if props don't change
+  const defaultFormValues = useMemo(() => ({
+    readingLevel: currentReadingLevel || "beginner",
+    wordLength: currentWordLength > 0 ? currentWordLength : 3, // Ensure a positive default
+  }), [currentReadingLevel, currentWordLength]);
+
   const form = useForm<SuggestionFormValues>({
     resolver: zodResolver(suggestionFormSchema),
-    // Default values will be set by useEffect based on props currentReadingLevel, currentWordLength
+    defaultValues: defaultFormValues, // Initialize form with default values
   });
 
-  // Update form when props change (e.g. loaded from localStorage by parent)
+  // Effect to reset form if props currentReadingLevel or currentWordLength change
   useEffect(() => {
-    if (currentReadingLevel && currentWordLength > 0) {
-        form.reset({
-            readingLevel: currentReadingLevel,
-            wordLength: currentWordLength,
-        });
+    const newDefaultValues = {
+      readingLevel: currentReadingLevel || "beginner",
+      wordLength: currentWordLength > 0 ? currentWordLength : 3,
+    };
+    // Only reset if the derived values actually differ from what's in the form
+    // This avoids unnecessary resets if props update but resolve to the same effective defaults
+    if (form.getValues('readingLevel') !== newDefaultValues.readingLevel || form.getValues('wordLength') !== newDefaultValues.wordLength) {
+      form.reset(newDefaultValues);
     }
   }, [currentReadingLevel, currentWordLength, form]);
 
@@ -62,7 +70,9 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
   const onSubmit: SubmitHandler<SuggestionFormValues> = async (data) => {
     setIsLoading(true);
     setDisplayedSuggestedWords([]); 
-    // onSettingsChange(data.readingLevel, data.wordLength); // This is already called by individual field changes
+    // onSettingsChange is called by individual field changes, so not strictly needed here
+    // but can be kept if direct submission should also update settings.
+    // onSettingsChange(data.readingLevel, data.wordLength); 
     try {
       const result = await suggestWords(data as SuggestWordsInput);
       if (result.suggestedWords && result.suggestedWords.length > 0) {
@@ -105,10 +115,9 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
                     <Select 
                       onValueChange={(value) => { 
                         field.onChange(value); 
-                        // Trigger settings change immediately for responsiveness
                         onSettingsChange(value, form.getValues('wordLength'));
                       }} 
-                      value={field.value}
+                      value={field.value} // field.value will be from defaultValues initially
                       disabled={isLoading}
                     >
                       <FormControl>
@@ -129,19 +138,22 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
               <FormField
                 control={form.control}
                 name="wordLength"
-                render={({ field }) => (
+                render={({ field }) => ( // field.value will be from defaultValues initially
                   <FormItem>
                     <FormLabel className="font-semibold text-base">Preferred Word Length</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
                         placeholder="e.g., 3 to 5" 
-                        {...field} 
+                        {...field} // Spreads value, onChange, etc.
                         onChange={(e) => {
-                          const val = e.target.valueAsNumber || 0;
-                          field.onChange(val);
-                           // Trigger settings change immediately
-                          onSettingsChange(form.getValues('readingLevel'), val);
+                          const val = e.target.valueAsNumber;
+                          // Ensure NaN (from empty input) becomes a controlled value for RHF, e.g., 0 or an empty string
+                          // RHF handles number coercion, but it's good to be explicit.
+                          // If schema expects number, field.onChange should receive number or empty for clearing.
+                          // Zod coerce will handle empty string to number.
+                          field.onChange(isNaN(val) ? '' : val); // Pass empty string or number
+                          onSettingsChange(form.getValues('readingLevel'), isNaN(val) ? 0 : val);
                         }}
                         disabled={isLoading}
                         className="bg-background/80 hover:border-primary/50 focus:ring-primary/50 text-base h-11 shadow-sm"
@@ -152,7 +164,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
                 )}
               />
             </div>
-           <Button type="submit" disabled={isLoading || !form.formState.isDirty && !displayedSuggestedWords.length } className="w-full !text-lg py-3 mt-2" size="lg">
+           <Button type="submit" disabled={isLoading || !form.formState.isDirty && displayedSuggestedWords.length === 0 } className="w-full !text-lg py-3 mt-2" size="lg">
              {isLoading ? (
                <>
                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
