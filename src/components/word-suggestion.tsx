@@ -1,7 +1,7 @@
 
 "use client";
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,20 +23,22 @@ type SuggestionFormValues = z.infer<typeof suggestionFormSchema>;
 
 interface WordSuggestionProps {
   onWordSelected: (word: string) => void;
+  onNewSuggestedWordsList: (words: string[]) => void; // Callback to inform parent of new suggestions
   currentReadingLevel: string;
   currentWordLength: number;
   onSettingsChange: (level: string, length: number) => void;
-  currentPracticingWord?: string; // To highlight the active word
+  currentPracticingWord?: string;
 }
 
 export const WordSuggestion: FC<WordSuggestionProps> = ({ 
   onWordSelected, 
+  onNewSuggestedWordsList,
   currentReadingLevel, 
   currentWordLength, 
   onSettingsChange,
   currentPracticingWord 
 }) => {
-  const [suggestedWordsList, setSuggestedWordsList] = useState<string[]>([]);
+  const [displayedSuggestedWords, setDisplayedSuggestedWords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -46,29 +48,37 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
       readingLevel: currentReadingLevel,
       wordLength: currentWordLength,
     },
-    values: { 
-        readingLevel: currentReadingLevel,
-        wordLength: currentWordLength,
-    }
   });
+
+  // Sync form with external prop changes for readingLevel and wordLength
+  useEffect(() => {
+    form.reset({
+      readingLevel: currentReadingLevel,
+      wordLength: currentWordLength,
+    });
+  }, [currentReadingLevel, currentWordLength, form]);
+
 
   const onSubmit: SubmitHandler<SuggestionFormValues> = async (data) => {
     setIsLoading(true);
-    setSuggestedWordsList([]);
+    setDisplayedSuggestedWords([]); // Clear previous suggestions
     onSettingsChange(data.readingLevel, data.wordLength); 
     try {
       const result = await suggestWords(data as SuggestWordsInput);
       if (result.suggestedWords && result.suggestedWords.length > 0) {
-        setSuggestedWordsList(result.suggestedWords);
+        setDisplayedSuggestedWords(result.suggestedWords);
+        onNewSuggestedWordsList(result.suggestedWords); // Inform parent
         toast({ title: "Words Suggested!", description: `${result.suggestedWords.length} new words to practice.` });
       } else {
-        setSuggestedWordsList([]);
+        setDisplayedSuggestedWords([]);
+        onNewSuggestedWordsList([]); // Inform parent
         toast({ title: "No Words Found", description: "Try different settings or broaden your criteria.", variant: "default" });
       }
     } catch (error) {
       console.error("Error fetching suggestions:", error);
       toast({ title: "Suggestion Error", description: "Could not fetch word suggestions at this time. Please try again later.", variant: "destructive" });
-      setSuggestedWordsList([]);
+      setDisplayedSuggestedWords([]);
+      onNewSuggestedWordsList([]); // Inform parent
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +99,13 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Your Reading Level</FormLabel>
-                  <Select onValueChange={(value) => { field.onChange(value); onSettingsChange(value, form.getValues("wordLength")); }} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={(value) => { 
+                      field.onChange(value); 
+                      // No need to call onSettingsChange here, it's called on submit
+                    }} 
+                    value={field.value} // Ensure value is controlled
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select your reading level" />
@@ -112,13 +128,22 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
                 <FormItem>
                   <FormLabel>Preferred Word Length</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="e.g., 4" {...field} onChange={(e) => { field.onChange(e); onSettingsChange(form.getValues("readingLevel"), Number(e.target.value)); }} />
+                    <Input 
+                      type="number" 
+                      placeholder="e.g., 4" 
+                      {...field} 
+                      onChange={(e) => {
+                        field.onChange(e.target.valueAsNumber || 0);
+                        // No need to call onSettingsChange here
+                      }}
+                      value={field.value} // Ensure value is controlled
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-           <Button type="submit" disabled={isLoading} className="w-full" size="lg">
+           <Button type="submit" disabled={isLoading} className="w-full !text-base" size="lg">
              {isLoading ? (
                <>
                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -134,11 +159,11 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
           </CardContent>
         </form>
       </Form>
-      {suggestedWordsList.length > 0 && (
+      {displayedSuggestedWords.length > 0 && (
         <CardFooter className="flex flex-col items-start gap-4 pt-6 border-t">
           <h4 className="font-semibold text-foreground text-lg">Practice these words:</h4>
           <div className="flex flex-wrap gap-2 items-center">
-            {suggestedWordsList.map((word, index) => (
+            {displayedSuggestedWords.map((word, index) => (
               <Button
                 key={index}
                 variant={currentPracticingWord === word ? "default" : "outline"}
@@ -146,7 +171,11 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
                 onClick={() => {
                   onWordSelected(word);
                 }}
-                className="px-3 py-1.5"
+                className={`px-3 py-1.5 text-sm transition-all duration-150 ease-in-out hover:shadow-md 
+                            ${currentPracticingWord === word 
+                              ? 'bg-primary text-primary-foreground scale-105 shadow-lg' 
+                              : 'bg-secondary/50 hover:bg-secondary text-secondary-foreground hover:text-accent-foreground'
+                            }`}
               >
                 {word}
               </Button>
