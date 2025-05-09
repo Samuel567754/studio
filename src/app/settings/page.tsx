@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Sun, Moon, Laptop, Palette, Type, CaseSensitive, Volume2, VolumeX, RefreshCw, Mic2, ChevronDown } from "lucide-react";
+import { Sun, Moon, Laptop, Palette, Type, CaseSensitive, Volume2, VolumeX, RefreshCw, Mic2, ChevronDown, SettingsIcon } from "lucide-react";
 import { playNotificationSound } from '@/lib/audio';
 
 const fontFamilies = [
@@ -308,3 +308,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
