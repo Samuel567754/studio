@@ -5,11 +5,11 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2 } from 'lucide-react';
+import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { clearAllStoredData } from '@/lib/storage'; // Import clear storage function
+import { clearAllStoredData } from '@/lib/storage'; 
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -17,6 +17,7 @@ const navLinks = [
   { href: '/', label: 'Learn Words', icon: Lightbulb },
   { href: '/spell', label: 'Spell Practice', icon: Edit3 },
   { href: '/read', label: 'Read Passages', icon: BookMarked },
+  { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
 export const MainNav: FC = () => {
@@ -63,8 +64,6 @@ export const MainNav: FC = () => {
                 description: "All your learning data has been cleared.",
                 variant: "default"
             });
-            // Force a reload or navigate to home to reflect changes
-            // Using window.location.href to ensure a full refresh that clears any component state.
             window.location.href = '/';
         }
     }
@@ -72,7 +71,6 @@ export const MainNav: FC = () => {
 
 
   if (!isMounted) {
-    // Skeleton loader for header to avoid layout shift during SSR/initial client render
     return (
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
@@ -87,6 +85,7 @@ export const MainNav: FC = () => {
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
+                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* Added for Settings */}
                 <div className="h-8 w-24 bg-muted rounded-md animate-pulse ml-2"></div>
             </div>
         </div>
@@ -97,13 +96,11 @@ export const MainNav: FC = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        {/* Logo and Title */}
         <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
           <BookOpenText className="h-7 w-7 text-primary" />
           <h1 className="text-xl font-bold text-primary hidden sm:block">SightWords</h1>
         </Link>
 
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1 lg:gap-2">
           <NavLinkItems />
           <Button variant="default" size="sm" asChild className="ml-2">
@@ -113,7 +110,6 @@ export const MainNav: FC = () => {
           </Button>
         </nav>
 
-        {/* Mobile Navigation Trigger */}
         <div className="md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -123,7 +119,7 @@ export const MainNav: FC = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full max-w-xs p-0 flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b">
+              <SheetHeader className="flex flex-row items-center justify-between p-4 border-b">
                 <SheetTitle asChild>
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <BookOpenText className="h-7 w-7 text-primary" />
@@ -136,8 +132,7 @@ export const MainNav: FC = () => {
                       <span className="sr-only">Close navigation menu</span>
                     </Button>
                 </SheetClose>
-              </div>
-              {/* Optional: Add a SheetDescription if appropriate, or a visually hidden one for screen readers */}
+              </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for SightWords application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4">
                 <NavLinkItems isMobile />

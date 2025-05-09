@@ -5,13 +5,14 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Lightbulb, Edit3, BookMarked } from 'lucide-react';
+import { Lightbulb, Edit3, BookMarked, SettingsIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Learn', icon: Lightbulb },
   { href: '/spell', label: 'Spell', icon: Edit3 },
   { href: '/read', label: 'Read', icon: BookMarked },
+  { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
 export const BottomNav: FC = () => {
@@ -23,7 +24,6 @@ export const BottomNav: FC = () => {
   }, []);
 
   if (!isMounted) {
-    // Avoid rendering on server or during first mount to prevent hydration mismatch with md:hidden
     return null; 
   }
 
@@ -35,7 +35,7 @@ export const BottomNav: FC = () => {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out w-1/3 h-full",
+              "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out w-1/4 h-full", // Changed w-1/3 to w-1/4
               pathname === item.href
                 ? "text-primary bg-primary/10 scale-105"
                 : "text-muted-foreground hover:text-primary hover:bg-primary/5"
