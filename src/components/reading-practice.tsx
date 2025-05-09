@@ -35,7 +35,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+      window.speechSynthesis.cancel(); // This will trigger 'onend' and potentially 'onerror' with 'canceled'
     }
     setIsSpeaking(false);
     setIsPaused(false);
@@ -45,11 +45,13 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   const handleSpeechBoundary = useCallback((event: SpeechSynthesisEvent) => {
     if (event.name === 'word') {
+      // console.log('Speech Boundary:', event.charIndex, event.charLength, passage?.substring(event.charIndex, event.charIndex + event.charLength));
       setCurrentSpokenWordInfo({ charIndex: event.charIndex, charLength: event.charLength });
     }
-  }, []);
+  }, [passage]); // Added passage because it's used in the (commented out) console.log
 
   const handleSpeechEnd = useCallback(() => {
+    // This is called when the utterance finishes speaking naturally or is canceled.
     setIsSpeaking(false);
     setIsPaused(false);
     setCurrentUtterance(null);
@@ -59,17 +61,21 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const handleSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
       if (event.error === 'interrupted' || event.error === 'canceled') {
           console.warn("Speech synthesis event in ReadingPractice:", event.error);
+          // For 'canceled' (e.g., by stopSpeech), onend will also fire and handle state reset.
+          // For 'interrupted', if it's not a full cancel, we might not want to reset all state here,
+          // but usually, it implies the speech cannot continue as intended with this utterance.
+          // If 'interrupted' is triggered by `pause()`, that would be a browser bug. Pause shouldn't be an error.
       } else {
-          console.error("Speech synthesis error in ReadingPractice:", event.error);
-          toast({ variant: "destructive", title: "Audio Error", description: "Could not play audio for the passage." });
+          console.error("Speech synthesis error in ReadingPractice:", event.error, passage?.substring(event.charIndex));
+          toast({ variant: "destructive", title: "Audio Error", description: `Could not play audio: ${event.error}.` });
           playErrorSound();
+          // Reset state for actual errors that prevent continuation
+          setIsSpeaking(false);
+          setIsPaused(false);
+          setCurrentUtterance(null);
+          setCurrentSpokenWordInfo(null);
       }
-      // Ensure UI state is reset
-      setIsSpeaking(false);
-      setIsPaused(false);
-      setCurrentUtterance(null);
-      setCurrentSpokenWordInfo(null);
-  }, [toast]);
+  }, [toast, passage]);
 
 
   const fetchPassage = useCallback(async () => {
@@ -113,58 +119,70 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
     const speech = window.speechSynthesis;
 
-    if (isSpeaking && !isPaused) { 
+    if (isSpeaking && !isPaused) { // Currently speaking, want to PAUSE
       speech.pause();
       setIsPaused(true);
       playNotificationSound();
-    } else if (isSpeaking && isPaused) { 
+    } else if (isSpeaking && isPaused) { // Currently paused, want to RESUME
       speech.resume();
-      setIsPaused(false);
+      setIsPaused(false); // isSpeaking remains true
       playNotificationSound();
-    } else { 
+    } else { // Not speaking (or previous session ended), want to START
+      // Ensure any remnants are cleared before starting anew (though speakText also calls cancel)
+      speech.cancel(); 
       const utterance = speakText(passage, handleSpeechBoundary, handleSpeechEnd, handleSpeechError);
       if (utterance) {
         setCurrentUtterance(utterance);
         setIsSpeaking(true);
         setIsPaused(false);
         // playNotificationSound(); // speakText might play its own notification or we might not want one on start
+      } else {
+        // Failed to create/start utterance
+        setIsSpeaking(false);
+        setIsPaused(false);
       }
     }
   }, [passage, isSpeaking, isPaused, soundEffectsEnabled, handleSpeechBoundary, handleSpeechEnd, handleSpeechError]);
 
   useEffect(() => {
+    // Cleanup function to stop speech when the component unmounts
     return () => {
       stopSpeech();
     };
   }, [stopSpeech]);
 
   const renderHighlightedPassage = (): ReactNode[] => {
+    // console.log("Rendering with currentSpokenWordInfo:", currentSpokenWordInfo);
     if (!passage) return [];
   
     const elements: ReactNode[] = [];
     let keyCounter = 0;
   
-    const processTextSegment = (textSegment: string, segmentContainsSpokenWord: boolean) => {
+    // This function processes a segment of text (before, spoken, after)
+    // and styles practice words within it.
+    // The `isCurrentlySpokenSegment` flag is true only for the "spoken" part.
+    const processSegmentAndTokenize = (textSegment: string, isCurrentlySpokenSegment: boolean) => {
       if (!textSegment) return;
   
-      // Regex to split by words while keeping delimiters.
-      // It captures sequences of word characters, or sequences of non-word/non-space characters (punctuation), or sequences of spaces.
+      // Tokenize by words and punctuation/spaces
       const tokens = textSegment.split(/(\b\w+\b|[^\w\s]+|\s+)/g).filter(Boolean);
   
       for (const token of tokens) {
-        const isWordToken = /\b\w+\b/.test(token);
+        const isWordToken = /\b\w+\b/.test(token); // Check if the token is a word
+        // Check if this word token (case-insensitive) is one of the practice words
         const isPracticeWord = isWordToken && wordsToPractice.some(pWord => pWord.toLowerCase() === token.toLowerCase());
         
         elements.push(
           <span
             key={`token-${keyCounter++}`}
             className={cn({
-              // Style for the word that is currently being spoken by TTS
-              'bg-accent/80 dark:bg-accent/60 text-accent-foreground px-0.5 rounded transition-all duration-100': segmentContainsSpokenWord && isWordToken,
-              // Style for practice words that are NOT currently being spoken
-              'text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2': isPracticeWord && !segmentContainsSpokenWord,
-              // Style for practice words that ARE currently being spoken (combines both)
-              'text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2 bg-accent/80 dark:bg-accent/60 text-accent-foreground px-0.5 rounded transition-all duration-100': isPracticeWord && segmentContainsSpokenWord && isWordToken,
+              // Style for the word that is currently being spoken by TTS (applies to tokens within the spoken segment)
+              'bg-accent/80 dark:bg-accent/60 text-accent-foreground px-0.5 rounded transition-colors duration-100 ease-in-out': isCurrentlySpokenSegment && isWordToken,
+              // Style for practice words that are NOT currently being spoken (applies to tokens in before/after segments, or non-spoken tokens in spoken segment)
+              'text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2': isPracticeWord && !isCurrentlySpokenSegment,
+              // Style for practice words that ARE currently being spoken (combines both styles)
+              // This condition ensures that if a practice word is the one being spoken, it gets both underlines and background highlight.
+              'text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2 bg-accent/80 dark:bg-accent/60 text-accent-foreground px-0.5 rounded transition-colors duration-100 ease-in-out': isPracticeWord && isCurrentlySpokenSegment && isWordToken,
             })}
           >
             {token}
@@ -175,15 +193,26 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   
     if (currentSpokenWordInfo && passage) {
       const { charIndex, charLength } = currentSpokenWordInfo;
-      const before = passage.substring(0, charIndex);
-      const spoken = passage.substring(charIndex, charIndex + charLength);
-      const after = passage.substring(charIndex + charLength);
-  
-      processTextSegment(before, false);
-      processTextSegment(spoken, true); // This segment is the spoken word
-      processTextSegment(after, false);
+      // Ensure charIndex and charLength are valid
+      const validCharIndex = Math.max(0, charIndex);
+      const validCharLength = Math.max(0, charLength);
+
+      if (validCharIndex < passage.length) {
+        const before = passage.substring(0, validCharIndex);
+        const spoken = passage.substring(validCharIndex, Math.min(passage.length, validCharIndex + validCharLength));
+        const after = passage.substring(Math.min(passage.length, validCharIndex + validCharLength));
+    
+        processSegmentAndTokenize(before, false);
+        processSegmentAndTokenize(spoken, true); // This segment IS the currently spoken word(s)
+        processSegmentAndTokenize(after, false);
+      } else {
+         // charIndex is out of bounds, treat entire passage as not spoken
+        processSegmentAndTokenize(passage, false);
+      }
+
     } else if (passage) {
-      processTextSegment(passage, false); // No specific word is being spoken, just process for practice words
+      // No specific word is being spoken, just process the whole passage for practice words
+      processSegmentAndTokenize(passage, false);
     }
   
     return elements;
@@ -221,7 +250,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
                 {isSpeaking && !isPaused ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
                 {isSpeaking && !isPaused ? 'Pause' : (isPaused ? 'Resume' : 'Read Aloud')}
               </Button>
-              {isSpeaking && (
+              {isSpeaking && ( // Show stop button only if a speech session is active
                 <Button onClick={stopSpeech} variant="destructive" size="lg" className="w-full sm:w-auto" aria-label="Stop reading">
                   <StopCircle className="mr-2 h-5 w-5" /> Stop
                 </Button>
@@ -264,10 +293,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       </CardContent>
       {passage && !isLoading && (
         <CardFooter>
-            <p className="text-xs text-muted-foreground">Passage generated by AI. Words from your list are <strong className="text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2">highlighted</strong>. Spoken words are <span className="bg-accent/80 dark:bg-accent/60 text-accent-foreground px-0.5 rounded">highlighted like this</span>.</p>
+            <p className="text-xs text-muted-foreground">Passage generated by AI. Words from your list are <strong className="text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2">highlighted like this</strong>. Spoken words are <span className="bg-accent/80 dark:bg-accent/60 text-accent-foreground px-0.5 rounded">highlighted with a background</span>.</p>
         </CardFooter>
       )}
     </Card>
   );
 };
-
