@@ -1,4 +1,3 @@
-
 "use client";
 import type { FC, ReactNode } from 'react';
 import { useState, useCallback, useEffect } from 'react';
@@ -135,9 +134,16 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         setIsPaused(false);
       };
       utterance.onerror = (event) => {
-        console.error("Speech synthesis error:", event.error);
-        toast({ variant: "destructive", title: "Audio Error", description: "Could not play audio for the passage." });
-        playErrorSound();
+        // "interrupted" and "canceled" are often due to user action (e.g., stopping speech, fetching new passage)
+        // and might not need an aggressive error display.
+        if (event.error === 'interrupted' || event.error === 'canceled') {
+          console.warn("Speech synthesis event:", event.error);
+        } else {
+          console.error("Speech synthesis error:", event.error);
+          toast({ variant: "destructive", title: "Audio Error", description: "Could not play audio for the passage." });
+          playErrorSound();
+        }
+        // Always reset state regardless of error type to ensure UI consistency
         setIsSpeaking(false);
         setIsPaused(false);
       };
@@ -234,4 +240,3 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     </Card>
   );
 };
-
