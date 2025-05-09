@@ -1,0 +1,77 @@
+
+'use client';
+
+// Keys for localStorage items
+const WORD_LIST_KEY = 'sightwords_wordList_v1'; // Added versioning in case of structure change
+const READING_LEVEL_KEY = 'sightwords_readingLevel_v1';
+const WORD_LENGTH_KEY = 'sightwords_wordLength_v1';
+const CURRENT_INDEX_KEY = 'sightwords_currentIndex_v1';
+
+// --- Word List ---
+export const getStoredWordList = (): string[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(WORD_LIST_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error("Error parsing word list from localStorage:", error);
+    return [];
+  }
+};
+
+export const storeWordList = (wordList: string[]): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(WORD_LIST_KEY, JSON.stringify(wordList));
+  } catch (error) {
+    console.error("Error storing word list to localStorage:", error);
+  }
+};
+
+// --- Reading Level ---
+export const getStoredReadingLevel = (defaultValue = "beginner"): string => {
+  if (typeof window === 'undefined') return defaultValue;
+  return localStorage.getItem(READING_LEVEL_KEY) || defaultValue;
+};
+
+export const storeReadingLevel = (level: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(READING_LEVEL_KEY, level);
+};
+
+// --- Word Length ---
+export const getStoredWordLength = (defaultValue = 3): number => {
+  if (typeof window === 'undefined') return defaultValue;
+  const stored = localStorage.getItem(WORD_LENGTH_KEY);
+  const value = stored ? parseInt(stored, 10) : defaultValue;
+  return isNaN(value) ? defaultValue : value;
+};
+
+export const storeWordLength = (length: number): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(WORD_LENGTH_KEY, String(length));
+};
+
+// --- Current Index (for word list navigation) ---
+export const getStoredCurrentIndex = (defaultValue = 0): number => {
+  if (typeof window === 'undefined') return defaultValue;
+  const stored = localStorage.getItem(CURRENT_INDEX_KEY);
+  const value = stored ? parseInt(stored, 10) : defaultValue;
+  return isNaN(value) ? defaultValue : value;
+};
+
+export const storeCurrentIndex = (index: number): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(CURRENT_INDEX_KEY, String(index));
+};
+
+// --- Utility to clear all app-specific storage ---
+export const clearAllStoredData = (): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(WORD_LIST_KEY);
+  localStorage.removeItem(READING_LEVEL_KEY);
+  localStorage.removeItem(WORD_LENGTH_KEY);
+  localStorage.removeItem(CURRENT_INDEX_KEY);
+  // Potentially alert user or log this action
+  console.log("Cleared all application-specific stored data.");
+};
