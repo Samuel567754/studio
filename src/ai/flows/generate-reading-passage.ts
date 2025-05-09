@@ -34,6 +34,8 @@ const GenerateReadingPassageOutputSchema = z.object({
   passage: z
     .string()
     .describe('The generated reading passage.'),
+  comprehensionQuestion: z.string().optional().describe('A simple comprehension question based *only* on the content of the generated passage. The question should test understanding of key information.'),
+  comprehensionAnswer: z.string().optional().describe('A concise answer to the comprehension question, based *only* on the passage content.'),
 });
 export type GenerateReadingPassageOutput = z.infer<
   typeof GenerateReadingPassageOutputSchema
@@ -42,8 +44,6 @@ export type GenerateReadingPassageOutput = z.infer<
 export async function generateReadingPassage(
   input: GenerateReadingPassageInput
 ): Promise<GenerateReadingPassageOutput> {
-  // The client is now responsible for passing masteredWords if available.
-  // No server-side fetching of masteredWords from localStorage.
   return generateReadingPassageFlow(input);
 }
 
@@ -70,7 +70,10 @@ const prompt = ai.definePrompt({
 
   Please generate a passage that is 10-15 sentences long. Ensure the vocabulary and sentence structure are suitable for the reading level.
   The passage should make sense and be interesting for a learner.
-  Output only the passage itself.`,
+
+  Additionally, formulate one simple comprehension question based *only* on the content of the passage you just generated. Also, provide a concise answer to this question.
+  The question should test understanding of the passage's key information.
+  Output only the passage itself, the comprehension question, and the answer in the specified structured format.`,
   config: {
     temperature: 0.7, // Allow for some creativity
      safetySettings: [ 
@@ -102,7 +105,11 @@ const generateReadingPassageFlow = ai.defineFlow(
   },
   async input => {
     if (input.words.length === 0) {
-        return { passage: "Please learn some words first to generate a reading passage." };
+        return { 
+          passage: "Please learn some words first to generate a reading passage.",
+          comprehensionQuestion: undefined,
+          comprehensionAnswer: undefined,
+        };
     }
     const {output} = await prompt(input);
     return output!;
