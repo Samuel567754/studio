@@ -220,4 +220,13 @@
   .text-gradient-primary-accent {
     @apply bg-gradient-to-r from-primary via-accent to-yellow-400 dark:from-primary dark:via-accent dark:to-yellow-300 bg-clip-text text-transparent;
   }
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
 }
