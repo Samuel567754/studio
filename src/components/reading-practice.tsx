@@ -8,6 +8,7 @@ import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/f
 import { Loader2, BookMarked, RefreshCcw } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { playSuccessSound, playErrorSound, playNotificationSound } from '@/lib/audio';
 
 interface ReadingPracticeProps {
   wordsToPractice: string[];
@@ -16,8 +17,6 @@ interface ReadingPracticeProps {
 
 const highlightWords = (text: string, words: string[]): ReactNode[] => {
   if (!words.length || !text) return [text];
-  // Ensure words are sorted by length descending to match longer phrases first if applicable
-  // and escape special characters for regex.
   const sortedWords = [...words].sort((a, b) => b.length - a.length);
   const regex = new RegExp(`\\b(${sortedWords.map(word => word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})\\b`, 'gi');
   
@@ -25,27 +24,24 @@ const highlightWords = (text: string, words: string[]): ReactNode[] => {
   let lastIndex = 0;
 
   text.replace(regex, (match, ...args) => {
-    const offset = args[args.length - 2]; // The offset of the match
-    // Add the text before the match
+    const offset = args[args.length - 2]; 
     if (offset > lastIndex) {
       parts.push(text.substring(lastIndex, offset));
     }
-    // Add the highlighted match
     parts.push(
       <strong key={`match-${offset}`} className="text-primary font-bold underline decoration-wavy decoration-primary/50 underline-offset-2">
         {match}
       </strong>
     );
     lastIndex = offset + match.length;
-    return match; // Required by String.prototype.replace
+    return match; 
   });
 
-  // Add any remaining text after the last match
   if (lastIndex < text.length) {
     parts.push(text.substring(lastIndex));
   }
   
-  return parts.length > 0 ? parts : [text]; // Return original text if no parts (e.g. no matches)
+  return parts.length > 0 ? parts : [text]; 
 };
 
 
@@ -62,6 +58,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         variant: "default",
       });
       setPassage("Please get some word suggestions and select a word first. Then, try generating a passage.");
+      // No specific sound here, toast is sufficient.
       return;
     }
 
@@ -73,14 +70,17 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       if (result.passage) {
         setPassage(result.passage);
         toast({ title: "Passage Generated!", description: "Happy reading!" });
+        playSuccessSound();
       } else {
         setPassage("Could not generate a passage with the current words and settings. Try again or change words.");
         toast({ title: "No Passage Generated", description: "Try different words or settings.", variant: "default" });
+        playNotificationSound(); 
       }
     } catch (error) {
       console.error("Error generating passage:", error);
       setPassage("An error occurred while generating the passage. Please try again.");
       toast({ title: "Generation Error", description: "Could not generate a passage at this time.", variant: "destructive" });
+      playErrorSound();
     } finally {
       setIsLoading(false);
     }

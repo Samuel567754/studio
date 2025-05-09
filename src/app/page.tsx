@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -14,6 +15,8 @@ import { Trash2, CheckCircle, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card'; // Renamed to avoid conflict
 import { cn } from '@/lib/utils';
+import { playSuccessSound, playNavigationSound, playNotificationSound } from '@/lib/audio';
+
 
 export default function LearnWordsPage() {
   const [readingLevel, setReadingLevel] = useState<string>('');
@@ -55,6 +58,7 @@ export default function LearnWordsPage() {
     storeCurrentIndex(wordIndex);
     setCurrentPracticingWord(word);
     toast({ title: "Word Selected!", description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` });
+    playSuccessSound();
   }, [wordList, updateWordList, toast]);
   
   const handleNewSuggestedWordsList = useCallback((suggestedWords: string[]) => {
@@ -69,26 +73,25 @@ export default function LearnWordsPage() {
     setWordLength(length);
     storeWordLength(length);
     toast({ title: "Preferences Updated", description: `Suggestions will now target ${level} level, ${length}-letter words.` });
+    playNotificationSound();
   }, [toast]);
 
   const handleRemoveWord = (wordToRemove: string) => {
     const newWordList = wordList.filter(w => w !== wordToRemove);
-    updateWordList(newWordList); // This also calls storeWordList via setWordList
+    updateWordList(newWordList); 
 
     toast({ title: "Word Removed", description: `"${wordToRemove}" removed from your practice list.` });
+    playNavigationSound();
 
     if (newWordList.length === 0) {
         setCurrentPracticingWord('');
         storeCurrentIndex(0); 
     } else {
-        // Determine the new word to focus on
         let newSelectedWord = currentPracticingWord;
         let newIndex = newWordList.indexOf(newSelectedWord);
 
-        // If the currentPracticingWord was the one removed, or if it's no longer in the list (e.g. list was cleared and repopulated by another means)
-        // or if currentPracticingWord was empty (e.g. after removing the last word)
         if (newIndex === -1 || currentPracticingWord === wordToRemove) {
-            newSelectedWord = newWordList[0]; // Default to the first word in the new list
+            newSelectedWord = newWordList[0]; 
             newIndex = 0;
         }
         

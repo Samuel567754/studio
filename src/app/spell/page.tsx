@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { playSuccessSound, playNavigationSound } from '@/lib/audio';
 
 export default function SpellingPage() {
   const [wordList, setWordList] = useState<string[]>([]);
@@ -25,16 +26,15 @@ export default function SpellingPage() {
     setWordList(storedList);
     if (storedList.length > 0) {
       const storedIndex = getStoredCurrentIndex();
-      // Ensure index is within bounds, default to 0 if not
       const validIndex = (storedIndex >= 0 && storedIndex < storedList.length) ? storedIndex : 0;
       setCurrentIndex(validIndex);
       setCurrentWord(storedList[validIndex]);
       if (storedIndex !== validIndex) { 
-        storeCurrentIndex(validIndex); // Correct localStorage if index was out of bounds
+        storeCurrentIndex(validIndex); 
       }
     } else {
       setCurrentWord('');
-      setCurrentIndex(0); // Reset index if list is empty
+      setCurrentIndex(0); 
     }
   }, []);
 
@@ -65,6 +65,7 @@ export default function SpellingPage() {
     setCurrentIndex(newIndex);
     setCurrentWord(wordList[newIndex]);
     storeCurrentIndex(newIndex);
+    playNavigationSound();
   };
 
   const handleCorrectSpell = () => {
@@ -72,8 +73,8 @@ export default function SpellingPage() {
       title: "Great Job!",
       description: `You spelled "${currentWord}" correctly!`,
     });
+    playSuccessSound();
     if (wordList.length > 1) {
-      // Delay moving to next word to allow user to see feedback
       setTimeout(() => navigateWord('next'), 1200); 
     } else if (wordList.length === 1) {
         toast({
@@ -87,7 +88,6 @@ export default function SpellingPage() {
   if (!isMounted) {
     return (
       <div className="space-y-6 md:space-y-8">
-        {/* Skeleton for WordDisplay */}
         <Card className="shadow-lg animate-pulse">
             <CardHeader><div className="h-6 w-1/3 bg-muted rounded"></div></CardHeader>
             <CardContent className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
@@ -95,7 +95,6 @@ export default function SpellingPage() {
                 <div className="h-12 w-1/2 bg-primary/50 rounded"></div>
             </CardContent>
         </Card>
-        {/* Skeleton for SpellingPractice */}
         <Card className="shadow-lg animate-pulse">
             <CardHeader>
                 <div className="h-6 w-1/2 bg-muted rounded"></div>
