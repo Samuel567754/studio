@@ -1,19 +1,20 @@
-
 "use client";
 
 import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Lightbulb, Edit3, BookMarked, SettingsIcon, User } from 'lucide-react';
+import { Lightbulb, Edit3, BookMarked, SettingsIcon, User, HelpCircle } from 'lucide-react'; // Added HelpCircle
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Learn', icon: Lightbulb },
   { href: '/spell', label: 'Spell', icon: Edit3 },
   { href: '/read', label: 'Read', icon: BookMarked },
+  { href: '/tutorial', label: 'Guide', icon: HelpCircle }, // Added Tutorial link with HelpCircle
   { href: '/profile', label: 'Profile', icon: User },
-  { href: '/settings', label: 'Settings', icon: SettingsIcon },
+  // Removed settings from bottom nav to keep it to 5 items for better spacing
+  // { href: '/settings', label: 'Settings', icon: SettingsIcon }, 
 ];
 
 export const BottomNav: FC = () => {

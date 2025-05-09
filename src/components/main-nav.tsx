@@ -1,11 +1,10 @@
-
 "use client";
 
 import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info } from 'lucide-react'; // Added Info
+import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle } from 'lucide-react'; // Added HelpCircle
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -17,6 +16,7 @@ const navLinks = [
   { href: '/', label: 'Learn Words', icon: Lightbulb },
   { href: '/spell', label: 'Spell Practice', icon: Edit3 },
   { href: '/read', label: 'Read Passages', icon: BookMarked },
+  { href: '/tutorial', label: 'Tutorial', icon: HelpCircle }, // Added Tutorial Link
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -82,12 +82,13 @@ export const MainNav: FC = () => {
             <div className="flex items-center gap-2 md:hidden">
                  <div className="h-8 w-8 bg-muted rounded-full animate-pulse"></div>
             </div>
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-1"> {/* Adjusted gap for more items */}
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
                 <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* Added for profile */}
+                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* For Tutorial */}
+                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* For Profile */}
+                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div> {/* For Settings */}
                 <div className="h-8 w-24 bg-muted rounded-md animate-pulse ml-2"></div>
             </div>
         </div>

@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
@@ -30,7 +29,8 @@ export default function RootLayout({
         >
           <div className="flex flex-col min-h-screen">
             <MainNav />
-            <main className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-8 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out"> {/* Increased bottom padding for mobile & added animation */}
+            {/* Ensure consistent bottom padding for mobile due to BottomNav */}
+            <main className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-8 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out">
               {children}
             </main>
             <BottomNav />
@@ -44,4 +44,3 @@ export default function RootLayout({
     </html>
   );
 }
-
