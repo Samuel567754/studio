@@ -4,7 +4,7 @@ import React, { FC, ReactNode, useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
-import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, HelpCircle, Eye, ClipboardCopy } from 'lucide-react'; 
+import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy } from 'lucide-react'; 
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
@@ -30,9 +30,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const [isPaused, setIsPaused] = useState(false);
   const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
   const [currentSpokenWordInfo, setCurrentSpokenWordInfo] = useState<SpokenWordInfo | null>(null);
-  const [comprehensionQuestion, setComprehensionQuestion] = useState<string | null>(null);
-  const [comprehensionAnswer, setComprehensionAnswer] = useState<string | null>(null);
-  const [showComprehensionAnswer, setShowComprehensionAnswer] = useState(false);
   
   const { toast } = useToast();
   const soundEffectsEnabled = useAppSettingsStore(state => state.soundEffectsEnabled);
@@ -46,20 +43,14 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel(); // This should trigger onEnd or onError for the utterance
+      window.speechSynthesis.cancel(); 
     }
-    // resetSpeechState(); // onEnd/onError handlers should manage this.
-                           // If cancel() doesn't reliably trigger them, call resetSpeechState() here.
-                           // SpeechSynthesis.cancel() typically triggers onend.
   }, []);
 
 
   const resetStateForNewPassage = () => {
     setPassage(null);
     setCurrentSpokenWordInfo(null);
-    setComprehensionQuestion(null);
-    setComprehensionAnswer(null);
-    setShowComprehensionAnswer(false);
     resetSpeechState();
   };
 
@@ -86,7 +77,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       } else if (event.error) {
         console.warn("Speech synthesis event (interrupted/canceled) in ReadingPractice:", event.error);
       }
-      resetSpeechState(); // Always reset state on error or interruption
+      resetSpeechState(); 
   }, [toast, passage, resetSpeechState]);
 
 
@@ -98,9 +89,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         description: "Please get some word suggestions and select a word first.",
       });
       setPassage("Please get some word suggestions and select a word first. Then, try generating a passage.");
-      setComprehensionQuestion(null);
-      setComprehensionAnswer(null);
-      setShowComprehensionAnswer(false);
       return;
     }
 
@@ -115,9 +103,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       const result = await generateReadingPassage(input);
       if (result.passage) {
         setPassage(result.passage);
-        setComprehensionQuestion(result.comprehensionQuestion || null);
-        setComprehensionAnswer(result.comprehensionAnswer || null);
-        setShowComprehensionAnswer(false);
         toast({ 
           variant: "success", 
           title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Passage Generated!</div>, 
@@ -157,25 +142,23 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
     const speech = window.speechSynthesis;
 
-    if (isSpeaking) { // Utterance is active (could be playing or paused)
-        if (isPaused) { // Currently paused -> Resume
+    if (isSpeaking) { 
+        if (isPaused) { 
             speech.resume();
             setIsPaused(false);
             playNotificationSound();
-        } else { // Currently playing -> Pause
+        } else { 
             speech.pause();
             setIsPaused(true);
             playNotificationSound();
         }
-    } else { // Not speaking (no active utterance or it finished/stopped) -> Start new speech
-      // speech.cancel(); // Ensure any residual queue is cleared. speakText also does this.
+    } else { 
       const utterance = speakText(passage, handleSpeechBoundary, handleSpeechEnd, handleSpeechError);
       if (utterance) {
         setCurrentUtterance(utterance);
         setIsSpeaking(true);
         setIsPaused(false);
       } else {
-        // speakText might return null if soundEffectsEnabled was toggled off or other issue
         resetSpeechState();
       }
     }
@@ -213,7 +196,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   useEffect(() => {
     return () => {
-      // Ensure speech is stopped and states are reset when component unmounts
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
@@ -251,7 +233,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       }
     };
   
-    if (isSpeaking && currentSpokenWordInfo && passage) { // Only highlight if isSpeaking is true
+    if (isSpeaking && currentSpokenWordInfo && passage) { 
       const { charIndex, charLength } = currentSpokenWordInfo;
       const validCharIndex = Math.max(0, charIndex);
       const validCharLength = Math.max(0, charLength);
@@ -386,39 +368,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
                Click the "Generate New Passage" button above to create a story with your practice words!
              </AlertDescription>
            </Alert>
-        )}
-
-        {/* Comprehension Check Section */}
-        {comprehensionQuestion && !isLoading && (
-          <Card className="mt-6 shadow-md border-accent/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-accent flex items-center">
-                <HelpCircle className="mr-2 h-6 w-6" aria-hidden="true" /> Comprehension Check
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-lg text-foreground/90">{comprehensionQuestion}</p>
-              {!showComprehensionAnswer ? (
-                <Button 
-                  onClick={() => { setShowComprehensionAnswer(true); playNotificationSound(); }} 
-                  variant="outline" 
-                  size="default"
-                  className="hover:bg-accent/20 hover:text-accent-foreground"
-                >
-                  <Eye className="mr-2 h-5 w-5" aria-hidden="true" /> Show Answer
-                </Button>
-              ) : (
-                comprehensionAnswer ? (
-                  <Alert variant="info" className="bg-accent/10 border-accent/30 text-accent-foreground animate-in fade-in duration-300">
-                    <AlertTitle className="font-semibold">Answer:</AlertTitle>
-                    <AlertDescription className="text-base">{comprehensionAnswer}</AlertDescription>
-                  </Alert>
-                ) : (
-                   <p className="text-sm text-muted-foreground">Answer not available for this question.</p>
-                )
-              )}
-            </CardContent>
-          </Card>
         )}
       </CardContent>
       {passage && !isLoading && (
