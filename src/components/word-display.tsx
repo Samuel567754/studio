@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC } from 'react';
 import { Volume2 } from 'lucide-react';
@@ -29,16 +30,16 @@ export const WordDisplay: FC<WordDisplayProps> = ({ word }) => {
                      dark:from-primary dark:via-purple-400 dark:to-pink-400
                      bg-clip-text text-transparent 
                      drop-shadow-lg py-2
-                     select-none" /* Added select-none for better UX on text */
+                     select-none"
         >
           {word || "----"}
         </h2>
         <Button 
           onClick={speakWord} 
-          variant="outline" 
+          variant="default" 
           size="lg" 
           disabled={!word} 
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+          className="shadow-md hover:shadow-lg transform transition-transform hover:scale-105 active:scale-95 duration-200 ease-in-out"
         >
           <Volume2 className="mr-2 h-6 w-6" />
           Say Word
