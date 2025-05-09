@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle } from 'lucide-react';
+import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ import { playNotificationSound } from '@/lib/audio';
 const navLinks = [
   { href: '/', label: 'Learn Words', icon: Lightbulb },
   { href: '/spell', label: 'Spell Practice', icon: Edit3 },
+  { href: '/identify', label: 'Identify Word', icon: Target },
   { href: '/read', label: 'Read Passages', icon: BookMarked },
   { href: '/tutorial', label: 'Tutorial', icon: HelpCircle },
   { href: '/profile', label: 'Profile', icon: User },
@@ -86,12 +87,10 @@ export const MainNav: FC = () => {
                  <div className="h-9 w-9 bg-muted rounded-full animate-pulse"></div>
             </div>
             <div className="hidden md:flex items-center gap-1">
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
-                <div className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
+                {/* Adjust count based on navLinks length */}
+                {[...Array(navLinks.length)].map((_, i) => (
+                   <div key={i} className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
+                ))}
                 <div className="h-9 w-28 bg-primary/50 rounded-md animate-pulse ml-2"></div>
             </div>
         </div>

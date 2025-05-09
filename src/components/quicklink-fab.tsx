@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Plus, Lightbulb, Edit3, BookMarked, HelpCircle, User, SettingsIcon, X } from 'lucide-react';
+import { LayoutGrid, Plus, Lightbulb, Edit3, BookMarked, HelpCircle, User, SettingsIcon, X, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 const fabNavLinks = [
   { href: '/', label: 'Learn', icon: Lightbulb },
   { href: '/spell', label: 'Spell', icon: Edit3 },
+  { href: '/identify', label: 'Identify', icon: Target },
   { href: '/read', label: 'Read', icon: BookMarked },
   { href: '/tutorial', label: 'Guide', icon: HelpCircle },
   { href: '/profile', label: 'Profile', icon: User },

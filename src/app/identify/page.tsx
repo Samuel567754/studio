@@ -1,0 +1,173 @@
+
+"use client";
+
+import { useState, useEffect, useCallback } from 'react';
+import { WordDisplay } from '@/components/word-display';
+import { WordIdentificationGame } from '@/components/word-identification-game';
+import { useToast } from "@/hooks/use-toast";
+import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, Info, Target, CheckCircle2, XCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
+import { playNavigationSound, speakText } from '@/lib/audio';
+
+export default function IdentifyWordPage() {
+  const [wordList, setWordList] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [currentWord, setCurrentWord] = useState<string>('');
+  const [isMounted, setIsMounted] = useState(false);
+
+  const { toast } = useToast();
+
+  const loadWordData = useCallback(() => {
+    const storedList = getStoredWordList();
+    setWordList(storedList);
+    if (storedList.length > 0) {
+      const storedIndex = getStoredCurrentIndex();
+      const validIndex = (storedIndex >= 0 && storedIndex < storedList.length) ? storedIndex : 0;
+      setCurrentIndex(validIndex);
+      setCurrentWord(storedList[validIndex]);
+      if (storedList[validIndex]) speakText(storedList[validIndex]); // Speak word on load/change
+      if (storedIndex !== validIndex) { 
+        storeCurrentIndex(validIndex); 
+      }
+    } else {
+      setCurrentWord('');
+      setCurrentIndex(0); 
+    }
+  }, []);
+
+  useEffect(() => {
+    loadWordData();
+    setIsMounted(true);
+    
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'sightwords_wordList_v1' || event.key === 'sightwords_currentIndex_v1') {
+        loadWordData();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [loadWordData]);
+
+
+  const navigateWord = (direction: 'next' | 'prev') => {
+    if (wordList.length === 0) return;
+    let newIndex = currentIndex;
+    if (direction === 'next') {
+      newIndex = (currentIndex + 1) % wordList.length;
+    } else {
+      newIndex = (currentIndex - 1 + wordList.length) % wordList.length;
+    }
+    setCurrentIndex(newIndex);
+    const newWord = wordList[newIndex];
+    setCurrentWord(newWord);
+    storeCurrentIndex(newIndex);
+    if (newWord) speakText(newWord); // Speak new word
+    playNavigationSound();
+  };
+
+  const handleGameResult = (correct: boolean, selectedWord: string) => {
+    if (correct) {
+      toast({
+        variant: "success",
+        title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Correct!</div>,
+        description: `You identified "${currentWord}"!`,
+      });
+      // Auto-navigate to next word after a short delay for feedback visibility
+      if (wordList.length > 1) {
+        setTimeout(() => navigateWord('next'), 1500); 
+      } else {
+         toast({
+            variant: "success",
+            title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />List Complete!</div>,
+            description: "You've identified the only word. Add more to keep playing!",
+            duration: 4000,
+        });
+      }
+    } else {
+      toast({
+        variant: "destructive",
+        title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Not quite...</div>,
+        description: `You chose "${selectedWord}". The word was "${currentWord}". Try the next one!`,
+      });
+       if (wordList.length > 1) {
+        setTimeout(() => navigateWord('next'), 2500); 
+      }
+    }
+  };
+  
+  if (!isMounted) {
+    return (
+      <div className="space-y-6 md:space-y-8" aria-live="polite" aria-busy="true">
+        <Card className="shadow-lg animate-pulse">
+            <div className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
+                <div className="h-20 w-3/4 bg-muted rounded"></div>
+                <div className="h-12 w-1/2 bg-primary/50 rounded"></div>
+            </div>
+        </Card>
+        <Card className="shadow-lg animate-pulse">
+            <div className="p-6 space-y-4">
+                <div className="h-10 w-full bg-muted rounded"></div>
+                <div className="h-10 w-full bg-muted rounded"></div>
+                <div className="h-10 w-full bg-muted rounded"></div>
+                 <div className="h-10 w-full bg-muted rounded"></div>
+            </div>
+        </Card>
+        <p className="sr-only">Loading word identification game...</p>
+      </div>
+    );
+  }
+
+  if (wordList.length < 2) { // Need at least 2 words for MCQs (correct + 1 distractor)
+    return (
+      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
+        <Target className="h-6 w-6 mx-auto mb-2" aria-hidden="true" />
+        <AlertTitle className="text-xl font-semibold mb-2">Not Enough Words!</AlertTitle>
+        <AlertDescription className="text-base">
+          You need at least 2 words in your practice list to play the identification game.
+          Please go to the{' '}
+          <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
+          {' '}page to add more words.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <div className="space-y-6 md:space-y-8">
+      <WordDisplay word={currentWord} />
+      
+      <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
+        <WordIdentificationGame 
+          wordToIdentify={currentWord}
+          allWords={wordList}
+          onGameResult={handleGameResult}
+          // showNextButton={true} // Can enable if manual next is preferred over auto-navigate
+          // onNextWord={() => navigateWord('next')}
+        />
+      </div>
+      
+      {wordList.length > 1 && ( // Show navigation if more than one word, even if auto-navigating for manual override
+        <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
+            <CardContent className="p-4 flex justify-between items-center gap-2 md:gap-4">
+            <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="flex-1 md:flex-none">
+                <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
+            </Button>
+            <span className="text-muted-foreground text-sm whitespace-nowrap font-medium" aria-live="polite" aria-atomic="true">
+                Word {currentIndex + 1} / {wordList.length}
+            </span>
+            <Button variant="outline" size="lg" onClick={() => navigateWord('next')} aria-label="Next word" className="flex-1 md:flex-none">
+                Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
+            </Button>
+            </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
