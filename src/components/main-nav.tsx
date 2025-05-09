@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { clearAllStoredData } from '@/lib/storage'; // Import clear storage function
 import { useToast } from "@/hooks/use-toast";
@@ -124,10 +124,12 @@ export const MainNav: FC = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-full max-w-xs p-0 flex flex-col">
               <div className="flex items-center justify-between p-4 border-b">
-                <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                  <BookOpenText className="h-7 w-7 text-primary" />
-                  <h1 className="text-xl font-bold text-primary">SightWords</h1>
-                </Link>
+                <SheetTitle asChild>
+                  <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    <BookOpenText className="h-7 w-7 text-primary" />
+                    <h1 className="text-xl font-bold text-primary">SightWords</h1>
+                  </Link>
+                </SheetTitle>
                 <SheetClose asChild>
                    <Button variant="ghost" size="icon" className="rounded-full aspect-square">
                       <X className="h-6 w-6" />
@@ -135,6 +137,8 @@ export const MainNav: FC = () => {
                     </Button>
                 </SheetClose>
               </div>
+              {/* Optional: Add a SheetDescription if appropriate, or a visually hidden one for screen readers */}
+              <SheetDescription className="sr-only">Main navigation menu for SightWords application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4">
                 <NavLinkItems isMobile />
                 <Button variant="default" size="lg" asChild className="mt-4 w-full">
