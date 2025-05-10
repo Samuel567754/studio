@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { setHasSeenIntroduction } from '@/lib/storage';
-import { BookOpenText, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon } from 'lucide-react';
+import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon } from 'lucide-react';
 import { playNotificationSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 
@@ -79,12 +79,22 @@ export default function IntroductionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-primary/10 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
-      <main className="container mx-auto max-w-2xl text-center space-y-8 md:space-y-12 my-6 flex-grow flex flex-col justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
+      <main className="container mx-auto max-w-2xl text-center space-y-8 md:space-y-10 my-auto flex-grow flex flex-col justify-center">
         
+        <div className="animate-in fade-in-0 slide-in-from-top-10 duration-700 delay-100">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gradient-primary-accent mb-4 flex items-center justify-center gap-3">
+            <Sparkles className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 text-primary opacity-90" />
+            Welcome to ChillLearn AI
+          </h1>
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto">
+            Discover a fun and interactive way to learn. Let's explore what you can do!
+          </p>
+        </div>
+
         <section className="relative animate-in fade-in-0 slide-in-from-bottom-10 duration-700 delay-200 w-full">
           <div 
-            className="overflow-hidden relative h-[400px] sm:h-[480px] md:h-[550px]"
+            className="overflow-hidden relative h-[400px] sm:h-[480px] md:h-[550px] select-none cursor-grab active:cursor-grabbing"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -93,7 +103,7 @@ export default function IntroductionPage() {
               <div
                 key={feature.title}
                 className={cn(
-                  "absolute inset-0 transition-all duration-500 ease-in-out transform flex justify-center items-center p-1",
+                  "absolute inset-0 transition-all duration-500 ease-out transform flex justify-center items-center p-1",
                   index === currentFeatureIndex ? "opacity-100 translate-x-0" : "opacity-0",
                   index < currentFeatureIndex ? "-translate-x-full" : "",
                   index > currentFeatureIndex ? "translate-x-full" : ""
@@ -156,7 +166,7 @@ export default function IntroductionPage() {
         </div>
       </main>
        <footer className="text-center text-xs text-muted-foreground py-4">
-         © {new Date().getFullYear()} ChillLearn App. An AI-Powered Learning Adventure.
+         © {new Date().getFullYear()} ChillLearn AI. An AI-Powered Learning Adventure.
       </footer>
     </div>
   );
