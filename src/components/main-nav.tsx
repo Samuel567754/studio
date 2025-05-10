@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle, Target } from 'lucide-react';
+import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle, Target, Sigma } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ const navLinks = [
   { href: '/spell', label: 'Spell Practice', icon: Edit3 },
   { href: '/identify', label: 'Identify Word', icon: Target },
   { href: '/read', label: 'Read Passages', icon: BookMarked },
+  { href: '/math', label: 'Math Zone', icon: Sigma },
   { href: '/tutorial', label: 'Tutorial', icon: HelpCircle },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
@@ -159,3 +160,4 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+

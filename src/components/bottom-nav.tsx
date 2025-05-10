@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Lightbulb, Edit3, BookMarked, SettingsIcon, User, HelpCircle, Target } from 'lucide-react';
+import { Lightbulb, Edit3, BookMarked, SettingsIcon, User, HelpCircle, Target, Sigma } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/spell', label: 'Spell', icon: Edit3 },
   { href: '/identify', label: 'Identify', icon: Target },
   { href: '/read', label: 'Read', icon: BookMarked },
+  { href: '/math', label: 'Math', icon: Sigma },
   { href: '/tutorial', label: 'Guide', icon: HelpCircle },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon }, 
