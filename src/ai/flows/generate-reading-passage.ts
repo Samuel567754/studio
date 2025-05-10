@@ -9,48 +9,18 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {
+  GenerateReadingPassageInputSchema,
+  type GenerateReadingPassageInput,
+  GenerateReadingPassageOutputSchema,
+  type GenerateReadingPassageOutput
+} from '@/ai/schemas/reading-passage-schemas';
 
-const GenerateReadingPassageInputSchema = z.object({
-  words: z
-    .array(z.string())
-    .describe('A list of words to incorporate into the passage.'),
-  readingLevel: z
-    .string()
-    .describe(
-      'The target reading level for the passage (e.g., beginner, intermediate, advanced).'
-    ),
-  masteredWords: z
-    .array(z.string())
-    .optional()
-    .describe(
-      'An optional list of words the user has already mastered. The AI can use this to subtly adjust complexity.'
-    ),
-  favoriteTopics: z
-    .string()
-    .optional()
-    .describe(
-      'An optional string of comma-separated topics the user is interested in (e.g., "animals, space, sports").'
-    ),
-});
-export type GenerateReadingPassageInput = z.infer<
-  typeof GenerateReadingPassageInputSchema
->;
-
-const GenerateReadingPassageOutputSchema = z.object({
-  passage: z
-    .string()
-    .describe('The generated reading passage.'),
-});
-export type GenerateReadingPassageOutput = z.infer<
-  typeof GenerateReadingPassageOutputSchema
->;
+export type { GenerateReadingPassageInput, GenerateReadingPassageOutput };
 
 export async function generateReadingPassage(
   input: GenerateReadingPassageInput
 ): Promise<GenerateReadingPassageOutput> {
-  // The client should provide masteredWords and favoriteTopics if available.
-  // This flow will use what's provided in the input.
   return generateReadingPassageFlow(input);
 }
 
@@ -84,7 +54,7 @@ const prompt = ai.definePrompt({
   The passage should make sense and be interesting for a learner.
   Ensure your entire output is structured according to the requested format, including only the 'passage'.`,
   config: {
-    temperature: 0.7, // Allow for some creativity
+    temperature: 0.7, 
      safetySettings: [ 
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',
@@ -122,4 +92,3 @@ const generateReadingPassageFlow = ai.defineFlow(
     return output!;
   }
 );
-

@@ -9,44 +9,16 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {
+  GenerateMathWordProblemInputSchema,
+  type GenerateMathWordProblemInput,
+  PromptInputSchema,
+  type PromptInput,
+  GenerateMathWordProblemOutputSchema,
+  type GenerateMathWordProblemOutput
+} from '@/ai/schemas/math-word-problem-schemas';
 
-const GenerateMathWordProblemInputSchema = z.object({
-  difficultyLevel: z
-    .enum(['easy', 'medium', 'hard'])
-    .describe('The difficulty level of the math problem (easy, medium, or hard).'),
-  operation: z
-    .enum(['addition', 'subtraction', 'multiplication', 'division', 'random'])
-    .describe('The mathematical operation for the problem (addition, subtraction, multiplication, division, or random for AI to choose).'),
-   username: z.string().optional().describe("The learner's name, if available, to personalize the problem."),
-});
-export type GenerateMathWordProblemInput = z.infer<
-  typeof GenerateMathWordProblemInputSchema
->;
-
-const PromptInputSchema = GenerateMathWordProblemInputSchema.extend({
-  isRandomOperation: z.boolean().describe('True if the AI should choose a random operation, false otherwise.'),
-});
-type PromptInput = z.infer<typeof PromptInputSchema>;
-
-const GenerateMathWordProblemOutputSchema = z.object({
-  problemText: z
-    .string()
-    .describe('The text of the generated math word problem.'),
-  numericalAnswer: z
-    .number()
-    .describe('The numerical answer to the math word problem.'),
-  explanation: z
-    .string()
-    .optional()
-    .describe('An optional brief explanation of how to solve the problem.'),
-  operationUsed: z
-    .string() // Made non-optional
-    .describe('The mathematical operation used or chosen by the AI for this problem (e.g., "addition", "subtraction", "multiplication", "division").'),
-});
-export type GenerateMathWordProblemOutput = z.infer<
-  typeof GenerateMathWordProblemOutputSchema
->;
+export type { GenerateMathWordProblemInput, GenerateMathWordProblemOutput };
 
 export async function generateMathWordProblem(
   input: GenerateMathWordProblemInput
@@ -56,7 +28,7 @@ export async function generateMathWordProblem(
 
 const prompt = ai.definePrompt({
   name: 'generateMathWordProblemPrompt',
-  input: {schema: PromptInputSchema}, // Use the extended schema for prompt input
+  input: {schema: PromptInputSchema}, 
   output: {schema: GenerateMathWordProblemOutputSchema},
   prompt: `You are an AI assistant that creates age-appropriate math word problems for children.
   The user is at a '{{difficultyLevel}}' level.
@@ -83,7 +55,7 @@ const prompt = ai.definePrompt({
   Ensure your entire output is structured according to the requested format, including 'problemText', 'numericalAnswer', 'operationUsed', and optionally 'explanation'.
   The numericalAnswer MUST be a number, not a string. The problemText should end with a question mark.`,
    config: {
-    temperature: 0.9, // Increased temperature for more variety
+    temperature: 0.9, 
     safetySettings: [
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',
@@ -117,9 +89,6 @@ const generateMathWordProblemFlow = ai.defineFlow(
       isRandomOperation: input.operation === 'random',
     };
     const {output} = await prompt(promptInput);
-    // The prompt and Zod output schema now enforce 'operationUsed'.
-    // If the AI doesn't provide it, 'output' might be null or prompt will throw during Zod validation.
     return output!;
   }
 );
-
