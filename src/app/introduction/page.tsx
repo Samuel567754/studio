@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { TouchEvent } from 'react'; // Import TouchEvent for type safety
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -24,34 +24,68 @@ const features = [
   { icon: HelpCircle, title: "Interactive Guides", description: "Easy-to-follow tutorials and walkthroughs.", imageSrc: "https://picsum.photos/seed/guides/600/400", aiHint: "guide help map" },
 ];
 
+const AUTOPLAY_INTERVAL = 5000; // 5 seconds
+
 export default function IntroductionPage() {
   const router = useRouter();
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
+  const [isAutoplayActive, setIsAutoplayActive] = useState(true);
+  const autoplayIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
   const minSwipeDistance = 50;
 
-  const completeIntroduction = () => {
+  const completeIntroduction = useCallback(() => {
+    setIsAutoplayActive(false); // Stop autoplay when completing
     setHasSeenIntroduction(true);
     playNotificationSound();
     router.push('/'); 
-  }
+  },[router]);
 
-  const selectFeature = useCallback((newIndex: number) => {
-    if (newIndex === currentFeatureIndex) return; 
-
-    if (newIndex >= 0 && newIndex < features.length) {
-      playNotificationSound();
-      setCurrentFeatureIndex(newIndex);
-    } else if (newIndex >= features.length) { // Loop to start
+  const selectFeature = useCallback((newIndex: number, manualInteraction: boolean = true) => {
+    if (manualInteraction) {
+      setIsAutoplayActive(false); 
+      if (newIndex !== currentFeatureIndex) { 
         playNotificationSound();
-        setCurrentFeatureIndex(0);
-    } else if (newIndex < 0) { // Loop to end
-        playNotificationSound();
-        setCurrentFeatureIndex(features.length - 1);
+      }
     }
-  }, [currentFeatureIndex]); 
+
+    let targetIndex = newIndex;
+    if (targetIndex >= features.length) {
+      targetIndex = 0; 
+    } else if (targetIndex < 0) {
+      targetIndex = features.length - 1; 
+    }
+    
+    if (targetIndex !== currentFeatureIndex) {
+      setCurrentFeatureIndex(targetIndex);
+    }
+  }, [currentFeatureIndex, features.length]); 
+
+  // Autoplay effect
+  useEffect(() => {
+    const stopAutoplay = () => {
+      if (autoplayIntervalRef.current) {
+        clearInterval(autoplayIntervalRef.current);
+        autoplayIntervalRef.current = null;
+      }
+    };
+
+    if (isAutoplayActive) {
+      stopAutoplay(); 
+      autoplayIntervalRef.current = setInterval(() => {
+        setCurrentFeatureIndex(prevIndex => {
+          const nextIndex = prevIndex + 1;
+          return nextIndex >= features.length ? 0 : nextIndex;
+        });
+      }, AUTOPLAY_INTERVAL);
+    } else {
+      stopAutoplay();
+    }
+
+    return () => stopAutoplay();
+  }, [isAutoplayActive, features.length]);
 
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     setTouchEndX(null); 
@@ -69,9 +103,9 @@ export default function IntroductionPage() {
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe) {
-      selectFeature(currentFeatureIndex + 1);
+      selectFeature(currentFeatureIndex + 1, true); // Manual interaction
     } else if (isRightSwipe) {
-      selectFeature(currentFeatureIndex - 1);
+      selectFeature(currentFeatureIndex - 1, true); // Manual interaction
     }
 
     setTouchStartX(null);
@@ -141,7 +175,7 @@ export default function IntroductionPage() {
             {features.map((_, index) => (
               <button
                 key={`dot-${index}`}
-                onClick={() => selectFeature(index)}
+                onClick={() => selectFeature(index, true)} // Pass true for manual interaction
                 className={cn(
                   "h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
                   currentFeatureIndex === index ? "bg-primary scale-125 shadow-lg" : "bg-muted hover:bg-muted-foreground/50"
