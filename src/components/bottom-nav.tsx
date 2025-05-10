@@ -9,7 +9,7 @@ import { Lightbulb, Edit3, BookMarked, SettingsIcon, User, HelpCircle, Target, S
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/', label: 'Learn', icon: Lightbulb },
+  { href: '/learn', label: 'Learn', icon: Lightbulb },
   { href: '/spell', label: 'Spell', icon: Edit3 },
   { href: '/identify', label: 'Identify', icon: Target },
   { href: '/read', label: 'Read', icon: BookMarked },

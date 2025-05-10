@@ -1,319 +1,165 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
-import { WordSuggestion } from '@/components/word-suggestion';
-import { useToast } from "@/hooks/use-toast";
-import {
-  getStoredWordList, storeWordList,
-  getStoredReadingLevel, storeReadingLevel,
-  getStoredWordLength, storeWordLength,
-  storeCurrentIndex, getStoredCurrentIndex,
-  getStoredMasteredWords,
-  getProgressionSuggestionDismissed, storeProgressionSuggestionDismissed
-} from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { Trash2, CheckCircle, Info, CheckCircle2, AlertTriangle, CornerRightUp } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { playSuccessSound, playNotificationSound, speakText } from '@/lib/audio';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, BookOpenText, Lightbulb, Edit3, Target, BookMarked, Sigma, Sparkles } from 'lucide-react';
 
+const mainSections = [
+  {
+    title: "Learn New Words",
+    description: "Discover new words with AI suggestions tailored to your level. Build your personal practice list.",
+    href: "/learn",
+    icon: Lightbulb,
+    imageSrc: "https://picsum.photos/seed/learn/600/400",
+    imageAlt: "Child with a bright lightbulb over their head",
+    aiHint: "child idea lightbulb",
+    color: "text-primary",
+    bgFrom: "from-primary/10",
+    bgTo: "to-primary/5",
+  },
+  {
+    title: "Spelling Practice",
+    description: "Sharpen your spelling skills. Practice words from your list and master them one by one.",
+    href: "/spell",
+    icon: Edit3,
+    imageSrc: "https://picsum.photos/seed/spell/600/400",
+    imageAlt: "Pencils and letter blocks",
+    aiHint: "pencil letters",
+    color: "text-accent",
+    bgFrom: "from-accent/10",
+    bgTo: "to-accent/5",
+  },
+  {
+    title: "Identify Words",
+    description: "Test your word recognition! Listen and choose the correct word in a fun, interactive game.",
+    href: "/identify",
+    icon: Target,
+    imageSrc: "https://picsum.photos/seed/identify/600/400",
+    imageAlt: "Magnifying glass over a word",
+    aiHint: "magnifying glass word",
+    color: "text-green-500",
+    bgFrom: "from-green-500/10",
+    bgTo: "to-green-500/5",
+  },
+  {
+    title: "Reading Adventures",
+    description: "Dive into AI-generated stories featuring your practice words. Read or listen along!",
+    href: "/read",
+    icon: BookMarked,
+    imageSrc: "https://picsum.photos/seed/read/600/400",
+    imageAlt: "Open storybook with fantastical elements",
+    aiHint: "storybook adventure",
+    color: "text-blue-500",
+    bgFrom: "from-blue-500/10",
+    bgTo: "to-blue-500/5",
+  },
+  {
+    title: "Math Zone",
+    description: "Explore a world of numbers with engaging arithmetic games, times tables, and more.",
+    href: "/math",
+    icon: Sigma,
+    imageSrc: "https://picsum.photos/seed/math/600/400",
+    imageAlt: "Colorful numbers and math symbols",
+    aiHint: "numbers math symbols",
+    color: "text-purple-500",
+    bgFrom: "from-purple-500/10",
+    bgTo: "to-purple-500/5",
+  },
+];
 
-export default function LearnWordsPage() {
-  const [readingLevel, setReadingLevel] = useState<string>('');
-  const [wordLength, setWordLength] = useState<number>(0);
-  const [wordList, setWordList] = useState<string[]>([]);
-  const [masteredWords, setMasteredWords] = useState<string[]>([]);
-  const [currentPracticingWord, setCurrentPracticingWord] = useState<string>('');
-  const [isMounted, setIsMounted] = useState(false);
-  const [showProgressionAlert, setShowProgressionAlert] = useState(false);
-
-  const { toast } = useToast();
-
-  // Load initial state from localStorage
-  useEffect(() => {
-    const storedLevel = getStoredReadingLevel();
-    const storedLength = getStoredWordLength();
-    const storedList = getStoredWordList();
-    const storedMasteredList = getStoredMasteredWords();
-    
-    setReadingLevel(storedLevel);
-    setWordLength(storedLength);
-    setWordList(storedList);
-    setMasteredWords(storedMasteredList);
-
-    const storedIndex = getStoredCurrentIndex();
-    if (storedList.length > 0 && storedIndex >= 0 && storedIndex < storedList.length) {
-        setCurrentPracticingWord(storedList[storedIndex]);
-    } else if (storedList.length > 0) { 
-        setCurrentPracticingWord(storedList[0]);
-        storeCurrentIndex(0);
-    }
-    setIsMounted(true);
-  }, []);
-
-  // Effect for progression suggestion alert
-  useEffect(() => {
-    if (!isMounted) return;
-
-    const isDismissed = getProgressionSuggestionDismissed(readingLevel, wordLength);
-    if (isDismissed) {
-      setShowProgressionAlert(false);
-      return;
-    }
-
-    if (wordList.length > 5) { // Only suggest if there's a decent number of words
-      const currentWordsMasteredCount = wordList.filter(w => masteredWords.includes(w)).length;
-      const masteredThreshold = Math.ceil(wordList.length * 0.7); // 70% mastery of current list
-
-      if (currentWordsMasteredCount >= masteredThreshold) {
-        if ((readingLevel === "beginner" || readingLevel === "intermediate") || wordLength < 5) { // Simple condition for now
-           setShowProgressionAlert(true);
-        }
-      } else {
-        setShowProgressionAlert(false);
-      }
-    } else {
-      setShowProgressionAlert(false);
-    }
-
-  }, [wordList, masteredWords, readingLevel, wordLength, isMounted]);
-
-
-  const updateWordList = useCallback((newWordList: string[]) => {
-    setWordList(newWordList);
-    storeWordList(newWordList);
-  }, []);
-
-  const handleWordSelected = useCallback((word: string) => {
-    let newWordList = [...wordList];
-    if (!newWordList.includes(word)) {
-      newWordList.push(word);
-      updateWordList(newWordList);
-    }
-    const wordIndex = newWordList.indexOf(word);
-    storeCurrentIndex(wordIndex);
-    setCurrentPracticingWord(word);
-    toast({ 
-      variant: "success", 
-      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />Word Selected!</div>, 
-      description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` 
-    });
-    playSuccessSound();
-    speakText(word); 
-  }, [wordList, updateWordList, toast]);
-  
-  const handleNewSuggestedWordsList = useCallback((suggestedWords: string[]) => {
-    // This callback is mostly for information or future use.
-  }, []);
-
-  const handleSettingsChange = useCallback((level: string, length: number) => {
-    setReadingLevel(level);
-    storeReadingLevel(level);
-    setWordLength(length);
-    storeWordLength(length);
-    // When settings change, new progression suggestion for the new settings should not be dismissed by default
-    storeProgressionSuggestionDismissed(level, length, false); 
-    setShowProgressionAlert(false); // Hide any current alert as settings are changing
-    toast({ 
-      variant: "info", 
-      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />Preferences Updated</div>, 
-      description: `Suggestions will now target ${level} level, ${length}-letter words.` 
-    });
-    playNotificationSound();
-  }, [toast]);
-
-  const handleRemoveWord = (wordToRemove: string) => {
-    const newWordList = wordList.filter(w => w !== wordToRemove);
-    updateWordList(newWordList); 
-
-    toast({ 
-      variant: "info", 
-      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />Word Removed</div>, 
-      description: `"${wordToRemove}" removed from your practice list.` 
-    });
-    playNotificationSound(); 
-
-    if (newWordList.length === 0) {
-        setCurrentPracticingWord('');
-        storeCurrentIndex(0); 
-    } else {
-        let newSelectedWord = currentPracticingWord;
-        let newIndex = newWordList.indexOf(newSelectedWord);
-
-        if (newIndex === -1 || currentPracticingWord === wordToRemove) {
-            newSelectedWord = newWordList[0]; 
-            newIndex = 0;
-        }
-        
-        setCurrentPracticingWord(newSelectedWord);
-        storeCurrentIndex(newIndex);
-    }
-  };
-
-  const handleDismissProgressionAlert = () => {
-    storeProgressionSuggestionDismissed(readingLevel, wordLength, true);
-    setShowProgressionAlert(false);
-    playNotificationSound();
-  };
-
-  if (!isMounted) {
-    return (
-      <div className="space-y-6 md:space-y-8" aria-live="polite" aria-busy="true">
-        <Card className="shadow-lg animate-pulse">
-            <CardHeader className="p-4 md:p-6">
-                <div className="h-6 w-3/4 bg-muted rounded"></div>
-                <div className="h-4 w-1/2 bg-muted rounded mt-2"></div>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <div className="h-4 w-1/3 bg-muted rounded mb-2"></div>
-                        <div className="h-10 bg-muted rounded"></div>
-                    </div>
-                    <div>
-                        <div className="h-4 w-1/3 bg-muted rounded mb-2"></div>
-                        <div className="h-10 bg-muted rounded"></div>
-                    </div>
-                </div>
-                <div className="h-12 bg-primary/50 rounded"></div>
-            </CardContent>
-        </Card>
-        <Card className="shadow-lg animate-pulse">
-            <CardHeader className="p-4 md:p-6">
-                <div className="h-6 w-1/2 bg-muted rounded"></div>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6">
-                <div className="flex flex-wrap gap-2">
-                    <div className="h-8 w-20 bg-muted rounded-full"></div>
-                    <div className="h-8 w-24 bg-muted rounded-full"></div>
-                    <div className="h-8 w-16 bg-muted rounded-full"></div>
-                </div>
-            </CardContent>
-        </Card>
-        <p className="sr-only">Loading learning page...</p>
-      </div>
-    );
-  }
-
+export default function OfficialHomePage() {
   return (
-    <div className="space-y-6 md:space-y-8">
-      <WordSuggestion
-        onWordSelected={handleWordSelected}
-        onNewSuggestedWordsList={handleNewSuggestedWordsList}
-        currentReadingLevel={readingLevel}
-        currentWordLength={wordLength}
-        onSettingsChange={handleSettingsChange}
-        currentPracticingWord={currentPracticingWord}
-      />
+    <div className="space-y-12">
+      <header className="relative text-center py-16 md:py-24 rounded-xl overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 shadow-inner border border-border/10">
+        <div 
+            className="absolute inset-0 opacity-10 dark:opacity-5 bg-repeat" 
+            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
+            aria-hidden="true"
+        ></div>
+         <div className="absolute top-8 left-10 transform -rotate-12 opacity-20 dark:opacity-10">
+            <Sparkles className="h-16 w-16 text-accent" />
+        </div>
+        <div className="absolute bottom-12 right-16 transform rotate-6 opacity-20 dark:opacity-10">
+            <Lightbulb className="h-20 w-20 text-primary" />
+        </div>
 
-      {showProgressionAlert && (
-        <Alert variant="default" className="border-accent bg-accent/10 text-accent-foreground animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
-           <AlertTriangle className="h-5 w-5 text-accent" aria-hidden="true" />
-           <AlertTitle className="font-semibold text-lg text-accent">Ready for a New Challenge?</AlertTitle>
-           <AlertDescription className="text-base">
-             You're doing great and have mastered many words at the current settings! 
-             Consider trying a higher reading level or different word length in the "AI Word Suggestions" panel above to keep growing.
-           </AlertDescription>
-           <div className="mt-4 flex gap-2 justify-end">
-            <Button variant="outline" size="sm" onClick={() => {
-                const wordSuggestionCard = document.querySelector('[class*="shadow-xl"]'); // A bit hacky, consider a ref
-                wordSuggestionCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                setShowProgressionAlert(false); // Hide after interaction
-                playNotificationSound();
-            }}>
-                <CornerRightUp className="mr-2 h-4 w-4" aria-hidden="true"/>
-                Update Settings
-             </Button>
-             <Button variant="ghost" size="sm" onClick={handleDismissProgressionAlert}>Maybe Later</Button>
-           </div>
-        </Alert>
-      )}
+        <div className="relative z-10 container mx-auto px-4">
+          <BookOpenText className="mx-auto h-20 w-20 md:h-24 md:w-24 text-primary mb-6 animate-in fade-in-0 zoom-in-50 duration-700 ease-out" />
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+            Welcome to <span className="text-gradient-primary-accent">ChillLearn AI</span>
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 delay-200">
+            Your fun and interactive partner for mastering words, practicing spelling, enjoying AI-powered reading, and exploring the world of math!
+          </p>
+          <Button asChild size="lg" className="btn-glow text-lg animate-in fade-in-0 zoom-in-75 duration-500 delay-400">
+            <Link href="/learn">
+              Start Learning Words <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
+          </Button>
+        </div>
+      </header>
 
-      {wordList.length > 0 && (
-        <Card className="shadow-lg border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-primary" id="practice-list-heading">Your Practice Word List</CardTitle>
-            <UiCardDescription className="text-base">
-              Words you've selected. Click a word to make it active for spelling, or remove it.
-            </UiCardDescription>
-          </CardHeader>
-          <CardContent>
-            {wordList.length > 0 ? (
-              <div className="flex flex-wrap gap-3 items-center" role="list" aria-labelledby="practice-list-heading">
-                {wordList.map((word, index) => (
-                  <div key={index} className="relative group rounded-full shadow-sm hover:shadow-md transition-all duration-200 ease-in-out hover:scale-105" role="listitem">
-                    <Button
-                      variant={currentPracticingWord === word ? "default" : "secondary"}
-                      size="sm" 
-                      onClick={() => handleWordSelected(word)}
-                      className={cn(
-                          "text-base md:text-lg py-2 pl-4 pr-10 rounded-full transition-all duration-200 ease-in-out",
-                          currentPracticingWord === word && "ring-2 ring-primary-foreground dark:ring-primary ring-offset-2 ring-offset-primary dark:ring-offset-background scale-105 font-semibold",
-                          !(currentPracticingWord === word) && "bg-secondary/70 hover:bg-secondary border border-transparent hover:border-primary/30"
-                      )}
-                      aria-pressed={currentPracticingWord === word}
-                      aria-label={`Select word: ${word}. ${currentPracticingWord === word ? 'Currently selected.' : ''}`}
-                    >
-                      {currentPracticingWord === word && <CheckCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-70" aria-hidden="true" />}
-                      <span className={cn(currentPracticingWord === word && "ml-3")}>{word}</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "absolute top-1/2 right-1 transform -translate-y-1/2 h-8 w-8 p-0 opacity-60 group-hover:opacity-100 rounded-full transition-opacity",
-                        currentPracticingWord === word ? "text-primary-foreground hover:bg-primary/80" : "text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
-                      )}
-                      onClick={(e) => { e.stopPropagation(); handleRemoveWord(word); }}
-                      aria-label={`Remove ${word} from practice list`}
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-                 <p className="text-muted-foreground">Your practice list is empty. Add some words using the suggestions above!</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {wordList.length === 0 && isMounted && !showProgressionAlert && (
-        <Alert variant="info" className="bg-card/90 border-accent/20 shadow animate-in fade-in-0 zoom-in-95 duration-500 ease-out" aria-live="polite">
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className='flex-shrink-0'>
-             <Info className="h-5 w-5 mt-1" aria-hidden="true" />
-            </div>
-            <div className="flex-grow">
-              <AlertTitle className="font-semibold text-lg">Welcome to ChillLearn AI!</AlertTitle>
-              <AlertDescription className="text-base">
-                Start your learning journey:
-                <ol className="list-decimal list-inside mt-2 space-y-1">
-                  <li>Use the "AI Word Suggestions" panel to set your reading level and desired word length.</li>
-                  <li>Click "Get New Words" to see AI-powered suggestions.</li>
-                  <li>Click on any suggested word to add it to your practice list below.</li>
-                  <li>Navigate to "Spell" or "Read" sections to practice your selected words!</li>
-                </ol>
-              </AlertDescription>
-            </div>
-            <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-auto">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {mainSections.map((section, index) => (
+          <Card 
+            key={section.title} 
+            className={`overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 bg-gradient-to-br ${section.bgFrom} ${section.bgTo} animate-in fade-in-0 slide-in-from-bottom-5 duration-500`}
+            style={{ animationDelay: `${100 + index * 100}ms` }}
+          >
+            <div className="relative h-48 w-full">
               <Image
-                src="https://picsum.photos/150/150"
-                alt="Child learning with a tablet"
-                width={120}
-                height={120}
-                className="rounded-lg shadow-md"
-                data-ai-hint="happy child learning"
+                src={section.imageSrc}
+                alt={section.imageAlt}
+                layout="fill"
+                objectFit="cover"
+                className="opacity-80 group-hover:opacity-100 transition-opacity"
+                data-ai-hint={section.aiHint}
               />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                 <section.icon className={`h-16 w-16 ${section.color} opacity-70 drop-shadow-lg`} />
+              </div>
             </div>
-          </div>
-        </Alert>
-      )}
+            <CardHeader className="pt-4">
+              <CardTitle className={`text-2xl font-semibold ${section.color} flex items-center`}>
+                 <section.icon className="mr-3 h-6 w-6" /> {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base text-foreground/80 min-h-[60px] mb-2">
+                {section.description}
+              </CardDescription>
+              <Button asChild variant="outline" className={`w-full border-${section.color.replace('text-', '')}/50 hover:bg-${section.color.replace('text-', '')}/10 hover:text-${section.color.replace('text-', '')} group`}>
+                <Link href={section.href}>
+                  Go to {section.title} <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
+
+      <section className="text-center py-12 animate-in fade-in-0 delay-500 duration-500">
+         <Card className="max-w-2xl mx-auto p-6 md:p-8 shadow-xl bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <CardTitle className="text-2xl md:text-3xl font-semibold text-gradient-primary-accent">Ready to Explore More?</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <p className="text-lg text-muted-foreground">
+                    Check out your <Link href="/profile" className="text-primary hover:underline font-medium">Profile</Link> to see your progress,
+                    visit the <Link href="/tutorial" className="text-accent hover:underline font-medium">Tutorial</Link> for a detailed guide,
+                    or customize your experience in <Link href="/settings" className="text-green-500 hover:underline font-medium">Settings</Link>.
+                </p>
+                <Button size="lg" variant="secondary" asChild>
+                    <Link href="/tutorial">
+                        <Sparkles className="mr-2 h-5 w-5" /> View Full Guide
+                    </Link>
+                </Button>
+            </CardContent>
+         </Card>
+      </section>
     </div>
   );
 }
-

@@ -129,7 +129,7 @@ export default function SpellingPage() {
           <AlertTitle className="text-xl font-semibold mb-2">No Words to Spell!</AlertTitle>
           <AlertDescription className="text-base">
             Your spelling list is empty. Please go to the{' '}
-            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
+            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/learn">Learn Words</Link></Button>
             {' '}page to add some words.
           </AlertDescription>
         </div>

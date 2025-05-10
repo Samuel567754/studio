@@ -141,7 +141,7 @@ export default function IdentifyWordPage() {
           <AlertDescription className="text-base">
             You need at least 2 words in your practice list to play the identification game.
             Please go to the{' '}
-            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
+            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/learn">Learn Words</Link></Button>
             {' '}page to add more words.
           </AlertDescription>
         </div>

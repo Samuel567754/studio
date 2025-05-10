@@ -15,7 +15,7 @@ import { playNotificationSound } from '@/lib/audio';
 
 
 const navLinks = [
-  { href: '/', label: 'Learn Words', icon: Lightbulb },
+  { href: '/learn', label: 'Learn Words', icon: Lightbulb },
   { href: '/spell', label: 'Spell Practice', icon: Edit3 },
   { href: '/identify', label: 'Identify Word', icon: Target },
   { href: '/read', label: 'Read Passages', icon: BookMarked },
@@ -61,16 +61,16 @@ export const MainNav: FC = () => {
   
   const handleResetProgress = () => {
     if (typeof window !== 'undefined') {
-        if(confirm("This will clear your learned words, mastered words, reading level, and word length preferences. Are you sure?")) {
+        if(confirm("This will clear your learned words, mastered words, reading level, word length preferences, introduction and walkthrough status. Are you sure?")) {
             clearProgressStoredData(); 
             setIsMobileMenuOpen(false);
             toast({
                 title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Progress Reset</div>,
-                description: "Your learning data (learned words, mastered words, reading level, and word length preferences) has been cleared.",
+                description: "Your learning and app usage data has been cleared. You will see the introduction again.",
                 variant: "info"
             });
             playNotificationSound();
-             window.location.href = '/'; 
+             window.location.href = '/introduction'; // Redirect to introduction
         }
     }
   };
@@ -110,7 +110,7 @@ export const MainNav: FC = () => {
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
           <NavLinkItems />
           <Button variant="default" size="sm" asChild className="ml-2 btn-glow">
-            <Link href="/">
+            <Link href="/learn">
               <Brain className="mr-2 h-4 w-4" aria-hidden="true" /> Quick Learn
             </Link>
           </Button>
@@ -141,7 +141,7 @@ export const MainNav: FC = () => {
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
                 <NavLinkItems isMobile />
                 <Button variant="default" size="lg" asChild className="mt-4 w-full btn-glow">
-                  <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href="/learn" onClick={() => setIsMobileMenuOpen(false)}>
                     <Brain className="mr-2 h-5 w-5" aria-hidden="true" /> Quick Learn
                   </Link>
                 </Button>
@@ -149,9 +149,9 @@ export const MainNav: FC = () => {
                <div className="mt-auto p-4 border-t border-border/30">
                   <Button variant="destructive" className="w-full" onClick={handleResetProgress}>
                       <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Reset Learning Progress
+                      Reset All Progress
                   </Button>
-                  <p className="text-xs text-muted-foreground mt-2 text-center">This resets learned words, mastered words, reading level, and word length preferences. Theme and sound settings remain unchanged.</p>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">This resets all learning data and app usage preferences. You will see the introduction again.</p>
               </div>
             </SheetContent>
           </Sheet>
@@ -160,4 +160,3 @@ export const MainNav: FC = () => {
     </header>
   );
 };
-

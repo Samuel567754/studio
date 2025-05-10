@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 
 const fabNavLinks = [
-  { href: '/', label: 'Learn', icon: Lightbulb },
+  { href: '/learn', label: 'Learn', icon: Lightbulb },
   { href: '/spell', label: 'Spell', icon: Edit3 },
   { href: '/identify', label: 'Identify', icon: Target },
   { href: '/read', label: 'Read', icon: BookMarked },

@@ -29,9 +29,9 @@ const tutorialSections: TutorialSection[] = [
   },
   {
     id: 'learn',
-    title: 'Learn Words Page (Your Starting Point)',
-    content: "The 'Learn' page is where your literacy journey begins.\n\n1. AI Word Suggestions: Set your desired reading level (e.g., beginner, intermediate) and preferred word length.\n2. Get Ideas: Click 'Get New Word Ideas', and our AI will suggest words tailored to your settings.\n3. Build Your List: See a word you like? Click on it! It'll be added to 'Your Practice Word List' below.\nThis list is crucial as it populates words for your spelling, identification, and reading practices.",
-    ariaLabel: "Explanation of the Learn Words page features including AI suggestions and practice list."
+    title: "Learn Words Page (Your Starting Point - '/learn')",
+    content: "The 'Learn' page (found at /learn) is where your literacy journey begins.\n\n1. AI Word Suggestions: Set your desired reading level (e.g., beginner, intermediate) and preferred word length.\n2. Get Ideas: Click 'Get New Word Ideas', and our AI will suggest words tailored to your settings.\n3. Build Your List: See a word you like? Click on it! It'll be added to 'Your Practice Word List' below.\nThis list is crucial as it populates words for your spelling, identification, and reading practices.",
+    ariaLabel: "Explanation of the Learn Words page (now at /learn) features including AI suggestions and practice list."
   },
   {
     id: 'spell',
@@ -72,8 +72,8 @@ const tutorialSections: TutorialSection[] = [
   {
     id: 'navigation',
     title: 'Navigating the App',
-    content: "Getting around is easy:\n- Desktop/Tablet: Use the navigation links at the top of the page.\n- Mobile: A handy bottom navigation bar provides quick access to all sections. There's also a Quick Link FAB (Floating Action Button) for fast access to main pages.\n- Quick Learn: The 'Quick Learn' button (in the main navigation or mobile sheet menu) takes you directly to the word learning page to jump back into practice.",
-    ariaLabel: "How to navigate the application on different devices using the navigation bars and quick link FAB."
+    content: "Getting around is easy:\n- Main Homepage ('/'): Your dashboard for quick access to all learning areas.\n- Learn Words ('/learn'): The dedicated page for finding and managing your practice words.\n- Desktop/Tablet: Use the navigation links at the top of the page.\n- Mobile: A handy bottom navigation bar provides quick access to all sections. There's also a Quick Link FAB (Floating Action Button) for fast access to main pages.\n- Quick Learn Button: This button (in the main navigation or mobile sheet menu) takes you directly to the '/learn' page.",
+    ariaLabel: "How to navigate the application on different devices using the navigation bars, quick link FAB, and understanding the main homepage vs. learn words page."
   },
 ];
 

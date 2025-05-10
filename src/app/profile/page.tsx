@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   getStoredWordList,
   getStoredMasteredWords,
@@ -12,9 +13,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare } from 'lucide-react';
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 
 interface ProfileData {
   practiceWordCount: number;
@@ -126,7 +128,7 @@ export default function ProfilePage() {
             <Settings2 className="mr-3 h-6 w-6" aria-hidden="true" />
             Current Preferences
           </CardTitle>
-          <CardDescription>Your current settings for word suggestions.</CardDescription>
+          <CardDescription>Your current settings for word suggestions. You can change these on the "Learn Words" or "Settings" page.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-lg">
           <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg animate-in fade-in-0 zoom-in-95 duration-300 delay-300">
@@ -137,6 +139,11 @@ export default function ProfilePage() {
             <span className="text-foreground font-medium" id="word-length-label">Preferred Word Length:</span>
             <Badge variant="outline" className="text-base px-3 py-1" aria-labelledby="word-length-label">{profileData.wordLength} letters</Badge>
           </div>
+           <Button asChild variant="outline" className="w-full mt-2">
+             <Link href="/learn">
+              <Edit className="mr-2 h-4 w-4" /> Change Preferences on Learn Page
+             </Link>
+           </Button>
         </CardContent>
       </Card>
       
@@ -159,7 +166,7 @@ export default function ProfilePage() {
                 ) : (
                     <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300" aria-live="polite">
                         <AlertTitle>No Practice Words</AlertTitle>
-                        <AlertDescription>Your practice list is currently empty. Go to the "Learn" page to add words!</AlertDescription>
+                        <AlertDescription>Your practice list is currently empty. Go to the <Link href="/learn" className="font-semibold text-primary hover:underline">Learn Words</Link> page to add words!</AlertDescription>
                     </Alert>
                 )}
             </CardContent>

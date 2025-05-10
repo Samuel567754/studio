@@ -8,6 +8,29 @@ const CURRENT_INDEX_KEY = 'sightwords_currentIndex_v1';
 const MASTERED_WORDS_KEY = 'sightwords_masteredWords_v1'; 
 const PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX = 'sightwords_progressionSuggestionDismissed_v1_';
 export const WALKTHROUGH_PERSIST_KEY = 'chilllearn_walkthroughState_v1';
+const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
+
+
+// --- Introduction Seen ---
+export const getHasSeenIntroduction = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const stored = localStorage.getItem(INTRODUCTION_SEEN_KEY);
+    return stored === 'true';
+  } catch (error) {
+    console.error("Error reading introduction seen flag from localStorage:", error);
+    return false;
+  }
+};
+
+export const setHasSeenIntroduction = (seen: boolean): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(INTRODUCTION_SEEN_KEY, seen ? 'true' : 'false');
+  } catch (error) {
+    console.error("Error storing introduction seen flag to localStorage:", error);
+  }
+};
 
 
 // --- Word List ---
@@ -129,7 +152,8 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(WORD_LENGTH_KEY);
   localStorage.removeItem(CURRENT_INDEX_KEY);
   localStorage.removeItem(MASTERED_WORDS_KEY); 
-  localStorage.removeItem(WALKTHROUGH_PERSIST_KEY); // Added this line
+  localStorage.removeItem(WALKTHROUGH_PERSIST_KEY);
+  localStorage.removeItem(INTRODUCTION_SEEN_KEY);
   
   // Clear all progression dismissal flags
   Object.keys(localStorage).forEach(key => {
@@ -137,5 +161,5 @@ export const clearProgressStoredData = (): void => {
       localStorage.removeItem(key);
     }
   });
-  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, and walkthrough status.");
+  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, walkthrough status, and introduction seen flag.");
 };

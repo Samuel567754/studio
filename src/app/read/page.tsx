@@ -74,7 +74,7 @@ export default function ReadingPage() {
           <AlertDescription className="text-base">
             To generate a reading passage, you need some words in your practice list.
             Please visit the {' '}
-            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
+            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/learn">Learn Words</Link></Button>
             {' '}page to select or add words.
           </AlertDescription>
         </div>
