@@ -52,6 +52,17 @@ export const NumberSequencingUI = () => {
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
 
+  const loadNewProblem = useCallback(() => {
+    setIsLoading(true);
+    setFeedback(null);
+    setUserAnswer('');
+    const newProblem = generateSequenceProblem();
+    setCurrentProblem(newProblem);
+    setIsLoading(false);
+    playNotificationSound();
+    answerInputRef.current?.focus();
+  }, []);
+
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!currentProblem || userAnswer.trim() === '') {
@@ -87,17 +98,6 @@ export const NumberSequencingUI = () => {
     }
   }, [currentProblem, userAnswer, loadNewProblem]);
 
-
-  const loadNewProblem = useCallback(() => {
-    setIsLoading(true);
-    setFeedback(null);
-    setUserAnswer('');
-    const newProblem = generateSequenceProblem();
-    setCurrentProblem(newProblem);
-    setIsLoading(false);
-    playNotificationSound();
-    answerInputRef.current?.focus();
-  }, []);
 
   useEffect(() => {
     loadNewProblem();
@@ -148,7 +148,9 @@ export const NumberSequencingUI = () => {
       };
     }
     return () => {
-        recognitionRef.current?.stop();
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);

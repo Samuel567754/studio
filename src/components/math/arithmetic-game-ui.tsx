@@ -79,6 +79,17 @@ export const ArithmeticGameUI = () => {
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
 
+  const loadNewProblem = useCallback(() => {
+    setIsLoading(true);
+    setFeedback(null);
+    setUserAnswer('');
+    const newProblem = generateProblem();
+    setCurrentProblem(newProblem);
+    setIsLoading(false);
+    playNotificationSound();
+    answerInputRef.current?.focus();
+  },[]);
+
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!currentProblem || userAnswer.trim() === '') {
@@ -117,17 +128,6 @@ export const ArithmeticGameUI = () => {
   }, [currentProblem, userAnswer, loadNewProblem]);
 
 
-  const loadNewProblem = useCallback(() => {
-    setIsLoading(true);
-    setFeedback(null);
-    setUserAnswer('');
-    const newProblem = generateProblem();
-    setCurrentProblem(newProblem);
-    setIsLoading(false);
-    playNotificationSound();
-    answerInputRef.current?.focus();
-  },[]);
-
   useEffect(() => {
     loadNewProblem();
   }, [loadNewProblem]);
@@ -137,6 +137,13 @@ export const ArithmeticGameUI = () => {
       speakText(currentProblem.speechText);
     }
   }, [currentProblem, isLoading]);
+
+  // Ref to hold the latest handleSubmit function
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  }, [handleSubmit]);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
@@ -173,16 +180,12 @@ export const ArithmeticGameUI = () => {
     }
     
     return () => {
-        recognitionRef.current?.stop();
+        if (recognitionRef.current) {
+           recognitionRef.current.stop();
+        }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]); // handleSubmit will be called via ref
-
-  // Ref to hold the latest handleSubmit function
-  const handleSubmitRef = useRef(handleSubmit);
-  useEffect(() => {
-    handleSubmitRef.current = handleSubmit;
-  }, [handleSubmit]);
+  }, [toast]);
 
 
   const handleSpeakQuestion = () => {

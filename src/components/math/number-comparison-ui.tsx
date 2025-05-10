@@ -46,6 +46,16 @@ export const NumberComparisonUI = () => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
 
+  const loadNewProblem = useCallback(() => {
+    setIsLoading(true);
+    setFeedback(null);
+    setSelectedAnswer(null);
+    const newProblem = generateComparisonProblem();
+    setCurrentProblem(newProblem);
+    setIsLoading(false);
+    playNotificationSound();
+  }, []);
+
   const handleAnswer = useCallback((chosenNum: number) => {
     if (!currentProblem || selectedAnswer !== null) return; 
 
@@ -72,17 +82,7 @@ export const NumberComparisonUI = () => {
         setTimeout(loadNewProblem, 3000);
       }
     }
-  }, [currentProblem, selectedAnswer, loadNewProblem]); // Added loadNewProblem to dependencies
-
-  const loadNewProblem = useCallback(() => {
-    setIsLoading(true);
-    setFeedback(null);
-    setSelectedAnswer(null);
-    const newProblem = generateComparisonProblem();
-    setCurrentProblem(newProblem);
-    setIsLoading(false);
-    playNotificationSound();
-  }, []);
+  }, [currentProblem, selectedAnswer, loadNewProblem]);
 
   useEffect(() => {
     loadNewProblem();
@@ -138,7 +138,9 @@ export const NumberComparisonUI = () => {
       };
     }
     return () => {
-        recognitionRef.current?.stop();
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast, currentProblem]);
