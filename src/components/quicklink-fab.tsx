@@ -5,17 +5,14 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Plus, Lightbulb, Edit3, BookMarked, HelpCircle, User, SettingsIcon, X, Target, Sigma, HomeIcon, Puzzle } from 'lucide-react';
+import { LayoutGrid, Plus, HelpCircle, User, SettingsIcon, X, Sigma, HomeIcon, Puzzle, TextSelect } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 const fabNavLinks = [
   { href: '/', label: 'Home', icon: HomeIcon },
-  { href: '/learn', label: 'Learn', icon: Lightbulb },
-  { href: '/spell', label: 'Spell', icon: Edit3 },
-  { href: '/identify', label: 'Identify', icon: Target },
-  { href: '/read', label: 'Read', icon: BookMarked },
+  { href: '/word-practice', label: 'Word Practice', icon: TextSelect },
   { href: '/ai-games', label: 'AI Games', icon: Puzzle },
   { href: '/math', label: 'Math', icon: Sigma },
   { href: '/tutorial', label: 'Guide', icon: HelpCircle },
@@ -50,11 +47,11 @@ export const QuickLinkFAB: FC = () => {
           {fabNavLinks.map((link) => (
             <Button
               key={link.href}
-              variant={pathname === link.href ? 'secondary' : 'ghost'}
+              variant={pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/') ? 'secondary' : 'ghost'}
               asChild
               className={cn(
                 "justify-start w-full text-base py-3 px-4",
-                pathname === link.href && "font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
+                (pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/')) && "font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
               )}
               onClick={() => setIsOpen(false)}
             >

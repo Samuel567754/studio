@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle, Target, Sigma, HomeIcon, Puzzle } from 'lucide-react';
+import { BookOpenText, Menu, X, SettingsIcon, User, HelpCircle, Sigma, HomeIcon, Puzzle, TextSelect, Brain, Trash2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -16,10 +16,7 @@ import { playNotificationSound } from '@/lib/audio';
 
 const navLinks = [
   { href: '/', label: 'Home', icon: HomeIcon },
-  { href: '/learn', label: 'Learn Words', icon: Lightbulb },
-  { href: '/spell', label: 'Spell Practice', icon: Edit3 },
-  { href: '/identify', label: 'Identify Word', icon: Target },
-  { href: '/read', label: 'Read Passages', icon: BookMarked },
+  { href: '/word-practice', label: 'Word Practice', icon: TextSelect },
   { href: '/ai-games', label: 'AI Word Games', icon: Puzzle },
   { href: '/math', label: 'Math Zone', icon: Sigma },
   { href: '/tutorial', label: 'Tutorial', icon: HelpCircle },
@@ -43,12 +40,12 @@ export const MainNav: FC = () => {
       {navLinks.map((link) => (
         <Button
           key={link.href}
-          variant={pathname === link.href ? 'secondary' : 'ghost'}
+          variant={pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/') ? 'secondary' : 'ghost'}
           asChild
           className={cn(
             "justify-start w-full text-base md:text-sm md:w-auto",
             isMobile ? "py-3 px-4" : "py-2 px-3",
-            pathname === link.href && "font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
+            (pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/')) && "font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
           )}
           onClick={() => isMobile && setIsMobileMenuOpen(false)}
         >
@@ -72,7 +69,7 @@ export const MainNav: FC = () => {
                 variant: "info"
             });
             playNotificationSound();
-             window.location.href = '/introduction'; // Redirect to introduction
+             window.location.href = '/introduction'; 
         }
     }
   };
@@ -90,9 +87,8 @@ export const MainNav: FC = () => {
                  <div className="h-9 w-9 bg-muted rounded-full animate-pulse"></div>
             </div>
             <div className="hidden md:flex items-center gap-1">
-                {/* Adjust count based on navLinks length */}
                 {[...Array(navLinks.length)].map((_, i) => (
-                   <div key={i} className="h-8 w-20 bg-muted rounded-md animate-pulse"></div>
+                   <div key={i} className="h-8 w-24 bg-muted rounded-md animate-pulse"></div>
                 ))}
                 <div className="h-9 w-28 bg-primary/50 rounded-md animate-pulse ml-2"></div>
             </div>
@@ -106,7 +102,7 @@ export const MainNav: FC = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
           <BookOpenText className="h-8 w-8 text-primary group-hover:text-accent transition-colors duration-300 ease-in-out" aria-hidden="true" />
-          <h1 className="text-2xl font-bold text-primary group-hover:text-accent transition-colors duration-300 ease-in-out hidden sm:block">ChillLearn AI</h1>
+          <h1 className="text-2xl font-bold text-primary group-hover:text-accent transition-colors duration-300 ease-in-out hidden sm:block">ChillLearn</h1>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
@@ -130,7 +126,7 @@ export const MainNav: FC = () => {
                 <SheetTitle asChild>
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <BookOpenText className="h-7 w-7 text-primary" aria-hidden="true"/>
-                    <h1 className="text-xl font-bold text-primary">ChillLearn AI</h1>
+                    <h1 className="text-xl font-bold text-primary">ChillLearn</h1>
                   </Link>
                 </SheetTitle>
                 <SheetClose asChild>

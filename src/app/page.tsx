@@ -5,60 +5,21 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, BookOpenText, Lightbulb, Edit3, Target, BookMarked, Sigma, Sparkles, Puzzle } from 'lucide-react';
+import { ArrowRight, BookOpenText, Sigma, Sparkles, Puzzle, TextSelect } from 'lucide-react';
 
 const mainSections = [
   {
-    key: "learn",
-    title: "Learn New Words",
-    description: "Discover new words with AI suggestions tailored to your level. Build your personal practice list.",
-    href: "/learn",
-    icon: Lightbulb,
-    imageSrc: "https://picsum.photos/seed/learn/600/400",
-    imageAlt: "Child with a bright lightbulb over their head",
-    aiHint: "child idea lightbulb",
+    key: "word-practice",
+    title: "Word Practice Zone",
+    description: "Learn new words, practice spelling, identify words by ear, and read AI-generated stories.",
+    href: "/word-practice",
+    icon: TextSelect,
+    imageSrc: "https://picsum.photos/seed/word-practice/600/400",
+    imageAlt: "Collection of learning tools for words",
+    aiHint: "letters books pen",
     color: "text-primary",
     bgFrom: "from-primary/10",
     bgTo: "to-primary/5",
-  },
-  {
-    key: "spell",
-    title: "Spelling Practice",
-    description: "Sharpen your spelling skills. Practice words from your list and master them one by one.",
-    href: "/spell",
-    icon: Edit3,
-    imageSrc: "https://picsum.photos/seed/spell/600/400",
-    imageAlt: "Pencils and letter blocks",
-    aiHint: "pencil letters",
-    color: "text-accent",
-    bgFrom: "from-accent/10",
-    bgTo: "to-accent/5",
-  },
-  {
-    key: "identify",
-    title: "Identify Words",
-    description: "Test your word recognition! Listen and choose the correct word in a fun, interactive game.",
-    href: "/identify",
-    icon: Target,
-    imageSrc: "https://picsum.photos/seed/identify/600/400",
-    imageAlt: "Magnifying glass over a word",
-    aiHint: "magnifying glass word",
-    color: "text-green-500",
-    bgFrom: "from-green-500/10",
-    bgTo: "to-green-500/5",
-  },
-  {
-    key: "read",
-    title: "Reading Adventures",
-    description: "Dive into AI-generated stories featuring your practice words. Read or listen along!",
-    href: "/read",
-    icon: BookMarked,
-    imageSrc: "https://picsum.photos/seed/read/600/400",
-    imageAlt: "Open storybook with fantastical elements",
-    aiHint: "storybook adventure",
-    color: "text-blue-500",
-    bgFrom: "from-blue-500/10",
-    bgTo: "to-blue-500/5",
   },
    {
     key: "ai-games",
@@ -101,20 +62,20 @@ export default function OfficialHomePage() {
             <Sparkles className="h-16 w-16 text-accent" />
         </div>
         <div className="absolute bottom-12 right-16 transform rotate-6 opacity-20 dark:opacity-10">
-            <Lightbulb className="h-20 w-20 text-primary" />
+            <TextSelect className="h-20 w-20 text-primary" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4">
           <BookOpenText className="mx-auto h-20 w-20 md:h-24 md:w-24 text-primary mb-6 animate-in fade-in-0 zoom-in-50 duration-700 ease-out" />
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            Welcome to <span className="text-gradient-primary-accent">ChillLearn AI</span>
+            Welcome to <span className="text-gradient-primary-accent">ChillLearn</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 delay-200">
             Your fun and interactive partner for mastering words, practicing spelling, enjoying AI-powered reading, and exploring the world of math!
           </p>
           <Button asChild size="lg" className="btn-glow text-lg animate-in fade-in-0 zoom-in-75 duration-500 delay-400">
-            <Link href="/learn">
-              Start Learning Words <ArrowRight className="ml-2 h-5 w-5" />
+            <Link href="/word-practice">
+              Start Word Practice <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
         </div>

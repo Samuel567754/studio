@@ -1,5 +1,5 @@
 
-import type { Puzzle, BookOpenCheck } from 'lucide-react'; // Example, adjust as needed
+import type { Puzzle, BookOpenCheck, TextSelect } from 'lucide-react'; // Example, adjust as needed
 
 export interface TutorialStep {
   id: string;
@@ -13,82 +13,62 @@ export interface TutorialStep {
 export const tutorialStepsData: TutorialStep[] = [
   {
     id: 'welcome',
-    title: (username) => username ? `Welcome, ${username}!` : 'Welcome to ChillLearn AI!',
-    content: "This guide will walk you through the main features of the ChillLearn AI application, helping you make the most of your learning experience. Let's get started! You can also launch an interactive walkthrough using the button above.",
+    title: (username) => username ? `Welcome, ${username}!` : 'Welcome to ChillLearn!',
+    content: "This guide will walk you through the main features of the ChillLearn application, helping you make the most of your learning experience. Let's get started! You can also launch an interactive walkthrough using the button above.",
     ariaLabel: 'Welcome section introduction',
-    targetElementSelector: '#main-header', // Example
+    targetElementSelector: '#main-header', 
   },
   {
-    id: 'learn',
-    title: () => "Learn Words Page (Your Starting Point - '/learn')",
-    content: "The 'Learn' page (found at /learn) is where your literacy journey begins.\n\n1. AI Word Suggestions: Set your desired reading level (e.g., beginner, intermediate) and preferred word length.\n2. Get Ideas: Click 'Get New Word Ideas', and our AI will suggest words tailored to your settings.\n3. Build Your List: See a word you like? Click on it! It'll be added to 'Your Practice Word List' below.\nThis list is crucial as it populates words for your spelling, identification, reading, and AI word game practices.",
-    ariaLabel: "Explanation of the Learn Words page (now at /learn) features including AI suggestions and practice list.",
-    targetElementSelector: '[data-tour-id="learn-page-card"]', // Example
-  },
-  {
-    id: 'spell',
-    title: () => 'Spell Practice Page (Sharpen Your Skills)',
-    content: "Navigate to the 'Spell' page to practice spelling words from your list.\n\n1. Current Word: The word you need to spell is displayed prominently.\n2. Your Turn: Type your spelling attempt into the input field.\n3. Check It: Click 'Check Spelling'. If you're correct, the word is marked as 'mastered', and you'll automatically move to the next word in your list. If not, you'll get a hint to try again!",
-    ariaLabel: "Guide to the Spell Practice page, how to input spellings and what happens on correct or incorrect attempts.",
-    targetElementSelector: '[data-tour-id="spell-page-card"]',
-  },
-  {
-    id: 'identify',
-    title: () => 'Identify Word Game (Test Your Recognition)',
-    content: "Head to the 'Identify' page for a fun word recognition game.\n\n1. Listen & See: The current word will be displayed and spoken.\n2. Choose Wisely: Select the matching word from a set of multiple-choice options.\n3. Feedback: Get immediate feedback on your choice and automatically proceed to the next word.",
-    ariaLabel: "Instructions for the Identify Word game, covering word display, multiple choice options, and feedback.",
-    targetElementSelector: '[data-tour-id="identify-page-card"]',
-  },
-  {
-    id: 'read',
-    title: () => 'Read Passages Page (Reading in Context)',
-    content: "The 'Read' page brings your learned words to life!\n\n1. Generate Story: Click 'Generate New Passage'. The AI will create a short story using words from your practice list and suited to your reading level.\n2. Read or Listen: You can read the passage yourself or click 'Read Aloud' to hear it narrated. Words from your practice list and the currently spoken word will be highlighted.",
-    ariaLabel: "Instructions for the Read Passages page, covering passage generation and read aloud features.",
-    targetElementSelector: '[data-tour-id="read-page-card"]',
+    id: 'word-practice-hub',
+    title: () => "Word Practice Zone (Your Literacy Hub - '/word-practice')",
+    content: "The 'Word Practice' page (found at /word-practice) is your central hub for all word-related activities.\n\nFrom here, you can access:\n- Learn New Words: Get AI suggestions, set your reading level, and build your crucial practice list.\n- Spelling Practice: Master words from your list with interactive exercises.\n- Identify Words: Test your recognition by choosing the correct word from options.\n- Reading Adventures: Read AI-generated stories featuring your practice words.",
+    ariaLabel: "Explanation of the Word Practice Zone, linking to Learn, Spell, Identify, and Read sections.",
+    icon: "TextSelect" as any,
+    targetElementSelector: '[href="/word-practice"]',
   },
   {
     id: 'ai-games',
-    title: () => 'AI Word Games (Interactive Fun)',
-    content: "Visit the 'AI Games' section for more engaging ways to practice your vocabulary.\n\n- Fill in the Blank: Read a sentence generated by AI and choose the correct word (from your practice list or similar) to complete it.\n- Word Definition Match: Test your understanding by matching words to their AI-generated definitions.",
+    title: () => 'AI Word Games (Interactive Fun - /ai-games)',
+    content: "Visit the 'AI Games' section for more engaging ways to practice your vocabulary.\n\n- Fill in the Blank: Read an AI-generated sentence and choose the correct word to complete it.\n- Word Definition Match: Test your understanding by matching words to their AI-generated definitions.",
     ariaLabel: "Overview of the AI Word Games section, featuring Fill in the Blank and Definition Match.",
-    icon: "Puzzle" as any, // Will be resolved to Lucide icon in component
-    targetElementSelector: '[data-tour-id="ai-games-page-card"]',
+    icon: "Puzzle" as any, 
+    targetElementSelector: '[href="/ai-games"]',
   },
   {
     id: 'math',
-    title: () => 'Math Zone (Explore Numeracy)',
-    content: "The 'Math Zone' is your hub for various math activities:\n\n- AI Word Problems & Story Problems: Solve math challenges created by AI, tailored to different difficulty levels.\n- Arithmetic Games: Tackle addition, subtraction, multiplication, and division problems.\n- Times Table Practice: Master your multiplication facts for specific tables.\n- Number Comparison: Identify the larger or smaller number in a pair.\n- Number Sequencing: Complete number patterns by finding the missing element.\nMany math games feature optional audio read-aloud for questions and voice input for answers!",
-    ariaLabel: "Overview of the Math Zone and its various game sections including AI problems, Arithmetic, Times Table, Comparison and Sequencing.",
-    targetElementSelector: '[data-tour-id="math-zone-page-card"]',
+    title: () => 'Math Zone (Explore Numeracy - /math)',
+    content: "The 'Math Zone' is your hub for various math activities:\n\n- AI Word Problems & Story Problems: Solve math challenges created by AI.\n- Arithmetic Games: Tackle addition, subtraction, multiplication, and division.\n- Times Table Practice: Master your multiplication facts.\n- Number Comparison & Sequencing: Test your number sense.\nMany games feature audio read-aloud and voice input options!",
+    ariaLabel: "Overview of the Math Zone and its various game sections.",
+    targetElementSelector: '[href="/math"]',
   },
   {
     id: 'profile',
-    title: () => 'Profile Page (Track Your Progress)',
-    content: "Visit your 'Profile' page for a snapshot of your learning journey.\nHere you'll find:\n- Your name and favorite topics (editable!).\n- Number of words in your practice list.\n- Count of words you've successfully mastered.\n- Your currently set reading level and word length preferences for suggestions.",
-    ariaLabel: "Overview of the Profile page and the learning statistics and preferences it displays.",
-    targetElementSelector: '[data-tour-id="profile-nav-link"]',
+    title: () => 'Profile Page (Track Your Progress - /profile)',
+    content: "Visit your 'Profile' page for a snapshot of your learning journey.\nHere you'll find:\n- Your name and favorite topics (editable!).\n- Statistics on practice words and mastered words.\n- Your current learning preferences.",
+    ariaLabel: "Overview of the Profile page.",
+    targetElementSelector: '[href="/profile"]',
   },
   {
     id: 'settings',
-    title: () => 'Settings Page (Customize Your App)',
-    content: "Tailor the ChillLearn AI app to your liking on the 'Settings' page.\nYou can adjust:\n- Theme: Choose between light, dark, or system default.\n- Font: Select your preferred font family and size.\n- Audio: Enable or disable sound effects, and fine-tune speech settings like voice, rate, and pitch for the read-aloud features.",
-    ariaLabel: "Details on the Settings page for customizing appearance and audio preferences.",
-    targetElementSelector: '[data-tour-id="settings-nav-link"]',
+    title: () => 'Settings Page (Customize Your App - /settings)',
+    content: "Tailor the ChillLearn app on the 'Settings' page.\nAdjust:\n- Theme: Light, dark, or system default.\n- Font: Family and size.\n- Audio: Sound effects, speech voice, rate, and pitch.",
+    ariaLabel: "Details on the Settings page.",
+    targetElementSelector: '[href="/settings"]',
   },
   {
     id: 'navigation',
     title: () => 'Navigating the App',
-    content: "Getting around is easy:\n- Main Homepage ('/'): Your dashboard for quick access to all learning areas.\n- Learn Words ('/learn'): The dedicated page for finding and managing your practice words.\n- Desktop/Tablet: Use the navigation links at the top of the page.\n- Mobile: A handy bottom navigation bar provides quick access to all sections. There's also a Quick Link FAB (Floating Action Button) for fast access to main pages.\n- Quick Learn Button: This button (in the main navigation or mobile sheet menu) takes you directly to the '/learn' page.",
-    ariaLabel: "How to navigate the application on different devices using the navigation bars, quick link FAB, and understanding the main homepage vs. learn words page.",
-    targetElementSelector: '[data-tour-id="main-navigation"]',
+    content: "Getting around is easy:\n- Main Homepage ('/'): Your dashboard for quick access to all learning areas (Word Practice, AI Games, Math Zone).\n- Desktop/Tablet: Use the navigation links at the top.\n- Mobile: A bottom navigation bar and a Quick Link FAB (Floating Action Button) provide fast access.\n- Quick Learn Button: Takes you directly to the 'Learn New Words' section within 'Word Practice'.",
+    ariaLabel: "How to navigate the application on different devices.",
+    targetElementSelector: '[data-tour-id="main-navigation"]', // Assuming main-nav has this
   },
 ];
 
 export const walkthroughModalSteps: TutorialStep[] = [
  { id: 'intro-modal', title: (username) => username ? `Hi ${username}, Welcome!` : 'Welcome to ChillLearn!', content: "Let's quickly see where everything is. This tour will highlight key sections.", ariaLabel: 'Modal: Introduction', targetElementSelector: 'body' },
-  { id: 'home-modal', title: () => "Homepage", content: "This is your main dashboard. From here, you can jump to any learning activity like learning new words, spelling, reading, math, or AI games.", ariaLabel: 'Modal: Homepage', targetElementSelector: '[data-tour-id="main-content-area"]' }, // Assuming your main content area has an ID or data attribute
-  { id: 'learn-modal', title: () => "Learn Words Area", content: "Go to 'Learn Words' (usually from the top or bottom nav) to find new words with AI, set your learning level, and manage your personal practice list. This list is key for other activities!", ariaLabel: 'Modal: Learn Words Area', targetElementSelector: '[href="/learn"]' },
-  { id: 'activities-modal', title: () => "Activity Hubs", content: "Sections like 'Spell', 'Identify', 'Read', 'AI Games', and 'Math Zone' are where you'll practice and play. They use words from your 'Learn Words' list.", ariaLabel: 'Modal: Activity Hubs', targetElementSelector: '[href="/spell"]' }, // Target one of them
+  { id: 'home-modal', title: () => "Homepage", content: "This is your main dashboard. From here, you can jump to any learning activity zone like Word Practice, AI Games, or the Math Zone.", ariaLabel: 'Modal: Homepage', targetElementSelector: '[data-tour-id="main-content-area"]' },
+  { id: 'word-practice-modal', title: () => "Word Practice Zone", content: "Go to 'Word Practice' (from the top or bottom nav) to learn new words, practice spelling, identify words, and read stories. Remember to visit 'Learn New Words' within this zone first to build your practice list!", ariaLabel: 'Modal: Word Practice Zone', targetElementSelector: '[href="/word-practice"]' },
+  { id: 'ai-math-modal', title: () => "AI Games & Math Zone", content: "Explore 'AI Games' for fun vocabulary challenges and the 'Math Zone' for various numerical activities. These use words from your practice list where applicable.", ariaLabel: 'Modal: AI Games and Math Zone', targetElementSelector: '[href="/ai-games"]' }, 
   { id: 'profile-settings-modal', title: () => "Profile & Settings", content: "Check your 'Profile' to see progress and update your name/topics. In 'Settings', you can change the app's look and sound.", ariaLabel: 'Modal: Profile and Settings', targetElementSelector: '[href="/profile"]'},
   { id: 'finish-modal', title: () => "You're Ready!", content: "That's the basics! Explore and have fun learning. You can find this full guide on the 'Guide' page if you need a refresher.", ariaLabel: 'Modal: End of tour', targetElementSelector: 'body' }
 ];
