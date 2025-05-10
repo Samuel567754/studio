@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { playErrorSound, playNotificationSound } from '@/lib/audio';
 import { useWalkthroughStore } from '@/stores/walkthrough-store';
 import { tutorialStepsData, type TutorialStep } from '@/components/tutorial/tutorial-data'; // Import tutorial data
+import { useUserProfileStore } from '@/stores/user-profile-store'; // Import user profile store
 
 // Helper to map string icon names from data to actual Lucide components
 const getIconComponent = (iconName?: string): React.ElementType | undefined => {
@@ -239,3 +240,4 @@ export default function TutorialPage() {
     </div>
   );
 }
+
