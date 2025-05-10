@@ -15,8 +15,8 @@ interface TimesTableProblem {
   factor1: number; 
   factor2: number; 
   answer: number;
-  questionText: string; // For display
-  speechText: string;   // For TTS
+  questionText: string; 
+  speechText: string;   
 }
 
 const generateTimesTableProblem = (table: number, currentMultiplier: number): TimesTableProblem => {
@@ -41,7 +41,7 @@ export const TimesTableUI = () => {
   const [showCompletionMessage, setShowCompletionMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); // Tables 2 to 12
+  const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); 
 
   const loadProblemForTableAndMultiplier = useCallback(() => {
     setIsLoading(true);
@@ -51,7 +51,6 @@ export const TimesTableUI = () => {
     setFeedback(null);
     setShowCompletionMessage(false);
     setIsLoading(false);
-    // Notification sound is played by handleTableChange or successful submit
   }, [selectedTable, currentMultiplier]);
   
   useEffect(() => {
@@ -71,8 +70,6 @@ export const TimesTableUI = () => {
     setCurrentMultiplier(1); 
     setCorrectInARow(0);
     playNotificationSound();
-    // Problem will reload due to useEffect dependency on selectedTable & currentMultiplier
-    // No need to call loadProblemForTableAndMultiplier here, useEffect handles it.
   };
 
   const handleSpeakQuestion = () => {
@@ -94,39 +91,46 @@ export const TimesTableUI = () => {
       return;
     }
 
+    const handleNextStepLogic = () => {
+      if (currentMultiplier < MAX_MULTIPLIER) {
+        setCurrentMultiplier(prev => prev + 1);
+      } else {
+        const completionMsg = `Congratulations! You've completed the ${selectedTable} times table!`;
+        setShowCompletionMessage(true);
+        setFeedback({ type: 'success', message: completionMsg }); 
+        speakText(completionMsg);
+      }
+    };
+
     if (answerNum === currentProblem.answer) {
       const successMessage = `Correct! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
       setCorrectInARow(prev => prev + 1);
-      speakText(`Correct! ${currentProblem.factor1} times ${currentProblem.factor2} is ${currentProblem.answer}.`);
       playSuccessSound();
       
-      setTimeout(() => {
-        if (currentMultiplier < MAX_MULTIPLIER) {
-          setCurrentMultiplier(prev => prev + 1);
-          // Problem will reload due to useEffect
-        } else {
-          const completionMsg = `Congratulations! You've completed the ${selectedTable} times table!`;
-          setShowCompletionMessage(true);
-          setFeedback({ type: 'success', message: completionMsg }); // Update feedback for completion
-          speakText(completionMsg);
-        }
-      }, 1200);
+      const utterance = speakText(`Correct! ${currentProblem.factor1} times ${currentProblem.factor2} is ${currentProblem.answer}.`, undefined, handleNextStepLogic);
+      
+      if (!utterance) { // Fallback if speech doesn't start
+        setTimeout(handleNextStepLogic, 1200);
+      }
     } else {
       const errorMessage = `Not quite. ${currentProblem.factor1} × ${currentProblem.factor2} is ${currentProblem.answer}.`;
       setFeedback({ type: 'error', message: errorMessage });
       setCorrectInARow(0); 
-      speakText(`Oops! ${currentProblem.factor1} times ${currentProblem.factor2} is ${currentProblem.answer}.`);
       playErrorSound();
+      // For error, we don't automatically advance. User needs to correct or skip.
+      // If we wanted to advance on error after audio, it would be:
+      // const utterance = speakText(`Oops! ...`, undefined, () => { /* loadProblemForTableAndMultiplier(); or similar */ });
+      // if (!utterance) setTimeout(() => { /* loadProblem... */ }, 2000);
+      // But current behavior is to let user re-try or skip.
     }
   };
 
   const handleRestartTable = () => {
     setCurrentMultiplier(1);
     setCorrectInARow(0);
-    setShowCompletionMessage(false); // Ensure this is reset
+    setShowCompletionMessage(false); 
     playNotificationSound();
-    // loadProblemForTableAndMultiplier will be called by useEffect due to state change
   };
   
   if (isLoading && !currentProblem) {
@@ -196,10 +200,10 @@ export const TimesTableUI = () => {
                   placeholder="Answer"
                   className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-accent"
                   aria-label={`Enter your answer for ${currentProblem.questionText.replace('?', '')}`}
-                  disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading}
+                  disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading || showCompletionMessage}
                 />
               </div>
-              <Button type="submit" size="lg" className="w-full btn-glow !text-lg bg-accent hover:bg-accent/90" disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading}>
+              <Button type="submit" size="lg" className="w-full btn-glow !text-lg bg-accent hover:bg-accent/90" disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading || showCompletionMessage}>
                 Check
               </Button>
             </form>

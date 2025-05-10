@@ -12,16 +12,16 @@ import { cn } from '@/lib/utils';
 interface ComparisonProblem {
   num1: number;
   num2: number;
-  questionType: 'bigger' | 'smaller'; // Determines if we ask for bigger or smaller
+  questionType: 'bigger' | 'smaller'; 
   correctAnswer: number;
   questionText: string;
   speechText: string;
 }
 
 const generateComparisonProblem = (): ComparisonProblem => {
-  let num1 = Math.floor(Math.random() * 100) + 1; // Numbers between 1 and 100
+  let num1 = Math.floor(Math.random() * 100) + 1; 
   let num2 = Math.floor(Math.random() * 100) + 1;
-  while (num2 === num1) { // Ensure numbers are different for a clear bigger/smaller question
+  while (num2 === num1) { 
     num2 = Math.floor(Math.random() * 100) + 1;
   }
 
@@ -67,7 +67,7 @@ export const NumberComparisonUI = () => {
   };
   
   const handleAnswer = (chosenNum: number) => {
-    if (!currentProblem || selectedAnswer !== null) return; // Prevent re-answering
+    if (!currentProblem || selectedAnswer !== null) return; 
 
     setSelectedAnswer(chosenNum);
     const isCorrect = chosenNum === currentProblem.correctAnswer;
@@ -75,14 +75,22 @@ export const NumberComparisonUI = () => {
     if (isCorrect) {
       setFeedback({ type: 'success', message: `Correct! ${chosenNum} is indeed the ${currentProblem.questionType} one.` });
       setScore(prev => prev + 1);
-      speakText(`Correct! ${chosenNum} is ${currentProblem.questionType}.`);
       playSuccessSound();
-      setTimeout(loadNewProblem, 2000);
+      const utterance = speakText(`Correct! ${chosenNum} is ${currentProblem.questionType}.`, undefined, () => {
+        loadNewProblem();
+      });
+      if (!utterance) { // Fallback if speech doesn't start
+        setTimeout(loadNewProblem, 2000);
+      }
     } else {
       setFeedback({ type: 'error', message: `Not quite. The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.` });
-      speakText(`Oops! The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`);
       playErrorSound();
-      setTimeout(loadNewProblem, 3000);
+      const utterance = speakText(`Oops! The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`, undefined, () => {
+        loadNewProblem();
+      });
+      if (!utterance) { // Fallback if speech doesn't start
+        setTimeout(loadNewProblem, 3000);
+      }
     }
   };
 
@@ -128,7 +136,7 @@ export const NumberComparisonUI = () => {
                 "text-4xl h-24 font-bold transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md",
                 selectedAnswer === num && feedback?.type === 'success' && "bg-green-500/20 border-green-500 text-green-700 dark:text-green-400 ring-2 ring-green-500",
                 selectedAnswer === num && feedback?.type === 'error' && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 ring-2 ring-red-500",
-                selectedAnswer !== null && num === currentProblem.correctAnswer && feedback?.type === 'error' && "bg-green-500/10 border-green-500/50" // Highlight correct if wrong chosen
+                selectedAnswer !== null && num === currentProblem.correctAnswer && feedback?.type === 'error' && "bg-green-500/10 border-green-500/50" 
               )}
               onClick={() => handleAnswer(num)}
               disabled={selectedAnswer !== null || isLoading}

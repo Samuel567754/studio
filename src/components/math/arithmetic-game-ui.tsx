@@ -76,7 +76,6 @@ export const ArithmeticGameUI = () => {
     setIsLoading(true);
     setFeedback(null);
     setUserAnswer('');
-    // Generate problem immediately, don't wait for timeout
     const newProblem = generateProblem();
     setCurrentProblem(newProblem);
     setIsLoading(false);
@@ -117,19 +116,27 @@ export const ArithmeticGameUI = () => {
       const successMessage = `Correct! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
       setScore(prev => prev + 1);
-      speakText(`Correct! The answer is ${currentProblem.answer}.`);
       playSuccessSound();
-      setTimeout(() => {
+      const utterance = speakText(`Correct! The answer is ${currentProblem.answer}.`, undefined, () => {
         loadNewProblem();
-      }, 1500); 
+      });
+      if (!utterance) { // Fallback if speech doesn't start
+        setTimeout(() => {
+          loadNewProblem();
+        }, 1500);
+      }
     } else {
       const errorMessage = `Not quite. The correct answer for ${currentProblem.questionText.replace('?', '')} was ${currentProblem.answer}. Try the next one!`;
       setFeedback({ type: 'error', message: errorMessage });
-      speakText(`Oops! The correct answer was ${currentProblem.answer}.`);
       playErrorSound();
-       setTimeout(() => { 
+      const utterance = speakText(`Oops! The correct answer was ${currentProblem.answer}.`, undefined, () => {
         loadNewProblem();
-      }, 2500);
+      });
+      if (!utterance) { // Fallback if speech doesn't start
+        setTimeout(() => { 
+          loadNewProblem();
+        }, 2500);
+      }
     }
   };
   
@@ -142,7 +149,7 @@ export const ArithmeticGameUI = () => {
         <CardDescription>Solve the problem below. Current Score: <span className="font-bold text-accent">{score}</span></CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {isLoading && !currentProblem && ( // Show loader only if no problem is displayed yet
+        {isLoading && !currentProblem && ( 
           <div className="flex justify-center items-center min-h-[100px]">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="sr-only">Loading new problem...</p>
@@ -173,10 +180,10 @@ export const ArithmeticGameUI = () => {
                   placeholder="Your answer"
                   className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary"
                   aria-label="Enter your answer for the math problem"
-                  disabled={feedback?.type === 'success'}
+                  disabled={feedback?.type === 'success' || isLoading}
                 />
               </div>
-              <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success'}>
+              <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success' || isLoading}>
                 Check Answer
               </Button>
             </form>

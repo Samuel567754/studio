@@ -11,18 +11,18 @@ import { playSuccessSound, playErrorSound, playNotificationSound, speakText } fr
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface SequenceProblem {
-  sequenceDisplay: (number | string)[]; // e.g., [2, 4, "__", 8]
+  sequenceDisplay: (number | string)[]; 
   correctAnswer: number;
-  questionText: string; // For display
-  speechText: string;   // For TTS
+  questionText: string; 
+  speechText: string;   
 }
 
 const generateSequenceProblem = (): SequenceProblem => {
-  const start = Math.floor(Math.random() * 20) + 1; // Start between 1-20
-  const diffTypes = [1, 2, 3, 5, 10]; // Possible differences
+  const start = Math.floor(Math.random() * 20) + 1; 
+  const diffTypes = [1, 2, 3, 5, 10]; 
   const difference = diffTypes[Math.floor(Math.random() * diffTypes.length)];
-  const length = 4; // Sequence of 4 numbers, one blank
-  const blankIndex = Math.floor(Math.random() * (length -1)) + 1; // Blank can be 2nd or 3rd item in a 4 item pattern
+  const length = 4; 
+  const blankIndex = Math.floor(Math.random() * (length -1)) + 1; 
 
   const fullSequence: number[] = [];
   for (let i = 0; i < length; i++) {
@@ -88,14 +88,22 @@ export const NumberSequencingUI = () => {
     if (answerNum === currentProblem.correctAnswer) {
       setFeedback({ type: 'success', message: `Correct! The number is ${currentProblem.correctAnswer}.` });
       setScore(prev => prev + 1);
-      speakText(`That's right! ${currentProblem.correctAnswer} completes the sequence.`);
       playSuccessSound();
-      setTimeout(loadNewProblem, 2000);
+      const utterance = speakText(`That's right! ${currentProblem.correctAnswer} completes the sequence.`, undefined, () => {
+        loadNewProblem();
+      });
+      if (!utterance) { // Fallback if speech doesn't start
+        setTimeout(loadNewProblem, 2000);
+      }
     } else {
       setFeedback({ type: 'error', message: `Not quite. The correct number was ${currentProblem.correctAnswer}.` });
-      speakText(`Oops! The correct number was ${currentProblem.correctAnswer}.`);
       playErrorSound();
-      setTimeout(loadNewProblem, 3000);
+      const utterance = speakText(`Oops! The correct number was ${currentProblem.correctAnswer}.`, undefined, () => {
+        loadNewProblem();
+      });
+      if (!utterance) { // Fallback if speech doesn't start
+        setTimeout(loadNewProblem, 3000);
+      }
     }
   };
   
