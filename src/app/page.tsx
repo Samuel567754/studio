@@ -58,7 +58,7 @@ const mainSections = [
   },
   {
     title: "Math Zone",
-    description: "Explore a world of numbers with engaging arithmetic games, times tables, and more.",
+    description: "Explore a world of numbers with engaging arithmetic games, times tables, AI word problems, and more.",
     href: "/math",
     icon: Sigma,
     imageSrc: "https://picsum.photos/seed/math/600/400",
