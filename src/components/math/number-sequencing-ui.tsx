@@ -43,13 +43,14 @@ export const NumberSequencingUI = () => {
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [score, setScore] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
     setFeedback(null);
     setUserAnswer('');
-    setCurrentProblem(generateSequenceProblem());
+    const newProblem = generateSequenceProblem();
+    setCurrentProblem(newProblem);
     setIsLoading(false);
     playNotificationSound();
   }, []);
@@ -57,6 +58,13 @@ export const NumberSequencingUI = () => {
   useEffect(() => {
     loadNewProblem();
   }, [loadNewProblem]);
+
+  useEffect(() => {
+    if (currentProblem && !isLoading && currentProblem.speechText) {
+      speakText(currentProblem.speechText);
+    }
+  }, [currentProblem, isLoading]);
+
 
   const handleSpeakQuestion = () => {
     if (currentProblem?.speechText) {
@@ -138,10 +146,10 @@ export const NumberSequencingUI = () => {
               placeholder="Type missing number"
               className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary"
               aria-label="Enter the missing number in the sequence"
-              disabled={feedback?.type === 'success'}
+              disabled={feedback?.type === 'success' || isLoading}
             />
           </div>
-          <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success'}>
+          <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success' || isLoading}>
             Check Answer
           </Button>
         </form>

@@ -70,13 +70,15 @@ export const ArithmeticGameUI = () => {
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [score, setScore] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
 
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
     setFeedback(null);
     setUserAnswer('');
-    setCurrentProblem(generateProblem());
+    // Generate problem immediately, don't wait for timeout
+    const newProblem = generateProblem();
+    setCurrentProblem(newProblem);
     setIsLoading(false);
     playNotificationSound();
   },[]);
@@ -84,6 +86,13 @@ export const ArithmeticGameUI = () => {
   useEffect(() => {
     loadNewProblem();
   }, [loadNewProblem]);
+  
+  useEffect(() => {
+    if (currentProblem && !isLoading && currentProblem.speechText) {
+      speakText(currentProblem.speechText);
+    }
+  }, [currentProblem, isLoading]);
+
 
   const handleSpeakQuestion = () => {
     if (currentProblem?.speechText) {
@@ -133,7 +142,7 @@ export const ArithmeticGameUI = () => {
         <CardDescription>Solve the problem below. Current Score: <span className="font-bold text-accent">{score}</span></CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {isLoading && (
+        {isLoading && !currentProblem && ( // Show loader only if no problem is displayed yet
           <div className="flex justify-center items-center min-h-[100px]">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="sr-only">Loading new problem...</p>
@@ -182,7 +191,7 @@ export const ArithmeticGameUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading}>
+        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading && !!currentProblem}>
           <RefreshCw className="mr-2 h-4 w-4" /> Skip / New Problem
         </Button>
       </CardFooter>

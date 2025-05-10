@@ -37,14 +37,15 @@ export const NumberComparisonUI = () => {
   const [currentProblem, setCurrentProblem] = useState<ComparisonProblem | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [score, setScore] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
 
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
     setFeedback(null);
     setSelectedAnswer(null);
-    setCurrentProblem(generateComparisonProblem());
+    const newProblem = generateComparisonProblem();
+    setCurrentProblem(newProblem);
     setIsLoading(false);
     playNotificationSound();
   }, []);
@@ -52,6 +53,12 @@ export const NumberComparisonUI = () => {
   useEffect(() => {
     loadNewProblem();
   }, [loadNewProblem]);
+
+  useEffect(() => {
+    if (currentProblem && !isLoading && currentProblem.speechText) {
+      speakText(currentProblem.speechText);
+    }
+  }, [currentProblem, isLoading]);
 
   const handleSpeakQuestion = () => {
     if (currentProblem?.speechText) {
@@ -124,7 +131,7 @@ export const NumberComparisonUI = () => {
                 selectedAnswer !== null && num === currentProblem.correctAnswer && feedback?.type === 'error' && "bg-green-500/10 border-green-500/50" // Highlight correct if wrong chosen
               )}
               onClick={() => handleAnswer(num)}
-              disabled={selectedAnswer !== null}
+              disabled={selectedAnswer !== null || isLoading}
               aria-pressed={selectedAnswer === num}
             >
               {num}
@@ -140,7 +147,7 @@ export const NumberComparisonUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading || selectedAnswer === null && feedback !== null}>
+        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading || (selectedAnswer === null && feedback !== null)}>
           <RefreshCw className="mr-2 h-4 w-4" /> Skip / Next Problem
         </Button>
       </CardFooter>

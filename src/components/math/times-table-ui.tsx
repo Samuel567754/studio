@@ -39,19 +39,31 @@ export const TimesTableUI = () => {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [correctInARow, setCorrectInARow] = useState(0);
   const [showCompletionMessage, setShowCompletionMessage] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); // Tables 2 to 12
 
   const loadProblemForTableAndMultiplier = useCallback(() => {
-    setCurrentProblem(generateTimesTableProblem(selectedTable, currentMultiplier));
+    setIsLoading(true);
+    const newProblem = generateTimesTableProblem(selectedTable, currentMultiplier);
+    setCurrentProblem(newProblem);
     setUserAnswer('');
     setFeedback(null);
     setShowCompletionMessage(false);
+    setIsLoading(false);
+    // Notification sound is played by handleTableChange or successful submit
   }, [selectedTable, currentMultiplier]);
   
   useEffect(() => {
     loadProblemForTableAndMultiplier();
   }, [loadProblemForTableAndMultiplier]);
+
+  useEffect(() => {
+    if (currentProblem && !isLoading && !showCompletionMessage && currentProblem.speechText) {
+      speakText(currentProblem.speechText);
+    }
+  }, [currentProblem, isLoading, showCompletionMessage]);
+
 
   const handleTableChange = (value: string) => {
     const tableNum = parseInt(value, 10);
@@ -60,6 +72,7 @@ export const TimesTableUI = () => {
     setCorrectInARow(0);
     playNotificationSound();
     // Problem will reload due to useEffect dependency on selectedTable & currentMultiplier
+    // No need to call loadProblemForTableAndMultiplier here, useEffect handles it.
   };
 
   const handleSpeakQuestion = () => {
@@ -95,7 +108,7 @@ export const TimesTableUI = () => {
         } else {
           const completionMsg = `Congratulations! You've completed the ${selectedTable} times table!`;
           setShowCompletionMessage(true);
-          setFeedback({ type: 'success', message: completionMsg });
+          setFeedback({ type: 'success', message: completionMsg }); // Update feedback for completion
           speakText(completionMsg);
         }
       }, 1200);
@@ -111,9 +124,27 @@ export const TimesTableUI = () => {
   const handleRestartTable = () => {
     setCurrentMultiplier(1);
     setCorrectInARow(0);
-    // loadProblemForTableAndMultiplier will be called by useEffect due to state change
+    setShowCompletionMessage(false); // Ensure this is reset
     playNotificationSound();
+    // loadProblemForTableAndMultiplier will be called by useEffect due to state change
   };
+  
+  if (isLoading && !currentProblem) {
+    return (
+        <Card className="w-full max-w-lg mx-auto shadow-xl border-accent/20">
+            <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold text-accent flex items-center justify-center">
+                    <ListOrdered className="mr-2 h-6 w-6" /> Times Table Challenge
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center min-h-[200px]">
+                <Loader2 className="h-12 w-12 animate-spin text-accent" />
+                <p className="sr-only">Loading times table practice...</p>
+            </CardContent>
+        </Card>
+    );
+  }
+
 
   return (
     <Card className="w-full max-w-lg mx-auto shadow-xl border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
@@ -126,7 +157,7 @@ export const TimesTableUI = () => {
       <CardContent className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <Label htmlFor="table-select" className="text-md font-medium whitespace-nowrap">Practice Table:</Label>
-          <Select value={selectedTable.toString()} onValueChange={handleTableChange}>
+          <Select value={selectedTable.toString()} onValueChange={handleTableChange} disabled={isLoading}>
             <SelectTrigger id="table-select" className="flex-grow h-11 text-base shadow-sm focus:ring-accent" aria-label="Select times table to practice">
               <SelectValue placeholder="Select table" />
             </SelectTrigger>
@@ -165,10 +196,10 @@ export const TimesTableUI = () => {
                   placeholder="Answer"
                   className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-accent"
                   aria-label={`Enter your answer for ${currentProblem.questionText.replace('?', '')}`}
-                  disabled={feedback?.type === 'success' && !showCompletionMessage}
+                  disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading}
                 />
               </div>
-              <Button type="submit" size="lg" className="w-full btn-glow !text-lg bg-accent hover:bg-accent/90" disabled={feedback?.type === 'success' && !showCompletionMessage}>
+              <Button type="submit" size="lg" className="w-full btn-glow !text-lg bg-accent hover:bg-accent/90" disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading}>
                 Check
               </Button>
             </form>
