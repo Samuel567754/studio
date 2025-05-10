@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -133,7 +134,7 @@ export const TimesTableUI = () => {
         setTimeout(handleNextStepLogic, 1200);
       }
     } else {
-      const errorMessage = `Not quite. ${currentProblem.factor1} × ${currentProblem.factor2} is ${currentProblem.answer}.`;
+      const errorMessage = `Not quite${username ? `, ${username}` : ''}. ${currentProblem.factor1} × ${currentProblem.factor2} is ${currentProblem.answer}.`;
       setFeedback({ type: 'error', message: errorMessage });
       setCorrectInARow(0); 
       playErrorSound();
@@ -344,3 +345,5 @@ export const TimesTableUI = () => {
   );
 };
 
+
+    

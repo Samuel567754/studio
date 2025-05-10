@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -117,7 +118,7 @@ export const ArithmeticGameUI = () => {
         setTimeout(loadNewProblem, 1500);
       }
     } else {
-      const errorMessage = `Not quite. The correct answer for ${currentProblem.questionText.replace('?', '')} was ${currentProblem.answer}. Try the next one!`;
+      const errorMessage = `Not quite${username ? `, ${username}` : ''}. The correct answer for ${currentProblem.questionText.replace('?', '')} was ${currentProblem.answer}. Try the next one!`;
       setFeedback({ type: 'error', message: errorMessage });
       playErrorSound();
       const speechErrorMsg = `Oops! The correct answer was ${currentProblem.answer}.`;
@@ -297,3 +298,5 @@ export const ArithmeticGameUI = () => {
   );
 };
 
+
+    

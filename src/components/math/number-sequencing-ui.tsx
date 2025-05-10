@@ -91,7 +91,8 @@ export const NumberSequencingUI = () => {
         setTimeout(loadNewProblem, 2000);
       }
     } else {
-      setFeedback({ type: 'error', message: `Not quite. The correct number was ${currentProblem.correctAnswer}.` });
+      const errorMessage = `Not quite${username ? `, ${username}` : ''}. The correct number was ${currentProblem.correctAnswer}.`;
+      setFeedback({ type: 'error', message: errorMessage });
       playErrorSound();
       const speechErrorMsg = `Oops! The correct number was ${currentProblem.correctAnswer}.`;
       const utterance = speakText(speechErrorMsg, undefined, () => {
@@ -203,74 +204,74 @@ export const NumberSequencingUI = () => {
   }
 
   return (
-    <>
-      <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
-            <ChevronsRight className="mr-2 h-6 w-6" /> Complete the Sequence
-          </CardTitle>
-          <CardDescription>
-            Current Score: <span className="font-bold text-accent">{score}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex justify-between items-center my-2 bg-muted/50 p-4 rounded-lg">
-              <p className="text-3xl md:text-4xl font-bold text-gradient-primary-accent select-none" aria-live="polite">
-              {currentProblem.sequenceDisplay.join(', ')}
-              </p>
-            <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read sequence problem aloud" disabled={isListening}>
-              <Volume2 className="h-5 w-5" />
+    <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
+          <ChevronsRight className="mr-2 h-6 w-6" /> Complete the Sequence
+        </CardTitle>
+        <CardDescription>
+          Current Score: <span className="font-bold text-accent">{score}</span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex justify-between items-center my-2 bg-muted/50 p-4 rounded-lg">
+            <p className="text-3xl md:text-4xl font-bold text-gradient-primary-accent select-none" aria-live="polite">
+            {currentProblem.sequenceDisplay.join(', ')}
+            </p>
+          <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read sequence problem aloud" disabled={isListening}>
+            <Volume2 className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="sequence-answer" className="sr-only">Your Answer for the blank</Label>
+            <Input
+              id="sequence-answer"
+              ref={answerInputRef}
+              type="number"
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              placeholder="Type missing number"
+              className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary flex-grow"
+              aria-label="Enter the missing number in the sequence"
+              disabled={feedback?.type === 'success' || isLoading || isListening}
+            />
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="icon" 
+              onClick={toggleListening} 
+              className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
+              aria-label={isListening ? "Stop listening" : "Speak your answer"}
+              disabled={feedback?.type === 'success' || isLoading || !recognitionRef.current}
+            >
+                {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
             </Button>
           </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="sequence-answer" className="sr-only">Your Answer for the blank</Label>
-              <Input
-                id="sequence-answer"
-                ref={answerInputRef}
-                type="number"
-                value={userAnswer}
-                onChange={(e) => setUserAnswer(e.target.value)}
-                placeholder="Type missing number"
-                className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary flex-grow"
-                aria-label="Enter the missing number in the sequence"
-                disabled={feedback?.type === 'success' || isLoading || isListening}
-              />
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="icon" 
-                onClick={toggleListening} 
-                className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
-                aria-label={isListening ? "Stop listening" : "Speak your answer"}
-                disabled={feedback?.type === 'success' || isLoading || !recognitionRef.current}
-              >
-                  {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
-              </Button>
-            </div>
-            <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success' || isLoading || isListening}>
-              Check Answer
-            </Button>
-          </form>
-
-          {feedback && (
-            <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
-              {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
-              <AlertTitle>
-                  {feedback.type === 'success' ? (username ? `Awesome, ${username}!` : 'Awesome!') : 'Keep Going!'}
-              </AlertTitle>
-              <AlertDescription>{feedback.message}</AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-        <CardFooter>
-          <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading || isListening}>
-            <RefreshCw className="mr-2 h-4 w-4" /> Skip / New Sequence
+          <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success' || isLoading || isListening}>
+            Check Answer
           </Button>
-        </CardFooter>
-      </Card>
-    </>
+        </form>
+
+        {feedback && (
+          <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
+            {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
+            <AlertTitle>
+                {feedback.type === 'success' ? (username ? `Awesome, ${username}!` : 'Awesome!') : 'Keep Going!'}
+            </AlertTitle>
+            <AlertDescription>{feedback.message}</AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading || isListening}>
+          <RefreshCw className="mr-2 h-4 w-4" /> Skip / New Sequence
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 
+
+    

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, type FormEvent } from 'react';
@@ -122,7 +123,7 @@ export default function ProfilePage() {
         <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-primary/30">
             <Image
                 src="https://picsum.photos/200/200"
-                alt="User profile avatar placeholder"
+                alt={username ? `${username}'s profile avatar` : "User profile avatar placeholder"}
                 layout="fill"
                 objectFit="cover"
                 className="rounded-full"
@@ -141,7 +142,7 @@ export default function ProfilePage() {
       <Card className="shadow-xl border-accent/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-accent">
-             <Smile className="mr-3 h-6 w-6" aria-hidden="true" /> Personalize Your Experience
+             <Smile className="mr-3 h-6 w-6" aria-hidden="true" /> Personalize Your Experience{username ? `, ${username}!` : '!'}
           </CardTitle>
           <CardDescription>Enter your name to personalize greetings and messages in the app.</CardDescription>
         </CardHeader>
@@ -278,3 +279,5 @@ export default function ProfilePage() {
   );
 }
 
+
+    

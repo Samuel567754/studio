@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -64,7 +65,8 @@ export const NumberComparisonUI = () => {
     const isCorrect = chosenNum === currentProblem.correctAnswer;
 
     if (isCorrect) {
-      setFeedback({ type: 'success', message: `Correct! ${chosenNum} is indeed the ${currentProblem.questionType} one.` });
+      const successMessage = `${username ? username + ", y" : "Y"}ou got it right! ${chosenNum} is indeed the ${currentProblem.questionType} one.`;
+      setFeedback({ type: 'success', message: successMessage });
       setScore(prev => prev + 1);
       playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", y" : "Y"}ou got it! ${chosenNum} is ${currentProblem.questionType}.`;
@@ -75,7 +77,8 @@ export const NumberComparisonUI = () => {
         setTimeout(loadNewProblem, 2000);
       }
     } else {
-      setFeedback({ type: 'error', message: `Not quite. The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.` });
+      const errorMessage = `Not quite${username ? `, ${username}` : ''}. The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`;
+      setFeedback({ type: 'error', message: errorMessage });
       playErrorSound();
       const speechErrorMsg = `Oops! The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`;
       const utterance = speakText(speechErrorMsg, undefined, () => {
@@ -258,3 +261,5 @@ export const NumberComparisonUI = () => {
   );
 };
 
+
+    
