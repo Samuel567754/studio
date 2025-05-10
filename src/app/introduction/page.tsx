@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { setHasSeenIntroduction } from '@/lib/storage';
-import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon } from 'lucide-react';
+import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon, SkipForward } from 'lucide-react';
 import { playNotificationSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 
@@ -32,11 +32,11 @@ export default function IntroductionPage() {
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
   const minSwipeDistance = 50;
 
-  const handleGetStarted = () => {
+  const completeIntroduction = () => {
     setHasSeenIntroduction(true);
     playNotificationSound();
     router.push('/'); 
-  };
+  }
 
   const selectFeature = useCallback((newIndex: number) => {
     if (newIndex === currentFeatureIndex) return; 
@@ -154,14 +154,23 @@ export default function IntroductionPage() {
           </div>
         </section>
 
-        <div className="animate-in fade-in-0 slide-in-from-bottom-10 duration-700 delay-[400ms] pt-4">
+        <div className="animate-in fade-in-0 slide-in-from-bottom-10 duration-700 delay-[400ms] pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button
             size="lg"
-            onClick={handleGetStarted}
-            className="px-8 py-5 text-lg sm:text-xl font-semibold btn-glow shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 ease-in-out"
+            onClick={completeIntroduction}
+            className="px-8 py-5 text-lg sm:text-xl font-semibold btn-glow shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 ease-in-out w-full sm:w-auto"
             aria-label="Get started with ChillLearn AI"
           >
             Let's Get Started! <ArrowRight className="ml-2 h-5 w-5 sm:h-6 sm:w-6" />
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={completeIntroduction}
+            className="px-8 py-5 text-lg sm:text-xl font-medium w-full sm:w-auto hover:bg-primary/10 hover:text-primary transition-colors duration-200"
+            aria-label="Skip introduction and go to app"
+          >
+             <SkipForward className="mr-2 h-5 w-5 sm:h-6 sm:w-6" /> Skip to App
           </Button>
         </div>
       </main>
