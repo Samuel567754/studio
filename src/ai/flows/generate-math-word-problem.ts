@@ -24,6 +24,11 @@ export type GenerateMathWordProblemInput = z.infer<
   typeof GenerateMathWordProblemInputSchema
 >;
 
+const PromptInputSchema = GenerateMathWordProblemInputSchema.extend({
+  isRandomOperation: z.boolean().describe('True if the AI should choose a random operation, false otherwise.'),
+});
+type PromptInput = z.infer<typeof PromptInputSchema>;
+
 const GenerateMathWordProblemOutputSchema = z.object({
   problemText: z
     .string()
@@ -52,13 +57,13 @@ export async function generateMathWordProblem(
 
 const prompt = ai.definePrompt({
   name: 'generateMathWordProblemPrompt',
-  input: {schema: GenerateMathWordProblemInputSchema},
+  input: {schema: PromptInputSchema}, // Use the extended schema for prompt input
   output: {schema: GenerateMathWordProblemOutputSchema},
   prompt: `You are an AI assistant that creates age-appropriate math word problems for children.
   The user is at a '{{difficultyLevel}}' level.
   {{#if username}}The learner's name is {{username}}. You can use their name in the problem if it feels natural.{{/if}}
 
-  {{#if (eq operation "random")}}
+  {{#if isRandomOperation}}
   You should choose one of the following operations: addition, subtraction, multiplication, or division.
   Indicate the operation you chose in the 'operationUsed' field of your output.
   {{else}}
@@ -74,7 +79,7 @@ const prompt = ai.definePrompt({
   The word problem should be clear, unambiguous, and 1-2 sentences long.
   Provide the problem text and the numerical answer.
   Optionally, provide a brief, simple explanation (1 sentence) of how to solve it.
-  {{#if (eq operation "random")}}
+  {{#if isRandomOperation}}
   Make sure to set the 'operationUsed' field in the output to the operation you randomly selected (e.g., "addition", "subtraction", "multiplication", "division").
   {{/if}}
 
@@ -109,9 +114,16 @@ const generateMathWordProblemFlow = ai.defineFlow(
     inputSchema: GenerateMathWordProblemInputSchema,
     outputSchema: GenerateMathWordProblemOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    if (input.operation !== 'random' && output) {
+  async (input: GenerateMathWordProblemInput): Promise<GenerateMathWordProblemOutput> => {
+    const promptInput: PromptInput = {
+      ...input,
+      isRandomOperation: input.operation === 'random',
+    };
+    const {output} = await prompt(promptInput);
+    
+    if (output && input.operation !== 'random') {
+      // Ensure operationUsed is set if it was a specific operation,
+      // even if the AI doesn't set it (though it should not for non-random).
       output.operationUsed = input.operation;
     }
     return output!;
