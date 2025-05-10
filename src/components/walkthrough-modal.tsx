@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FC } from 'react';
@@ -10,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  // DialogClose, // Removed as base DialogContent provides one
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Volume2, Play, Pause, StopCircle, X, CheckCircle } from 'lucide-react';
@@ -223,10 +222,9 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
             )}
           </div>
         </DialogFooter>
-         <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground md:hidden">
-              <X className="h-5 w-5" />
-              <span className="sr-only">Close</span>
-        </DialogClose>
+         {/* The DialogClose from ui/dialog.tsx will handle the 'X' button automatically.
+             No need for an additional one here.
+          */}
       </DialogContent>
     </Dialog>
   );
