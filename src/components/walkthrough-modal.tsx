@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FC } from 'react';
@@ -12,7 +11,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X, Smile, Compass } from 'lucide-react'; // Added Compass
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X, Smile, Compass } from 'lucide-react'; 
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +19,7 @@ import { playNotificationSound, playErrorSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useUserProfileStore } from '@/stores/user-profile-store';
-import { walkthroughModalSteps, type TutorialStep } from '@/components/tutorial/tutorial-data'; // Import modal steps data
+import { walkthroughModalSteps, type TutorialStep } from '@/components/tutorial/tutorial-data'; 
 
 interface WalkthroughModalProps {
   isOpen: boolean;
@@ -89,7 +88,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
 
   const handleToggleSpeech = useCallback(() => {
     if (!currentStepData) return;
-    const stepTitle = currentStepData.title(username); // Get title with username
+    const stepTitle = currentStepData.title(username); 
     if (currentSpeechUtterance && activeSpeakingStepId === currentStepData.id) {
       if (isAudioPlaying && !isAudioPaused) {
         window.speechSynthesis.pause();
@@ -173,7 +172,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { stopCurrentSpeech(); onClose(); } }}>
-      <DialogContent className="sm:max-w-md p-0" aria-labelledby="walkthrough-title" aria-describedby="walkthrough-description">
+      <DialogContent className="sm:max-w-md p-0">
         <DialogHeader className="p-6 pb-2 border-b flex flex-row justify-between items-center">
           <DialogTitle id="walkthrough-title" className="text-xl font-semibold text-primary flex items-center gap-2">
              <IconComponent className="h-6 w-6 text-accent" />
