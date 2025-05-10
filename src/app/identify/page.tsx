@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { WordDisplay } from '@/components/word-display';
 import { WordIdentificationGame } from '@/components/word-identification-game';
 import { useToast } from "@/hooks/use-toast";
@@ -126,14 +127,24 @@ export default function IdentifyWordPage() {
   if (wordList.length < 2) { // Need at least 2 words for MCQs (correct + 1 distractor)
     return (
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
-        <Target className="h-6 w-6 mx-auto mb-2" aria-hidden="true" />
-        <AlertTitle className="text-xl font-semibold mb-2">Not Enough Words!</AlertTitle>
-        <AlertDescription className="text-base">
-          You need at least 2 words in your practice list to play the identification game.
-          Please go to the{' '}
-          <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
-          {' '}page to add more words.
-        </AlertDescription>
+        <div className="flex flex-col items-center gap-4">
+          <Image 
+            src="https://picsum.photos/200/150" 
+            alt="Child looking thoughtful"
+            width={200}
+            height={150}
+            className="rounded-lg shadow-md mb-3"
+            data-ai-hint="confused child thinking"
+          />
+          <Target className="h-6 w-6 text-primary" aria-hidden="true" />
+          <AlertTitle className="text-xl font-semibold mb-2">Not Enough Words!</AlertTitle>
+          <AlertDescription className="text-base">
+            You need at least 2 words in your practice list to play the identification game.
+            Please go to the{' '}
+            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
+            {' '}page to add more words.
+          </AlertDescription>
+        </div>
       </Alert>
     );
   }

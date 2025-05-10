@@ -2,6 +2,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calculator, TableIcon as TimesTableIcon, Sigma, Puzzle, Scaling, ChevronsRight } from 'lucide-react';
@@ -41,10 +42,22 @@ export default function MathZonePage() {
 
   return (
     <div className="space-y-8">
-      <header className="text-center space-y-2 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
-        <Sigma className="h-16 w-16 mx-auto text-primary animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
-        <h1 className="text-4xl font-bold text-gradient-primary-accent">Math Zone</h1>
-        <p className="text-lg text-muted-foreground">Explore various math activities and games.</p>
+      <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
+        <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
+          <Image 
+            src="https://picsum.photos/600/400" 
+            alt="Abstract math background"
+            layout="fill"
+            objectFit="cover"
+            className="rounded-lg"
+            data-ai-hint="abstract math education"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex flex-col items-center justify-center p-4">
+            <Sigma className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+            <h1 className="text-4xl font-bold text-gradient-primary-accent mt-2">Math Zone</h1>
+            <p className="text-lg text-foreground/90 drop-shadow-sm">Explore various math activities and games.</p>
+          </div>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

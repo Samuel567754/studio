@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { ReadingPractice } from '@/components/reading-practice';
 import { getStoredWordList, getStoredReadingLevel, getStoredMasteredWords } from '@/lib/storage';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -59,14 +60,24 @@ export default function ReadingPage() {
   if (wordList.length === 0) {
     return (
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
-        <Info className="h-6 w-6 mx-auto mb-2" />
-        <AlertTitle className="text-xl font-semibold mb-2">No Words for Reading Practice!</AlertTitle>
-        <AlertDescription className="text-base">
-          To generate a reading passage, you need some words in your practice list.
-          Please visit the {' '}
-          <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
-          {' '}page to select or add words.
-        </AlertDescription>
+        <div className="flex flex-col items-center gap-4">
+          <Image 
+            src="https://picsum.photos/200/150" 
+            alt="Empty bookshelf"
+            width={200}
+            height={150}
+            className="rounded-lg shadow-md mb-3"
+            data-ai-hint="empty bookshelf"
+          />
+          <Info className="h-6 w-6 text-primary" />
+          <AlertTitle className="text-xl font-semibold mb-2">No Words for Reading Practice!</AlertTitle>
+          <AlertDescription className="text-base">
+            To generate a reading passage, you need some words in your practice list.
+            Please visit the {' '}
+            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
+            {' '}page to select or add words.
+          </AlertDescription>
+        </div>
       </Alert>
     );
   }
@@ -81,3 +92,4 @@ export default function ReadingPage() {
     </div>
   );
 }
+

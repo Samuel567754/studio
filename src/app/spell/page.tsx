@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { WordDisplay } from '@/components/word-display';
 import { SpellingPractice } from '@/components/spelling-practice';
 import { useToast } from "@/hooks/use-toast";
@@ -115,13 +116,23 @@ export default function SpellingPage() {
   if (wordList.length === 0) {
     return (
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
-        <Info className="h-6 w-6 mx-auto mb-2" aria-hidden="true" />
-        <AlertTitle className="text-xl font-semibold mb-2">No Words to Spell!</AlertTitle>
-        <AlertDescription className="text-base">
-          Your spelling list is empty. Please go to the{' '}
-          <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
-          {' '}page to add some words.
-        </AlertDescription>
+         <div className="flex flex-col items-center gap-4">
+          <Image 
+            src="https://picsum.photos/200/150" 
+            alt="Pencil and paper"
+            width={200}
+            height={150}
+            className="rounded-lg shadow-md mb-3"
+            data-ai-hint="pencil paper"
+          />
+          <Info className="h-6 w-6 text-primary" aria-hidden="true" />
+          <AlertTitle className="text-xl font-semibold mb-2">No Words to Spell!</AlertTitle>
+          <AlertDescription className="text-base">
+            Your spelling list is empty. Please go to the{' '}
+            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/">Learn Words</Link></Button>
+            {' '}page to add some words.
+          </AlertDescription>
+        </div>
       </Alert>
     );
   }
@@ -151,3 +162,4 @@ export default function SpellingPage() {
     </div>
   );
 }
+

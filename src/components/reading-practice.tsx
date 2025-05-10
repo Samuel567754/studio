@@ -1,6 +1,7 @@
 
 'use client';
 import React, { FC, ReactNode, useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
@@ -344,12 +345,24 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           </div>
         )}
         {passage && !isLoading && (
-          <Alert variant="default" className="bg-card/50 dark:bg-card/30 border-primary/30 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
-             <AlertTitle className="text-lg font-semibold text-primary">Your Reading Passage:</AlertTitle>
-            <AlertDescription className="text-base leading-relaxed text-foreground/90 dark:text-foreground/80 py-2 whitespace-pre-line">
-              {renderHighlightedPassage().map((node, index) => <React.Fragment key={index}>{node}</React.Fragment>)}
-            </AlertDescription>
-          </Alert>
+          <div className="space-y-4">
+            <div className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden shadow-md">
+              <Image 
+                src="https://picsum.photos/600/400" 
+                alt="Child reading a book"
+                layout="fill"
+                objectFit="cover"
+                className="rounded-lg"
+                data-ai-hint="child reading book"
+              />
+            </div>
+            <Alert variant="default" className="bg-card/50 dark:bg-card/30 border-primary/30 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
+              <AlertTitle className="text-lg font-semibold text-primary">Your Reading Passage:</AlertTitle>
+              <AlertDescription className="text-base leading-relaxed text-foreground/90 dark:text-foreground/80 py-2 whitespace-pre-line">
+                {renderHighlightedPassage().map((node, index) => <React.Fragment key={index}>{node}</React.Fragment>)}
+              </AlertDescription>
+            </Alert>
+          </div>
         )}
         {!passage && !isLoading && wordsToPractice.length === 0 && (
            <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300" aria-live="polite">

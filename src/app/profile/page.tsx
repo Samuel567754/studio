@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   getStoredWordList,
   getStoredMasteredWords,
@@ -75,8 +76,20 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
-      <header className="text-center space-y-2 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
-        <User className="h-16 w-16 mx-auto text-primary animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+      <header className="text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
+        <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-primary/30">
+            <Image
+                src="https://picsum.photos/200/200"
+                alt="User profile avatar placeholder"
+                layout="fill"
+                objectFit="cover"
+                className="rounded-full"
+                data-ai-hint="profile avatar"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent flex items-end justify-center p-2">
+                 <User className="h-10 w-10 text-white/80 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+            </div>
+        </div>
         <h1 className="text-4xl font-bold text-gradient-primary-accent">Your Learning Profile</h1>
         <p className="text-lg text-muted-foreground">A snapshot of your progress and preferences.</p>
       </header>
@@ -176,8 +189,6 @@ export default function ProfilePage() {
             </CardContent>
         </Card>
       </div>
-
-
     </div>
   );
 }

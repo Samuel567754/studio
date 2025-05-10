@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass } from 'lucide-react';
@@ -189,9 +190,21 @@ export default function TutorialPage() {
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
-      <header className="text-center space-y-2 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
-        <HelpCircle className="h-16 w-16 mx-auto text-primary animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
-        <h1 className="text-4xl font-bold text-gradient-primary-accent">App Tutorial & Guide</h1>
+      <header className="text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
+        <div className="relative w-full max-w-sm mx-auto h-40 md:h-48 rounded-lg overflow-hidden shadow-lg">
+           <Image 
+            src="https://picsum.photos/400/300" 
+            alt="Friendly guide pointing the way"
+            layout="fill"
+            objectFit="cover"
+            className="rounded-lg"
+            data-ai-hint="guide map person"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex flex-col items-center justify-center p-4">
+             <HelpCircle className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+          </div>
+        </div>
+        <h1 className="text-4xl font-bold text-gradient-primary-accent mt-3">App Tutorial & Guide</h1>
         <p className="text-lg text-muted-foreground">Learn how to use ChillLearn AI effectively.</p>
       </header>
 
@@ -267,3 +280,4 @@ export default function TutorialPage() {
     </div>
   );
 }
+
