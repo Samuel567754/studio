@@ -7,15 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { CheckCircle2, XCircle, Loader2, Repeat, ListOrdered } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Repeat, ListOrdered, Volume2 } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface TimesTableProblem {
-  factor1: number; // The table number being practiced
-  factor2: number; // The multiplier (1 through 12 or 10)
+  factor1: number; 
+  factor2: number; 
   answer: number;
-  questionText: string;
+  questionText: string; // For display
+  speechText: string;   // For TTS
 }
 
 const generateTimesTableProblem = (table: number, currentMultiplier: number): TimesTableProblem => {
@@ -24,6 +25,7 @@ const generateTimesTableProblem = (table: number, currentMultiplier: number): Ti
     factor2: currentMultiplier,
     answer: table * currentMultiplier,
     questionText: `${table} × ${currentMultiplier} = ?`,
+    speechText: `${table} times ${currentMultiplier} equals what?`,
   };
 };
 
@@ -57,6 +59,13 @@ export const TimesTableUI = () => {
     setCurrentMultiplier(1); 
     setCorrectInARow(0);
     playNotificationSound();
+    // Problem will reload due to useEffect dependency on selectedTable & currentMultiplier
+  };
+
+  const handleSpeakQuestion = () => {
+    if (currentProblem?.speechText) {
+      speakText(currentProblem.speechText);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -73,22 +82,28 @@ export const TimesTableUI = () => {
     }
 
     if (answerNum === currentProblem.answer) {
-      setFeedback({ type: 'success', message: 'Correct!' });
+      const successMessage = `Correct! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
+      setFeedback({ type: 'success', message: successMessage });
       setCorrectInARow(prev => prev + 1);
+      speakText(`Correct! ${currentProblem.factor1} times ${currentProblem.factor2} is ${currentProblem.answer}.`);
       playSuccessSound();
       
       setTimeout(() => {
         if (currentMultiplier < MAX_MULTIPLIER) {
           setCurrentMultiplier(prev => prev + 1);
+          // Problem will reload due to useEffect
         } else {
+          const completionMsg = `Congratulations! You've completed the ${selectedTable} times table!`;
           setShowCompletionMessage(true);
-           setFeedback({ type: 'success', message: `Congratulations! You've completed the ${selectedTable} times table!` });
+          setFeedback({ type: 'success', message: completionMsg });
+          speakText(completionMsg);
         }
-         // setUserAnswer(''); // Keep for consistency if problem reloads, or clear if next problem auto-loads
       }, 1200);
     } else {
-      setFeedback({ type: 'error', message: `Not quite. The correct answer for ${currentProblem.factor1} × ${currentProblem.factor2} was ${currentProblem.answer}.` });
+      const errorMessage = `Not quite. ${currentProblem.factor1} × ${currentProblem.factor2} is ${currentProblem.answer}.`;
+      setFeedback({ type: 'error', message: errorMessage });
       setCorrectInARow(0); 
+      speakText(`Oops! ${currentProblem.factor1} times ${currentProblem.factor2} is ${currentProblem.answer}.`);
       playErrorSound();
     }
   };
@@ -127,13 +142,18 @@ export const TimesTableUI = () => {
 
         {currentProblem && !showCompletionMessage && (
           <div className="text-center space-y-4 animate-in fade-in-0 duration-300">
-             <p 
-                className="text-5xl md:text-6xl font-bold text-gradient-primary-accent bg-clip-text text-transparent drop-shadow-sm py-2 select-none" 
-                aria-live="polite"
-                data-ai-hint="multiplication problem"
-            >
-              {currentProblem.questionText}
-            </p>
+             <div className="flex justify-center items-center gap-4 my-2">
+                <p 
+                    className="text-5xl md:text-6xl font-bold text-gradient-primary-accent bg-clip-text text-transparent drop-shadow-sm py-2 select-none flex-grow text-center" 
+                    aria-live="polite"
+                    data-ai-hint="multiplication problem"
+                >
+                {currentProblem.questionText}
+                </p>
+                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud">
+                    <Volume2 className="h-6 w-6" />
+                </Button>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="times-table-answer" className="sr-only">Your Answer</Label>

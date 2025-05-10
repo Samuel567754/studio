@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calculator, TableIcon as TimesTableIcon, Sigma, Puzzle } from 'lucide-react'; // Puzzle for games
+import { Calculator, TableIcon as TimesTableIcon, Sigma, Puzzle, Scaling, ChevronsRight } from 'lucide-react';
 
 export default function MathZonePage() {
   const mathSections = [
@@ -21,6 +21,20 @@ export default function MathZonePage() {
       href: "/math/times-table",
       icon: TimesTableIcon,
       dataAiHint: "multiplication grid",
+    },
+    {
+      title: "Number Comparison",
+      description: "Compare numbers and choose the biggest or smallest.",
+      href: "/math/number-comparison",
+      icon: Scaling,
+      dataAiHint: "numbers comparison chart",
+    },
+    {
+      title: "Number Sequencing",
+      description: "Find the missing number in a sequence or complete patterns.",
+      href: "/math/number-sequencing",
+      icon: ChevronsRight,
+      dataAiHint: "number line sequence",
     },
     // Add more sections here in the future e.g. Geometry, Fractions etc.
   ];
@@ -74,3 +88,4 @@ export default function MathZonePage() {
     </div>
   );
 }
+

@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle2, XCircle, Loader2, Zap, RefreshCw } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Zap, RefreshCw, Volume2 } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type Operation = '+' | '-' | '*' | '/';
@@ -16,7 +16,8 @@ interface Problem {
   num2: number;
   operation: Operation;
   answer: number;
-  questionText: string;
+  questionText: string; // For display
+  speechText: string;   // For TTS
 }
 
 const generateProblem = (): Problem => {
@@ -25,38 +26,43 @@ const generateProblem = (): Problem => {
   let num2 = Math.floor(Math.random() * 12) + 1;
   let answer: number;
   let questionText = '';
+  let speechText = '';
 
   switch (operation) {
     case '+':
       answer = num1 + num2;
       questionText = `${num1} + ${num2} = ?`;
+      speechText = `${num1} plus ${num2} equals what?`;
       break;
     case '-':
-      if (num1 < num2) [num1, num2] = [num2, num1]; // Ensure positive result for simplicity
+      if (num1 < num2) [num1, num2] = [num2, num1]; 
       answer = num1 - num2;
       questionText = `${num1} - ${num2} = ?`;
+      speechText = `${num1} minus ${num2} equals what?`;
       break;
     case '*':
-      num1 = Math.floor(Math.random() * 10) + 1; // Smaller numbers for multiplication
+      num1 = Math.floor(Math.random() * 10) + 1; 
       num2 = Math.floor(Math.random() * 10) + 1;
       answer = num1 * num2;
       questionText = `${num1} × ${num2} = ?`;
+      speechText = `${num1} times ${num2} equals what?`;
       break;
     case '/':
-      answer = Math.floor(Math.random() * 10) + 1; // Ensure whole number division for answer
-      num2 = Math.floor(Math.random() * ( Math.min(10, (answer > 0 ? Math.floor(50 / answer) : 10 ) ) ) ) + 1; // num2 that results in num1 <= 50
-      num1 = answer * num2; // num1 is product
-      if (num1 === 0 && num2 === 0) { // Avoid 0/0
+      answer = Math.floor(Math.random() * 10) + 1; 
+      num2 = Math.floor(Math.random() * ( Math.min(10, (answer > 0 ? Math.floor(50 / answer) : 10 ) ) ) ) + 1;
+      num1 = answer * num2; 
+      if (num1 === 0 && num2 === 0) { 
           num2 = 1;
           num1 = answer * num2;
-      } else if (num2 === 0) { // Avoid division by zero
-          num2 = 1; // Change divisor to 1
-          num1 = answer * num2; // Recalculate num1
+      } else if (num2 === 0) { 
+          num2 = 1; 
+          num1 = answer * num2; 
       }
       questionText = `${num1} ÷ ${num2} = ?`;
+      speechText = `${num1} divided by ${num2} equals what?`;
       break;
   }
-  return { num1, num2, operation, answer, questionText };
+  return { num1, num2, operation, answer, questionText, speechText };
 };
 
 export const ArithmeticGameUI = () => {
@@ -79,6 +85,12 @@ export const ArithmeticGameUI = () => {
     loadNewProblem();
   }, [loadNewProblem]);
 
+  const handleSpeakQuestion = () => {
+    if (currentProblem?.speechText) {
+      speakText(currentProblem.speechText);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentProblem || userAnswer.trim() === '') {
@@ -93,14 +105,18 @@ export const ArithmeticGameUI = () => {
     }
 
     if (answerNum === currentProblem.answer) {
-      setFeedback({ type: 'success', message: 'Correct! Well done!' });
+      const successMessage = `Correct! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
+      setFeedback({ type: 'success', message: successMessage });
       setScore(prev => prev + 1);
+      speakText(`Correct! The answer is ${currentProblem.answer}.`);
       playSuccessSound();
       setTimeout(() => {
         loadNewProblem();
       }, 1500); 
     } else {
-      setFeedback({ type: 'error', message: `Not quite. The correct answer was ${currentProblem.answer}. Try the next one!` });
+      const errorMessage = `Not quite. The correct answer for ${currentProblem.questionText.replace('?', '')} was ${currentProblem.answer}. Try the next one!`;
+      setFeedback({ type: 'error', message: errorMessage });
+      speakText(`Oops! The correct answer was ${currentProblem.answer}.`);
       playErrorSound();
        setTimeout(() => { 
         loadNewProblem();
@@ -125,13 +141,18 @@ export const ArithmeticGameUI = () => {
         )}
         {!isLoading && currentProblem && (
           <div className="text-center space-y-4 animate-in fade-in-0 duration-300">
-            <p 
-                className="text-5xl md:text-6xl font-bold text-gradient-primary-accent bg-clip-text text-transparent drop-shadow-sm py-2 select-none" 
-                aria-live="polite"
-                data-ai-hint="math equation"
-            >
-                {currentProblem.questionText}
-            </p>
+            <div className="flex justify-center items-center gap-4 my-2">
+                <p 
+                    className="text-5xl md:text-6xl font-bold text-gradient-primary-accent bg-clip-text text-transparent drop-shadow-sm py-2 select-none flex-grow text-center" 
+                    aria-live="polite"
+                    data-ai-hint="math equation"
+                >
+                    {currentProblem.questionText}
+                </p>
+                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud">
+                    <Volume2 className="h-6 w-6" />
+                </Button>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="math-answer" className="sr-only">Your Answer</Label>
