@@ -237,3 +237,4 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     </Dialog>
   );
 };
+
