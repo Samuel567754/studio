@@ -7,11 +7,12 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { setHasSeenIntroduction } from '@/lib/storage';
-import { BookOpenText, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, ArrowLeft, ChevronRight, ChevronLeft } from 'lucide-react';
+import { BookOpenText, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon } from 'lucide-react';
 import { playNotificationSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 
 const features = [
+  { icon: HomeIcon, title: "Homepage Hub", description: "Your central dashboard for accessing all learning activities.", imageSrc: "https://picsum.photos/seed/homepage/300/200", aiHint: "dashboard home screen" },
   { icon: Lightbulb, title: "AI Word Learning", description: "Get smart word suggestions tailored to your reading level.", imageSrc: "https://picsum.photos/seed/ai-learn/300/200", aiHint: "AI brain lightbulb" },
   { icon: Edit3, title: "Spelling Practice", description: "Master words with interactive spelling exercises.", imageSrc: "https://picsum.photos/seed/spelling/300/200", aiHint: "pencil letters blocks" },
   { icon: Target, title: "Word Identification", description: "Fun games to test your word recognition skills.", imageSrc: "https://picsum.photos/seed/identify-game/300/200", aiHint: "target word game" },
@@ -75,8 +76,8 @@ export default function IntroductionPage() {
                       <Image
                         src={feature.imageSrc}
                         alt={feature.title}
-                        layout="fill"
-                        objectFit="cover"
+                        fill
+                        style={{objectFit:"cover"}}
                         className="rounded-lg"
                         data-ai-hint={feature.aiHint}
                       />
@@ -104,7 +105,7 @@ export default function IntroductionPage() {
                 className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/50 hover:bg-background/80 shadow-md h-10 w-10 sm:h-12 sm:w-12"
                 aria-label="Previous feature"
               >
-                <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+                <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
               </Button>
               <Button
                 variant="outline"
@@ -113,7 +114,7 @@ export default function IntroductionPage() {
                 className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/50 hover:bg-background/80 shadow-md h-10 w-10 sm:h-12 sm:w-12"
                 aria-label="Next feature"
               >
-                <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
               </Button>
             </>
           )}

@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle, Target, Sigma } from 'lucide-react';
+import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle, Target, Sigma, HomeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,7 @@ import { playNotificationSound } from '@/lib/audio';
 
 
 const navLinks = [
+  { href: '/', label: 'Home', icon: HomeIcon },
   { href: '/learn', label: 'Learn Words', icon: Lightbulb },
   { href: '/spell', label: 'Spell Practice', icon: Edit3 },
   { href: '/identify', label: 'Identify Word', icon: Target },
