@@ -12,6 +12,7 @@ export const WALKTHROUGH_PERSIST_KEY = 'chilllearn_walkthroughState_v1';
 const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
 const USERNAME_KEY = 'chilllearn_username_v1';
 const PERSONALIZATION_COMPLETED_KEY = 'chilllearn_personalizationCompleted_v1';
+const FAVORITE_TOPICS_KEY = 'chilllearn_favoriteTopics_v1';
 
 
 // --- Username ---
@@ -35,6 +36,30 @@ export const storeUsername = (username: string | null): void => {
     }
   } catch (error) {
     console.error("Error storing username to localStorage:", error);
+  }
+};
+
+// --- Favorite Topics ---
+export const getStoredFavoriteTopics = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(FAVORITE_TOPICS_KEY);
+  } catch (error) {
+    console.error("Error reading favorite topics from localStorage:", error);
+    return null;
+  }
+};
+
+export const storeFavoriteTopics = (topics: string | null): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (topics) {
+      localStorage.setItem(FAVORITE_TOPICS_KEY, topics);
+    } else {
+      localStorage.removeItem(FAVORITE_TOPICS_KEY);
+    }
+  } catch (error) {
+    console.error("Error storing favorite topics to localStorage:", error);
   }
 };
 
@@ -205,6 +230,7 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(INTRODUCTION_SEEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
   localStorage.removeItem(PERSONALIZATION_COMPLETED_KEY);
+  localStorage.removeItem(FAVORITE_TOPICS_KEY);
   
   // Clear all progression dismissal flags
   Object.keys(localStorage).forEach(key => {
@@ -212,5 +238,6 @@ export const clearProgressStoredData = (): void => {
       localStorage.removeItem(key);
     }
   });
-  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, walkthrough status, introduction seen flag, username, and personalization status.");
+  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, walkthrough status, introduction seen flag, username, favorite topics, and personalization status.");
 };
+

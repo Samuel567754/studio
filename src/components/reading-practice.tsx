@@ -1,3 +1,4 @@
+
 'use client';
 import React, { FC, ReactNode, useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
@@ -28,10 +29,10 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const [passage, setPassage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isPaused, setIsPaused] = useState(isPaused);
+  const [isPaused, setIsPaused] = useState(false); // Corrected initial state
   const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
   const [currentSpokenWordInfo, setCurrentSpokenWordInfo] = useState<SpokenWordInfo | null>(null);
-  const { username } = useUserProfileStore();
+  const { username, favoriteTopics } = useUserProfileStore();
   
   const { toast } = useToast();
   const soundEffectsEnabled = useAppSettingsStore(state => state.soundEffectsEnabled);
@@ -46,8 +47,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel(); 
+      resetSpeechState(); // Ensure state is reset when speech is explicitly stopped
     }
-  }, []);
+  }, [resetSpeechState]);
 
 
   const resetStateForNewPassage = () => {
@@ -101,7 +103,12 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     resetStateForNewPassage();
 
     try {
-      const input: GenerateReadingPassageInput = { words: wordsToPractice, readingLevel, masteredWords };
+      const input: GenerateReadingPassageInput = { 
+        words: wordsToPractice, 
+        readingLevel, 
+        masteredWords,
+        favoriteTopics: favoriteTopics || undefined // Pass favorite topics
+      };
       const result = await generateReadingPassage(input);
       if (result.passage) {
         setPassage(result.passage);
@@ -132,7 +139,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     } finally {
       setIsLoading(false);
     }
-  }, [wordsToPractice, readingLevel, masteredWords, toast, stopSpeech, isSpeaking, username]);
+  }, [wordsToPractice, readingLevel, masteredWords, favoriteTopics, toast, stopSpeech, isSpeaking, username]);
 
   const toggleSpeech = useCallback(() => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis || !passage) {
@@ -144,7 +151,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
     const speech = window.speechSynthesis;
 
-    if (isSpeaking) { 
+    if (currentUtterance && isSpeaking) { // Check if there's an active utterance
         if (isPaused) { 
             speech.resume();
             setIsPaused(false);
@@ -154,17 +161,17 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             setIsPaused(true);
             playNotificationSound();
         }
-    } else { 
+    } else { // Start new speech
       const utterance = speakText(passage, handleSpeechBoundary, handleSpeechEnd, handleSpeechError);
       if (utterance) {
         setCurrentUtterance(utterance);
         setIsSpeaking(true);
         setIsPaused(false);
       } else {
-        resetSpeechState();
+        resetSpeechState(); // Ensure state is reset if speakText fails to return an utterance
       }
     }
-  }, [passage, isSpeaking, isPaused, soundEffectsEnabled, handleSpeechBoundary, handleSpeechEnd, handleSpeechError, resetSpeechState, toast]);
+  }, [passage, isSpeaking, isPaused, soundEffectsEnabled, handleSpeechBoundary, handleSpeechEnd, handleSpeechError, resetSpeechState, toast, currentUtterance]);
   
   const handleCopyPassage = useCallback(() => {
     if (passage && navigator.clipboard) {
@@ -349,12 +356,12 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           <div className="space-y-4">
             <div className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden shadow-md">
               <Image 
-                src="https://picsum.photos/600/400" 
-                alt="Child reading a book"
+                src="https://picsum.photos/seed/reading-passage/600/400" 
+                alt="Child reading a book with imagination bubbles"
                 layout="fill"
                 objectFit="cover"
                 className="rounded-lg"
-                data-ai-hint="child reading book"
+                data-ai-hint="child reading imagination"
               />
             </div>
             <Alert variant="default" className="bg-card/50 dark:bg-card/30 border-primary/30 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">

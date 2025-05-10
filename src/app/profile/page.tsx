@@ -14,11 +14,12 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile } from 'lucide-react';
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { playSuccessSound, playNotificationSound } from '@/lib/audio';
@@ -36,12 +37,20 @@ interface ProfileData {
 export default function ProfilePage() {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const { username, setUsername: setStoreUsername, loadUsernameFromStorage } = useUserProfileStore();
-  const [usernameInput, setUsernameInput] = useState<string>(username || '');
+  const { 
+    username, 
+    favoriteTopics, 
+    setUsername: setStoreUsername, 
+    setFavoriteTopics: setStoreFavoriteTopics, 
+    loadUserProfileFromStorage 
+  } = useUserProfileStore();
+  
+  const [usernameInput, setUsernameInput] = useState<string>('');
+  const [favoriteTopicsInput, setFavoriteTopicsInput] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
-    loadUsernameFromStorage(); // Ensure store is hydrated
+    loadUserProfileFromStorage(); 
     const practiceList = getStoredWordList();
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
@@ -56,36 +65,30 @@ export default function ProfilePage() {
       masteredWords: masteredList,
     });
     setIsMounted(true);
-  }, [loadUsernameFromStorage]);
+  }, [loadUserProfileFromStorage]);
 
   useEffect(() => {
-    if (isMounted && username !== null) {
-      setUsernameInput(username);
+    if (isMounted) {
+      setUsernameInput(username || '');
+      setFavoriteTopicsInput(favoriteTopics || '');
     }
-  }, [username, isMounted]);
+  }, [username, favoriteTopics, isMounted]);
 
 
-  const handleUsernameSave = (e: FormEvent) => {
+  const handleProfileInfoSave = (e: FormEvent) => {
     e.preventDefault();
     const trimmedUsername = usernameInput.trim();
-    if (trimmedUsername) {
-      setStoreUsername(trimmedUsername);
-      toast({
-        variant: "success",
-        title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />Username Saved!</div>,
-        description: `Hello, ${trimmedUsername}! Your name is set.`,
-      });
-      playSuccessSound();
-    } else {
-      // If they clear it and save, effectively remove username
-      setStoreUsername(null); 
-       toast({
-        variant: "info",
-        title: "Username Cleared",
-        description: "Your username has been removed.",
-      });
-      playNotificationSound();
-    }
+    const trimmedTopics = favoriteTopicsInput.trim();
+
+    setStoreUsername(trimmedUsername || null);
+    setStoreFavoriteTopics(trimmedTopics || null);
+    
+    toast({
+      variant: "success",
+      title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />Profile Updated!</div>,
+      description: `Your information has been saved.`,
+    });
+    playSuccessSound();
   };
 
 
@@ -122,7 +125,7 @@ export default function ProfilePage() {
       <header className="text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-primary/30">
             <Image
-                src="https://picsum.photos/200/200"
+                src="https://picsum.photos/seed/profile-avatar/200"
                 alt={username ? `${username}'s profile avatar` : "User profile avatar placeholder"}
                 layout="fill"
                 objectFit="cover"
@@ -142,28 +145,46 @@ export default function ProfilePage() {
       <Card className="shadow-xl border-accent/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-accent">
-             <Smile className="mr-3 h-6 w-6" aria-hidden="true" /> Personalize Your Experience{username ? `, ${username}!` : '!'}
+             <Edit className="mr-3 h-6 w-6" aria-hidden="true" /> Edit Your Information
           </CardTitle>
-          <CardDescription>Enter your name to personalize greetings and messages in the app.</CardDescription>
+          <CardDescription>Update your name and favorite topics to personalize your experience.</CardDescription>
         </CardHeader>
-        <form onSubmit={handleUsernameSave}>
-          <CardContent className="space-y-4">
-              <Label htmlFor="username-input" className="text-base font-medium">Your Name:</Label>
-              <div className="flex items-center gap-3">
+        <form onSubmit={handleProfileInfoSave}>
+          <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="username-input" className="text-base font-medium flex items-center gap-2">
+                    <Smile className="h-5 w-5 text-muted-foreground" /> Your Name:
+                </Label>
                 <Input
                     id="username-input"
                     type="text"
                     value={usernameInput}
                     onChange={(e) => setUsernameInput(e.target.value)}
                     placeholder="Enter your name"
-                    className="text-lg p-3 h-12 shadow-sm focus:ring-2 focus:ring-accent flex-grow"
+                    className="text-lg p-3 h-12 shadow-sm focus:ring-2 focus:ring-accent"
                     aria-label="Enter your name"
                 />
-                <Button type="submit" size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" aria-label="Save username">
-                    <Save className="mr-2 h-5 w-5" /> Save
-                </Button>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="favorite-topics-input" className="text-base font-medium flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-muted-foreground" /> Your Favorite Topics:
+                </Label>
+                <Textarea
+                    id="favorite-topics-input"
+                    value={favoriteTopicsInput}
+                    onChange={(e) => setFavoriteTopicsInput(e.target.value)}
+                    placeholder="E.g., animals, space, dinosaurs"
+                    className="text-base p-3 shadow-sm focus:ring-2 focus:ring-accent min-h-[80px]"
+                    aria-label="Enter your favorite topics, separated by commas"
+                />
+                 <p className="text-xs text-muted-foreground">Separate topics with a comma. This helps us tailor content for you.</p>
               </div>
           </CardContent>
+          <CardFooter>
+            <Button type="submit" size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground w-full sm:w-auto" aria-label="Save profile information">
+                <Save className="mr-2 h-5 w-5" /> Save Information
+            </Button>
+          </CardFooter>
         </form>
       </Card>
 

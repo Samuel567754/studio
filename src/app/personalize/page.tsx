@@ -12,20 +12,28 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { setHasCompletedPersonalization, getHasCompletedPersonalization, getHasSeenIntroduction } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { playSuccessSound, playNotificationSound } from '@/lib/audio';
-import { UserPlus, ArrowRight, Sparkles } from 'lucide-react';
+import { UserPlus, ArrowRight, Sparkles, Heart } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function PersonalizePage() {
   const router = useRouter();
-  const { username, setUsername: setStoreUsername, loadUsernameFromStorage } = useUserProfileStore();
+  const { 
+    username, 
+    favoriteTopics,
+    setUsername: setStoreUsername, 
+    setFavoriteTopics: setStoreFavoriteTopics,
+    loadUserProfileFromStorage 
+  } = useUserProfileStore();
+
   const [usernameInput, setUsernameInput] = useState<string>('');
+  const [favoriteTopicsInput, setFavoriteTopicsInput] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
-    loadUsernameFromStorage(); // Load existing username into store, if any
+    loadUserProfileFromStorage(); 
 
-    // Redirect if personalization is already done or intro hasn't been seen
     const introSeen = getHasSeenIntroduction();
     const personalizationCompleted = getHasCompletedPersonalization();
 
@@ -34,24 +42,27 @@ export default function PersonalizePage() {
         return;
     }
     if (personalizationCompleted) {
-        router.replace('/'); // Already personalized, go to home
+        router.replace('/'); 
         return;
     }
 
-  }, [router, loadUsernameFromStorage]);
+  }, [router, loadUserProfileFromStorage]);
   
   useEffect(() => {
-    if (isMounted && username !== null) {
-      setUsernameInput(username);
+    if (isMounted) {
+      setUsernameInput(username || '');
+      setFavoriteTopicsInput(favoriteTopics || '');
     }
-  }, [username, isMounted]);
+  }, [username, favoriteTopics, isMounted]);
 
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const trimmedUsername = usernameInput.trim();
+    const trimmedTopics = favoriteTopicsInput.trim();
     
-    setStoreUsername(trimmedUsername || null); // Update store, allow clearing by submitting empty
+    setStoreUsername(trimmedUsername || null); 
+    setStoreFavoriteTopics(trimmedTopics || null);
     setHasCompletedPersonalization(true);
 
     if (trimmedUsername) {
@@ -65,7 +76,7 @@ export default function PersonalizePage() {
        toast({
         variant: "info",
         title: "Personalization Complete",
-        description: "You can set a name later in your profile. Let's get started!",
+        description: "You can set your details later in your profile. Let's get started!",
       });
       playNotificationSound();
     }
@@ -85,6 +96,10 @@ export default function PersonalizePage() {
                         <div className="h-4 w-1/4 bg-muted rounded"></div>
                         <div className="h-12 bg-muted rounded"></div>
                     </div>
+                    <div className="space-y-2">
+                        <div className="h-4 w-1/4 bg-muted rounded"></div>
+                        <div className="h-20 bg-muted rounded"></div>
+                    </div>
                      <div className="h-12 bg-primary/50 rounded"></div>
                 </CardContent>
             </Card>
@@ -100,40 +115,54 @@ export default function PersonalizePage() {
         <CardHeader className="text-center items-center space-y-3">
           <div className="relative w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-accent/30 mb-3">
               <Image
-                  src="https://picsum.photos/seed/personalize/200"
+                  src="https://picsum.photos/seed/personalize-avatar/200"
                   alt="Personalization avatar"
                   layout="fill"
                   objectFit="cover"
                   data-ai-hint="avatar user"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent flex items-center justify-center p-2">
-                   <UserPlus className="h-10 w-10 text-white/90 drop-shadow-lg" aria-hidden="true" />
+                   <Sparkles className="h-10 w-10 text-white/90 drop-shadow-lg" aria-hidden="true" />
               </div>
           </div>
           <CardTitle className="text-3xl font-bold text-gradient-primary-accent">
-            Let's Personalize!
+            Make it Yours!
           </CardTitle>
           <CardDescription className="text-base text-muted-foreground px-2">
-            Tell us your name so we can make your learning experience even better.
-            You can always change this later in your profile.
+            Help us tailor ChillLearn AI for you. This is optional and can be updated later in your profile.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="username" className="text-lg font-medium text-foreground flex items-center">
-                <ArrowRight className="mr-2 h-5 w-5 text-accent" />
-                What should we call you?
+                <UserPlus className="mr-2 h-5 w-5 text-accent" />
+                What's your name?
               </Label>
               <Input
                 id="username"
                 type="text"
                 value={usernameInput}
                 onChange={(e) => setUsernameInput(e.target.value)}
-                placeholder="Enter your name (optional)"
+                placeholder="E.g., Alex (optional)"
                 className="text-xl p-4 h-14 shadow-sm focus:ring-2 focus:ring-primary border-border/50"
                 aria-label="Enter your name"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="favoriteTopics" className="text-lg font-medium text-foreground flex items-center">
+                <Heart className="mr-2 h-5 w-5 text-accent" />
+                Any favorite topics?
+              </Label>
+              <Textarea
+                id="favoriteTopics"
+                value={favoriteTopicsInput}
+                onChange={(e) => setFavoriteTopicsInput(e.target.value)}
+                placeholder="E.g., animals, space, dinosaurs (optional)"
+                className="text-base p-3 shadow-sm focus:ring-2 focus:ring-primary border-border/50 min-h-[80px]"
+                aria-label="Enter your favorite topics, separated by commas"
+              />
+              <p className="text-xs text-muted-foreground">This helps us suggest more relevant reading passages in the future. You can list a few, like "sports, music, history".</p>
             </div>
             <Button type="submit" size="lg" className="w-full btn-glow text-lg py-7">
               Continue to ChillLearn <ArrowRight className="ml-2 h-5 w-5" />
@@ -142,8 +171,9 @@ export default function PersonalizePage() {
         </CardContent>
       </Card>
        <footer className="text-center text-xs text-muted-foreground py-6 mt-4">
-         Your name helps us personalize greetings and messages.
+         Your preferences help us create a better learning adventure!
       </footer>
     </div>
   );
 }
+

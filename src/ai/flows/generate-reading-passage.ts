@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview AI-powered reading passage generation flow.
@@ -25,6 +26,12 @@ const GenerateReadingPassageInputSchema = z.object({
     .describe(
       'An optional list of words the user has already mastered. The AI can use this to subtly adjust complexity.'
     ),
+  favoriteTopics: z
+    .string()
+    .optional()
+    .describe(
+      'An optional string of comma-separated topics the user is interested in (e.g., "animals, space, sports").'
+    ),
 });
 export type GenerateReadingPassageInput = z.infer<
   typeof GenerateReadingPassageInputSchema
@@ -42,7 +49,7 @@ export type GenerateReadingPassageOutput = z.infer<
 export async function generateReadingPassage(
   input: GenerateReadingPassageInput
 ): Promise<GenerateReadingPassageOutput> {
-  // The client should provide masteredWords if available.
+  // The client should provide masteredWords and favoriteTopics if available.
   // This flow will use what's provided in the input.
   return generateReadingPassageFlow(input);
 }
@@ -66,6 +73,11 @@ const prompt = ai.definePrompt({
   - {{{this}}}
   {{/each}}
   Given this, you can subtly increase the complexity of the surrounding text or use a slightly richer vocabulary, while staying true to the overall '{{{readingLevel}}}' reading level. The primary goal is still to use the 'Words to include' list.
+  {{/if}}
+
+  {{#if favoriteTopics}}
+  The learner is interested in the following topics: {{{favoriteTopics}}}.
+  Please try to create a story related to one or more of these topics. If the topics are very diverse, pick one that fits well with the words to include.
   {{/if}}
 
   Please generate a passage that is 10-15 sentences long. Ensure the vocabulary and sentence structure are suitable for the reading level.
