@@ -19,8 +19,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from "@/hooks/use-toast";
 import { playSuccessSound, playNotificationSound } from '@/lib/audio';
 
@@ -34,6 +34,12 @@ interface ProfileData {
   masteredWords: string[];
 }
 
+const availableTopics = [
+  "Animals", "Space", "Dinosaurs", "Adventures", "Fairy Tales", 
+  "Superheroes", "Sports", "Music", "Nature", "Oceans", 
+  "Cars & Trucks", "Fantasy", "Science", "History", "Art", "Robots", "Mystery"
+];
+
 export default function ProfilePage() {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -46,7 +52,7 @@ export default function ProfilePage() {
   } = useUserProfileStore();
   
   const [usernameInput, setUsernameInput] = useState<string>('');
-  const [favoriteTopicsInput, setFavoriteTopicsInput] = useState<string>('');
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -70,18 +76,23 @@ export default function ProfilePage() {
   useEffect(() => {
     if (isMounted) {
       setUsernameInput(username || '');
-      setFavoriteTopicsInput(favoriteTopics || '');
+      setSelectedTopics(favoriteTopics ? favoriteTopics.split(',').map(t => t.trim()).filter(t => t) : []);
     }
   }, [username, favoriteTopics, isMounted]);
 
+  const handleTopicChange = (topic: string) => {
+    setSelectedTopics(prev => 
+      prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic]
+    );
+  };
 
   const handleProfileInfoSave = (e: FormEvent) => {
     e.preventDefault();
     const trimmedUsername = usernameInput.trim();
-    const trimmedTopics = favoriteTopicsInput.trim();
+    const topicsString = selectedTopics.join(', ');
 
     setStoreUsername(trimmedUsername || null);
-    setStoreFavoriteTopics(trimmedTopics || null);
+    setStoreFavoriteTopics(topicsString || null);
     
     toast({
       variant: "success",
@@ -166,18 +177,30 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="favorite-topics-input" className="text-base font-medium flex items-center gap-2">
+                <Label className="text-base font-medium flex items-center gap-2">
                     <Heart className="h-5 w-5 text-muted-foreground" /> Your Favorite Topics:
                 </Label>
-                <Textarea
-                    id="favorite-topics-input"
-                    value={favoriteTopicsInput}
-                    onChange={(e) => setFavoriteTopicsInput(e.target.value)}
-                    placeholder="E.g., animals, space, dinosaurs"
-                    className="text-base p-3 shadow-sm focus:ring-2 focus:ring-accent min-h-[80px]"
-                    aria-label="Enter your favorite topics, separated by commas"
-                />
-                 <p className="text-xs text-muted-foreground">Separate topics with a comma. This helps us tailor content for you.</p>
+                <ScrollArea className="h-40 w-full rounded-md border p-3 shadow-sm bg-background/50">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
+                    {availableTopics.map((topic) => (
+                      <div key={topic} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`profile-topic-${topic.toLowerCase().replace(/\s+/g, '-')}`}
+                          checked={selectedTopics.includes(topic)}
+                          onCheckedChange={() => handleTopicChange(topic)}
+                          aria-label={topic}
+                        />
+                        <Label 
+                          htmlFor={`profile-topic-${topic.toLowerCase().replace(/\s+/g, '-')}`}
+                          className="text-base font-normal cursor-pointer hover:text-accent"
+                        >
+                          {topic}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                 <p className="text-xs text-muted-foreground">Select topics that interest you for tailored reading passages.</p>
               </div>
           </CardContent>
           <CardFooter>

@@ -12,8 +12,15 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { setHasCompletedPersonalization, getHasCompletedPersonalization, getHasSeenIntroduction } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { playSuccessSound, playNotificationSound } from '@/lib/audio';
-import { UserPlus, ArrowRight, Sparkles, Heart } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import { UserPlus, ArrowRight, Sparkles, Heart, Check } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+const availableTopics = [
+  "Animals", "Space", "Dinosaurs", "Adventures", "Fairy Tales", 
+  "Superheroes", "Sports", "Music", "Nature", "Oceans", 
+  "Cars & Trucks", "Fantasy", "Science", "History", "Art", "Robots", "Mystery"
+];
 
 export default function PersonalizePage() {
   const router = useRouter();
@@ -26,7 +33,7 @@ export default function PersonalizePage() {
   } = useUserProfileStore();
 
   const [usernameInput, setUsernameInput] = useState<string>('');
-  const [favoriteTopicsInput, setFavoriteTopicsInput] = useState<string>('');
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
@@ -51,18 +58,24 @@ export default function PersonalizePage() {
   useEffect(() => {
     if (isMounted) {
       setUsernameInput(username || '');
-      setFavoriteTopicsInput(favoriteTopics || '');
+      setSelectedTopics(favoriteTopics ? favoriteTopics.split(',').map(t => t.trim()).filter(t => t) : []);
     }
   }, [username, favoriteTopics, isMounted]);
 
 
+  const handleTopicChange = (topic: string) => {
+    setSelectedTopics(prev => 
+      prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic]
+    );
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const trimmedUsername = usernameInput.trim();
-    const trimmedTopics = favoriteTopicsInput.trim();
+    const topicsString = selectedTopics.join(', ');
     
     setStoreUsername(trimmedUsername || null); 
-    setStoreFavoriteTopics(trimmedTopics || null);
+    setStoreFavoriteTopics(topicsString || null);
     setHasCompletedPersonalization(true);
 
     if (trimmedUsername) {
@@ -150,19 +163,30 @@ export default function PersonalizePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="favoriteTopics" className="text-lg font-medium text-foreground flex items-center">
+              <Label className="text-lg font-medium text-foreground flex items-center">
                 <Heart className="mr-2 h-5 w-5 text-accent" />
-                Any favorite topics?
+                Select your favorite topics (optional):
               </Label>
-              <Textarea
-                id="favoriteTopics"
-                value={favoriteTopicsInput}
-                onChange={(e) => setFavoriteTopicsInput(e.target.value)}
-                placeholder="E.g., animals, space, dinosaurs (optional)"
-                className="text-base p-3 shadow-sm focus:ring-2 focus:ring-primary border-border/50 min-h-[80px]"
-                aria-label="Enter your favorite topics, separated by commas"
-              />
-              <p className="text-xs text-muted-foreground">This helps us suggest more relevant reading passages in the future. You can list a few, like "sports, music, history".</p>
+              <ScrollArea className="h-40 w-full rounded-md border p-3 shadow-sm bg-background/50">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  {availableTopics.map((topic) => (
+                    <div key={topic} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`topic-${topic.toLowerCase().replace(/\s+/g, '-')}`}
+                        checked={selectedTopics.includes(topic)}
+                        onCheckedChange={() => handleTopicChange(topic)}
+                      />
+                      <Label 
+                        htmlFor={`topic-${topic.toLowerCase().replace(/\s+/g, '-')}`}
+                        className="text-base font-normal cursor-pointer hover:text-primary"
+                      >
+                        {topic}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+              <p className="text-xs text-muted-foreground">This helps us suggest more relevant reading passages.</p>
             </div>
             <Button type="submit" size="lg" className="w-full btn-glow text-lg py-7">
               Continue to ChillLearn <ArrowRight className="ml-2 h-5 w-5" />
