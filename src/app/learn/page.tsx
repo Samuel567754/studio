@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -119,7 +120,7 @@ export default function LearnPage() {
     setShowProgressionAlert(false); 
     toast({ 
       variant: "info", 
-      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />{username ? `${username}, p` : 'P'}references Updated</div>, 
+      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />{username ? `${username}, preferences updated` : 'Preferences Updated'}</div>, 
       description: `Suggestions will now target ${level} level, ${length}-letter words.` 
     });
     playNotificationSound();
@@ -213,7 +214,7 @@ export default function LearnPage() {
         <Alert variant="default" className="border-accent bg-accent/10 text-accent-foreground animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
            <AlertTriangle className="h-5 w-5 text-accent" aria-hidden="true" />
            <AlertTitle className="font-semibold text-lg text-accent">
-             {username ? `Hey ${username}, r` : 'R'}eady for a New Challenge?
+             {username ? `Hey ${username}, ready for a new challenge?` : 'Ready for a New Challenge?'}
             </AlertTitle>
            <AlertDescription className="text-base">
              You're doing great and have mastered many words at the current settings! 
@@ -244,7 +245,7 @@ export default function LearnPage() {
           </CardHeader>
           <CardContent>
             {wordList.length > 0 ? (
-              <div className="flex flex-wrap gap-3 items-center" role="list" aria-labelledby="practice-list-heading">
+              <div className="flex flex-wrap gap-3 md:gap-4 items-center" role="list" aria-labelledby="practice-list-heading">
                 {wordList.map((word, index) => (
                   <div key={index} className="relative group rounded-full shadow-sm hover:shadow-md transition-all duration-200 ease-in-out hover:scale-105" role="listitem">
                     <Button
@@ -306,7 +307,7 @@ export default function LearnPage() {
             </div>
             <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-auto">
               <Image
-                src="https://picsum.photos/150/150"
+                src="https://picsum.photos/seed/learn-welcome/150/150"
                 alt="Child learning with a tablet"
                 width={120}
                 height={120}
@@ -320,4 +321,3 @@ export default function LearnPage() {
     </div>
   );
 }
-

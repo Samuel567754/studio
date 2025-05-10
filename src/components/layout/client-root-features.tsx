@@ -22,7 +22,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     setHasCompletedWalkthrough,
   } = useWalkthroughStore();
   
-  const { loadUserProfileFromStorage } = useUserProfileStore(); // Corrected function name
+  const { loadUserProfileFromStorage } = useUserProfileStore();
   const [isClientMounted, setIsClientMounted] = useState(false);
   const [actualIntroductionSeen, setActualIntroductionSeen] = useState<boolean | null>(null);
   const [actualPersonalizationCompleted, setActualPersonalizationCompleted] = useState<boolean | null>(null);
@@ -31,7 +31,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
 
   useEffect(() => {
     setIsClientMounted(true);
-    loadUserProfileFromStorage(); // Corrected function call
+    loadUserProfileFromStorage();
     setActualIntroductionSeen(getHasSeenIntroduction());
     setActualPersonalizationCompleted(getHasCompletedPersonalization());
 
@@ -43,14 +43,14 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
         setActualPersonalizationCompleted(getHasCompletedPersonalization());
       }
       if (event.key === useUserProfileStore.persist.getOptions().name) {
-        loadUserProfileFromStorage(); // Corrected function call
+        loadUserProfileFromStorage();
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [loadUserProfileFromStorage]); // Corrected dependency
+  }, [loadUserProfileFromStorage]);
 
   useEffect(() => {
     if (isClientMounted) {
@@ -114,7 +114,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen">
       <MainNav />
-      <main className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-40 md:pb-8 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out">
+      <main className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out">
         {children}
       </main>
       <BottomNav />

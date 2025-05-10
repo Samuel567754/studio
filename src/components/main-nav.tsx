@@ -44,7 +44,7 @@ export const MainNav: FC = () => {
           asChild
           className={cn(
             "justify-start w-full text-base md:text-sm md:w-auto",
-            isMobile ? "py-3 px-4" : "py-2 px-3",
+            isMobile ? "py-3 px-4" : "py-2 px-3 md:h-10", // Ensure desktop links have consistent height
             (pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/')) && "font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
           )}
           onClick={() => isMobile && setIsMobileMenuOpen(false)}
@@ -60,7 +60,7 @@ export const MainNav: FC = () => {
   
   const handleResetProgress = () => {
     if (typeof window !== 'undefined') {
-        if(confirm("This will clear your learned words, mastered words, reading level, word length preferences, introduction and walkthrough status. Are you sure?")) {
+        if(confirm("This will clear your learned words, mastered words, reading level, word length preferences, introduction and walkthrough status, username, and favorite topics. Are you sure?")) {
             clearProgressStoredData(); 
             setIsMobileMenuOpen(false);
             toast({
@@ -107,7 +107,7 @@ export const MainNav: FC = () => {
 
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
           <NavLinkItems />
-          <Button variant="default" size="sm" asChild className="ml-2 btn-glow">
+          <Button variant="default" size="sm" className="ml-2 btn-glow md:h-10 md:px-4 md:py-2" asChild>
             <Link href="/learn">
               <Brain className="mr-2 h-4 w-4" aria-hidden="true" /> Quick Learn
             </Link>
@@ -117,7 +117,7 @@ export const MainNav: FC = () => {
         <div className="md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full aspect-square h-10 w-10 hover:bg-accent/20" aria-label="Open navigation menu" aria-expanded={isMobileMenuOpen}>
+              <Button variant="ghost" size="icon" className="rounded-full aspect-square h-10 w-10 hover:bg-accent/20" aria-label="Open main navigation menu" aria-expanded={isMobileMenuOpen}>
                 <Menu className="h-6 w-6 text-foreground" aria-hidden="true" />
               </Button>
             </SheetTrigger>

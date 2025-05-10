@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC } from 'react';
 import { useState, useEffect, useMemo } from 'react';
@@ -125,7 +126,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start">
               <FormField
                 control={form.control}
                 name="readingLevel"
