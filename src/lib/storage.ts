@@ -1,3 +1,4 @@
+
 'use client';
 
 // Keys for localStorage items
@@ -10,6 +11,7 @@ const PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX = 'sightwords_progressionSugge
 export const WALKTHROUGH_PERSIST_KEY = 'chilllearn_walkthroughState_v1';
 const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
 const USERNAME_KEY = 'chilllearn_username_v1';
+const PERSONALIZATION_COMPLETED_KEY = 'chilllearn_personalizationCompleted_v1';
 
 
 // --- Username ---
@@ -55,6 +57,27 @@ export const setHasSeenIntroduction = (seen: boolean): void => {
     localStorage.setItem(INTRODUCTION_SEEN_KEY, seen ? 'true' : 'false');
   } catch (error) {
     console.error("Error storing introduction seen flag to localStorage:", error);
+  }
+};
+
+// --- Personalization Completed ---
+export const getHasCompletedPersonalization = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const stored = localStorage.getItem(PERSONALIZATION_COMPLETED_KEY);
+    return stored === 'true';
+  } catch (error) {
+    console.error("Error reading personalization completed flag from localStorage:", error);
+    return false;
+  }
+};
+
+export const setHasCompletedPersonalization = (completed: boolean): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PERSONALIZATION_COMPLETED_KEY, completed ? 'true' : 'false');
+  } catch (error) {
+    console.error("Error storing personalization completed flag to localStorage:", error);
   }
 };
 
@@ -181,6 +204,7 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(WALKTHROUGH_PERSIST_KEY);
   localStorage.removeItem(INTRODUCTION_SEEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
+  localStorage.removeItem(PERSONALIZATION_COMPLETED_KEY);
   
   // Clear all progression dismissal flags
   Object.keys(localStorage).forEach(key => {
@@ -188,6 +212,5 @@ export const clearProgressStoredData = (): void => {
       localStorage.removeItem(key);
     }
   });
-  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, walkthrough status, introduction seen flag, and username.");
+  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, walkthrough status, introduction seen flag, username, and personalization status.");
 };
-

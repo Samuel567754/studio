@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC, PropsWithChildren } from 'react';
@@ -5,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useWalkthroughStore } from '@/stores/walkthrough-store';
 import { WalkthroughModal } from '@/components/walkthrough-modal';
-import { getHasSeenIntroduction } from '@/lib/storage';
+import { getHasSeenIntroduction, getHasCompletedPersonalization } from '@/lib/storage';
 import { MainNav } from '@/components/main-nav';
 import { BottomNav } from '@/components/bottom-nav';
 import { QuickLinkFAB } from '@/components/quicklink-fab';
@@ -24,19 +25,24 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const { loadUsernameFromStorage } = useUserProfileStore();
   const [isClientMounted, setIsClientMounted] = useState(false);
   const [actualIntroductionSeen, setActualIntroductionSeen] = useState<boolean | null>(null);
+  const [actualPersonalizationCompleted, setActualPersonalizationCompleted] = useState<boolean | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     setIsClientMounted(true);
-    loadUsernameFromStorage(); // Load username into store
+    loadUsernameFromStorage();
     setActualIntroductionSeen(getHasSeenIntroduction());
+    setActualPersonalizationCompleted(getHasCompletedPersonalization());
 
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'chilllearn_introductionSeen_v1') {
         setActualIntroductionSeen(getHasSeenIntroduction());
       }
-      if (event.key === useUserProfileStore.persist.getOptions().name) { // Check if username storage changed
+      if (event.key === 'chilllearn_personalizationCompleted_v1') {
+        setActualPersonalizationCompleted(getHasCompletedPersonalization());
+      }
+      if (event.key === useUserProfileStore.persist.getOptions().name) {
         loadUsernameFromStorage();
       }
     };
@@ -48,25 +54,31 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
 
   useEffect(() => {
     if (isClientMounted) {
-      const currentSeenStatus = getHasSeenIntroduction();
-      setActualIntroductionSeen(currentSeenStatus);
+      const introSeen = getHasSeenIntroduction();
+      const personalizationCompleted = getHasCompletedPersonalization();
+      setActualIntroductionSeen(introSeen);
+      setActualPersonalizationCompleted(personalizationCompleted);
 
-      if (!currentSeenStatus && pathname !== '/introduction') {
+      if (!introSeen && pathname !== '/introduction') {
         router.replace('/introduction');
+      } else if (introSeen && !personalizationCompleted && pathname !== '/personalize' && pathname !== '/introduction') {
+        router.replace('/personalize');
       }
     }
   }, [isClientMounted, pathname, router]);
 
   useEffect(() => {
-    if (isClientMounted && actualIntroductionSeen && !hasCompletedWalkthrough && pathname !== '/introduction' && typeof window !== 'undefined') {
+    if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && pathname !== '/introduction' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
         openWalkthrough();
       }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [isClientMounted, actualIntroductionSeen, hasCompletedWalkthrough, openWalkthrough, pathname]);
+  }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname]);
 
-  if (!isClientMounted || actualIntroductionSeen === null) {
+
+  // Enhanced loading condition
+  if (!isClientMounted || actualIntroductionSeen === null || (actualIntroductionSeen && actualPersonalizationCompleted === null)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -74,17 +86,30 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  if (actualIntroductionSeen === false && pathname !== '/introduction') {
-     return (
+  // Specific page passthrough for intro and personalize
+  if (pathname === '/introduction' || pathname === '/personalize') {
+    return <>{children}</>;
+  }
+
+  // Check again after passthrough for users landing directly on intro/personalize but already completed those steps
+  if (!actualIntroductionSeen) {
+     return ( // Should have been caught by useEffect, but as a safeguard
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        <p className="sr-only">Redirecting to introduction...</p>
       </div>
     );
   }
 
-  if (pathname === '/introduction') {
-    return <>{children}</>;
+  if (!actualPersonalizationCompleted) {
+     return ( // Should have been caught by useEffect, but as a safeguard
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        <p className="sr-only">Redirecting to personalization...</p>
+      </div>
+    );
   }
+  
 
   return (
     <div className="flex flex-col min-h-screen">

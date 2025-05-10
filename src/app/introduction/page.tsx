@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { setHasSeenIntroduction } from '@/lib/storage';
+import { setHasSeenIntroduction, getHasSeenIntroduction, getHasCompletedPersonalization } from '@/lib/storage';
 import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon, SkipForward } from 'lucide-react';
 import { playNotificationSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
@@ -31,16 +31,33 @@ export default function IntroductionPage() {
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
   const [isAutoplayActive, setIsAutoplayActive] = useState(true);
   const autoplayIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
   const minSwipeDistance = 50;
 
+  useEffect(() => {
+    setIsMounted(true);
+    // If intro has already been seen, redirect based on personalization status
+    if (getHasSeenIntroduction()) {
+        if (getHasCompletedPersonalization()) {
+            router.replace('/');
+        } else {
+            router.replace('/personalize');
+        }
+    }
+  }, [router]);
+
   const completeIntroduction = useCallback(() => {
-    setIsAutoplayActive(false); // Stop autoplay when completing
+    setIsAutoplayActive(false); 
     setHasSeenIntroduction(true);
     playNotificationSound();
-    router.push('/'); 
+    if (getHasCompletedPersonalization()) {
+      router.push('/'); 
+    } else {
+      router.push('/personalize');
+    }
   },[router]);
 
   const selectFeature = useCallback((newIndex: number, manualInteraction: boolean = true) => {
@@ -61,9 +78,8 @@ export default function IntroductionPage() {
     if (targetIndex !== currentFeatureIndex) {
       setCurrentFeatureIndex(targetIndex);
     }
-  }, [currentFeatureIndex, features.length]); 
+  }, [currentFeatureIndex]); 
 
-  // Autoplay effect
   useEffect(() => {
     const stopAutoplay = () => {
       if (autoplayIntervalRef.current) {
@@ -72,7 +88,7 @@ export default function IntroductionPage() {
       }
     };
 
-    if (isAutoplayActive) {
+    if (isAutoplayActive && isMounted) {
       stopAutoplay(); 
       autoplayIntervalRef.current = setInterval(() => {
         setCurrentFeatureIndex(prevIndex => {
@@ -85,7 +101,7 @@ export default function IntroductionPage() {
     }
 
     return () => stopAutoplay();
-  }, [isAutoplayActive, features.length]);
+  }, [isAutoplayActive, isMounted]);
 
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     setTouchEndX(null); 
@@ -103,14 +119,19 @@ export default function IntroductionPage() {
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe) {
-      selectFeature(currentFeatureIndex + 1, true); // Manual interaction
+      selectFeature((currentFeatureIndex + 1) % features.length, true);
     } else if (isRightSwipe) {
-      selectFeature(currentFeatureIndex - 1, true); // Manual interaction
+      selectFeature((currentFeatureIndex - 1 + features.length) % features.length, true);
     }
 
     setTouchStartX(null);
     setTouchEndX(null);
   };
+
+  if (!isMounted) {
+      return <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5 flex items-center justify-center"><Sparkles className="h-16 w-16 animate-spin text-primary" /></div>;
+  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
@@ -214,4 +235,3 @@ export default function IntroductionPage() {
     </div>
   );
 }
-
