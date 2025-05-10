@@ -52,6 +52,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [isAudioPaused, setIsAudioPaused] = useState<boolean>(false);
   const [currentSpeechUtterance, setCurrentSpeechUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [hasFirstStepAudioPlayed, setHasFirstStepAudioPlayed] = useState<boolean>(false);
   
   const { soundEffectsEnabled } = useAppSettingsStore();
   const { toast } = useToast();
@@ -99,7 +100,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     } else {
       handleSpeechEnd();
     }
-  }, [soundEffectsEnabled, stopCurrentSpeech, handleSpeechEnd, handleSpeechError, toast]); 
+  }, [soundEffectsEnabled, stopCurrentSpeech, handleSpeechEnd, handleSpeechError]); 
 
   const handleToggleSpeech = useCallback(() => {
     if (!currentStepData) return;
@@ -150,13 +151,16 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     onFinish();
   };
 
+  // Auto-play first step audio if enabled and modal opens, only once per modal display
   useEffect(() => {
-    // Auto-play first step audio if enabled and modal opens
-    if (isOpen && currentStepIndex === 0 && soundEffectsEnabled && !isAudioPlaying && !currentSpeechUtterance) {
+    if (isOpen && currentStepIndex === 0 && soundEffectsEnabled && !isAudioPlaying && !currentSpeechUtterance && !hasFirstStepAudioPlayed) {
        // Short delay to ensure modal is fully rendered before speech starts
-       setTimeout(() => playStepAudio(walkthroughSteps[0].id, walkthroughSteps[0].content), 300); 
+       setTimeout(() => {
+           playStepAudio(walkthroughSteps[0].id, walkthroughSteps[0].content);
+           setHasFirstStepAudioPlayed(true); // Mark as played for this modal session
+       }, 300); 
     }
-  }, [isOpen, currentStepIndex, soundEffectsEnabled, isAudioPlaying, currentSpeechUtterance, playStepAudio]);
+  }, [isOpen, currentStepIndex, soundEffectsEnabled, isAudioPlaying, currentSpeechUtterance, playStepAudio, hasFirstStepAudioPlayed]);
 
   // Cleanup speech on component unmount or when modal closes
   useEffect(() => {
@@ -165,10 +169,11 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     };
   }, [stopCurrentSpeech]);
   
-  // Reset current step to 0 when modal is re-opened, if it was closed before finishing
+  // Reset current step to 0 and first step audio played flag when modal is re-opened
   useEffect(() => {
     if (isOpen) {
         setCurrentStepIndex(0);
+        setHasFirstStepAudioPlayed(false); // Reset for new modal opening
     } else {
         // If modal is closed, ensure any active speech is stopped and states are reset
         stopCurrentSpeech();
