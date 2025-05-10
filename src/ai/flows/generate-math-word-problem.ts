@@ -41,9 +41,8 @@ const GenerateMathWordProblemOutputSchema = z.object({
     .optional()
     .describe('An optional brief explanation of how to solve the problem.'),
   operationUsed: z
-    .string()
-    .optional()
-    .describe('The operation used by the AI if "random" was selected, e.g., "addition", "subtraction".'),
+    .string() // Made non-optional
+    .describe('The mathematical operation used or chosen by the AI for this problem (e.g., "addition", "subtraction", "multiplication", "division").'),
 });
 export type GenerateMathWordProblemOutput = z.infer<
   typeof GenerateMathWordProblemOutputSchema
@@ -65,9 +64,10 @@ const prompt = ai.definePrompt({
 
   {{#if isRandomOperation}}
   You should choose one of the following operations: addition, subtraction, multiplication, or division.
-  Indicate the operation you chose in the 'operationUsed' field of your output.
+  You MUST indicate the operation you chose in the 'operationUsed' field of your output.
   {{else}}
   The user is practicing '{{operation}}'. You must use this operation.
+  Set the 'operationUsed' field in the output to '{{operation}}'.
   {{/if}}
 
   Generate a short, engaging word problem.
@@ -79,14 +79,11 @@ const prompt = ai.definePrompt({
   The word problem should be clear, unambiguous, and 1-2 sentences long.
   Provide the problem text and the numerical answer.
   Optionally, provide a brief, simple explanation (1 sentence) of how to solve it.
-  {{#if isRandomOperation}}
-  Make sure to set the 'operationUsed' field in the output to the operation you randomly selected (e.g., "addition", "subtraction", "multiplication", "division").
-  {{/if}}
-
-  Ensure your entire output is structured according to the requested format, including only 'problemText', 'numericalAnswer', 'operationUsed' (if applicable), and optionally 'explanation'.
+  
+  Ensure your entire output is structured according to the requested format, including 'problemText', 'numericalAnswer', 'operationUsed', and optionally 'explanation'.
   The numericalAnswer MUST be a number, not a string. The problemText should end with a question mark.`,
    config: {
-    temperature: 0.8, 
+    temperature: 0.8,
     safetySettings: [
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',
@@ -120,12 +117,8 @@ const generateMathWordProblemFlow = ai.defineFlow(
       isRandomOperation: input.operation === 'random',
     };
     const {output} = await prompt(promptInput);
-    
-    if (output && input.operation !== 'random') {
-      // Ensure operationUsed is set if it was a specific operation,
-      // even if the AI doesn't set it (though it should not for non-random).
-      output.operationUsed = input.operation;
-    }
+    // The prompt and Zod output schema now enforce 'operationUsed'.
+    // If the AI doesn't provide it, 'output' might be null or prompt will throw during Zod validation.
     return output!;
   }
 );

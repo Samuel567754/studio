@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from '@/components/ui/textarea';
+// import { Textarea } from '@/components/ui/textarea'; // Textarea not currently used
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathStoryProblem, type GenerateMathStoryProblemInput, type GenerateMathStoryProblemOutput } from '@/ai/flows/generate-math-story-problem';
 import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCw, Volume2, Mic, MicOff, Smile, Lightbulb } from 'lucide-react';
@@ -44,6 +44,7 @@ export const AiStoryProblemGameUI = () => {
     setIsLoading(true);
     setQuestionStates([]);
     setCurrentStoryProblem(null);
+    setScore(0); // Reset score for new story
     playNotificationSound();
 
     try {
@@ -69,12 +70,17 @@ export const AiStoryProblemGameUI = () => {
   }, [difficulty, customTopics, favoriteTopics, username, toast]);
 
   const handleSubmitAnswer = useCallback((questionIndex: number) => {
-    if (!currentStoryProblem || !questionStates[questionIndex] || questionStates[questionIndex].userAnswer.trim() === '') {
-      setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: 'info', message: 'Please enter an answer.' } } : qs));
+    if (!currentStoryProblem || !questionStates || questionStates.length <= questionIndex || !questionStates[questionIndex] || questionStates[questionIndex].userAnswer.trim() === '') {
+      if (questionStates && questionStates.length > questionIndex && questionStates[questionIndex]) {
+         setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: 'info', message: 'Please enter an answer.' } } : qs));
+      } else {
+        console.error("Attempted to submit answer for an invalid question index or uninitialized state.");
+        toast({ variant: "destructive", title: "Error", description: "Something went wrong. Please try generating a new story." });
+      }
       return;
     }
 
-    const answerNum = parseInt(questionStates[questionIndex].userAnswer, 10);
+    const answerNum = parseFloat(questionStates[questionIndex].userAnswer.replace(',', '.'));
     if (isNaN(answerNum)) {
       setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: 'info', message: 'Please enter a valid number.' } } : qs));
       return;
@@ -83,8 +89,11 @@ export const AiStoryProblemGameUI = () => {
     const question = currentStoryProblem.questions[questionIndex];
     if (answerNum === question.numericalAnswer) {
       let successMessage = `${username ? username + ", y" : "Y"}ou got it right! The answer is ${question.numericalAnswer}.`;
+      // Only update score if it hasn't been marked correct before for this attempt of the story
+      if(questionStates[questionIndex].isCorrect === null) { 
+         setScore(prev => prev + 1);
+      }
       setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: {type: 'success', message: successMessage}, isCorrect: true } : qs));
-      setScore(prev => prev + 1);
       playSuccessSound();
       speakText(`Correct! The answer to: ${question.questionText} is ${question.numericalAnswer}.`);
     } else {
@@ -98,7 +107,7 @@ export const AiStoryProblemGameUI = () => {
       playErrorSound();
       speakText(`Oops! The correct answer was ${question.numericalAnswer}. ${question.explanation || ''}`);
     }
-  }, [currentStoryProblem, questionStates, username]);
+  }, [currentStoryProblem, questionStates, username, toast]);
 
   useEffect(() => {
     fetchNewStoryProblem();
@@ -125,7 +134,7 @@ export const AiStoryProblemGameUI = () => {
           const qIndex = isListening;
           setQuestionStates(prev => prev.map((qs, i) => i === qIndex ? {...qs, userAnswer: String(number)} : qs ));
           toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
-          setTimeout(() => handleSubmitAnswerRef.current(qIndex), 0);
+          setTimeout(() => handleSubmitAnswerRef.current(qIndex), 50); // Added a small delay
         } else {
           toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
         }
@@ -156,7 +165,7 @@ export const AiStoryProblemGameUI = () => {
         playNotificationSound();
         recognitionRef.current.start();
         setIsListening(questionIndex);
-        toast({ title: "Listening...", description: "Speak your answer for the current question.", variant: "info" });
+        toast({ title: "Listening...", description: `Speak your answer for question ${questionIndex + 1}.`, variant: "info" });
       } catch (error) {
         console.error("Error starting speech recognition:", error);
         toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
@@ -173,7 +182,10 @@ export const AiStoryProblemGameUI = () => {
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <BookOpen className="mr-2 h-6 w-6" /> AI Math Story Time!
         </CardTitle>
-        <CardDescription>Read the story and answer the questions. Score: <span className="font-bold text-accent">{score}</span></CardDescription>
+        <CardDescription>
+          Read the story and answer the questions. Score: <span className="font-bold text-accent">{score}</span>
+          {currentStoryProblem && currentStoryProblem.questions && ` / ${currentStoryProblem.questions.length}`}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -230,7 +242,11 @@ export const AiStoryProblemGameUI = () => {
             <Accordion type="multiple" className="w-full space-y-2">
               {currentStoryProblem.questions.map((q, index) => (
                 <AccordionItem value={`item-${index}`} key={index} className="border bg-card p-0 rounded-lg shadow-sm">
-                  <AccordionTrigger className="text-left px-4 py-3 hover:no-underline hover:bg-secondary/50 rounded-t-lg">
+                  <AccordionTrigger className={cn(
+                    "text-left px-4 py-3 hover:no-underline hover:bg-secondary/50 rounded-t-lg transition-colors",
+                    questionStates[index]?.isCorrect === true && "bg-green-500/10 hover:bg-green-500/15 text-green-700 dark:text-green-400",
+                    questionStates[index]?.isCorrect === false && "bg-red-500/10 hover:bg-red-500/15 text-red-700 dark:text-red-500",
+                  )}>
                     <div className="flex-1">
                         <span className="font-semibold">Question {index + 1}: </span>{q.questionText}
                     </div>
@@ -247,7 +263,8 @@ export const AiStoryProblemGameUI = () => {
                         <Input
                           id={`story-q-${index}-answer`}
                           ref={el => answerInputRefs.current[index] = el}
-                          type="number"
+                          type="text" 
+                          inputMode="decimal" 
                           value={questionStates[index]?.userAnswer || ''}
                           onChange={(e) => setQuestionStates(prev => prev.map((qs, i) => i === index ? {...qs, userAnswer: e.target.value} : qs))}
                           placeholder="Your answer"
