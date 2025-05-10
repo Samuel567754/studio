@@ -5,10 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, BookOpenText, Lightbulb, Edit3, Target, BookMarked, Sigma, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpenText, Lightbulb, Edit3, Target, BookMarked, Sigma, Sparkles, Puzzle } from 'lucide-react';
 
 const mainSections = [
   {
+    key: "learn",
     title: "Learn New Words",
     description: "Discover new words with AI suggestions tailored to your level. Build your personal practice list.",
     href: "/learn",
@@ -21,6 +22,7 @@ const mainSections = [
     bgTo: "to-primary/5",
   },
   {
+    key: "spell",
     title: "Spelling Practice",
     description: "Sharpen your spelling skills. Practice words from your list and master them one by one.",
     href: "/spell",
@@ -33,6 +35,7 @@ const mainSections = [
     bgTo: "to-accent/5",
   },
   {
+    key: "identify",
     title: "Identify Words",
     description: "Test your word recognition! Listen and choose the correct word in a fun, interactive game.",
     href: "/identify",
@@ -45,6 +48,7 @@ const mainSections = [
     bgTo: "to-green-500/5",
   },
   {
+    key: "read",
     title: "Reading Adventures",
     description: "Dive into AI-generated stories featuring your practice words. Read or listen along!",
     href: "/read",
@@ -56,7 +60,21 @@ const mainSections = [
     bgFrom: "from-blue-500/10",
     bgTo: "to-blue-500/5",
   },
+   {
+    key: "ai-games",
+    title: "AI Word Games",
+    description: "Challenge yourself with interactive AI-powered word games like Fill-in-the-Blank.",
+    href: "/ai-games",
+    icon: Puzzle, // Consider a more specific "AI" or "game" icon if available
+    imageSrc: "https://picsum.photos/seed/ai-word-games/600/400",
+    imageAlt: "Child playing an interactive word game on a tablet",
+    aiHint: "child tablet game",
+    color: "text-orange-500", // Example color
+    bgFrom: "from-orange-500/10",
+    bgTo: "to-orange-500/5",
+  },
   {
+    key: "math",
     title: "Math Zone",
     description: "Explore a world of numbers with engaging arithmetic games, times tables, AI word problems, and more.",
     href: "/math",
@@ -105,7 +123,7 @@ export default function OfficialHomePage() {
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {mainSections.map((section, index) => (
           <Card 
-            key={section.title} 
+            key={section.key} 
             className={`overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 bg-gradient-to-br ${section.bgFrom} ${section.bgTo} animate-in fade-in-0 slide-in-from-bottom-5 duration-500`}
             style={{ animationDelay: `${100 + index * 100}ms` }}
           >

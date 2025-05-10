@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle, Target, Sigma, HomeIcon } from 'lucide-react';
+import { BookOpenText, Menu, X, Lightbulb, Edit3, BookMarked, Brain, Trash2, SettingsIcon, User, Info, HelpCircle, Target, Sigma, HomeIcon, Puzzle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ const navLinks = [
   { href: '/spell', label: 'Spell Practice', icon: Edit3 },
   { href: '/identify', label: 'Identify Word', icon: Target },
   { href: '/read', label: 'Read Passages', icon: BookMarked },
+  { href: '/ai-games', label: 'AI Word Games', icon: Puzzle },
   { href: '/math', label: 'Math Zone', icon: Sigma },
   { href: '/tutorial', label: 'Tutorial', icon: HelpCircle },
   { href: '/profile', label: 'Profile', icon: User },
@@ -105,7 +106,7 @@ export const MainNav: FC = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
           <BookOpenText className="h-8 w-8 text-primary group-hover:text-accent transition-colors duration-300 ease-in-out" aria-hidden="true" />
-          <h1 className="text-2xl font-bold text-primary group-hover:text-accent transition-colors duration-300 ease-in-out hidden sm:block">ChillLearn</h1>
+          <h1 className="text-2xl font-bold text-primary group-hover:text-accent transition-colors duration-300 ease-in-out hidden sm:block">ChillLearn AI</h1>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
@@ -129,7 +130,7 @@ export const MainNav: FC = () => {
                 <SheetTitle asChild>
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <BookOpenText className="h-7 w-7 text-primary" aria-hidden="true"/>
-                    <h1 className="text-xl font-bold text-primary">ChillLearn</h1>
+                    <h1 className="text-xl font-bold text-primary">ChillLearn AI</h1>
                   </Link>
                 </SheetTitle>
                 <SheetClose asChild>
