@@ -39,16 +39,22 @@ export default function IntroductionPage() {
   };
 
   const selectFeature = useCallback((newIndex: number) => {
-    if (newIndex === currentFeatureIndex) return; // Do nothing if index is the same
+    if (newIndex === currentFeatureIndex) return; 
 
     if (newIndex >= 0 && newIndex < features.length) {
       playNotificationSound();
       setCurrentFeatureIndex(newIndex);
+    } else if (newIndex >= features.length) { // Loop to start
+        playNotificationSound();
+        setCurrentFeatureIndex(0);
+    } else if (newIndex < 0) { // Loop to end
+        playNotificationSound();
+        setCurrentFeatureIndex(features.length - 1);
     }
-  }, [currentFeatureIndex]); // features.length is constant from module scope
+  }, [currentFeatureIndex]); 
 
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
-    setTouchEndX(null); // Reset touch end position
+    setTouchEndX(null); 
     setTouchStartX(e.targetTouches[0].clientX);
   };
 
@@ -63,10 +69,8 @@ export default function IntroductionPage() {
     const isRightSwipe = distance < -minSwipeDistance;
 
     if (isLeftSwipe) {
-      // Go to next feature, selectFeature will handle bounds
       selectFeature(currentFeatureIndex + 1);
     } else if (isRightSwipe) {
-      // Go to previous feature, selectFeature will handle bounds
       selectFeature(currentFeatureIndex - 1);
     }
 
@@ -77,7 +81,6 @@ export default function IntroductionPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-primary/10 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
       <main className="container mx-auto max-w-2xl text-center space-y-8 md:space-y-12 my-6 flex-grow flex flex-col justify-center">
-        {/* Static welcome text removed as per user request to integrate into feature cards or remove */}
         
         <section className="relative animate-in fade-in-0 slide-in-from-bottom-10 duration-700 delay-200 w-full">
           <div 
@@ -109,16 +112,12 @@ export default function IntroductionPage() {
                       priority={index === 0} 
                       sizes="(max-width: 640px) 90vw, (max-width: 768px) 80vw, 600px"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
-                    
-                    <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
-                      <div className="flex items-center mb-2 sm:mb-3">
-                        <feature.icon className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-white drop-shadow-md" />
-                        <h2 className="text-lg sm:text-xl md:text-2xl font-semibold">
-                          {feature.title}
-                        </h2>
-                      </div>
-                      <p className="text-xs sm:text-sm md:text-base text-gray-200 leading-relaxed line-clamp-2 sm:line-clamp-3">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent flex flex-col items-center justify-center text-center p-4 sm:p-6">
+                      <feature.icon className="h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3 text-white drop-shadow-md" />
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2">
+                        {feature.title}
+                      </h2>
+                      <p className="text-sm sm:text-base md:text-lg text-gray-100 leading-relaxed line-clamp-2 sm:line-clamp-3 max-w-md">
                         {feature.description}
                       </p>
                     </div>
