@@ -16,8 +16,8 @@ const GenerateMathWordProblemInputSchema = z.object({
     .enum(['easy', 'medium', 'hard'])
     .describe('The difficulty level of the math problem (easy, medium, or hard).'),
   operation: z
-    .enum(['addition', 'subtraction', 'multiplication', 'division'])
-    .describe('The mathematical operation for the problem (addition, subtraction, multiplication, or division).'),
+    .enum(['addition', 'subtraction', 'multiplication', 'division', 'random'])
+    .describe('The mathematical operation for the problem (addition, subtraction, multiplication, division, or random for AI to choose).'),
    username: z.string().optional().describe("The learner's name, if available, to personalize the problem."),
 });
 export type GenerateMathWordProblemInput = z.infer<
@@ -35,6 +35,10 @@ const GenerateMathWordProblemOutputSchema = z.object({
     .string()
     .optional()
     .describe('An optional brief explanation of how to solve the problem.'),
+  operationUsed: z
+    .string()
+    .optional()
+    .describe('The operation used by the AI if "random" was selected, e.g., "addition", "subtraction".'),
 });
 export type GenerateMathWordProblemOutput = z.infer<
   typeof GenerateMathWordProblemOutputSchema
@@ -51,11 +55,18 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateMathWordProblemInputSchema},
   output: {schema: GenerateMathWordProblemOutputSchema},
   prompt: `You are an AI assistant that creates age-appropriate math word problems for children.
-  The user is at a '{{difficultyLevel}}' level and is practicing '{{operation}}'.
+  The user is at a '{{difficultyLevel}}' level.
   {{#if username}}The learner's name is {{username}}. You can use their name in the problem if it feels natural.{{/if}}
 
+  {{#if (eq operation "random")}}
+  You should choose one of the following operations: addition, subtraction, multiplication, or division.
+  Indicate the operation you chose in the 'operationUsed' field of your output.
+  {{else}}
+  The user is practicing '{{operation}}'. You must use this operation.
+  {{/if}}
+
   Generate a short, engaging word problem.
-  The problem should involve a single step of {{operation}}.
+  The problem should involve a single step of the chosen or specified operation.
   - If difficulty is 'easy': Use numbers typically up to 20 for addition/subtraction. For multiplication, factors should be small (e.g., up to 5x5). For division, dividends should be small and result in whole numbers (e.g., 10 ÷ 2).
   - If difficulty is 'medium': Use numbers up to 100 for addition/subtraction. For multiplication, factors can be up to 10x10. For division, dividends can be up to 100 and result in whole numbers (e.g., 81 ÷ 9).
   - If difficulty is 'hard': Use numbers up to 200 for addition/subtraction, potentially involving carrying/borrowing. For multiplication, factors can be up to 12x12. For division, dividends can be up to 144 and result in whole numbers (e.g., 132 ÷ 11).
@@ -63,11 +74,14 @@ const prompt = ai.definePrompt({
   The word problem should be clear, unambiguous, and 1-2 sentences long.
   Provide the problem text and the numerical answer.
   Optionally, provide a brief, simple explanation (1 sentence) of how to solve it.
+  {{#if (eq operation "random")}}
+  Make sure to set the 'operationUsed' field in the output to the operation you randomly selected (e.g., "addition", "subtraction", "multiplication", "division").
+  {{/if}}
 
-  Ensure your entire output is structured according to the requested format, including only 'problemText', 'numericalAnswer', and optionally 'explanation'.
+  Ensure your entire output is structured according to the requested format, including only 'problemText', 'numericalAnswer', 'operationUsed' (if applicable), and optionally 'explanation'.
   The numericalAnswer MUST be a number, not a string. The problemText should end with a question mark.`,
    config: {
-    temperature: 0.8, // Allow for some creativity in problem generation
+    temperature: 0.8, 
     safetySettings: [
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',
@@ -97,6 +111,10 @@ const generateMathWordProblemFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
+    if (input.operation !== 'random' && output) {
+      output.operationUsed = input.operation;
+    }
     return output!;
   }
 );
+

@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
-type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division';
+type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'random';
 
 export const AiWordProblemGameUI = () => {
   const [currentProblem, setCurrentProblem] = useState<GenerateMathWordProblemOutput | null>(null);
@@ -72,7 +72,10 @@ export const AiWordProblemGameUI = () => {
     }
 
     if (answerNum === currentProblem.numericalAnswer) {
-      const successMessage = `${username ? username + ", that's c" : 'C'}orrect! The answer is ${currentProblem.numericalAnswer}.`;
+      let successMessage = `${username ? username + ", that's c" : 'C'}orrect! The answer is ${currentProblem.numericalAnswer}.`;
+      if (operation === 'random' && currentProblem.operationUsed) {
+        successMessage += ` (Operation: ${currentProblem.operationUsed})`;
+      }
       setFeedback({ type: 'success', message: successMessage });
       setScore(prev => prev + 1);
       playSuccessSound();
@@ -88,6 +91,7 @@ export const AiWordProblemGameUI = () => {
         <>
           Not quite{username ? `, ${username}` : ''}. The correct answer was <strong>{currentProblem.numericalAnswer}</strong>.
           {currentProblem.explanation && <p className="mt-1 text-xs"><em>Explanation: {currentProblem.explanation}</em></p>}
+          {operation === 'random' && currentProblem.operationUsed && <p className="mt-1 text-xs"><em>(AI chose: {currentProblem.operationUsed})</em></p>}
           Try the next one!
         </>
       );
@@ -101,7 +105,7 @@ export const AiWordProblemGameUI = () => {
         setTimeout(fetchNewProblem, 2500);
       }
     }
-  }, [currentProblem, userAnswer, fetchNewProblem, username]);
+  }, [currentProblem, userAnswer, fetchNewProblem, username, operation]);
 
   useEffect(() => {
     fetchNewProblem();
@@ -214,6 +218,7 @@ export const AiWordProblemGameUI = () => {
                 <SelectItem value="subtraction">Subtraction (-)</SelectItem>
                 <SelectItem value="multiplication">Multiplication (×)</SelectItem>
                 <SelectItem value="division">Division (÷)</SelectItem>
+                <SelectItem value="random">Random (AI Chooses)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -231,7 +236,7 @@ export const AiWordProblemGameUI = () => {
             <Card className="bg-muted/30 p-4 rounded-lg shadow">
               <CardTitle className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-accent"/>
-                Problem:
+                Problem: {currentProblem.operationUsed && operation === 'random' && <span className="text-sm text-muted-foreground">(Operation: {currentProblem.operationUsed})</span>}
                 <Button variant="ghost" size="icon" onClick={handleSpeakProblem} aria-label="Read problem aloud" className="ml-auto" disabled={isListening}>
                     <Volume2 className="h-5 w-5" />
                 </Button>
@@ -292,3 +297,4 @@ export const AiWordProblemGameUI = () => {
     </Card>
   );
 };
+

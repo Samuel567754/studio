@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calculator, TableIcon as TimesTableIcon, Sigma, Puzzle, Scaling, ChevronsRight, Brain } from 'lucide-react';
+import { Calculator, TableIcon as TimesTableIcon, Sigma, Puzzle, Scaling, ChevronsRight, Brain, BookOpen } from 'lucide-react';
 
 export default function MathZonePage() {
   const mathSections = [
@@ -15,6 +15,13 @@ export default function MathZonePage() {
       href: "/math/ai-word-problem",
       icon: Brain,
       dataAiHint: "AI brain numbers",
+    },
+    {
+      title: "AI Story Problems",
+      description: "Read engaging stories and solve math problems related to them. AI-generated!",
+      href: "/math/ai-story-problem",
+      icon: BookOpen, // Consider a story/book icon
+      dataAiHint: "AI story book math",
     },
     {
       title: "Arithmetic Games",
@@ -44,7 +51,6 @@ export default function MathZonePage() {
       icon: ChevronsRight,
       dataAiHint: "number line sequence",
     },
-    // Add more sections here in the future e.g. Geometry, Fractions etc.
   ];
 
   return (
@@ -72,7 +78,7 @@ export default function MathZonePage() {
           <Card 
             key={section.title} 
             className="shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
-            style={{ animationDelay: `${100 + index * 150}ms` }}
+            style={{ animationDelay: `${100 + index * 100}ms` }} // Staggered animation
           >
             <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
               <section.icon className="h-10 w-10 text-accent" aria-hidden="true" />
@@ -93,18 +99,7 @@ export default function MathZonePage() {
           </Card>
         ))}
       </div>
-
-      {/* Placeholder for future overall math stats or settings specific to math */}
-      {/* 
-      <Card className="mt-10 shadow-md animate-in fade-in-0 delay-500 duration-500">
-        <CardHeader>
-          <CardTitle className="text-xl">Math Progress Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Your math achievements will be displayed here soon!</p>
-        </CardContent>
-      </Card>
-      */}
     </div>
   );
 }
+
