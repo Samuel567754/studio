@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCw, ChevronsRight } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCw, ChevronsRight, Mic, MicOff } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from "@/hooks/use-toast";
+import { parseSpokenNumber } from '@/lib/speech';
+import { cn } from '@/lib/utils';
 
 interface SequenceProblem {
   sequenceDisplay: (number | string)[]; 
@@ -44,6 +47,9 @@ export const NumberSequencingUI = () => {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [score, setScore] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const { toast } = useToast();
 
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
@@ -65,6 +71,39 @@ export const NumberSequencingUI = () => {
     }
   }, [currentProblem, isLoading]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        const number = parseSpokenNumber(spokenText);
+        if (number !== null) {
+          setUserAnswer(String(number));
+          toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
+        } else {
+          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
+        }
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try typing.`, variant: "destructive" });
+        setIsListening(false);
+      };
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+    return () => {
+        recognitionRef.current?.stop();
+    };
+  }, [toast]);
 
   const handleSpeakQuestion = () => {
     if (currentProblem?.speechText) {
@@ -72,8 +111,31 @@ export const NumberSequencingUI = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please type your answer.", variant: "info", duration: 5000 });
+        return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        playNotificationSound();
+        recognitionRef.current.start();
+        setIsListening(true);
+        setFeedback(null);
+        toast({ title: "Listening...", description: "Speak the missing number.", variant: "info" });
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
+        setIsListening(false);
+      }
+    }
+  };
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!currentProblem || userAnswer.trim() === '') {
       setFeedback({ type: 'info', message: 'Please enter an answer.' });
       return;
@@ -92,7 +154,7 @@ export const NumberSequencingUI = () => {
       const utterance = speakText(`That's right! ${currentProblem.correctAnswer} completes the sequence.`, undefined, () => {
         loadNewProblem();
       });
-      if (!utterance) { // Fallback if speech doesn't start
+      if (!utterance) { 
         setTimeout(loadNewProblem, 2000);
       }
     } else {
@@ -101,7 +163,7 @@ export const NumberSequencingUI = () => {
       const utterance = speakText(`Oops! The correct number was ${currentProblem.correctAnswer}.`, undefined, () => {
         loadNewProblem();
       });
-      if (!utterance) { // Fallback if speech doesn't start
+      if (!utterance) { 
         setTimeout(loadNewProblem, 3000);
       }
     }
@@ -138,13 +200,13 @@ export const NumberSequencingUI = () => {
             <p className="text-3xl md:text-4xl font-bold text-gradient-primary-accent select-none" aria-live="polite">
             {currentProblem.sequenceDisplay.join(', ')}
             </p>
-          <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read sequence problem aloud">
+          <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read sequence problem aloud" disabled={isListening}>
             <Volume2 className="h-5 w-5" />
           </Button>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="flex items-center gap-2">
             <Label htmlFor="sequence-answer" className="sr-only">Your Answer for the blank</Label>
             <Input
               id="sequence-answer"
@@ -152,12 +214,23 @@ export const NumberSequencingUI = () => {
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
               placeholder="Type missing number"
-              className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary"
+              className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary flex-grow"
               aria-label="Enter the missing number in the sequence"
-              disabled={feedback?.type === 'success' || isLoading}
+              disabled={feedback?.type === 'success' || isLoading || isListening}
             />
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="icon" 
+              onClick={toggleListening} 
+              className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
+              aria-label={isListening ? "Stop listening" : "Speak your answer"}
+              disabled={feedback?.type === 'success' || isLoading || !recognitionRef.current}
+            >
+                {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+            </Button>
           </div>
-          <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success' || isLoading}>
+          <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success' || isLoading || isListening}>
             Check Answer
           </Button>
         </form>
@@ -171,7 +244,7 @@ export const NumberSequencingUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading}>
+        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading || isListening}>
           <RefreshCw className="mr-2 h-4 w-4" /> Skip / New Sequence
         </Button>
       </CardFooter>

@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { CheckCircle2, XCircle, Loader2, Repeat, ListOrdered, Volume2 } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { CheckCircle2, XCircle, Loader2, Repeat, ListOrdered, Volume2, Mic, MicOff } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from "@/hooks/use-toast";
+import { parseSpokenNumber } from '@/lib/speech';
+import { cn } from '@/lib/utils';
 
 interface TimesTableProblem {
   factor1: number; 
@@ -40,6 +43,9 @@ export const TimesTableUI = () => {
   const [correctInARow, setCorrectInARow] = useState(0);
   const [showCompletionMessage, setShowCompletionMessage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const { toast } = useToast();
 
   const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); 
 
@@ -63,6 +69,39 @@ export const TimesTableUI = () => {
     }
   }, [currentProblem, isLoading, showCompletionMessage]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        const number = parseSpokenNumber(spokenText);
+        if (number !== null) {
+          setUserAnswer(String(number));
+          toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
+        } else {
+          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
+        }
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try typing.`, variant: "destructive" });
+        setIsListening(false);
+      };
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+    return () => {
+        recognitionRef.current?.stop();
+    };
+  }, [toast]);
 
   const handleTableChange = (value: string) => {
     const tableNum = parseInt(value, 10);
@@ -78,8 +117,32 @@ export const TimesTableUI = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please type your answer.", variant: "info", duration: 5000 });
+        return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      if (showCompletionMessage) return; // Don't listen if table completed
+      try {
+        playNotificationSound();
+        recognitionRef.current.start();
+        setIsListening(true);
+        setFeedback(null);
+        toast({ title: "Listening...", description: "Speak your answer.", variant: "info" });
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
+        setIsListening(false);
+      }
+    }
+  };
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!currentProblem || userAnswer.trim() === '') {
       setFeedback({ type: 'info', message: 'Please enter an answer.' });
       return;
@@ -110,7 +173,7 @@ export const TimesTableUI = () => {
       
       const utterance = speakText(`Correct! ${currentProblem.factor1} times ${currentProblem.factor2} is ${currentProblem.answer}.`, undefined, handleNextStepLogic);
       
-      if (!utterance) { // Fallback if speech doesn't start
+      if (!utterance) { 
         setTimeout(handleNextStepLogic, 1200);
       }
     } else {
@@ -118,11 +181,7 @@ export const TimesTableUI = () => {
       setFeedback({ type: 'error', message: errorMessage });
       setCorrectInARow(0); 
       playErrorSound();
-      // For error, we don't automatically advance. User needs to correct or skip.
-      // If we wanted to advance on error after audio, it would be:
-      // const utterance = speakText(`Oops! ...`, undefined, () => { /* loadProblemForTableAndMultiplier(); or similar */ });
-      // if (!utterance) setTimeout(() => { /* loadProblem... */ }, 2000);
-      // But current behavior is to let user re-try or skip.
+      speakText(`Oops! The answer was ${currentProblem.answer}.`);
     }
   };
 
@@ -161,7 +220,7 @@ export const TimesTableUI = () => {
       <CardContent className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <Label htmlFor="table-select" className="text-md font-medium whitespace-nowrap">Practice Table:</Label>
-          <Select value={selectedTable.toString()} onValueChange={handleTableChange} disabled={isLoading}>
+          <Select value={selectedTable.toString()} onValueChange={handleTableChange} disabled={isLoading || isListening}>
             <SelectTrigger id="table-select" className="flex-grow h-11 text-base shadow-sm focus:ring-accent" aria-label="Select times table to practice">
               <SelectValue placeholder="Select table" />
             </SelectTrigger>
@@ -185,12 +244,12 @@ export const TimesTableUI = () => {
                 >
                 {currentProblem.questionText}
                 </p>
-                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud">
+                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening}>
                     <Volume2 className="h-6 w-6" />
                 </Button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
+              <div className="flex items-center gap-2">
                 <Label htmlFor="times-table-answer" className="sr-only">Your Answer</Label>
                 <Input
                   id="times-table-answer"
@@ -198,12 +257,23 @@ export const TimesTableUI = () => {
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
                   placeholder="Answer"
-                  className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-accent"
+                  className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-accent flex-grow"
                   aria-label={`Enter your answer for ${currentProblem.questionText.replace('?', '')}`}
-                  disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading || showCompletionMessage}
+                  disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading || showCompletionMessage || isListening}
                 />
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={toggleListening} 
+                    className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
+                    aria-label={isListening ? "Stop listening" : "Speak your answer"}
+                    disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading || showCompletionMessage || !recognitionRef.current}
+                >
+                    {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+                </Button>
               </div>
-              <Button type="submit" size="lg" className="w-full btn-glow !text-lg bg-accent hover:bg-accent/90" disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading || showCompletionMessage}>
+              <Button type="submit" size="lg" className="w-full btn-glow !text-lg bg-accent hover:bg-accent/90" disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading || showCompletionMessage || isListening}>
                 Check
               </Button>
             </form>

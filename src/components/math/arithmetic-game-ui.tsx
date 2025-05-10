@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle2, XCircle, Loader2, Zap, RefreshCw, Volume2 } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { CheckCircle2, XCircle, Loader2, Zap, RefreshCw, Volume2, Mic, MicOff } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from "@/hooks/use-toast";
+import { parseSpokenNumber } from '@/lib/speech';
+import { cn } from '@/lib/utils';
 
 type Operation = '+' | '-' | '*' | '/';
 interface Problem {
@@ -70,7 +73,10 @@ export const ArithmeticGameUI = () => {
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [score, setScore] = useState(0);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const { toast } = useToast();
 
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
@@ -92,6 +98,43 @@ export const ArithmeticGameUI = () => {
     }
   }, [currentProblem, isLoading]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        const number = parseSpokenNumber(spokenText);
+        if (number !== null) {
+          setUserAnswer(String(number));
+           toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
+        } else {
+          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
+        }
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try typing.`, variant: "destructive" });
+        setIsListening(false);
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    } else {
+        // toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input.", variant: "info", duration: 5000 });
+    }
+    
+    return () => {
+        recognitionRef.current?.stop();
+    };
+  }, [toast]);
 
   const handleSpeakQuestion = () => {
     if (currentProblem?.speechText) {
@@ -99,8 +142,31 @@ export const ArithmeticGameUI = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please type your answer.", variant: "info", duration: 5000 });
+        return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        playNotificationSound(); // Sound for mic activation
+        recognitionRef.current.start();
+        setIsListening(true);
+        setFeedback(null); 
+        toast({ title: "Listening...", description: "Speak your answer.", variant: "info" });
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
+        setIsListening(false);
+      }
+    }
+  };
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!currentProblem || userAnswer.trim() === '') {
       setFeedback({ type: 'info', message: 'Please enter an answer.' });
       return;
@@ -120,10 +186,8 @@ export const ArithmeticGameUI = () => {
       const utterance = speakText(`Correct! The answer is ${currentProblem.answer}.`, undefined, () => {
         loadNewProblem();
       });
-      if (!utterance) { // Fallback if speech doesn't start
-        setTimeout(() => {
-          loadNewProblem();
-        }, 1500);
+      if (!utterance) { 
+        setTimeout(loadNewProblem, 1500);
       }
     } else {
       const errorMessage = `Not quite. The correct answer for ${currentProblem.questionText.replace('?', '')} was ${currentProblem.answer}. Try the next one!`;
@@ -132,10 +196,8 @@ export const ArithmeticGameUI = () => {
       const utterance = speakText(`Oops! The correct answer was ${currentProblem.answer}.`, undefined, () => {
         loadNewProblem();
       });
-      if (!utterance) { // Fallback if speech doesn't start
-        setTimeout(() => { 
-          loadNewProblem();
-        }, 2500);
+      if (!utterance) {
+        setTimeout(loadNewProblem, 2500);
       }
     }
   };
@@ -165,12 +227,12 @@ export const ArithmeticGameUI = () => {
                 >
                     {currentProblem.questionText}
                 </p>
-                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud">
+                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening}>
                     <Volume2 className="h-6 w-6" />
                 </Button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
+              <div className="flex items-center gap-2">
                 <Label htmlFor="math-answer" className="sr-only">Your Answer</Label>
                 <Input
                   id="math-answer"
@@ -178,12 +240,23 @@ export const ArithmeticGameUI = () => {
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
                   placeholder="Your answer"
-                  className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary"
+                  className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary flex-grow"
                   aria-label="Enter your answer for the math problem"
-                  disabled={feedback?.type === 'success' || isLoading}
+                  disabled={feedback?.type === 'success' || isLoading || isListening}
                 />
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={toggleListening} 
+                    className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
+                    aria-label={isListening ? "Stop listening" : "Speak your answer"}
+                    disabled={feedback?.type === 'success' || isLoading || !recognitionRef.current}
+                >
+                    {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+                </Button>
               </div>
-              <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success' || isLoading}>
+              <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success' || isLoading || isListening}>
                 Check Answer
               </Button>
             </form>
@@ -198,7 +271,7 @@ export const ArithmeticGameUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading && !!currentProblem}>
+        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={(isLoading && !!currentProblem) || isListening}>
           <RefreshCw className="mr-2 h-4 w-4" /> Skip / New Problem
         </Button>
       </CardFooter>

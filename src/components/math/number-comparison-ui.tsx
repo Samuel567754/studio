@@ -3,11 +3,14 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCw, Scaling } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCw, Scaling, Mic, MicOff } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
+import { useToast } from "@/hooks/use-toast";
+import { parseSpokenNumber } from '@/lib/speech';
+
 
 interface ComparisonProblem {
   num1: number;
@@ -39,6 +42,9 @@ export const NumberComparisonUI = () => {
   const [score, setScore] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const { toast } = useToast();
 
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
@@ -60,9 +66,75 @@ export const NumberComparisonUI = () => {
     }
   }, [currentProblem, isLoading]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        const number = parseSpokenNumber(spokenText);
+        
+        if (number !== null && currentProblem) {
+          if (number === currentProblem.num1) {
+            handleAnswer(currentProblem.num1);
+            toast({ title: "Heard you!", description: `You said: "${spokenText}". Choosing ${currentProblem.num1}.`, variant: "info" });
+          } else if (number === currentProblem.num2) {
+            handleAnswer(currentProblem.num2);
+            toast({ title: "Heard you!", description: `You said: "${spokenText}". Choosing ${currentProblem.num2}.`, variant: "info" });
+          } else {
+            toast({ title: "Couldn't match", description: `Heard: "${spokenText}". That's not one of the options. Try again or click.`, variant: "info" });
+          }
+        } else {
+          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or click an option.`, variant: "info" });
+        }
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try clicking.`, variant: "destructive" });
+        setIsListening(false);
+      };
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+    return () => {
+        recognitionRef.current?.stop();
+    };
+  }, [toast, currentProblem]); // Added currentProblem dependency
+
   const handleSpeakQuestion = () => {
     if (currentProblem?.speechText) {
       speakText(currentProblem.speechText);
+    }
+  };
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please click an option.", variant: "info", duration: 5000 });
+        return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      if (selectedAnswer !== null) return; // Don't listen if an answer is already processed
+      try {
+        playNotificationSound();
+        recognitionRef.current.start();
+        setIsListening(true);
+        setFeedback(null);
+        toast({ title: "Listening...", description: "Say one of the numbers.", variant: "info" });
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
+        setIsListening(false);
+      }
     }
   };
   
@@ -79,7 +151,7 @@ export const NumberComparisonUI = () => {
       const utterance = speakText(`Correct! ${chosenNum} is ${currentProblem.questionType}.`, undefined, () => {
         loadNewProblem();
       });
-      if (!utterance) { // Fallback if speech doesn't start
+      if (!utterance) { 
         setTimeout(loadNewProblem, 2000);
       }
     } else {
@@ -88,7 +160,7 @@ export const NumberComparisonUI = () => {
       const utterance = speakText(`Oops! The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`, undefined, () => {
         loadNewProblem();
       });
-      if (!utterance) { // Fallback if speech doesn't start
+      if (!utterance) { 
         setTimeout(loadNewProblem, 3000);
       }
     }
@@ -121,9 +193,19 @@ export const NumberComparisonUI = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex justify-center items-center my-4">
-          <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read question aloud">
+        <div className="flex justify-center items-center gap-4 my-4">
+          <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read question aloud" disabled={isListening}>
             <Volume2 className="h-5 w-5" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={toggleListening}
+            className={cn("h-10 w-10", isListening && "bg-destructive/20 text-destructive animate-pulse")}
+            aria-label={isListening ? "Stop listening" : "Speak your answer"}
+            disabled={selectedAnswer !== null || isLoading || !recognitionRef.current}
+          >
+            {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
           </Button>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -139,7 +221,7 @@ export const NumberComparisonUI = () => {
                 selectedAnswer !== null && num === currentProblem.correctAnswer && feedback?.type === 'error' && "bg-green-500/10 border-green-500/50" 
               )}
               onClick={() => handleAnswer(num)}
-              disabled={selectedAnswer !== null || isLoading}
+              disabled={selectedAnswer !== null || isLoading || isListening}
               aria-pressed={selectedAnswer === num}
             >
               {num}
@@ -155,7 +237,7 @@ export const NumberComparisonUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading || (selectedAnswer === null && feedback !== null)}>
+        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading || isListening || (selectedAnswer === null && feedback !== null)}>
           <RefreshCw className="mr-2 h-4 w-4" /> Skip / Next Problem
         </Button>
       </CardFooter>
