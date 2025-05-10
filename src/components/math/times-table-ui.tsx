@@ -46,102 +46,11 @@ export const TimesTableUI = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
+  const answerInputRef = useRef<HTMLInputElement>(null);
 
   const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); 
 
-  const loadProblemForTableAndMultiplier = useCallback(() => {
-    setIsLoading(true);
-    const newProblem = generateTimesTableProblem(selectedTable, currentMultiplier);
-    setCurrentProblem(newProblem);
-    setUserAnswer('');
-    setFeedback(null);
-    setShowCompletionMessage(false);
-    setIsLoading(false);
-  }, [selectedTable, currentMultiplier]);
-  
-  useEffect(() => {
-    loadProblemForTableAndMultiplier();
-  }, [loadProblemForTableAndMultiplier]);
-
-  useEffect(() => {
-    if (currentProblem && !isLoading && !showCompletionMessage && currentProblem.speechText) {
-      speakText(currentProblem.speechText);
-    }
-  }, [currentProblem, isLoading, showCompletionMessage]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognitionAPI();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
-
-      recognitionRef.current.onresult = (event) => {
-        const spokenText = event.results[0][0].transcript;
-        const number = parseSpokenNumber(spokenText);
-        if (number !== null) {
-          setUserAnswer(String(number));
-          toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
-        } else {
-          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
-        }
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
-        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try typing.`, variant: "destructive" });
-        setIsListening(false);
-      };
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
-    return () => {
-        recognitionRef.current?.stop();
-    };
-  }, [toast]);
-
-  const handleTableChange = (value: string) => {
-    const tableNum = parseInt(value, 10);
-    setSelectedTable(tableNum);
-    setCurrentMultiplier(1); 
-    setCorrectInARow(0);
-    playNotificationSound();
-  };
-
-  const handleSpeakQuestion = () => {
-    if (currentProblem?.speechText) {
-      speakText(currentProblem.speechText);
-    }
-  };
-
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please type your answer.", variant: "info", duration: 5000 });
-        return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      if (showCompletionMessage) return; // Don't listen if table completed
-      try {
-        playNotificationSound();
-        recognitionRef.current.start();
-        setIsListening(true);
-        setFeedback(null);
-        toast({ title: "Listening...", description: "Speak your answer.", variant: "info" });
-      } catch (error) {
-        console.error("Error starting speech recognition:", error);
-        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
-        setIsListening(false);
-      }
-    }
-  };
-
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!currentProblem || userAnswer.trim() === '') {
       setFeedback({ type: 'info', message: 'Please enter an answer.' });
@@ -182,14 +91,121 @@ export const TimesTableUI = () => {
       setCorrectInARow(0); 
       playErrorSound();
       speakText(`Oops! The answer was ${currentProblem.answer}.`);
+      answerInputRef.current?.focus();
+      answerInputRef.current?.select();
+    }
+  }, [currentProblem, userAnswer, selectedTable, currentMultiplier]);
+
+
+  const loadProblemForTableAndMultiplier = useCallback(() => {
+    setIsLoading(true);
+    const newProblem = generateTimesTableProblem(selectedTable, currentMultiplier);
+    setCurrentProblem(newProblem);
+    setUserAnswer('');
+    setFeedback(null);
+    setShowCompletionMessage(false);
+    setIsLoading(false);
+    answerInputRef.current?.focus();
+  }, [selectedTable, currentMultiplier]);
+  
+  useEffect(() => {
+    loadProblemForTableAndMultiplier();
+  }, [loadProblemForTableAndMultiplier]);
+
+  useEffect(() => {
+    if (currentProblem && !isLoading && !showCompletionMessage && currentProblem.speechText) {
+      speakText(currentProblem.speechText);
+    }
+  }, [currentProblem, isLoading, showCompletionMessage]);
+
+  // Ref to hold the latest handleSubmit function
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  }, [handleSubmit]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        const number = parseSpokenNumber(spokenText);
+        if (number !== null) {
+          setUserAnswer(String(number));
+          toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
+          // Auto-submit after setting the answer
+           setTimeout(() => handleSubmitRef.current(), 0);
+        } else {
+          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
+        }
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try typing.`, variant: "destructive" });
+        setIsListening(false);
+      };
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+    return () => {
+        recognitionRef.current?.stop();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast]);
+
+  const handleTableChange = (value: string) => {
+    const tableNum = parseInt(value, 10);
+    setSelectedTable(tableNum);
+    setCurrentMultiplier(1); 
+    setCorrectInARow(0);
+    playNotificationSound();
+  };
+
+  const handleSpeakQuestion = () => {
+    if (currentProblem?.speechText) {
+      speakText(currentProblem.speechText);
     }
   };
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please type your answer.", variant: "info", duration: 5000 });
+        return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      if (showCompletionMessage) return; // Don't listen if table completed
+      try {
+        playNotificationSound();
+        recognitionRef.current.start();
+        setIsListening(true);
+        setFeedback(null);
+        toast({ title: "Listening...", description: "Speak your answer.", variant: "info" });
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
+        setIsListening(false);
+      }
+    }
+  };
+
 
   const handleRestartTable = () => {
     setCurrentMultiplier(1);
     setCorrectInARow(0);
     setShowCompletionMessage(false); 
     playNotificationSound();
+    // Problem will reload due to useEffect on currentMultiplier change
   };
   
   if (isLoading && !currentProblem) {
@@ -253,6 +269,7 @@ export const TimesTableUI = () => {
                 <Label htmlFor="times-table-answer" className="sr-only">Your Answer</Label>
                 <Input
                   id="times-table-answer"
+                  ref={answerInputRef}
                   type="number"
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
@@ -299,3 +316,4 @@ export const TimesTableUI = () => {
     </Card>
   );
 };
+

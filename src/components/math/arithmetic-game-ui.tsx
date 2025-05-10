@@ -77,95 +77,9 @@ export const ArithmeticGameUI = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
+  const answerInputRef = useRef<HTMLInputElement>(null);
 
-  const loadNewProblem = useCallback(() => {
-    setIsLoading(true);
-    setFeedback(null);
-    setUserAnswer('');
-    const newProblem = generateProblem();
-    setCurrentProblem(newProblem);
-    setIsLoading(false);
-    playNotificationSound();
-  },[]);
-
-  useEffect(() => {
-    loadNewProblem();
-  }, [loadNewProblem]);
-  
-  useEffect(() => {
-    if (currentProblem && !isLoading && currentProblem.speechText) {
-      speakText(currentProblem.speechText);
-    }
-  }, [currentProblem, isLoading]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
-
-      recognitionRef.current.onresult = (event) => {
-        const spokenText = event.results[0][0].transcript;
-        const number = parseSpokenNumber(spokenText);
-        if (number !== null) {
-          setUserAnswer(String(number));
-           toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
-        } else {
-          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
-        }
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
-        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try typing.`, variant: "destructive" });
-        setIsListening(false);
-      };
-      
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    } else {
-        // toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input.", variant: "info", duration: 5000 });
-    }
-    
-    return () => {
-        recognitionRef.current?.stop();
-    };
-  }, [toast]);
-
-  const handleSpeakQuestion = () => {
-    if (currentProblem?.speechText) {
-      speakText(currentProblem.speechText);
-    }
-  };
-
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please type your answer.", variant: "info", duration: 5000 });
-        return;
-    }
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      try {
-        playNotificationSound(); // Sound for mic activation
-        recognitionRef.current.start();
-        setIsListening(true);
-        setFeedback(null); 
-        toast({ title: "Listening...", description: "Speak your answer.", variant: "info" });
-      } catch (error) {
-        console.error("Error starting speech recognition:", error);
-        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
-        setIsListening(false);
-      }
-    }
-  };
-
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!currentProblem || userAnswer.trim() === '') {
       setFeedback({ type: 'info', message: 'Please enter an answer.' });
@@ -198,6 +112,104 @@ export const ArithmeticGameUI = () => {
       });
       if (!utterance) {
         setTimeout(loadNewProblem, 2500);
+      }
+    }
+  }, [currentProblem, userAnswer, loadNewProblem]);
+
+
+  const loadNewProblem = useCallback(() => {
+    setIsLoading(true);
+    setFeedback(null);
+    setUserAnswer('');
+    const newProblem = generateProblem();
+    setCurrentProblem(newProblem);
+    setIsLoading(false);
+    playNotificationSound();
+    answerInputRef.current?.focus();
+  },[]);
+
+  useEffect(() => {
+    loadNewProblem();
+  }, [loadNewProblem]);
+  
+  useEffect(() => {
+    if (currentProblem && !isLoading && currentProblem.speechText) {
+      speakText(currentProblem.speechText);
+    }
+  }, [currentProblem, isLoading]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        const number = parseSpokenNumber(spokenText);
+        if (number !== null) {
+          setUserAnswer(String(number));
+           toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
+           // Auto-submit after setting the answer
+           // Use a slight delay to ensure state update before submit if needed, but direct call might be fine
+           setTimeout(() => handleSubmitRef.current(), 0);
+        } else {
+          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
+        }
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try typing.`, variant: "destructive" });
+        setIsListening(false);
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+    
+    return () => {
+        recognitionRef.current?.stop();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast]); // handleSubmit will be called via ref
+
+  // Ref to hold the latest handleSubmit function
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  }, [handleSubmit]);
+
+
+  const handleSpeakQuestion = () => {
+    if (currentProblem?.speechText) {
+      speakText(currentProblem.speechText);
+    }
+  };
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please type your answer.", variant: "info", duration: 5000 });
+        return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        playNotificationSound(); // Sound for mic activation
+        recognitionRef.current.start();
+        setIsListening(true);
+        setFeedback(null); 
+        toast({ title: "Listening...", description: "Speak your answer.", variant: "info" });
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
+        setIsListening(false);
       }
     }
   };
@@ -236,6 +248,7 @@ export const ArithmeticGameUI = () => {
                 <Label htmlFor="math-answer" className="sr-only">Your Answer</Label>
                 <Input
                   id="math-answer"
+                  ref={answerInputRef}
                   type="number"
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
@@ -278,3 +291,4 @@ export const ArithmeticGameUI = () => {
     </Card>
   );
 };
+

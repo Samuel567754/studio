@@ -46,6 +46,34 @@ export const NumberComparisonUI = () => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
 
+  const handleAnswer = useCallback((chosenNum: number) => {
+    if (!currentProblem || selectedAnswer !== null) return; 
+
+    setSelectedAnswer(chosenNum);
+    const isCorrect = chosenNum === currentProblem.correctAnswer;
+
+    if (isCorrect) {
+      setFeedback({ type: 'success', message: `Correct! ${chosenNum} is indeed the ${currentProblem.questionType} one.` });
+      setScore(prev => prev + 1);
+      playSuccessSound();
+      const utterance = speakText(`Correct! ${chosenNum} is ${currentProblem.questionType}.`, undefined, () => {
+        loadNewProblem();
+      });
+      if (!utterance) { 
+        setTimeout(loadNewProblem, 2000);
+      }
+    } else {
+      setFeedback({ type: 'error', message: `Not quite. The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.` });
+      playErrorSound();
+      const utterance = speakText(`Oops! The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`, undefined, () => {
+        loadNewProblem();
+      });
+      if (!utterance) { 
+        setTimeout(loadNewProblem, 3000);
+      }
+    }
+  }, [currentProblem, selectedAnswer, loadNewProblem]); // Added loadNewProblem to dependencies
+
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
     setFeedback(null);
@@ -66,6 +94,12 @@ export const NumberComparisonUI = () => {
     }
   }, [currentProblem, isLoading]);
 
+  // Ref to hold the latest handleAnswer function
+  const handleAnswerRef = useRef(handleAnswer);
+  useEffect(() => {
+    handleAnswerRef.current = handleAnswer;
+  }, [handleAnswer]);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
       const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -80,10 +114,10 @@ export const NumberComparisonUI = () => {
         
         if (number !== null && currentProblem) {
           if (number === currentProblem.num1) {
-            handleAnswer(currentProblem.num1);
+            handleAnswerRef.current(currentProblem.num1); // Use ref to call the latest version
             toast({ title: "Heard you!", description: `You said: "${spokenText}". Choosing ${currentProblem.num1}.`, variant: "info" });
           } else if (number === currentProblem.num2) {
-            handleAnswer(currentProblem.num2);
+            handleAnswerRef.current(currentProblem.num2); // Use ref
             toast({ title: "Heard you!", description: `You said: "${spokenText}". Choosing ${currentProblem.num2}.`, variant: "info" });
           } else {
             toast({ title: "Couldn't match", description: `Heard: "${spokenText}". That's not one of the options. Try again or click.`, variant: "info" });
@@ -106,7 +140,8 @@ export const NumberComparisonUI = () => {
     return () => {
         recognitionRef.current?.stop();
     };
-  }, [toast, currentProblem]); // Added currentProblem dependency
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast, currentProblem]);
 
   const handleSpeakQuestion = () => {
     if (currentProblem?.speechText) {
@@ -138,33 +173,6 @@ export const NumberComparisonUI = () => {
     }
   };
   
-  const handleAnswer = (chosenNum: number) => {
-    if (!currentProblem || selectedAnswer !== null) return; 
-
-    setSelectedAnswer(chosenNum);
-    const isCorrect = chosenNum === currentProblem.correctAnswer;
-
-    if (isCorrect) {
-      setFeedback({ type: 'success', message: `Correct! ${chosenNum} is indeed the ${currentProblem.questionType} one.` });
-      setScore(prev => prev + 1);
-      playSuccessSound();
-      const utterance = speakText(`Correct! ${chosenNum} is ${currentProblem.questionType}.`, undefined, () => {
-        loadNewProblem();
-      });
-      if (!utterance) { 
-        setTimeout(loadNewProblem, 2000);
-      }
-    } else {
-      setFeedback({ type: 'error', message: `Not quite. The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.` });
-      playErrorSound();
-      const utterance = speakText(`Oops! The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`, undefined, () => {
-        loadNewProblem();
-      });
-      if (!utterance) { 
-        setTimeout(loadNewProblem, 3000);
-      }
-    }
-  };
 
   if (isLoading || !currentProblem) {
     return (
@@ -244,3 +252,4 @@ export const NumberComparisonUI = () => {
     </Card>
   );
 };
+
