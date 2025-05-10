@@ -175,21 +175,19 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { stopCurrentSpeech(); onClose(); } }}>
       <DialogContent className="sm:max-w-md p-0" aria-labelledby="walkthrough-title" aria-describedby="walkthrough-description">
-        <DialogHeader className="p-6 pb-2 border-b">
-          <div className="flex justify-between items-center">
-            <DialogTitle id="walkthrough-title" className="text-xl font-semibold text-primary">{currentStepData.title}</DialogTitle>
-            {soundEffectsEnabled && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleSpeech}
-                className={cn(activeSpeakingStepId === currentStepData.id && isAudioPlaying && "text-accent animate-pulse")}
-                aria-label={activeSpeakingStepId === currentStepData.id && isAudioPlaying && !isAudioPaused ? "Pause audio" : "Play audio for this step"}
-              >
-                {activeSpeakingStepId === currentStepData.id && isAudioPlaying && !isAudioPaused ? <Pause className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-              </Button>
-            )}
-          </div>
+        <DialogHeader className="p-6 pb-2 border-b flex flex-row justify-between items-center">
+          <DialogTitle id="walkthrough-title" className="text-xl font-semibold text-primary">{currentStepData.title}</DialogTitle>
+          {soundEffectsEnabled && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleToggleSpeech}
+              className={cn(activeSpeakingStepId === currentStepData.id && isAudioPlaying && "text-accent animate-pulse")}
+              aria-label={activeSpeakingStepId === currentStepData.id && isAudioPlaying && !isAudioPaused ? "Pause audio" : "Play audio for this step"}
+            >
+              {activeSpeakingStepId === currentStepData.id && isAudioPlaying && !isAudioPaused ? <Pause className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+            </Button>
+          )}
         </DialogHeader>
         
         <Progress value={progressPercentage} className="w-full h-1.5 rounded-none bg-muted" indicatorClassName="bg-primary transition-all duration-300 ease-linear" />
