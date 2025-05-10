@@ -22,21 +22,31 @@ interface TimesTableProblem {
   speechText: string;   
 }
 
-const generateTimesTableProblem = (table: number, currentMultiplier: number): TimesTableProblem => {
+const generateTimesTableProblem = (table: number, multiplier: number): TimesTableProblem => {
   return {
     factor1: table,
-    factor2: currentMultiplier,
-    answer: table * currentMultiplier,
-    questionText: `${table} × ${currentMultiplier} = ?`,
-    speechText: `${table} times ${currentMultiplier} equals what?`,
+    factor2: multiplier,
+    answer: table * multiplier,
+    questionText: `${table} × ${multiplier} = ?`,
+    speechText: `${table} times ${multiplier} equals what?`,
   };
 };
 
 const MAX_MULTIPLIER = 12; 
 
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
 export const TimesTableUI = () => {
   const [selectedTable, setSelectedTable] = useState<number>(2); 
-  const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
+  const [shuffledMultipliers, setShuffledMultipliers] = useState<number[]>([]);
+  const [currentProblemIndex, setCurrentProblemIndex] = useState<number>(0);
   const [currentProblem, setCurrentProblem] = useState<TimesTableProblem | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -49,6 +59,44 @@ export const TimesTableUI = () => {
   const answerInputRef = useRef<HTMLInputElement>(null);
 
   const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); 
+
+  const startNewTablePractice = useCallback((table: number) => {
+    setIsLoading(true);
+    const multipliers = Array.from({ length: MAX_MULTIPLIER }, (_, i) => i + 1);
+    setShuffledMultipliers(shuffleArray(multipliers));
+    setCurrentProblemIndex(0);
+    setCorrectInARow(0);
+    setShowCompletionMessage(false);
+    setFeedback(null);
+    setUserAnswer('');
+    // The useEffect listening to shuffledMultipliers & currentProblemIndex will load the problem.
+    setIsLoading(false); // Set loading false after setup
+  }, []);
+  
+  useEffect(() => {
+    startNewTablePractice(selectedTable);
+  }, [selectedTable, startNewTablePractice]);
+
+  useEffect(() => {
+    if (shuffledMultipliers.length > 0 && currentProblemIndex < shuffledMultipliers.length) {
+      setIsLoading(true);
+      const currentFactor2 = shuffledMultipliers[currentProblemIndex];
+      const newProblem = generateTimesTableProblem(selectedTable, currentFactor2);
+      setCurrentProblem(newProblem);
+      setUserAnswer('');
+      setFeedback(null);
+      // setShowCompletionMessage(false); // Already handled in startNewTablePractice
+      answerInputRef.current?.focus();
+      setIsLoading(false);
+    } else if (shuffledMultipliers.length > 0 && currentProblemIndex >= shuffledMultipliers.length) {
+      // This case means the table is completed.
+      const completionMsg = `Congratulations! You've completed the ${selectedTable} times table!`;
+      setShowCompletionMessage(true);
+      setFeedback({ type: 'success', message: completionMsg }); 
+      speakText(completionMsg);
+    }
+  }, [selectedTable, shuffledMultipliers, currentProblemIndex]);
+
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -64,9 +112,10 @@ export const TimesTableUI = () => {
     }
 
     const handleNextStepLogic = () => {
-      if (currentMultiplier < MAX_MULTIPLIER) {
-        setCurrentMultiplier(prev => prev + 1);
+      if (currentProblemIndex < shuffledMultipliers.length - 1) {
+        setCurrentProblemIndex(prev => prev + 1);
       } else {
+        // Completion message handled by useEffect watching currentProblemIndex
         const completionMsg = `Congratulations! You've completed the ${selectedTable} times table!`;
         setShowCompletionMessage(true);
         setFeedback({ type: 'success', message: completionMsg }); 
@@ -94,23 +143,8 @@ export const TimesTableUI = () => {
       answerInputRef.current?.focus();
       answerInputRef.current?.select();
     }
-  }, [currentProblem, userAnswer, selectedTable, currentMultiplier]);
+  }, [currentProblem, userAnswer, selectedTable, currentProblemIndex, shuffledMultipliers.length]);
 
-
-  const loadProblemForTableAndMultiplier = useCallback(() => {
-    setIsLoading(true);
-    const newProblem = generateTimesTableProblem(selectedTable, currentMultiplier);
-    setCurrentProblem(newProblem);
-    setUserAnswer('');
-    setFeedback(null);
-    setShowCompletionMessage(false);
-    setIsLoading(false);
-    answerInputRef.current?.focus();
-  }, [selectedTable, currentMultiplier]);
-  
-  useEffect(() => {
-    loadProblemForTableAndMultiplier();
-  }, [loadProblemForTableAndMultiplier]);
 
   useEffect(() => {
     if (currentProblem && !isLoading && !showCompletionMessage && currentProblem.speechText) {
@@ -163,14 +197,12 @@ export const TimesTableUI = () => {
 
   const handleTableChange = (value: string) => {
     const tableNum = parseInt(value, 10);
-    setSelectedTable(tableNum);
-    setCurrentMultiplier(1); 
-    setCorrectInARow(0);
+    setSelectedTable(tableNum); // This will trigger the useEffect to call startNewTablePractice
     playNotificationSound();
   };
 
   const handleSpeakQuestion = () => {
-    if (currentProblem?.speechText) {
+    if (currentProblem?.speechText && !showCompletionMessage) {
       speakText(currentProblem.speechText);
     }
   };
@@ -184,7 +216,7 @@ export const TimesTableUI = () => {
       recognitionRef.current.stop();
       setIsListening(false);
     } else {
-      if (showCompletionMessage) return; // Don't listen if table completed
+      if (showCompletionMessage || (feedback?.type === 'success' && !showCompletionMessage) ) return; 
       try {
         playNotificationSound();
         recognitionRef.current.start();
@@ -201,14 +233,11 @@ export const TimesTableUI = () => {
 
 
   const handleRestartTable = () => {
-    setCurrentMultiplier(1);
-    setCorrectInARow(0);
-    setShowCompletionMessage(false); 
+    startNewTablePractice(selectedTable);
     playNotificationSound();
-    // Problem will reload due to useEffect on currentMultiplier change
   };
   
-  if (isLoading && !currentProblem) {
+  if (isLoading && !currentProblem) { // Show loader only if truly loading initial problem
     return (
         <Card className="w-full max-w-lg mx-auto shadow-xl border-accent/20">
             <CardHeader className="text-center">
@@ -260,7 +289,7 @@ export const TimesTableUI = () => {
                 >
                 {currentProblem.questionText}
                 </p>
-                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening}>
+                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening || showCompletionMessage}>
                     <Volume2 className="h-6 w-6" />
                 </Button>
             </div>
@@ -304,14 +333,14 @@ export const TimesTableUI = () => {
             <AlertDescription>{feedback.message}</AlertDescription>
           </Alert>
         )}
-         {showCompletionMessage && (
+         {showCompletionMessage && currentProblemIndex >= shuffledMultipliers.length && ( // Ensure message shows only after all problems
              <Button onClick={handleRestartTable} variant="outline" size="lg" className="w-full mt-4">
                 <Repeat className="mr-2 h-5 w-5" /> Practice {selectedTable}s Again
             </Button>
          )}
       </CardContent>
       <CardFooter className="text-center text-sm text-muted-foreground">
-        Correct in a row for this table: {correctInARow}
+        Problem {Math.min(currentProblemIndex + 1, shuffledMultipliers.length)} of {shuffledMultipliers.length} | Correct in a row: {correctInARow}
       </CardFooter>
     </Card>
   );
