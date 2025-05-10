@@ -7,6 +7,7 @@ const WORD_LENGTH_KEY = 'sightwords_wordLength_v1';
 const CURRENT_INDEX_KEY = 'sightwords_currentIndex_v1';
 const MASTERED_WORDS_KEY = 'sightwords_masteredWords_v1'; 
 const PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX = 'sightwords_progressionSuggestionDismissed_v1_';
+export const WALKTHROUGH_PERSIST_KEY = 'chilllearn_walkthroughState_v1';
 
 
 // --- Word List ---
@@ -128,6 +129,7 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(WORD_LENGTH_KEY);
   localStorage.removeItem(CURRENT_INDEX_KEY);
   localStorage.removeItem(MASTERED_WORDS_KEY); 
+  localStorage.removeItem(WALKTHROUGH_PERSIST_KEY); // Added this line
   
   // Clear all progression dismissal flags
   Object.keys(localStorage).forEach(key => {
@@ -135,5 +137,5 @@ export const clearProgressStoredData = (): void => {
       localStorage.removeItem(key);
     }
   });
-  console.log("Cleared all user progress-related stored data including mastered words and progression dismissal flags.");
+  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, and walkthrough status.");
 };

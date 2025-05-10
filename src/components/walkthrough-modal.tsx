@@ -9,10 +9,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  // DialogClose, // Removed as base DialogContent provides one
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, StopCircle, X, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X } from 'lucide-react'; // Removed StopCircle as it's implicit with cancel
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -155,8 +154,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     if (isOpen && currentStepIndex === 0 && soundEffectsEnabled && !isAudioPlaying && !currentSpeechUtterance) {
        setTimeout(() => playStepAudio(walkthroughSteps[0].id, walkthroughSteps[0].content), 300); // Small delay
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, soundEffectsEnabled]);
+  }, [isOpen, soundEffectsEnabled, currentStepIndex, isAudioPlaying, currentSpeechUtterance, playStepAudio]);
 
   // Cleanup speech on unmount or when modal is closed externally
   useEffect(() => {
@@ -173,7 +171,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { stopCurrentSpeech(); onClose(); } }}>
-      <DialogContent className="sm:max-w-md p-0" aria-labelledby="walkthrough-title" aria-describedby="walkthrough-description">
+      <DialogContent className="sm:max-w-md p-0">
         <DialogHeader className="p-6 pb-2 border-b flex flex-row justify-between items-center">
           <DialogTitle id="walkthrough-title" className="text-xl font-semibold text-primary">{currentStepData.title}</DialogTitle>
           {soundEffectsEnabled && (
@@ -222,9 +220,6 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
             )}
           </div>
         </DialogFooter>
-         {/* The DialogClose from ui/dialog.tsx will handle the 'X' button automatically.
-             No need for an additional one here.
-          */}
       </DialogContent>
     </Dialog>
   );
