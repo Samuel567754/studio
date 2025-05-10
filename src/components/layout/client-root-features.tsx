@@ -22,31 +22,56 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   } = useWalkthroughStore();
   
   const [isClientMounted, setIsClientMounted] = useState(false);
-  const [introductionSeen, setIntroductionSeen] = useState<boolean | null>(null);
+  // This state reflects the most up-to-date knowledge of whether intro has been seen,
+  // fetched from localStorage on mount and on pathname changes.
+  const [actualIntroductionSeen, setActualIntroductionSeen] = useState<boolean | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     setIsClientMounted(true);
-    setIntroductionSeen(getHasSeenIntroduction());
+    // Initial check on mount
+    setActualIntroductionSeen(getHasSeenIntroduction());
+
+    // Optional: Listen for storage events to catch changes made by other tabs/windows.
+    // For this specific flow, re-checking on pathname change (in the next effect) is primary.
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'chilllearn_introductionSeen_v1') {
+        setActualIntroductionSeen(getHasSeenIntroduction());
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
+  // This effect handles re-checking intro status on pathname changes
+  // AND handles redirection if intro is not seen.
   useEffect(() => {
-    if (isClientMounted && introductionSeen === false && pathname !== '/introduction') {
-      router.replace('/introduction');
-    }
-  }, [isClientMounted, introductionSeen, pathname, router]);
+    if (isClientMounted) {
+      // Always get the latest status from localStorage when pathname changes
+      const currentSeenStatus = getHasSeenIntroduction();
+      setActualIntroductionSeen(currentSeenStatus);
 
+      if (!currentSeenStatus && pathname !== '/introduction') {
+        router.replace('/introduction');
+      }
+    }
+  }, [isClientMounted, pathname, router]); // Effect runs when pathname changes
+
+  // Walkthrough logic (uses actualIntroductionSeen)
   useEffect(() => {
-    if (isClientMounted && introductionSeen && !hasCompletedWalkthrough && pathname !== '/introduction' && typeof window !== 'undefined') {
+    if (isClientMounted && actualIntroductionSeen && !hasCompletedWalkthrough && pathname !== '/introduction' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
         openWalkthrough();
-      }, 2500); // Delay walkthrough if intro was just seen, or show after normal delay
+      }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [isClientMounted, introductionSeen, hasCompletedWalkthrough, openWalkthrough, pathname]);
+  }, [isClientMounted, actualIntroductionSeen, hasCompletedWalkthrough, openWalkthrough, pathname]);
 
-  if (!isClientMounted || introductionSeen === null) {
+  // Render loading state until client is mounted and intro status is determined
+  if (!isClientMounted || actualIntroductionSeen === null) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -54,8 +79,9 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  if (introductionSeen === false && pathname !== '/introduction') {
-    // Still redirecting, show loader
+  // If intro hasn't been seen and we are NOT on the intro page,
+  // the effect above will handle redirection. Show loader while redirecting.
+  if (actualIntroductionSeen === false && pathname !== '/introduction') {
      return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -63,38 +89,33 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
+  // If on the introduction page, render only its children (the intro page content)
   if (pathname === '/introduction') {
-    return <>{children}</>; // Render only children for the introduction page
+    return <>{children}</>;
   }
 
-  // Render full layout for other pages if introduction has been seen
-  if (introductionSeen === true) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <MainNav />
-        <main className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-40 md:pb-8 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out">
-          {children}
-        </main>
-        <BottomNav />
-        <QuickLinkFAB />
-        <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border/30 hidden md:block">
-           © {new Date().getFullYear()} ChillLearn App. AI-Powered Learning.
-        </footer>
-        {isClientMounted && ( // Walkthrough modal only if intro seen
-          <WalkthroughModal
-            isOpen={isWalkthroughOpen}
-            onClose={closeWalkthrough}
-            onFinish={() => {
-              setHasCompletedWalkthrough(true);
-              closeWalkthrough();
-            }}
-          />
-        )}
-      </div>
-    );
-  }
-  
-  // Fallback if introductionSeen is true but path is /introduction (should not happen due to above logic)
-  // or if introductionSeen is still null (covered by initial loader)
-  return null; 
+  // If intro has been seen (or we are past the redirect logic for unseen intro), render full layout
+  return (
+    <div className="flex flex-col min-h-screen">
+      <MainNav />
+      <main className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-40 md:pb-8 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out">
+        {children}
+      </main>
+      <BottomNav />
+      <QuickLinkFAB />
+      <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border/30 hidden md:block">
+         © {new Date().getFullYear()} ChillLearn AI. An AI-Powered Learning Adventure.
+      </footer>
+      {isClientMounted && ( // Walkthrough modal only if intro seen and client mounted
+        <WalkthroughModal
+          isOpen={isWalkthroughOpen}
+          onClose={closeWalkthrough}
+          onFinish={() => {
+            setHasCompletedWalkthrough(true);
+            closeWalkthrough();
+          }}
+        />
+      )}
+    </div>
+  );
 };
