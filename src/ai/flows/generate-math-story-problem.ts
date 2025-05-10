@@ -61,8 +61,8 @@ const prompt = ai.definePrompt({
   {{#if topics}}The learner is interested in: {{topics}}. Try to weave these topics into the story.{{/if}}
 
   Instructions:
-  1. Generate an interesting and coherent short story (3-5 sentences long) suitable for a child.
-  2. Based on the story, create 1 to 3 math questions. Each question should be solvable using information from the story.
+  1. Generate an interesting and coherent short story (3-5 sentences long) suitable for a child. Aim for unique scenarios and try to vary the context each time you generate a story, even if the topics are similar. Avoid creating stories that are too similar to common examples or ones you might have generated previously.
+  2. Based on the story, create 1 to 3 math questions. Each question should be solvable using information from the story and should explore different aspects or calculations if multiple questions are generated for the same story. Ensure these questions are varied and not repetitive in style or what they ask.
   3. The difficulty of the math questions should match the '{{difficultyLevel}}' specified.
      - Easy: Single-step problems, small numbers (e.g., addition/subtraction within 20, simple multiplication/division).
      - Medium: Single or two-step problems, numbers up to 100, basic multi-digit operations.
@@ -77,7 +77,7 @@ const prompt = ai.definePrompt({
   Each 'numericalAnswer' MUST be a number, not a string. Each 'questionText' should end with a question mark.
   The story should provide enough context for all questions to be answerable.`,
   config: {
-    temperature: 0.75,
+    temperature: 0.8, // Increased temperature slightly for more variety
     safetySettings: [
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',
@@ -110,3 +110,4 @@ const generateMathStoryProblemFlow = ai.defineFlow(
     return output!;
   }
 );
+

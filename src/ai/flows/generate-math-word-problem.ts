@@ -70,7 +70,7 @@ const prompt = ai.definePrompt({
   Set the 'operationUsed' field in the output to '{{operation}}'.
   {{/if}}
 
-  Generate a short, engaging word problem.
+  Generate a short, engaging word problem. Strive for variety in themes and scenarios. Avoid creating problems that are too similar to common examples or ones you might have generated previously.
   The problem should involve a single step of the chosen or specified operation.
   - If difficulty is 'easy': Use numbers typically up to 20 for addition/subtraction. For multiplication, factors should be small (e.g., up to 5x5). For division, dividends should be small and result in whole numbers (e.g., 10 ÷ 2).
   - If difficulty is 'medium': Use numbers up to 100 for addition/subtraction. For multiplication, factors can be up to 10x10. For division, dividends can be up to 100 and result in whole numbers (e.g., 81 ÷ 9).
@@ -83,7 +83,7 @@ const prompt = ai.definePrompt({
   Ensure your entire output is structured according to the requested format, including 'problemText', 'numericalAnswer', 'operationUsed', and optionally 'explanation'.
   The numericalAnswer MUST be a number, not a string. The problemText should end with a question mark.`,
    config: {
-    temperature: 0.8,
+    temperature: 0.8, // Keep temperature relatively high for variety
     safetySettings: [
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',
