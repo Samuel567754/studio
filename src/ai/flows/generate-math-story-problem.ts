@@ -77,7 +77,7 @@ const prompt = ai.definePrompt({
   Each 'numericalAnswer' MUST be a number, not a string. Each 'questionText' should end with a question mark.
   The story should provide enough context for all questions to be answerable.`,
   config: {
-    temperature: 0.8, // Increased temperature slightly for more variety
+    temperature: 0.9, // Increased temperature for more variety
     safetySettings: [
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',

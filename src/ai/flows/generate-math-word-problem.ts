@@ -83,7 +83,7 @@ const prompt = ai.definePrompt({
   Ensure your entire output is structured according to the requested format, including 'problemText', 'numericalAnswer', 'operationUsed', and optionally 'explanation'.
   The numericalAnswer MUST be a number, not a string. The problemText should end with a question mark.`,
    config: {
-    temperature: 0.8, // Keep temperature relatively high for variety
+    temperature: 0.9, // Increased temperature for more variety
     safetySettings: [
       {
         category: 'HARM_CATEGORY_HATE_SPEECH',
