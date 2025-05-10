@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -6,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Zap, RefreshCw, Volume2, Mic, MicOff } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Zap, RefreshCw, Volume2, Mic, MicOff, Smile } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 type Operation = '+' | '-' | '*' | '/';
 interface Problem {
@@ -19,8 +19,8 @@ interface Problem {
   num2: number;
   operation: Operation;
   answer: number;
-  questionText: string; // For display
-  speechText: string;   // For TTS
+  questionText: string; 
+  speechText: string;   
 }
 
 const generateProblem = (): Problem => {
@@ -78,6 +78,7 @@ export const ArithmeticGameUI = () => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
+  const { username } = useUserProfileStore();
 
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
@@ -104,11 +105,12 @@ export const ArithmeticGameUI = () => {
     }
 
     if (answerNum === currentProblem.answer) {
-      const successMessage = `Correct! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
+      const successMessage = `${username ? username + ", that's c" : 'C'}orrect! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
       setScore(prev => prev + 1);
       playSuccessSound();
-      const utterance = speakText(`Correct! The answer is ${currentProblem.answer}.`, undefined, () => {
+      const speechSuccessMsg = `${username ? username + ", " : ""}Correct! The answer is ${currentProblem.answer}.`;
+      const utterance = speakText(speechSuccessMsg, undefined, () => {
         loadNewProblem();
       });
       if (!utterance) { 
@@ -118,14 +120,15 @@ export const ArithmeticGameUI = () => {
       const errorMessage = `Not quite. The correct answer for ${currentProblem.questionText.replace('?', '')} was ${currentProblem.answer}. Try the next one!`;
       setFeedback({ type: 'error', message: errorMessage });
       playErrorSound();
-      const utterance = speakText(`Oops! The correct answer was ${currentProblem.answer}.`, undefined, () => {
+      const speechErrorMsg = `Oops! The correct answer was ${currentProblem.answer}.`;
+      const utterance = speakText(speechErrorMsg, undefined, () => {
         loadNewProblem();
       });
       if (!utterance) {
         setTimeout(loadNewProblem, 2500);
       }
     }
-  }, [currentProblem, userAnswer, loadNewProblem]);
+  }, [currentProblem, userAnswer, loadNewProblem, username]);
 
 
   useEffect(() => {
@@ -138,7 +141,6 @@ export const ArithmeticGameUI = () => {
     }
   }, [currentProblem, isLoading]);
 
-  // Ref to hold the latest handleSubmit function
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
@@ -159,8 +161,6 @@ export const ArithmeticGameUI = () => {
         if (number !== null) {
           setUserAnswer(String(number));
            toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
-           // Auto-submit after setting the answer
-           // Use a slight delay to ensure state update before submit if needed, but direct call might be fine
            setTimeout(() => handleSubmitRef.current(), 0);
         } else {
           toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
@@ -184,7 +184,6 @@ export const ArithmeticGameUI = () => {
            recognitionRef.current.stop();
         }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
 
 
@@ -204,7 +203,7 @@ export const ArithmeticGameUI = () => {
       setIsListening(false);
     } else {
       try {
-        playNotificationSound(); // Sound for mic activation
+        playNotificationSound(); 
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null); 
@@ -280,8 +279,11 @@ export const ArithmeticGameUI = () => {
         )}
         {feedback && (
           <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
-            {feedback.type === 'success' ? <CheckCircle2 className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
-            <AlertTitle>{feedback.type === 'success' ? 'Correct!' : feedback.type === 'error' ? 'Try Again!' : 'Info'}</AlertTitle>
+            {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
+            <AlertTitle>
+              {feedback.type === 'success' ? (username ? `Well done, ${username}!` : 'Correct!') : 
+               feedback.type === 'error' ? 'Try Again!' : 'Info'}
+            </AlertTitle>
             <AlertDescription>{feedback.message}</AlertDescription>
           </Alert>
         )}

@@ -9,6 +9,32 @@ const MASTERED_WORDS_KEY = 'sightwords_masteredWords_v1';
 const PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX = 'sightwords_progressionSuggestionDismissed_v1_';
 export const WALKTHROUGH_PERSIST_KEY = 'chilllearn_walkthroughState_v1';
 const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
+const USERNAME_KEY = 'chilllearn_username_v1';
+
+
+// --- Username ---
+export const getStoredUsername = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(USERNAME_KEY);
+  } catch (error) {
+    console.error("Error reading username from localStorage:", error);
+    return null;
+  }
+};
+
+export const storeUsername = (username: string | null): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (username) {
+      localStorage.setItem(USERNAME_KEY, username);
+    } else {
+      localStorage.removeItem(USERNAME_KEY);
+    }
+  } catch (error) {
+    console.error("Error storing username to localStorage:", error);
+  }
+};
 
 
 // --- Introduction Seen ---
@@ -154,6 +180,7 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(MASTERED_WORDS_KEY); 
   localStorage.removeItem(WALKTHROUGH_PERSIST_KEY);
   localStorage.removeItem(INTRODUCTION_SEEN_KEY);
+  localStorage.removeItem(USERNAME_KEY);
   
   // Clear all progression dismissal flags
   Object.keys(localStorage).forEach(key => {
@@ -161,5 +188,6 @@ export const clearProgressStoredData = (): void => {
       localStorage.removeItem(key);
     }
   });
-  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, walkthrough status, and introduction seen flag.");
+  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, walkthrough status, introduction seen flag, and username.");
 };
+

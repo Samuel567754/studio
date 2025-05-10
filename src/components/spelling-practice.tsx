@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, XCircle, Sparkles, InfoIcon } from 'lucide-react';
-import { playErrorSound, speakText } from '@/lib/audio'; // Import speakText
+import { CheckCircle2, XCircle, Sparkles, InfoIcon, Smile } from 'lucide-react';
+import { playErrorSound, speakText } from '@/lib/audio'; 
 import { addMasteredWord } from '@/lib/storage'; 
+import { useUserProfileStore } from '@/stores/user-profile-store'; // Import user profile store
 
 interface SpellingPracticeProps {
   wordToSpell: string;
@@ -18,6 +19,7 @@ interface SpellingPracticeProps {
 export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCorrectSpell }) => {
   const [attempt, setAttempt] = useState('');
   const [feedback, setFeedback] = useState<{type: 'success' | 'destructive' | 'info', message: string} | null>(null);
+  const { username } = useUserProfileStore(); // Get username
 
   useEffect(() => {
     setAttempt('');
@@ -32,18 +34,16 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     }
 
     if (attempt.trim().toLowerCase() === wordToSpell.toLowerCase()) {
-      setFeedback({type: 'success', message: 'Excellent! You spelled it right.'});
-      addMasteredWord(wordToSpell); // Add word to mastered list
+      const successMessage = `${username ? username + ", y" : "Y"}ou spelled it right: "${wordToSpell}"!`;
+      setFeedback({type: 'success', message: successMessage});
+      addMasteredWord(wordToSpell); 
 
-      // Speak the word first
       speakText(wordToSpell, undefined, () => {
-        // This onEnd callback is executed after the speech finishes
-        onCorrectSpell(); // Now call parent's handler for toast, sound, navigation
+        onCorrectSpell(); 
       });
 
       setTimeout(() => {
         setAttempt('');
-         // setFeedback(null); // Optionally clear feedback after more time
       }, 2500);
     } else {
       setFeedback({type: 'destructive', message: `Not quite. The word is "${wordToSpell}". Keep trying!`});
@@ -96,7 +96,10 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
             {feedback.type === 'success' && <CheckCircle2 className="h-5 w-5" />}
             {feedback.type === 'destructive' && <XCircle className="h-5 w-5" />}
             {feedback.type === 'info' && <InfoIcon className="h-5 w-5" />}
-            <AlertTitle>{feedback.type === 'success' ? 'Correct!' : feedback.type === 'destructive' ? 'Try Again!' : 'Hint'}</AlertTitle>
+            <AlertTitle>
+                {feedback.type === 'success' ? <div className="flex items-center gap-1"><Smile className="h-5 w-5" /> {username ? `Great Job, ${username}!` : 'Correct!'}</div> : 
+                 feedback.type === 'destructive' ? 'Try Again!' : 'Hint'}
+            </AlertTitle>
             <AlertDescription>{feedback.message}</AlertDescription>
           </Alert>
         </CardFooter>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -14,11 +13,12 @@ import {
   getProgressionSuggestionDismissed, storeProgressionSuggestionDismissed
 } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { Trash2, CheckCircle, Info, CheckCircle2, AlertTriangle, CornerRightUp } from 'lucide-react';
+import { Trash2, CheckCircle, Info, CheckCircle2, AlertTriangle, CornerRightUp, Smile } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { playSuccessSound, playNotificationSound, speakText } from '@/lib/audio';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 
 export default function LearnPage() {
@@ -29,6 +29,7 @@ export default function LearnPage() {
   const [currentPracticingWord, setCurrentPracticingWord] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
   const [showProgressionAlert, setShowProgressionAlert] = useState(false);
+  const { username } = useUserProfileStore();
 
   const { toast } = useToast();
 
@@ -98,12 +99,12 @@ export default function LearnPage() {
     setCurrentPracticingWord(word);
     toast({ 
       variant: "success", 
-      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />Word Selected!</div>, 
+      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />{username ? `${username}, word selected!` : 'Word Selected!'}</div>, 
       description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` 
     });
     playSuccessSound();
     speakText(word); 
-  }, [wordList, updateWordList, toast]);
+  }, [wordList, updateWordList, toast, username]);
   
   const handleNewSuggestedWordsList = useCallback((suggestedWords: string[]) => {
     // This callback is mostly for information or future use.
@@ -114,16 +115,15 @@ export default function LearnPage() {
     storeReadingLevel(level);
     setWordLength(length);
     storeWordLength(length);
-    // When settings change, new progression suggestion for the new settings should not be dismissed by default
     storeProgressionSuggestionDismissed(level, length, false); 
-    setShowProgressionAlert(false); // Hide any current alert as settings are changing
+    setShowProgressionAlert(false); 
     toast({ 
       variant: "info", 
-      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />Preferences Updated</div>, 
+      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />{username ? `${username}, p` : 'P'}references Updated</div>, 
       description: `Suggestions will now target ${level} level, ${length}-letter words.` 
     });
     playNotificationSound();
-  }, [toast]);
+  }, [toast, username]);
 
   const handleRemoveWord = (wordToRemove: string) => {
     const newWordList = wordList.filter(w => w !== wordToRemove);
@@ -212,16 +212,18 @@ export default function LearnPage() {
       {showProgressionAlert && (
         <Alert variant="default" className="border-accent bg-accent/10 text-accent-foreground animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
            <AlertTriangle className="h-5 w-5 text-accent" aria-hidden="true" />
-           <AlertTitle className="font-semibold text-lg text-accent">Ready for a New Challenge?</AlertTitle>
+           <AlertTitle className="font-semibold text-lg text-accent">
+             {username ? `Hey ${username}, r` : 'R'}eady for a New Challenge?
+            </AlertTitle>
            <AlertDescription className="text-base">
              You're doing great and have mastered many words at the current settings! 
              Consider trying a higher reading level or different word length in the "AI Word Suggestions" panel above to keep growing.
            </AlertDescription>
            <div className="mt-4 flex gap-2 justify-end">
             <Button variant="outline" size="sm" onClick={() => {
-                const wordSuggestionCard = document.querySelector('[class*="shadow-xl"]'); // A bit hacky, consider a ref
+                const wordSuggestionCard = document.querySelector('[class*="shadow-xl"]'); 
                 wordSuggestionCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                setShowProgressionAlert(false); // Hide after interaction
+                setShowProgressionAlert(false); 
                 playNotificationSound();
             }}>
                 <CornerRightUp className="mr-2 h-4 w-4" aria-hidden="true"/>
@@ -289,7 +291,9 @@ export default function LearnPage() {
              <Info className="h-5 w-5 mt-1" aria-hidden="true" />
             </div>
             <div className="flex-grow">
-              <AlertTitle className="font-semibold text-lg">Welcome to ChillLearn AI!</AlertTitle>
+              <AlertTitle className="font-semibold text-lg">
+                 {username ? `Welcome, ${username}!` : 'Welcome to ChillLearn AI!'}
+              </AlertTitle>
               <AlertDescription className="text-base">
                 Start your learning journey:
                 <ol className="list-decimal list-inside mt-2 space-y-1">

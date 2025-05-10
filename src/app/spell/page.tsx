@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -8,17 +7,19 @@ import { SpellingPractice } from '@/components/spelling-practice';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, CheckCircle2 } from 'lucide-react'; // Added CheckCircle2
+import { ChevronLeft, ChevronRight, Info, CheckCircle2, Smile } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { playSuccessSound, playNavigationSound } from '@/lib/audio';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 export default function SpellingPage() {
   const [wordList, setWordList] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentWord, setCurrentWord] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
+  const { username } = useUserProfileStore();
 
   const { toast } = useToast();
 
@@ -72,7 +73,7 @@ export default function SpellingPage() {
   const handleCorrectSpell = () => {
     toast({
       variant: "success",
-      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />Great Job!</div>,
+      title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
       description: `You spelled "${currentWord}" correctly!`,
     });
     playSuccessSound();
@@ -81,7 +82,7 @@ export default function SpellingPage() {
     } else if (wordList.length === 1) {
         toast({
             variant: "success",
-            title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />List Complete!</div>,
+            title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />{username ? `${username}, l` : 'L'}ist Complete!</div>,
             description: "You've spelled the only word in your list. Add more words to continue!",
             duration: 4000,
         });

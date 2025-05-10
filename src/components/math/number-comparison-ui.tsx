@@ -1,15 +1,15 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCw, Scaling, Mic, MicOff } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCw, Scaling, Mic, MicOff, Smile } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 
 interface ComparisonProblem {
@@ -45,6 +45,7 @@ export const NumberComparisonUI = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
+  const { username } = useUserProfileStore();
 
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
@@ -66,7 +67,8 @@ export const NumberComparisonUI = () => {
       setFeedback({ type: 'success', message: `Correct! ${chosenNum} is indeed the ${currentProblem.questionType} one.` });
       setScore(prev => prev + 1);
       playSuccessSound();
-      const utterance = speakText(`Correct! ${chosenNum} is ${currentProblem.questionType}.`, undefined, () => {
+      const speechSuccessMsg = `${username ? username + ", y" : "Y"}ou got it! ${chosenNum} is ${currentProblem.questionType}.`;
+      const utterance = speakText(speechSuccessMsg, undefined, () => {
         loadNewProblem();
       });
       if (!utterance) { 
@@ -75,14 +77,15 @@ export const NumberComparisonUI = () => {
     } else {
       setFeedback({ type: 'error', message: `Not quite. The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.` });
       playErrorSound();
-      const utterance = speakText(`Oops! The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`, undefined, () => {
+      const speechErrorMsg = `Oops! The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`;
+      const utterance = speakText(speechErrorMsg, undefined, () => {
         loadNewProblem();
       });
       if (!utterance) { 
         setTimeout(loadNewProblem, 3000);
       }
     }
-  }, [currentProblem, selectedAnswer, loadNewProblem]);
+  }, [currentProblem, selectedAnswer, loadNewProblem, username]);
 
   useEffect(() => {
     loadNewProblem();
@@ -94,7 +97,6 @@ export const NumberComparisonUI = () => {
     }
   }, [currentProblem, isLoading]);
 
-  // Ref to hold the latest handleAnswer function
   const handleAnswerRef = useRef(handleAnswer);
   useEffect(() => {
     handleAnswerRef.current = handleAnswer;
@@ -114,10 +116,10 @@ export const NumberComparisonUI = () => {
         
         if (number !== null && currentProblem) {
           if (number === currentProblem.num1) {
-            handleAnswerRef.current(currentProblem.num1); // Use ref to call the latest version
+            handleAnswerRef.current(currentProblem.num1); 
             toast({ title: "Heard you!", description: `You said: "${spokenText}". Choosing ${currentProblem.num1}.`, variant: "info" });
           } else if (number === currentProblem.num2) {
-            handleAnswerRef.current(currentProblem.num2); // Use ref
+            handleAnswerRef.current(currentProblem.num2); 
             toast({ title: "Heard you!", description: `You said: "${spokenText}". Choosing ${currentProblem.num2}.`, variant: "info" });
           } else {
             toast({ title: "Couldn't match", description: `Heard: "${spokenText}". That's not one of the options. Try again or click.`, variant: "info" });
@@ -142,7 +144,6 @@ export const NumberComparisonUI = () => {
             recognitionRef.current.stop();
         }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast, currentProblem]);
 
   const handleSpeakQuestion = () => {
@@ -160,7 +161,7 @@ export const NumberComparisonUI = () => {
       recognitionRef.current.stop();
       setIsListening(false);
     } else {
-      if (selectedAnswer !== null) return; // Don't listen if an answer is already processed
+      if (selectedAnswer !== null) return; 
       try {
         playNotificationSound();
         recognitionRef.current.start();
@@ -240,8 +241,10 @@ export const NumberComparisonUI = () => {
         </div>
         {feedback && (
           <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
-            {feedback.type === 'success' ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-            <AlertTitle>{feedback.type === 'success' ? 'Great Job!' : 'Try Again!'}</AlertTitle>
+             {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+            <AlertTitle>
+                {feedback.type === 'success' ? (username ? `Great Job, ${username}!` : 'Great Job!') : 'Try Again!'}
+            </AlertTitle>
             <AlertDescription>{feedback.message}</AlertDescription>
           </Alert>
         )}

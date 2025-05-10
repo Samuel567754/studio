@@ -1,4 +1,3 @@
-
 "use client";
 import type { FC } from 'react';
 import { useState, useEffect, useMemo } from 'react';
@@ -11,11 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { suggestWords, type SuggestWordsInput } from '@/ai/flows/suggest-words';
-import { Loader2, Wand2, Lightbulb, CheckCircle, CheckCircle2, Info, XCircle } from 'lucide-react'; // Added icons
+import { Loader2, Wand2, Lightbulb, CheckCircle, CheckCircle2, Info, XCircle, Smile } from 'lucide-react'; 
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { playSuccessSound, playErrorSound } from '@/lib/audio';
-import { getStoredMasteredWords } from '@/lib/storage'; // Import getStoredMasteredWords
+import { getStoredMasteredWords } from '@/lib/storage'; 
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 const suggestionFormSchema = z.object({
   readingLevel: z.string().min(1, "Reading level is required."),
@@ -45,6 +45,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
+  const { username } = useUserProfileStore();
 
   useEffect(() => setIsMounted(true), []);
 
@@ -85,7 +86,7 @@ export const WordSuggestion: FC<WordSuggestionProps> = ({
         onNewSuggestedWordsList(result.suggestedWords); 
         toast({ 
           variant: "success", 
-          title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Words Suggested!</div>, 
+          title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />{username ? `Words for ${username}!` : 'Words Suggested!'}</div>, 
           description: `${result.suggestedWords.length} new words for you to consider.` 
         });
         playSuccessSound();

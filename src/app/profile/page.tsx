@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -10,13 +9,19 @@ import {
   getStoredReadingLevel,
   getStoredWordLength,
 } from '@/lib/storage';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useUserProfileStore } from '@/stores/user-profile-store';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit } from 'lucide-react';
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from "@/hooks/use-toast";
+import { playSuccessSound, playNotificationSound } from '@/lib/audio';
+
 
 interface ProfileData {
   practiceWordCount: number;
@@ -30,8 +35,12 @@ interface ProfileData {
 export default function ProfilePage() {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const { username, setUsername: setStoreUsername, loadUsernameFromStorage } = useUserProfileStore();
+  const [usernameInput, setUsernameInput] = useState<string>(username || '');
+  const { toast } = useToast();
 
   useEffect(() => {
+    loadUsernameFromStorage(); // Ensure store is hydrated
     const practiceList = getStoredWordList();
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
@@ -46,7 +55,38 @@ export default function ProfilePage() {
       masteredWords: masteredList,
     });
     setIsMounted(true);
-  }, []);
+  }, [loadUsernameFromStorage]);
+
+  useEffect(() => {
+    if (isMounted && username !== null) {
+      setUsernameInput(username);
+    }
+  }, [username, isMounted]);
+
+
+  const handleUsernameSave = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmedUsername = usernameInput.trim();
+    if (trimmedUsername) {
+      setStoreUsername(trimmedUsername);
+      toast({
+        variant: "success",
+        title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />Username Saved!</div>,
+        description: `Hello, ${trimmedUsername}! Your name is set.`,
+      });
+      playSuccessSound();
+    } else {
+      // If they clear it and save, effectively remove username
+      setStoreUsername(null); 
+       toast({
+        variant: "info",
+        title: "Username Cleared",
+        description: "Your username has been removed.",
+      });
+      playNotificationSound();
+    }
+  };
+
 
   if (!isMounted || !profileData) {
     return (
@@ -92,11 +132,42 @@ export default function ProfilePage() {
                  <User className="h-10 w-10 text-white/80 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
             </div>
         </div>
-        <h1 className="text-4xl font-bold text-gradient-primary-accent">Your Learning Profile</h1>
+        <h1 className="text-4xl font-bold text-gradient-primary-accent">
+          {username ? `${username}'s Learning Profile` : "Your Learning Profile"}
+        </h1>
         <p className="text-lg text-muted-foreground">A snapshot of your progress and preferences.</p>
       </header>
 
-      <Card className="shadow-lg border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
+      <Card className="shadow-xl border-accent/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
+        <CardHeader>
+          <CardTitle className="flex items-center text-2xl font-semibold text-accent">
+             <Smile className="mr-3 h-6 w-6" aria-hidden="true" /> Personalize Your Experience
+          </CardTitle>
+          <CardDescription>Enter your name to personalize greetings and messages in the app.</CardDescription>
+        </CardHeader>
+        <form onSubmit={handleUsernameSave}>
+          <CardContent className="space-y-4">
+              <Label htmlFor="username-input" className="text-base font-medium">Your Name:</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                    id="username-input"
+                    type="text"
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value)}
+                    placeholder="Enter your name"
+                    className="text-lg p-3 h-12 shadow-sm focus:ring-2 focus:ring-accent flex-grow"
+                    aria-label="Enter your name"
+                />
+                <Button type="submit" size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" aria-label="Save username">
+                    <Save className="mr-2 h-5 w-5" /> Save
+                </Button>
+              </div>
+          </CardContent>
+        </form>
+      </Card>
+
+
+      <Card className="shadow-lg border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-primary">
             <BarChart3 className="mr-3 h-6 w-6" aria-hidden="true" />
@@ -105,14 +176,14 @@ export default function ProfilePage() {
           <CardDescription>Key metrics about your learning journey.</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
-          <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-200">
+          <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
             <ListChecks className="h-8 w-8 text-accent" aria-hidden="true" />
             <div>
               <p className="font-semibold text-foreground">{profileData.practiceWordCount}</p>
               <p className="text-sm text-muted-foreground">Words in Practice List</p>
             </div>
           </div>
-          <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-right-5 duration-500 ease-out delay-300">
+          <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-right-5 duration-500 ease-out delay-400">
             <CheckSquare className="h-8 w-8 text-green-500" aria-hidden="true" />
             <div>
               <p className="font-semibold text-foreground">{profileData.masteredWordCount}</p>
@@ -122,7 +193,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-accent/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
+      <Card className="shadow-lg border-accent/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-300">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-accent">
             <Settings2 className="mr-3 h-6 w-6" aria-hidden="true" />
@@ -131,24 +202,31 @@ export default function ProfilePage() {
           <CardDescription>Your current settings for word suggestions. You can change these on the "Learn Words" or "Settings" page.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-lg">
-          <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg animate-in fade-in-0 zoom-in-95 duration-300 delay-300">
+          <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg animate-in fade-in-0 zoom-in-95 duration-300 delay-400">
             <span className="text-foreground font-medium" id="reading-level-label">Reading Level:</span>
             <Badge variant="outline" className="text-base px-3 py-1 capitalize" aria-labelledby="reading-level-label">{profileData.readingLevel}</Badge>
           </div>
-          <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg animate-in fade-in-0 zoom-in-95 duration-300 delay-400">
+          <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg animate-in fade-in-0 zoom-in-95 duration-300 delay-500">
             <span className="text-foreground font-medium" id="word-length-label">Preferred Word Length:</span>
             <Badge variant="outline" className="text-base px-3 py-1" aria-labelledby="word-length-label">{profileData.wordLength} letters</Badge>
           </div>
-           <Button asChild variant="outline" className="w-full mt-2">
-             <Link href="/learn">
-              <Edit className="mr-2 h-4 w-4" /> Change Preferences on Learn Page
-             </Link>
-           </Button>
+           <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <Button asChild variant="outline" className="w-full sm:flex-1">
+              <Link href="/learn">
+                <Edit className="mr-2 h-4 w-4" /> Change Word Preferences
+              </Link>
+            </Button>
+             <Button asChild variant="outline" className="w-full sm:flex-1">
+              <Link href="/settings">
+                <Settings2 className="mr-2 h-4 w-4" /> Go to App Settings
+              </Link>
+            </Button>
+           </div>
         </CardContent>
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="shadow-md border-border/30 animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
+        <Card className="shadow-md border-border/30 animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-400">
             <CardHeader>
                 <CardTitle className="flex items-center text-xl font-semibold" id="practice-words-heading">
                     <BookOpen className="mr-2 h-5 w-5 text-primary" aria-hidden="true" /> Practice Words
@@ -172,7 +250,7 @@ export default function ProfilePage() {
             </CardContent>
         </Card>
 
-        <Card className="shadow-md border-border/30 animate-in fade-in-0 slide-in-from-right-5 duration-500 ease-out delay-400">
+        <Card className="shadow-md border-border/30 animate-in fade-in-0 slide-in-from-right-5 duration-500 ease-out delay-500">
             <CardHeader>
                 <CardTitle className="flex items-center text-xl font-semibold" id="mastered-words-heading">
                    <CheckSquare className="mr-2 h-5 w-5 text-green-500" aria-hidden="true" /> Mastered Words

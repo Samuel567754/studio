@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -7,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Repeat, ListOrdered, Volume2, Mic, MicOff } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Repeat, ListOrdered, Volume2, Mic, MicOff, Smile } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 interface TimesTableProblem {
   factor1: number; 
@@ -57,6 +57,7 @@ export const TimesTableUI = () => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
+  const { username } = useUserProfileStore();
 
   const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); 
 
@@ -69,8 +70,7 @@ export const TimesTableUI = () => {
     setShowCompletionMessage(false);
     setFeedback(null);
     setUserAnswer('');
-    // The useEffect listening to shuffledMultipliers & currentProblemIndex will load the problem.
-    setIsLoading(false); // Set loading false after setup
+    setIsLoading(false); 
   }, []);
   
   useEffect(() => {
@@ -85,17 +85,15 @@ export const TimesTableUI = () => {
       setCurrentProblem(newProblem);
       setUserAnswer('');
       setFeedback(null);
-      // setShowCompletionMessage(false); // Already handled in startNewTablePractice
       answerInputRef.current?.focus();
       setIsLoading(false);
     } else if (shuffledMultipliers.length > 0 && currentProblemIndex >= shuffledMultipliers.length) {
-      // This case means the table is completed.
-      const completionMsg = `Congratulations! You've completed the ${selectedTable} times table!`;
+      const completionMsg = `${username ? `Way to go, ${username}! Y` : 'Y'}ou've completed the ${selectedTable} times table!`;
       setShowCompletionMessage(true);
       setFeedback({ type: 'success', message: completionMsg }); 
       speakText(completionMsg);
     }
-  }, [selectedTable, shuffledMultipliers, currentProblemIndex]);
+  }, [selectedTable, shuffledMultipliers, currentProblemIndex, username]);
 
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
@@ -115,8 +113,7 @@ export const TimesTableUI = () => {
       if (currentProblemIndex < shuffledMultipliers.length - 1) {
         setCurrentProblemIndex(prev => prev + 1);
       } else {
-        // Completion message handled by useEffect watching currentProblemIndex
-        const completionMsg = `Congratulations! You've completed the ${selectedTable} times table!`;
+        const completionMsg = `${username ? `Way to go, ${username}! Y` : 'Y'}ou've completed the ${selectedTable} times table!`;
         setShowCompletionMessage(true);
         setFeedback({ type: 'success', message: completionMsg }); 
         speakText(completionMsg);
@@ -124,12 +121,13 @@ export const TimesTableUI = () => {
     };
 
     if (answerNum === currentProblem.answer) {
-      const successMessage = `Correct! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
+      const successMessage = `${username ? username + ", t" : "T"}hat's right! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
       setCorrectInARow(prev => prev + 1);
       playSuccessSound();
       
-      const utterance = speakText(`Correct! ${currentProblem.factor1} times ${currentProblem.factor2} is ${currentProblem.answer}.`, undefined, handleNextStepLogic);
+      const speechSuccessMsg = `${username ? username + ", " : ""}Correct! ${currentProblem.factor1} times ${currentProblem.factor2} is ${currentProblem.answer}.`;
+      const utterance = speakText(speechSuccessMsg, undefined, handleNextStepLogic);
       
       if (!utterance) { 
         setTimeout(handleNextStepLogic, 1200);
@@ -143,7 +141,7 @@ export const TimesTableUI = () => {
       answerInputRef.current?.focus();
       answerInputRef.current?.select();
     }
-  }, [currentProblem, userAnswer, selectedTable, currentProblemIndex, shuffledMultipliers.length]);
+  }, [currentProblem, userAnswer, selectedTable, currentProblemIndex, shuffledMultipliers.length, username]);
 
 
   useEffect(() => {
@@ -152,7 +150,6 @@ export const TimesTableUI = () => {
     }
   }, [currentProblem, isLoading, showCompletionMessage]);
 
-  // Ref to hold the latest handleSubmit function
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
@@ -172,7 +169,6 @@ export const TimesTableUI = () => {
         if (number !== null) {
           setUserAnswer(String(number));
           toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
-          // Auto-submit after setting the answer
            setTimeout(() => handleSubmitRef.current(), 0);
         } else {
           toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
@@ -192,12 +188,11 @@ export const TimesTableUI = () => {
     return () => {
         recognitionRef.current?.stop();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
 
   const handleTableChange = (value: string) => {
     const tableNum = parseInt(value, 10);
-    setSelectedTable(tableNum); // This will trigger the useEffect to call startNewTablePractice
+    setSelectedTable(tableNum); 
     playNotificationSound();
   };
 
@@ -237,7 +232,7 @@ export const TimesTableUI = () => {
     playNotificationSound();
   };
   
-  if (isLoading && !currentProblem) { // Show loader only if truly loading initial problem
+  if (isLoading && !currentProblem) { 
     return (
         <Card className="w-full max-w-lg mx-auto shadow-xl border-accent/20">
             <CardHeader className="text-center">
@@ -328,12 +323,15 @@ export const TimesTableUI = () => {
 
         {feedback && (
           <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
-            {feedback.type === 'success' ? <CheckCircle2 className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
-            <AlertTitle>{feedback.type === 'success' ? 'Excellent!' : feedback.type === 'error' ? 'Keep Trying!' : 'Info'}</AlertTitle>
+            {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
+            <AlertTitle>
+                {feedback.type === 'success' ? (username ? `Excellent, ${username}!` : 'Excellent!') : 
+                 feedback.type === 'error' ? 'Keep Trying!' : 'Info'}
+            </AlertTitle>
             <AlertDescription>{feedback.message}</AlertDescription>
           </Alert>
         )}
-         {showCompletionMessage && currentProblemIndex >= shuffledMultipliers.length && ( // Ensure message shows only after all problems
+         {showCompletionMessage && currentProblemIndex >= shuffledMultipliers.length && ( 
              <Button onClick={handleRestartTable} variant="outline" size="lg" className="w-full mt-4">
                 <Repeat className="mr-2 h-5 w-5" /> Practice {selectedTable}s Again
             </Button>

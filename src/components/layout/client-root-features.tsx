@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FC, PropsWithChildren } from 'react';
@@ -11,6 +10,7 @@ import { MainNav } from '@/components/main-nav';
 import { BottomNav } from '@/components/bottom-nav';
 import { QuickLinkFAB } from '@/components/quicklink-fab';
 import { Loader2 } from 'lucide-react';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const {
@@ -21,36 +21,33 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     setHasCompletedWalkthrough,
   } = useWalkthroughStore();
   
+  const { loadUsernameFromStorage } = useUserProfileStore();
   const [isClientMounted, setIsClientMounted] = useState(false);
-  // This state reflects the most up-to-date knowledge of whether intro has been seen,
-  // fetched from localStorage on mount and on pathname changes.
   const [actualIntroductionSeen, setActualIntroductionSeen] = useState<boolean | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     setIsClientMounted(true);
-    // Initial check on mount
+    loadUsernameFromStorage(); // Load username into store
     setActualIntroductionSeen(getHasSeenIntroduction());
 
-    // Optional: Listen for storage events to catch changes made by other tabs/windows.
-    // For this specific flow, re-checking on pathname change (in the next effect) is primary.
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'chilllearn_introductionSeen_v1') {
         setActualIntroductionSeen(getHasSeenIntroduction());
+      }
+      if (event.key === useUserProfileStore.persist.getOptions().name) { // Check if username storage changed
+        loadUsernameFromStorage();
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [loadUsernameFromStorage]);
 
-  // This effect handles re-checking intro status on pathname changes
-  // AND handles redirection if intro is not seen.
   useEffect(() => {
     if (isClientMounted) {
-      // Always get the latest status from localStorage when pathname changes
       const currentSeenStatus = getHasSeenIntroduction();
       setActualIntroductionSeen(currentSeenStatus);
 
@@ -58,9 +55,8 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
         router.replace('/introduction');
       }
     }
-  }, [isClientMounted, pathname, router]); // Effect runs when pathname changes
+  }, [isClientMounted, pathname, router]);
 
-  // Walkthrough logic (uses actualIntroductionSeen)
   useEffect(() => {
     if (isClientMounted && actualIntroductionSeen && !hasCompletedWalkthrough && pathname !== '/introduction' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
@@ -70,7 +66,6 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     }
   }, [isClientMounted, actualIntroductionSeen, hasCompletedWalkthrough, openWalkthrough, pathname]);
 
-  // Render loading state until client is mounted and intro status is determined
   if (!isClientMounted || actualIntroductionSeen === null) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -79,8 +74,6 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  // If intro hasn't been seen and we are NOT on the intro page,
-  // the effect above will handle redirection. Show loader while redirecting.
   if (actualIntroductionSeen === false && pathname !== '/introduction') {
      return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -89,12 +82,10 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  // If on the introduction page, render only its children (the intro page content)
   if (pathname === '/introduction') {
     return <>{children}</>;
   }
 
-  // If intro has been seen (or we are past the redirect logic for unseen intro), render full layout
   return (
     <div className="flex flex-col min-h-screen">
       <MainNav />
@@ -106,7 +97,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border/30 hidden md:block">
          © {new Date().getFullYear()} ChillLearn AI. An AI-Powered Learning Adventure.
       </footer>
-      {isClientMounted && ( // Walkthrough modal only if intro seen and client mounted
+      {isClientMounted && ( 
         <WalkthroughModal
           isOpen={isWalkthroughOpen}
           onClose={closeWalkthrough}

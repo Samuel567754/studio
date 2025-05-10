@@ -1,16 +1,16 @@
-
 'use client';
 import React, { FC, ReactNode, useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
-import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy } from 'lucide-react'; 
+import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy, Smile } from 'lucide-react'; 
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 
 interface ReadingPracticeProps {
@@ -28,9 +28,10 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const [passage, setPassage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(isPaused);
   const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
   const [currentSpokenWordInfo, setCurrentSpokenWordInfo] = useState<SpokenWordInfo | null>(null);
+  const { username } = useUserProfileStore();
   
   const { toast } = useToast();
   const soundEffectsEnabled = useAppSettingsStore(state => state.soundEffectsEnabled);
@@ -106,7 +107,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         setPassage(result.passage);
         toast({ 
           variant: "success", 
-          title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Passage Generated!</div>, 
+          title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />{username ? `Passage for ${username}!` : 'Passage Generated!'}</div>, 
           description: "Happy reading!" 
         });
         playSuccessSound();
@@ -131,7 +132,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     } finally {
       setIsLoading(false);
     }
-  }, [wordsToPractice, readingLevel, masteredWords, toast, stopSpeech, isSpeaking]);
+  }, [wordsToPractice, readingLevel, masteredWords, toast, stopSpeech, isSpeaking, username]);
 
   const toggleSpeech = useCallback(() => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis || !passage) {
@@ -171,7 +172,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         .then(() => {
           toast({
             variant: "success",
-            title: <div className="flex items-center gap-2"><ClipboardCopy className="h-5 w-5" />Copied!</div>,
+            title: <div className="flex items-center gap-2"><ClipboardCopy className="h-5 w-5" />{username ? `${username}, copied!` : 'Copied!'}</div>,
             description: "Passage copied to clipboard.",
           });
           playSuccessSound();
@@ -192,7 +193,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             description: "Clipboard API not available in this browser or context.",
           });
     }
-  }, [passage, toast]);
+  }, [passage, toast, username]);
 
 
   useEffect(() => {

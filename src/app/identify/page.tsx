@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -8,17 +7,19 @@ import { WordIdentificationGame } from '@/components/word-identification-game';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, Target, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, Target, CheckCircle2, XCircle, Smile } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { playNavigationSound, speakText } from '@/lib/audio';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 export default function IdentifyWordPage() {
   const [wordList, setWordList] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentWord, setCurrentWord] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
+  const { username } = useUserProfileStore();
 
   const { toast } = useToast();
 
@@ -30,7 +31,7 @@ export default function IdentifyWordPage() {
       const validIndex = (storedIndex >= 0 && storedIndex < storedList.length) ? storedIndex : 0;
       setCurrentIndex(validIndex);
       setCurrentWord(storedList[validIndex]);
-      if (storedList[validIndex]) speakText(storedList[validIndex]); // Speak word on load/change
+      if (storedList[validIndex]) speakText(storedList[validIndex]); 
       if (storedIndex !== validIndex) { 
         storeCurrentIndex(validIndex); 
       }
@@ -68,7 +69,7 @@ export default function IdentifyWordPage() {
     const newWord = wordList[newIndex];
     setCurrentWord(newWord);
     storeCurrentIndex(newIndex);
-    if (newWord) speakText(newWord); // Speak new word
+    if (newWord) speakText(newWord); 
     playNavigationSound();
   };
 
@@ -76,16 +77,15 @@ export default function IdentifyWordPage() {
     if (correct) {
       toast({
         variant: "success",
-        title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Correct!</div>,
+        title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Correct, ${username}!` : 'Correct!'}</div>,
         description: `You identified "${currentWord}"!`,
       });
-      // Auto-navigate to next word after a short delay for feedback visibility
       if (wordList.length > 1) {
         setTimeout(() => navigateWord('next'), 1500); 
       } else {
          toast({
             variant: "success",
-            title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />List Complete!</div>,
+            title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />{username ? `${username}, list complete!` : 'List Complete!'}</div>,
             description: "You've identified the only word. Add more to keep playing!",
             duration: 4000,
         });
@@ -124,7 +124,7 @@ export default function IdentifyWordPage() {
     );
   }
 
-  if (wordList.length < 2) { // Need at least 2 words for MCQs (correct + 1 distractor)
+  if (wordList.length < 2) { 
     return (
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
         <div className="flex flex-col items-center gap-4">
@@ -158,12 +158,10 @@ export default function IdentifyWordPage() {
           wordToIdentify={currentWord}
           allWords={wordList}
           onGameResult={handleGameResult}
-          // showNextButton={true} // Can enable if manual next is preferred over auto-navigate
-          // onNextWord={() => navigateWord('next')}
         />
       </div>
       
-      {wordList.length > 1 && ( // Show navigation if more than one word, even if auto-navigating for manual override
+      {wordList.length > 1 && ( 
         <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
             <CardContent className="p-4 flex justify-between items-center gap-2 md:gap-4">
             <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="flex-1 md:flex-none">

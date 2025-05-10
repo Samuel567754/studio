@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FC } from 'react';
@@ -12,32 +11,34 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X, Smile } from 'lucide-react';
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
 import { playNotificationSound, playErrorSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { useUserProfileStore } from '@/stores/user-profile-store';
+
 
 interface WalkthroughStep {
   id: string;
-  title: string;
+  title: (username?: string | null) => string; // Title can be a function to include username
   content: string;
   ariaLabel: string;
 }
 
 const walkthroughSteps: WalkthroughStep[] = [
-  { id: 'intro', title: 'Welcome to ChillLearn!', content: "Let's take a quick tour of the app. You can use the audio button to have these steps read aloud.", ariaLabel: 'Introduction to the app walkthrough.' },
-  { id: 'learn', title: "1. Learn Words ('/learn')", content: "Start on the 'Learn' page (at /learn). Set your reading level and word length, then get AI-suggested words. Click words to add them to your practice list.", ariaLabel: 'Guide for the Learn Words page, now at /learn.' },
-  { id: 'spell', title: '2. Spell Practice', content: "Go to 'Spell' to practice words from your list. Correct spellings mark words as mastered!", ariaLabel: 'Guide for the Spell Practice page.' },
-  { id: 'identify', title: '3. Identify Words', content: "Play the 'Identify' game! Listen to a word and pick the correct option from the choices.", ariaLabel: 'Guide for the Identify Word game page.' },
-  { id: 'read', title: '4. Read Passages', content: "On the 'Read' page, generate AI stories using your practice words. Read them yourself or listen along.", ariaLabel: 'Guide for the Read Passages page.' },
-  { id: 'math', title: '5. Math Zone', content: "Explore the 'Math Zone' for fun arithmetic games, times table practice, number comparison, and sequencing challenges.", ariaLabel: 'Guide for the Math Zone page.' },
-  { id: 'profile', title: '6. Your Profile', content: "Check your 'Profile' to see your learning progress, mastered words, and current preferences.", ariaLabel: 'Guide for the Profile page.' },
-  { id: 'settings', title: '7. Customize Settings', content: "Visit 'Settings' to change themes, fonts, and audio/speech preferences.", ariaLabel: 'Guide for the Settings page.' },
-  { id: 'navigation', title: '8. Navigation', content: "Use the top (desktop) or bottom (mobile) navigation bars. The floating button on mobile also provides quick links! The main app dashboard is now your homepage ('/').", ariaLabel: 'Guide for navigating the app, noting the new main homepage.' },
-  { id: 'finish', title: "You're All Set!", content: "Enjoy learning with ChillLearn AI! You can revisit the full tutorial from the 'Guide' page anytime.", ariaLabel: 'End of the walkthrough.' }
+  { id: 'intro', title: (username) => username ? `Welcome, ${username}!` : 'Welcome to ChillLearn!', content: "Let's take a quick tour of the app. You can use the audio button to have these steps read aloud.", ariaLabel: 'Introduction to the app walkthrough.' },
+  { id: 'learn', title: () => "1. Learn Words ('/learn')", content: "Start on the 'Learn' page (at /learn). Set your reading level and word length, then get AI-suggested words. Click words to add them to your practice list.", ariaLabel: 'Guide for the Learn Words page, now at /learn.' },
+  { id: 'spell', title: () => '2. Spell Practice', content: "Go to 'Spell' to practice words from your list. Correct spellings mark words as mastered!", ariaLabel: 'Guide for the Spell Practice page.' },
+  { id: 'identify', title: () => '3. Identify Words', content: "Play the 'Identify' game! Listen to a word and pick the correct option from the choices.", ariaLabel: 'Guide for the Identify Word game page.' },
+  { id: 'read', title: () => '4. Read Passages', content: "On the 'Read' page, generate AI stories using your practice words. Read them yourself or listen along.", ariaLabel: 'Guide for the Read Passages page.' },
+  { id: 'math', title: () => '5. Math Zone', content: "Explore the 'Math Zone' for fun arithmetic games, times table practice, number comparison, and sequencing challenges.", ariaLabel: 'Guide for the Math Zone page.' },
+  { id: 'profile', title: () => '6. Your Profile', content: "Check your 'Profile' to see your learning progress, mastered words, and current preferences. You can also set your name here!", ariaLabel: 'Guide for the Profile page.' },
+  { id: 'settings', title: () => '7. Customize Settings', content: "Visit 'Settings' to change themes, fonts, and audio/speech preferences.", ariaLabel: 'Guide for the Settings page.' },
+  { id: 'navigation', title: () => '8. Navigation', content: "Use the top (desktop) or bottom (mobile) navigation bars. The floating button on mobile also provides quick links! The main app dashboard is now your homepage ('/').", ariaLabel: 'Guide for navigating the app, noting the new main homepage.' },
+  { id: 'finish', title: (username) => username ? `You're All Set, ${username}!` : "You're All Set!", content: "Enjoy learning with ChillLearn AI! You can revisit the full tutorial from the 'Guide' page anytime.", ariaLabel: 'End of the walkthrough.' }
 ];
 
 interface WalkthroughModalProps {
@@ -55,9 +56,11 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
   const [hasFirstStepAudioPlayed, setHasFirstStepAudioPlayed] = useState<boolean>(false);
   
   const { soundEffectsEnabled } = useAppSettingsStore();
+  const { username } = useUserProfileStore();
   const { toast } = useToast();
 
   const currentStepData = walkthroughSteps[currentStepIndex];
+  const currentTitle = currentStepData.title(username);
 
   const handleSpeechEnd = useCallback(() => {
     setActiveSpeakingStepId(null);
@@ -86,12 +89,12 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     handleSpeechEnd();
   }, [handleSpeechEnd]);
 
-  const playStepAudio = useCallback((stepId: string, content: string) => {
+  const playStepAudio = useCallback((stepId: string, title: string, content: string) => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
     
     stopCurrentSpeech(); 
-
-    const utterance = speakText(content, undefined, handleSpeechEnd, handleSpeechError);
+    const fullTextToSpeak = `${title}. ${content}`;
+    const utterance = speakText(fullTextToSpeak, undefined, handleSpeechEnd, handleSpeechError);
     if (utterance) {
       setCurrentSpeechUtterance(utterance);
       setActiveSpeakingStepId(stepId);
@@ -115,10 +118,10 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
         setIsAudioPlaying(true);
       }
     } else {
-      playStepAudio(currentStepData.id, currentStepData.content);
+      playStepAudio(currentStepData.id, currentTitle, currentStepData.content);
     }
     playNotificationSound();
-  }, [currentStepData, currentSpeechUtterance, activeSpeakingStepId, isAudioPlaying, isAudioPaused, playStepAudio]);
+  }, [currentStepData, currentSpeechUtterance, activeSpeakingStepId, isAudioPlaying, isAudioPaused, playStepAudio, currentTitle]);
 
 
   const handleNextStep = () => {
@@ -151,31 +154,26 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     onFinish();
   };
 
-  // Auto-play first step audio if enabled and modal opens, only once per modal display
   useEffect(() => {
     if (isOpen && currentStepIndex === 0 && soundEffectsEnabled && !isAudioPlaying && !currentSpeechUtterance && !hasFirstStepAudioPlayed) {
-       // Short delay to ensure modal is fully rendered before speech starts
        setTimeout(() => {
-           playStepAudio(walkthroughSteps[0].id, walkthroughSteps[0].content);
-           setHasFirstStepAudioPlayed(true); // Mark as played for this modal session
+           playStepAudio(walkthroughSteps[0].id, walkthroughSteps[0].title(username), walkthroughSteps[0].content);
+           setHasFirstStepAudioPlayed(true); 
        }, 300); 
     }
-  }, [isOpen, currentStepIndex, soundEffectsEnabled, isAudioPlaying, currentSpeechUtterance, playStepAudio, hasFirstStepAudioPlayed]);
+  }, [isOpen, currentStepIndex, soundEffectsEnabled, isAudioPlaying, currentSpeechUtterance, playStepAudio, hasFirstStepAudioPlayed, username]);
 
-  // Cleanup speech on component unmount or when modal closes
   useEffect(() => {
     return () => {
       stopCurrentSpeech();
     };
   }, [stopCurrentSpeech]);
   
-  // Reset current step to 0 and first step audio played flag when modal is re-opened
   useEffect(() => {
     if (isOpen) {
         setCurrentStepIndex(0);
-        setHasFirstStepAudioPlayed(false); // Reset for new modal opening
+        setHasFirstStepAudioPlayed(false); 
     } else {
-        // If modal is closed, ensure any active speech is stopped and states are reset
         stopCurrentSpeech();
     }
   }, [isOpen, stopCurrentSpeech]);
@@ -191,7 +189,9 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { stopCurrentSpeech(); onClose(); } }}>
       <DialogContent className="sm:max-w-md p-0" aria-labelledby="walkthrough-title" aria-describedby="walkthrough-description">
         <DialogHeader className="p-6 pb-2 border-b flex flex-row justify-between items-center">
-          <DialogTitle id="walkthrough-title" className="text-xl font-semibold text-primary">{currentStepData.title}</DialogTitle>
+          <DialogTitle id="walkthrough-title" className="text-xl font-semibold text-primary flex items-center gap-2">
+             {currentStepData.id === 'intro' && <Smile className="h-6 w-6 text-accent" />} {currentTitle}
+          </DialogTitle>
           {soundEffectsEnabled && (
             <Button
               variant="ghost"
