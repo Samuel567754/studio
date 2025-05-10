@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -23,9 +23,12 @@ const features = [
   { icon: HelpCircle, title: "Interactive Guides", description: "Easy-to-follow tutorials and walkthroughs.", imageSrc: "https://picsum.photos/seed/guides/300/200", aiHint: "guide help map" },
 ];
 
+const AUTOPLAY_DELAY = 5000; // 5 seconds
+
 export default function IntroductionPage() {
   const router = useRouter();
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
+  const autoplayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleGetStarted = () => {
     setHasSeenIntroduction(true);
@@ -33,10 +36,37 @@ export default function IntroductionPage() {
     router.push('/'); // Navigate directly to homepage
   };
 
-  const selectFeature = (index: number) => {
+  const selectFeature = useCallback((index: number) => {
+    if (autoplayTimeoutRef.current) {
+      clearTimeout(autoplayTimeoutRef.current);
+    }
     playNotificationSound();
     setCurrentFeatureIndex(index);
-  };
+  }, []);
+
+  useEffect(() => {
+    const clearAutoplayTimeout = () => {
+      if (autoplayTimeoutRef.current) {
+        clearTimeout(autoplayTimeoutRef.current);
+      }
+    };
+
+    clearAutoplayTimeout(); // Clear previous timeout
+
+    if (features.length > 1) { // Only autoplay if there's more than one feature
+      autoplayTimeoutRef.current = setTimeout(() => {
+        setCurrentFeatureIndex((prevIndex) => {
+          const nextIndex = (prevIndex + 1) % features.length;
+          if (nextIndex !== prevIndex) {
+            playNotificationSound(); // Play sound on auto-advance
+          }
+          return nextIndex;
+        });
+      }, AUTOPLAY_DELAY);
+    }
+
+    return () => clearAutoplayTimeout(); // Cleanup on unmount or when currentFeatureIndex/features.length changes
+  }, [currentFeatureIndex, features.length]);
 
 
   const currentFeature = features[currentFeatureIndex];
