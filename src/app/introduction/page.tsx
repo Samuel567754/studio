@@ -33,15 +33,11 @@ export default function IntroductionPage() {
     router.push('/'); // Navigate directly to homepage
   };
 
-  const nextFeature = () => {
+  const selectFeature = (index: number) => {
     playNotificationSound();
-    setCurrentFeatureIndex((prevIndex) => (prevIndex + 1) % features.length);
+    setCurrentFeatureIndex(index);
   };
 
-  const prevFeature = () => {
-    playNotificationSound();
-    setCurrentFeatureIndex((prevIndex) => (prevIndex - 1 + features.length) % features.length);
-  };
 
   const currentFeature = features[currentFeatureIndex];
 
@@ -54,7 +50,7 @@ export default function IntroductionPage() {
             Welcome to <span className="text-gradient-primary-accent">ChillLearn AI</span>!
           </h1>
           <p className="text-md sm:text-lg md:text-xl text-muted-foreground max-w-md mx-auto">
-            Swipe through to see what you can do, then let's begin your learning adventure!
+            Explore what you can do, then let's begin your learning adventure!
           </p>
         </header>
 
@@ -69,6 +65,7 @@ export default function IntroductionPage() {
                   index < currentFeatureIndex ? "-translate-x-full" : "",
                   index > currentFeatureIndex ? "translate-x-full" : ""
                 )}
+                aria-hidden={index !== currentFeatureIndex}
               >
                 <Card className="w-full max-w-sm bg-card/80 backdrop-blur-sm shadow-xl border border-border/30 transform hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-[1.02]">
                   <CardHeader className="p-4">
@@ -80,6 +77,7 @@ export default function IntroductionPage() {
                         style={{objectFit:"cover"}}
                         className="rounded-lg"
                         data-ai-hint={feature.aiHint}
+                        priority={index === 0} // Prioritize loading the first image
                       />
                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                        <feature.icon className="absolute bottom-3 left-3 h-8 w-8 text-white drop-shadow-md" />
@@ -95,40 +93,19 @@ export default function IntroductionPage() {
               </div>
             ))}
           </div>
-
-          {features.length > 1 && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={prevFeature}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/50 hover:bg-background/80 shadow-md h-10 w-10 sm:h-12 sm:w-12"
-                aria-label="Previous feature"
-              >
-                <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={nextFeature}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full bg-background/50 hover:bg-background/80 shadow-md h-10 w-10 sm:h-12 sm:w-12"
-                aria-label="Next feature"
-              >
-                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
-              </Button>
-            </>
-          )}
           
-          <div className="flex justify-center mt-4 space-x-2">
+          <div className="flex justify-center mt-6 space-x-2" role="tablist" aria-label="Features navigation">
             {features.map((_, index) => (
               <button
                 key={`dot-${index}`}
-                onClick={() => { playNotificationSound(); setCurrentFeatureIndex(index); }}
+                onClick={() => selectFeature(index)}
                 className={cn(
-                  "h-2.5 w-2.5 rounded-full transition-all duration-300 ease-in-out",
+                  "h-3 w-3 rounded-full transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
                   currentFeatureIndex === index ? "bg-primary scale-125" : "bg-muted hover:bg-muted-foreground/50"
                 )}
                 aria-label={`Go to feature ${index + 1}: ${features[index].title}`}
+                aria-selected={currentFeatureIndex === index}
+                role="tab"
               />
             ))}
           </div>
@@ -151,3 +128,4 @@ export default function IntroductionPage() {
     </div>
   );
 }
+
