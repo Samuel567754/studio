@@ -22,7 +22,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     setHasCompletedWalkthrough,
   } = useWalkthroughStore();
   
-  const { loadUsernameFromStorage } = useUserProfileStore();
+  const { loadUserProfileFromStorage } = useUserProfileStore(); // Corrected function name
   const [isClientMounted, setIsClientMounted] = useState(false);
   const [actualIntroductionSeen, setActualIntroductionSeen] = useState<boolean | null>(null);
   const [actualPersonalizationCompleted, setActualPersonalizationCompleted] = useState<boolean | null>(null);
@@ -31,7 +31,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
 
   useEffect(() => {
     setIsClientMounted(true);
-    loadUsernameFromStorage();
+    loadUserProfileFromStorage(); // Corrected function call
     setActualIntroductionSeen(getHasSeenIntroduction());
     setActualPersonalizationCompleted(getHasCompletedPersonalization());
 
@@ -43,14 +43,14 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
         setActualPersonalizationCompleted(getHasCompletedPersonalization());
       }
       if (event.key === useUserProfileStore.persist.getOptions().name) {
-        loadUsernameFromStorage();
+        loadUserProfileFromStorage(); // Corrected function call
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [loadUsernameFromStorage]);
+  }, [loadUserProfileFromStorage]); // Corrected dependency
 
   useEffect(() => {
     if (isClientMounted) {
