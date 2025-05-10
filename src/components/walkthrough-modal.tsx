@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X } from 'lucide-react'; // Removed StopCircle as it's implicit with cancel
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X } from 'lucide-react';
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -87,7 +87,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
   const playStepAudio = useCallback((stepId: string, content: string) => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
     
-    stopCurrentSpeech(); // Stop any previous speech
+    stopCurrentSpeech(); 
 
     const utterance = speakText(content, undefined, handleSpeechEnd, handleSpeechError);
     if (utterance) {
@@ -98,7 +98,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     } else {
       handleSpeechEnd();
     }
-  }, [soundEffectsEnabled, stopCurrentSpeech, handleSpeechEnd, handleSpeechError]);
+  }, [soundEffectsEnabled, stopCurrentSpeech, handleSpeechEnd, handleSpeechError, toast]); // Added toast to dependency array
 
   const handleToggleSpeech = useCallback(() => {
     if (!currentStepData) return;
@@ -150,13 +150,11 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
   };
 
   useEffect(() => {
-    // Automatically read the first step when modal opens, if enabled
     if (isOpen && currentStepIndex === 0 && soundEffectsEnabled && !isAudioPlaying && !currentSpeechUtterance) {
-       setTimeout(() => playStepAudio(walkthroughSteps[0].id, walkthroughSteps[0].content), 300); // Small delay
+       setTimeout(() => playStepAudio(walkthroughSteps[0].id, walkthroughSteps[0].content), 300); 
     }
-  }, [isOpen, soundEffectsEnabled, currentStepIndex, isAudioPlaying, currentSpeechUtterance, playStepAudio]);
+  }, [isOpen, currentStepIndex, soundEffectsEnabled, isAudioPlaying, currentSpeechUtterance, playStepAudio]);
 
-  // Cleanup speech on unmount or when modal is closed externally
   useEffect(() => {
     return () => {
       stopCurrentSpeech();
