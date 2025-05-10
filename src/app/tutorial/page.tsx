@@ -4,12 +4,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2 } from 'lucide-react';
+import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass } from 'lucide-react';
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { playErrorSound, playNotificationSound } from '@/lib/audio';
+import { useWalkthroughStore } from '@/stores/walkthrough-store';
 
 interface TutorialSection {
   id: string;
@@ -22,13 +23,13 @@ const tutorialSections: TutorialSection[] = [
   {
     id: 'welcome',
     title: 'Welcome to ChillLearn AI!',
-    content: "This guide will walk you through the main features of the ChillLearn AI application, helping you make the most of your learning experience. Let's get started!",
+    content: "This guide will walk you through the main features of the ChillLearn AI application, helping you make the most of your learning experience. Let's get started! You can also launch an interactive walkthrough using the button above.",
     ariaLabel: 'Welcome section introduction'
   },
   {
     id: 'learn',
     title: 'Learn Words Page (Your Starting Point)',
-    content: "The 'Learn' page is where your literacy journey begins.\n\n1. AI Word Suggestions: Set your desired reading level (e.g., beginner, intermediate) and preferred word length.\n2. Get Ideas: Click 'Get New Word Ideas', and our AI will suggest words tailored to your settings.\n3. Build Your List: See a word you like? Click on it! It'll be added to 'Your Practice Word List' below.\nThis list is crucial as it populates words for your spelling and reading practices.",
+    content: "The 'Learn' page is where your literacy journey begins.\n\n1. AI Word Suggestions: Set your desired reading level (e.g., beginner, intermediate) and preferred word length.\n2. Get Ideas: Click 'Get New Word Ideas', and our AI will suggest words tailored to your settings.\n3. Build Your List: See a word you like? Click on it! It'll be added to 'Your Practice Word List' below.\nThis list is crucial as it populates words for your spelling, identification, and reading practices.",
     ariaLabel: "Explanation of the Learn Words page features including AI suggestions and practice list."
   },
   {
@@ -38,10 +39,22 @@ const tutorialSections: TutorialSection[] = [
     ariaLabel: "Guide to the Spell Practice page, how to input spellings and what happens on correct or incorrect attempts."
   },
   {
+    id: 'identify',
+    title: 'Identify Word Game (Test Your Recognition)',
+    content: "Head to the 'Identify' page for a fun word recognition game.\n\n1. Listen & See: The current word will be displayed and spoken.\n2. Choose Wisely: Select the matching word from a set of multiple-choice options.\n3. Feedback: Get immediate feedback on your choice and automatically proceed to the next word.",
+    ariaLabel: "Instructions for the Identify Word game, covering word display, multiple choice options, and feedback."
+  },
+  {
     id: 'read',
     title: 'Read Passages Page (Reading in Context)',
     content: "The 'Read' page brings your learned words to life!\n\n1. Generate Story: Click 'Generate New Passage'. The AI will create a short story using words from your practice list and suited to your reading level.\n2. Read or Listen: You can read the passage yourself or click 'Read Aloud' to hear it narrated. Words from your practice list and the currently spoken word will be highlighted.",
     ariaLabel: "Instructions for the Read Passages page, covering passage generation and read aloud features."
+  },
+  {
+    id: 'math',
+    title: 'Math Zone (Explore Numeracy)',
+    content: "The 'Math Zone' is your hub for various math activities:\n\n- Arithmetic Games: Tackle addition, subtraction, multiplication, and division problems.\n- Times Table Practice: Master your multiplication facts for specific tables.\n- Number Comparison: Identify the larger or smaller number in a pair.\n- Number Sequencing: Complete number patterns by finding the missing element.\nAll math games feature optional audio read-aloud for questions and voice input for answers!",
+    ariaLabel: "Overview of the Math Zone and its various game sections like Arithmetic, Times Table, Comparison and Sequencing."
   },
   {
     id: 'profile',
@@ -58,8 +71,8 @@ const tutorialSections: TutorialSection[] = [
   {
     id: 'navigation',
     title: 'Navigating the App',
-    content: "Getting around is easy:\n- Desktop/Tablet: Use the navigation links at the top of the page.\n- Mobile: A handy bottom navigation bar provides quick access to all sections.\n- Quick Learn: The 'Quick Learn' button (often in the main navigation) takes you directly to the word learning page to jump back into practice.",
-    ariaLabel: "How to navigate the application on different devices using the navigation bars."
+    content: "Getting around is easy:\n- Desktop/Tablet: Use the navigation links at the top of the page.\n- Mobile: A handy bottom navigation bar provides quick access to all sections. There's also a Quick Link FAB (Floating Action Button) for fast access to main pages.\n- Quick Learn: The 'Quick Learn' button (in the main navigation or mobile sheet menu) takes you directly to the word learning page to jump back into practice.",
+    ariaLabel: "How to navigate the application on different devices using the navigation bars and quick link FAB."
   },
 ];
 
@@ -71,11 +84,11 @@ export default function TutorialPage() {
   const [isMounted, setIsMounted] = useState(false);
 
   const { soundEffectsEnabled } = useAppSettingsStore();
+  const { openWalkthrough } = useWalkthroughStore();
   const { toast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
-    // Cleanup speech synthesis on component unmount
     return () => {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -100,7 +113,7 @@ export default function TutorialPage() {
       });
       playErrorSound();
     }
-    handleSpeechEnd(); // Ensure state is reset
+    handleSpeechEnd(); 
   }, [toast, handleSpeechEnd]);
 
   const playSectionAudio = useCallback((sectionId: string, content: string) => {
@@ -113,7 +126,7 @@ export default function TutorialPage() {
       return;
     }
 
-    window.speechSynthesis.cancel(); // Stop any current speech
+    window.speechSynthesis.cancel(); 
 
     const utterance = speakText(content, undefined, handleSpeechEnd, handleSpeechError);
     if (utterance) {
@@ -122,13 +135,12 @@ export default function TutorialPage() {
       setIsAudioPlaying(true);
       setIsAudioPaused(false);
     } else {
-      handleSpeechEnd(); // Reset if speech didn't start
+      handleSpeechEnd();
     }
   }, [soundEffectsEnabled, handleSpeechEnd, handleSpeechError, toast]);
 
   const handleToggleSpeech = useCallback((sectionId: string, content: string) => {
     if (currentSpeechUtterance && activeSpeakingSectionId === sectionId) {
-      // Current section is active, toggle play/pause
       if (isAudioPlaying && !isAudioPaused) {
         window.speechSynthesis.pause();
         setIsAudioPaused(true);
@@ -141,7 +153,6 @@ export default function TutorialPage() {
         playNotificationSound();
       }
     } else {
-      // Different section or no active speech, play new section
       playSectionAudio(sectionId, content);
     }
   }, [currentSpeechUtterance, activeSpeakingSectionId, isAudioPlaying, isAudioPaused, playSectionAudio]);
@@ -150,9 +161,12 @@ export default function TutorialPage() {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-    // onEnd/onError will be called by cancel, which resets state via handleSpeechEnd
   }, []);
 
+  const handleLaunchWalkthrough = () => {
+    playNotificationSound();
+    openWalkthrough();
+  }
 
   if (!isMounted) {
     return (
@@ -180,6 +194,10 @@ export default function TutorialPage() {
         <h1 className="text-4xl font-bold text-gradient-primary-accent">App Tutorial & Guide</h1>
         <p className="text-lg text-muted-foreground">Learn how to use ChillLearn AI effectively.</p>
       </header>
+
+      <Button onClick={handleLaunchWalkthrough} className="w-full btn-glow mb-8" size="lg" aria-label="Launch interactive app walkthrough">
+        <Compass className="mr-2 h-5 w-5" /> Launch Interactive Walkthrough
+      </Button>
 
       {currentSpeechUtterance && (isAudioPlaying || isAudioPaused) && (
         <Card className="mb-6 sticky top-20 z-30 shadow-xl border-accent bg-card animate-in fade-in-0 zoom-in-95 duration-300">
