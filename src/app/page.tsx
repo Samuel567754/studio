@@ -63,13 +63,13 @@ const mainSections = [
    {
     key: "ai-games",
     title: "AI Word Games",
-    description: "Challenge yourself with interactive AI-powered word games like Fill-in-the-Blank.",
+    description: "Challenge yourself with interactive AI-powered word games like Fill-in-the-Blank and Definition Match.",
     href: "/ai-games",
-    icon: Puzzle, // Consider a more specific "AI" or "game" icon if available
+    icon: Puzzle, 
     imageSrc: "https://picsum.photos/seed/ai-word-games/600/400",
     imageAlt: "Child playing an interactive word game on a tablet",
     aiHint: "child tablet game",
-    color: "text-orange-500", // Example color
+    color: "text-orange-500", 
     bgFrom: "from-orange-500/10",
     bgTo: "to-orange-500/5",
   },

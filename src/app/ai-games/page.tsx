@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Puzzle, Edit, TextSelect } from 'lucide-react';
+import { Puzzle, Edit, BookOpenCheck, TextSelect } from 'lucide-react'; // Added BookOpenCheck
 
 export default function AiGamesPage() {
   const gameSections = [
@@ -16,15 +16,14 @@ export default function AiGamesPage() {
       icon: Edit,
       dataAiHint: "pencil writing sentence",
     },
+    {
+      title: "Word Definition Match",
+      description: "Match words to their correct AI-generated definitions. Boost your understanding!",
+      href: "/ai-games/definition-match",
+      icon: BookOpenCheck, 
+      dataAiHint: "dictionary book definition",
+    },
     // Add more AI games here in the future
-    // Example:
-    // {
-    //   title: "Word Definition Match",
-    //   description: "Match words to their correct AI-generated definitions.",
-    //   href: "/ai-games/definition-match", // Placeholder
-    //   icon: BookOpen, // Example icon
-    //   dataAiHint: "dictionary book definition",
-    // },
   ];
 
   return (

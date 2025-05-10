@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X, Smile, Puzzle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X, Smile, Compass } from 'lucide-react'; // Added Compass
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -20,28 +20,7 @@ import { playNotificationSound, playErrorSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { useUserProfileStore } from '@/stores/user-profile-store';
-
-
-interface WalkthroughStep {
-  id: string;
-  title: (username?: string | null) => string; // Title can be a function to include username
-  content: string;
-  ariaLabel: string;
-}
-
-const walkthroughSteps: WalkthroughStep[] = [
-  { id: 'intro', title: (username) => username ? `Welcome, ${username}!` : 'Welcome to ChillLearn!', content: "Let's take a quick tour of the app. You can use the audio button to have these steps read aloud.", ariaLabel: 'Introduction to the app walkthrough.' },
-  { id: 'learn', title: () => "1. Learn Words ('/learn')", content: "Start on the 'Learn' page (at /learn). Set your reading level and word length, then get AI-suggested words. Click words to add them to your practice list for all activities.", ariaLabel: 'Guide for the Learn Words page, now at /learn.' },
-  { id: 'spell', title: () => '2. Spell Practice', content: "Go to 'Spell' to practice words from your list. Correct spellings mark words as mastered!", ariaLabel: 'Guide for the Spell Practice page.' },
-  { id: 'identify', title: () => '3. Identify Words', content: "Play the 'Identify' game! Listen to a word and pick the correct option from the choices.", ariaLabel: 'Guide for the Identify Word game page.' },
-  { id: 'read', title: () => '4. Read Passages', content: "On the 'Read' page, generate AI stories using your practice words. Read them yourself or listen along.", ariaLabel: 'Guide for the Read Passages page.' },
-  { id: 'ai-games', title: () => '5. AI Word Games', content: "Head to 'AI Games' for interactive challenges like 'Fill in the Blank', where you complete sentences using your vocabulary.", ariaLabel: 'Guide for the AI Word Games page, featuring Fill in the Blank.' },
-  { id: 'math', title: () => '6. Math Zone', content: "Explore the 'Math Zone' for fun arithmetic games, times table practice, AI problems, and more.", ariaLabel: 'Guide for the Math Zone page.' },
-  { id: 'profile', title: () => '7. Your Profile', content: "Check your 'Profile' to see your learning progress, mastered words, and current preferences. You can also set your name and favorite topics here!", ariaLabel: 'Guide for the Profile page.' },
-  { id: 'settings', title: () => '8. Customize Settings', content: "Visit 'Settings' to change themes, fonts, and audio/speech preferences.", ariaLabel: 'Guide for the Settings page.' },
-  { id: 'navigation', title: () => '9. Navigation', content: "Use the top (desktop) or bottom (mobile) navigation bars. The floating button on mobile also provides quick links! The main app dashboard is now your homepage ('/').", ariaLabel: 'Guide for navigating the app, noting the new main homepage.' },
-  { id: 'finish', title: (username) => username ? `You're All Set, ${username}!` : "You're All Set!", content: "Enjoy learning with ChillLearn AI! You can revisit the full tutorial from the 'Guide' page anytime.", ariaLabel: 'End of the walkthrough.' }
-];
+import { walkthroughModalSteps, type TutorialStep } from '@/components/tutorial/tutorial-data'; // Import modal steps data
 
 interface WalkthroughModalProps {
   isOpen: boolean;
@@ -61,8 +40,9 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
   const { username } = useUserProfileStore();
   const { toast } = useToast();
 
-  const currentStepData = walkthroughSteps[currentStepIndex];
-  const currentTitle = currentStepData.title(username);
+  const currentStepData = walkthroughModalSteps[currentStepIndex];
+  const currentTitle = currentStepData ? currentStepData.title(username) : "Walkthrough";
+
 
   const handleSpeechEnd = useCallback(() => {
     setActiveSpeakingStepId(null);
@@ -109,6 +89,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
 
   const handleToggleSpeech = useCallback(() => {
     if (!currentStepData) return;
+    const stepTitle = currentStepData.title(username); // Get title with username
     if (currentSpeechUtterance && activeSpeakingStepId === currentStepData.id) {
       if (isAudioPlaying && !isAudioPaused) {
         window.speechSynthesis.pause();
@@ -120,16 +101,16 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
         setIsAudioPlaying(true);
       }
     } else {
-      playStepAudio(currentStepData.id, currentTitle, currentStepData.content);
+      playStepAudio(currentStepData.id, stepTitle, currentStepData.content);
     }
     playNotificationSound();
-  }, [currentStepData, currentSpeechUtterance, activeSpeakingStepId, isAudioPlaying, isAudioPaused, playStepAudio, currentTitle]);
+  }, [currentStepData, currentSpeechUtterance, activeSpeakingStepId, isAudioPlaying, isAudioPaused, playStepAudio, username]);
 
 
   const handleNextStep = () => {
     playNotificationSound();
     stopCurrentSpeech();
-    if (currentStepIndex < walkthroughSteps.length - 1) {
+    if (currentStepIndex < walkthroughModalSteps.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
     } else {
       handleFinish();
@@ -157,9 +138,10 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
   };
 
   useEffect(() => {
-    if (isOpen && currentStepIndex === 0 && soundEffectsEnabled && !isAudioPlaying && !currentSpeechUtterance && !hasFirstStepAudioPlayed) {
+    if (isOpen && currentStepIndex === 0 && soundEffectsEnabled && !isAudioPlaying && !currentSpeechUtterance && !hasFirstStepAudioPlayed && walkthroughModalSteps[0]) {
        setTimeout(() => {
-           playStepAudio(walkthroughSteps[0].id, walkthroughSteps[0].title(username), walkthroughSteps[0].content);
+           const firstStep = walkthroughModalSteps[0];
+           playStepAudio(firstStep.id, firstStep.title(username), firstStep.content);
            setHasFirstStepAudioPlayed(true); 
        }, 300); 
     }
@@ -185,15 +167,16 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
     return null;
   }
   
-  const progressPercentage = ((currentStepIndex + 1) / walkthroughSteps.length) * 100;
+  const progressPercentage = ((currentStepIndex + 1) / walkthroughModalSteps.length) * 100;
+  const IconComponent = currentStepData.icon || Compass;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { stopCurrentSpeech(); onClose(); } }}>
       <DialogContent className="sm:max-w-md p-0" aria-labelledby="walkthrough-title" aria-describedby="walkthrough-description">
         <DialogHeader className="p-6 pb-2 border-b flex flex-row justify-between items-center">
           <DialogTitle id="walkthrough-title" className="text-xl font-semibold text-primary flex items-center gap-2">
-             {currentStepData.id === 'intro' && <Smile className="h-6 w-6 text-accent" />} 
-             {currentStepData.id === 'ai-games' && <Puzzle className="h-6 w-6 text-accent" />} 
+             <IconComponent className="h-6 w-6 text-accent" />
              {currentTitle}
           </DialogTitle>
           {soundEffectsEnabled && (
@@ -231,7 +214,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
             >
               <ArrowLeft className="mr-2 h-4 w-4" /> Previous
             </Button>
-            {currentStepIndex < walkthroughSteps.length - 1 ? (
+            {currentStepIndex < walkthroughModalSteps.length - 1 ? (
               <Button onClick={handleNextStep} className="flex-1 sm:flex-initial btn-glow" aria-label="Next step">
                 Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
