@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import type { TouchEvent } from 'react'; // Import TouchEvent for type safety
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -27,37 +28,69 @@ export default function IntroductionPage() {
   const router = useRouter();
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
   
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+
   const handleGetStarted = () => {
     setHasSeenIntroduction(true);
     playNotificationSound();
     router.push('/'); 
   };
 
-  const selectFeature = useCallback((index: number) => {
-    playNotificationSound();
-    setCurrentFeatureIndex(index);
-  }, []);
+  const selectFeature = useCallback((newIndex: number) => {
+    if (newIndex === currentFeatureIndex) return; // Do nothing if index is the same
+
+    if (newIndex >= 0 && newIndex < features.length) {
+      playNotificationSound();
+      setCurrentFeatureIndex(newIndex);
+    }
+  }, [currentFeatureIndex]); // features.length is constant from module scope
+
+  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+    setTouchEndX(null); // Reset touch end position
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      // Go to next feature, selectFeature will handle bounds
+      selectFeature(currentFeatureIndex + 1);
+    } else if (isRightSwipe) {
+      // Go to previous feature, selectFeature will handle bounds
+      selectFeature(currentFeatureIndex - 1);
+    }
+
+    setTouchStartX(null);
+    setTouchEndX(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-primary/10 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
-      <main className="container mx-auto max-w-2xl text-center space-y-6 md:space-y-10 my-6">
-        <div className="animate-in fade-in-0 zoom-in-75 duration-700 ease-out">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gradient-primary-accent">
-                Welcome to ChillLearn AI
-            </h1>
-            <p className="text-md sm:text-lg md:text-xl text-muted-foreground mt-2">
-                Explore key features by tapping the dots below.
-            </p>
-        </div>
-
+      <main className="container mx-auto max-w-2xl text-center space-y-8 md:space-y-12 my-6 flex-grow flex flex-col justify-center">
+        {/* Static welcome text removed as per user request to integrate into feature cards or remove */}
+        
         <section className="relative animate-in fade-in-0 slide-in-from-bottom-10 duration-700 delay-200 w-full">
-          {/* Increased height for larger cards */}
-          <div className="overflow-hidden relative h-[400px] sm:h-[480px] md:h-[550px]"> 
+          <div 
+            className="overflow-hidden relative h-[400px] sm:h-[480px] md:h-[550px]"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          > 
             {features.map((feature, index) => (
               <div
                 key={feature.title}
                 className={cn(
-                  "absolute inset-0 transition-all duration-500 ease-in-out transform flex justify-center items-center p-1", // Added padding for card spacing effect
+                  "absolute inset-0 transition-all duration-500 ease-in-out transform flex justify-center items-center p-1",
                   index === currentFeatureIndex ? "opacity-100 translate-x-0" : "opacity-0",
                   index < currentFeatureIndex ? "-translate-x-full" : "",
                   index > currentFeatureIndex ? "translate-x-full" : ""
@@ -74,7 +107,7 @@ export default function IntroductionPage() {
                       className="transition-transform duration-300 ease-in-out group-hover:scale-105"
                       data-ai-hint={feature.aiHint}
                       priority={index === 0} 
-                      sizes="(max-width: 640px) 90vw, (max-width: 768px) 80vw, 600px" // Added sizes for optimization
+                      sizes="(max-width: 640px) 90vw, (max-width: 768px) 80vw, 600px"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
                     
@@ -102,7 +135,7 @@ export default function IntroductionPage() {
                 onClick={() => selectFeature(index)}
                 className={cn(
                   "h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                  currentFeatureIndex === index ? "bg-primary scale-125" : "bg-muted hover:bg-muted-foreground/50"
+                  currentFeatureIndex === index ? "bg-primary scale-125 shadow-lg" : "bg-muted hover:bg-muted-foreground/50"
                 )}
                 aria-label={`Go to feature ${index + 1}: ${features[index].title}`}
                 aria-selected={currentFeatureIndex === index}
@@ -123,7 +156,7 @@ export default function IntroductionPage() {
           </Button>
         </div>
       </main>
-       <footer className="text-center text-xs text-muted-foreground py-4 mt-auto">
+       <footer className="text-center text-xs text-muted-foreground py-4">
          © {new Date().getFullYear()} ChillLearn App. An AI-Powered Learning Adventure.
       </footer>
     </div>
