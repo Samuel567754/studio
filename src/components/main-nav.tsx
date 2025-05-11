@@ -15,8 +15,8 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogHeader as AlertDialogHeaderPrimitive, // Renamed to avoid conflict
-  AlertDialogTitle as AlertDialogTitlePrimitive, // Renamed to avoid conflict
+  AlertDialogHeader as AlertDialogHeaderPrimitive,
+  AlertDialogTitle as AlertDialogTitlePrimitive,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
@@ -188,8 +188,8 @@ export const MainNav: FC = () => {
                 aria-label="Open main navigation menu"
                 aria-expanded={isMobileMenuOpen}
               >
-                <Menu className={cn("h-7 w-7 text-[hsl(var(--nav-icon-dark))]", isMobileMenuOpen && "hidden")} aria-hidden="true" />
-                 <X className={cn("h-7 w-7 text-[hsl(var(--nav-icon-dark))]", !isMobileMenuOpen && "hidden")} aria-hidden="true" />
+                <Menu className={cn("h-8 w-8 text-[hsl(var(--nav-icon-dark))]", isMobileMenuOpen && "hidden")} aria-hidden="true" />
+                 <X className={cn("h-8 w-8 text-[hsl(var(--nav-icon-dark))]", !isMobileMenuOpen && "hidden")} aria-hidden="true" />
               </Button>
             </SheetTrigger>
             <SheetContent
@@ -207,7 +207,7 @@ export const MainNav: FC = () => {
                     <h1 className={cn("text-xl font-bold text-[hsl(var(--nav-text-dark))]")}>ChillLearn</h1>
                   </Link>
                 </SheetTitle>
-                 {/* SheetClose is automatically rendered by SheetContent if not explicitly placed */}
+                {/* SheetClose is automatically rendered by SheetContent if not explicitly placed, handled by X icon in button */}
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
