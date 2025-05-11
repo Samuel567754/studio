@@ -293,20 +293,45 @@ export default function FillInTheBlankPage() {
       </Card>
       
       <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
-          <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-2 md:gap-4">
-          <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="w-full sm:flex-1 md:flex-none" disabled={isLoadingGame}>
-              <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
+        <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={() => navigateWord('prev')} 
+            aria-label="Previous word" 
+            className="w-full sm:w-auto order-2 sm:order-1"
+            disabled={isLoadingGame}
+          >
+            <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
           </Button>
-          <Button variant="default" size="lg" onClick={() => fetchNewGameProblem(currentWordForGame)} aria-label="New problem for current word" className="w-full sm:flex-1 md:flex-none btn-glow" disabled={isLoadingGame}>
+
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 order-1 sm:order-2 w-full sm:w-auto">
+            <Button 
+              variant="default" 
+              size="lg" 
+              onClick={() => fetchNewGameProblem(currentWordForGame)} 
+              aria-label="New problem for current word" 
+              className="w-full sm:w-auto btn-glow" 
+              disabled={isLoadingGame}
+            >
               <RefreshCcw className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> New Sentence
-          </Button>
-          <span className="text-muted-foreground text-sm whitespace-nowrap font-medium hidden sm:block" aria-live="polite" aria-atomic="true">
+            </Button>
+            <span className="text-muted-foreground text-sm whitespace-nowrap font-medium" aria-live="polite" aria-atomic="true">
               Word {currentIndex + 1} / {wordList.length}
-          </span>
-          <Button variant="outline" size="lg" onClick={() => navigateWord('next')} aria-label="Next word" className="w-full sm:flex-1 md:flex-none" disabled={isLoadingGame}>
-              Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
+            </span>
+          </div>
+
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={() => navigateWord('next')} 
+            aria-label="Next word" 
+            className="w-full sm:w-auto order-3"
+            disabled={isLoadingGame}
+          >
+            Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
           </Button>
-          </CardContent>
+        </CardContent>
       </Card>
     </div>
   );
