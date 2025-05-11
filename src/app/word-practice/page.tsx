@@ -51,11 +51,11 @@ export default function WordPracticePage() {
             className="rounded-lg"
             data-ai-hint="letters learning" 
           />
-          <div className="absolute inset-0 bg-black/30"></div> {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent flex flex-col items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60"></div> {/* Darker overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent flex flex-col items-center justify-center p-4">
             <TextSelectIcon className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
             <h1 className="text-4xl font-bold text-gradient-primary-accent mt-2">Word Practice Zone</h1>
-            <p className="text-lg text-white/90 drop-shadow-sm">Master words through various activities.</p> {/* Changed text color for better visibility */}
+            <p className="text-lg text-white drop-shadow-md">Master words through various activities.</p> {/* Ensured text is bright white */}
           </div>
         </div>
       </header>
