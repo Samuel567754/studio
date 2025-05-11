@@ -14,7 +14,7 @@
     --font-size-base: 16px; /* Default base font size */
 
 
-    /* Light Mode - Vibrant & Playful Theme */
+    /* Light Mode - Updated Navbar to use Dark Theme Styles */
     --background: 40 100% 98%; /* Light Cream - Opaque, for elements that should not be glassy */
     --foreground: 210 30% 25%; /* Charcoal Blue */
 
@@ -94,14 +94,14 @@
     --alert-destructive-fg-raw: 0 70% 25%;      /* Darker Coral Red for text */
     --alert-destructive-icon-color-raw: 0 75% 55%;/* Vibrant Coral Red for Icon */
 
-    /* Navbar Gradient & Text Colors - Light Mode */
-    --nav-gradient-from-light: 175 75% 60%; /* Brighter Teal */
-    --nav-gradient-to-light: 195 80% 70%;   /* Lighter Cyan-Teal */
-    --nav-text-light: 210 50% 15%;        /* Darkest Blue for max contrast */
-    --nav-icon-light: 210 45% 25%;        /* Slightly Lighter Dark Blue for icons */
-    --nav-active-indicator-light: 0 0% 100% / 0.25; /* Semi-transparent white for active item background */
-    --nav-active-text-light: 210 50% 10%;   /* Even Darker Blue for active text */
-    --nav-border-light: 185 70% 50% / 0.3;  /* Tealish border with opacity */
+    /* Navbar Gradient & Text Colors - Light Mode (NOW USING DARK MODE STYLES) */
+    --nav-gradient-from-light: 210 40% 15%;  /* Deep Dark Blue (from dark theme) */
+    --nav-gradient-to-light: 185 50% 25%;    /* Darker Tealish Blue (from dark theme) */
+    --nav-text-light: 30 70% 92%;          /* Very Light Off-White/Cream (from dark theme) */
+    --nav-icon-light: 30 60% 88%;          /* Slightly Dimmer Off-White (from dark theme) */
+    --nav-active-indicator-light: 0 0% 100% / 0.1; /* Subtle transparent white (from dark theme) */
+    --nav-active-text-light: 30 80% 95%;     /* Brightest Off-White (from dark theme) */
+    --nav-border-light: 200 40% 30% / 0.3;   /* Bluish border with opacity (from dark theme) */
   }
 
   .dark {
@@ -246,12 +246,12 @@
   }
 
   /* Navbar specific background - using Tailwind's gradient syntax directly */
+  /* Both light and dark mode will now use the same gradient defined by --nav-gradient-from-light and --nav-gradient-to-light (which are now dark theme values) */
   .bg-nav-gradient {
     @apply bg-gradient-to-r from-[hsl(var(--nav-gradient-from-light))] to-[hsl(var(--nav-gradient-to-light))];
   }
-  .dark .bg-nav-gradient {
-    @apply bg-gradient-to-r from-[hsl(var(--nav-gradient-from-dark))] to-[hsl(var(--nav-gradient-to-dark))];
-  }
+  /* .dark .bg-nav-gradient will also use the same values, because its own nav variables are the same */
+
 
   /* Additional global component styles if needed */
   .btn-glow {
@@ -278,14 +278,11 @@
   .shadow-nav-top {
     box-shadow: 0 -4px 12px -1px hsl(var(--nav-border-light) / 0.3), 0 -2px 8px -2px hsl(var(--nav-border-light) / 0.2);
   }
-  .dark .shadow-nav-top {
-     box-shadow: 0 -4px 12px -1px hsl(var(--nav-border-dark) / 0.3), 0 -2px 8px -2px hsl(var(--nav-border-dark) / 0.2);
-  }
+  /* .dark .shadow-nav-top will use the same values for nav-border-light now */
+
    /* Custom bottom shadow for top nav */
   .shadow-nav-bottom {
     box-shadow: 0 4px 12px -1px hsl(var(--nav-border-light) / 0.3), 0 2px 8px -2px hsl(var(--nav-border-light) / 0.2);
   }
-  .dark .shadow-nav-bottom {
-     box-shadow: 0 4px 12px -1px hsl(var(--nav-border-dark) / 0.3), 0 2px 8px -2px hsl(var(--nav-border-dark) / 0.2);
-  }
+  /* .dark .shadow-nav-bottom will use the same values for nav-border-light now */
 }
