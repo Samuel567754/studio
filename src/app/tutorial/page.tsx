@@ -19,7 +19,7 @@ import { useUserProfileStore } from '@/stores/user-profile-store'; // Import use
 const getIconComponent = (iconName?: string): React.ElementType | undefined => {
   if (!iconName) return undefined;
   const icons: { [key: string]: React.ElementType } = {
-    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map
+    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass
   };
   return icons[iconName] || HelpCircle; // Default to HelpCircle if not found
 };
@@ -141,21 +141,22 @@ export default function TutorialPage() {
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
       <header className="text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
-        <div className="relative w-full max-w-sm mx-auto h-40 md:h-48 rounded-lg overflow-hidden shadow-lg">
+        <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
            <Image 
-            src="https://picsum.photos/seed/treasure-map-guide/400/300" 
-            alt="Friendly cartoon character holding a treasure map and pointing the way"
+            src="https://plus.unsplash.com/premium_photo-1722156533662-f58d3e13c07c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NjV8fGFwcCUyMHdhbGslMjB0aHJvdWdofGVufDB8fDB8fHww"
+            alt="Abstract representation of a guided app walkthrough or tutorial"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="treasure map guide character" // Updated hint
+            data-ai-hint="app walkthrough guide" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex flex-col items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60"></div> {/* Dark overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent flex flex-col items-center justify-center p-4">
              <Map className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+             <h1 className="text-4xl font-bold text-gradient-primary-accent mt-3 drop-shadow-md">App Tutorial & Guide</h1>
+             <p className="text-lg text-gray-100 drop-shadow-sm mt-1">Learn how to use ChillLearn AI effectively.</p>
           </div>
         </div>
-        <h1 className="text-4xl font-bold text-gradient-primary-accent mt-3">App Tutorial & Guide</h1>
-        <p className="text-lg text-muted-foreground">Learn how to use ChillLearn AI effectively.</p>
       </header>
 
       <Button onClick={handleLaunchWalkthrough} className="w-full btn-glow mb-8" size="lg" aria-label="Launch interactive app walkthrough">
@@ -240,5 +241,6 @@ export default function TutorialPage() {
     </div>
   );
 }
+
 
 
