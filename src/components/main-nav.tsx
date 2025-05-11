@@ -17,7 +17,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
@@ -173,7 +172,7 @@ export const MainNav: FC = () => {
                 aria-label="Open main navigation menu"
                 aria-expanded={isMobileMenuOpen}
               >
-                <Menu className={cn("h-7 w-7", isMobile ? "text-[hsl(40_20%_90%)]" : "text-foreground")} aria-hidden="true" />
+                <Menu className={cn("h-8 w-8", isMobile ? "text-[hsl(40_20%_90%)]" : "text-foreground")} aria-hidden="true" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className={cn(
@@ -190,7 +189,15 @@ export const MainNav: FC = () => {
                     <h1 className={cn("text-xl font-bold", isMobile ? "text-[hsl(175_70%_55%)]" : "text-primary")}>ChillLearn</h1>
                   </Link>
                 </SheetTitle>
-                {/* The SheetContent component itself renders a close button. No need for an explicit one here. */}
+                 <SheetClose 
+                  className={cn(
+                    "rounded-full p-1.5 opacity-80 ring-offset-background transition-all hover:opacity-100",
+                    isMobile ? "hover:bg-[hsl(210_25%_20%)] text-[hsl(40_20%_90%)]" : "hover:bg-muted/80 text-foreground"
+                  )}
+                  aria-label="Close navigation menu"
+                >
+                  <X className="h-5 w-5" />
+                </SheetClose>
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
