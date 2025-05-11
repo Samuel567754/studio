@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC } from 'react';
@@ -52,7 +53,7 @@ export const MainNav: FC = () => {
   const NavLinkItems: FC<{ isMobileSheet?: boolean }> = ({ isMobileSheet = false }) => (
     <>
       {navLinks.map((link) => {
-        const isActive = pathname === link.href || (pathname.startsWith(link.href) && item.href !== '/');
+        const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/');
         let buttonVariant: "secondary" | "ghost" = isActive ? 'secondary' : 'ghost';
         let buttonClassName = cn(
           "justify-start w-full text-base md:text-sm md:w-auto group transition-colors duration-200 ease-in-out",
@@ -138,17 +139,23 @@ export const MainNav: FC = () => {
     );
   }
 
+  const navBarBaseClasses = "sticky top-0 z-50 w-full bg-nav-gradient shadow-nav-bottom";
+  const navBarLightBorder = "border-[hsl(var(--nav-border-light))]";
+  const navBarDarkBorder = "dark:border-[hsl(var(--nav-border-dark))]";
+  const navBarBorder = isMobile ? navBarDarkBorder : cn(navBarLightBorder, navBarDarkBorder);
+
+
   return (
-    <header className={cn(
-      "sticky top-0 z-50 w-full bg-nav-gradient shadow-nav-bottom border-b border-[hsl(var(--nav-border-light))] dark:border-[hsl(var(--nav-border-dark))]"
-    )}>
+    <header className={cn(navBarBaseClasses, navBarBorder )}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
           <BookOpenText className={cn(
-            "h-8 w-8 transition-colors duration-300 ease-in-out text-[hsl(var(--nav-icon-dark))] dark:text-[hsl(var(--nav-icon-dark))] group-hover:text-accent dark:group-hover:text-accent"
+            "h-8 w-8 transition-colors duration-300 ease-in-out text-[hsl(var(--nav-icon-light))] dark:text-[hsl(var(--nav-icon-dark))] group-hover:text-accent dark:group-hover:text-accent",
+             isMobile && "text-[hsl(var(--nav-icon-dark))]" 
           )} aria-hidden="true" />
           <h1 className={cn(
-            "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-dark))] dark:text-[hsl(var(--nav-text-dark))] group-hover:text-accent dark:group-hover:text-accent"
+            "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-light))] dark:text-[hsl(var(--nav-text-dark))] group-hover:text-accent dark:group-hover:text-accent",
+            isMobile && "text-[hsl(var(--nav-text-dark))]"
           )}>ChillLearn</h1>
         </Link>
 
@@ -173,15 +180,16 @@ export const MainNav: FC = () => {
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "rounded-full aspect-square h-10 w-10 transition-colors duration-200", 
+                  "rounded-full aspect-square h-11 w-11 transition-colors duration-200 focus-visible:ring-0 focus-visible:ring-offset-0", 
                   "text-[hsl(var(--nav-icon-dark))] dark:text-[hsl(var(--nav-icon-dark))]", 
-                  "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 dark:hover:bg-[hsl(var(--nav-active-indicator-dark))]/50",
-                  isMobileMenuOpen && "bg-[hsl(var(--nav-active-indicator-light))] dark:bg-[hsl(var(--nav-active-indicator-dark))]"
+                  "hover:bg-[hsl(var(--nav-active-indicator-dark))]/50 dark:hover:bg-[hsl(var(--nav-active-indicator-dark))]/50",
+                  isMobileMenuOpen && "bg-[hsl(var(--nav-active-indicator-dark))] dark:bg-[hsl(var(--nav-active-indicator-dark))]"
                 )}
                 aria-label="Open main navigation menu"
                 aria-expanded={isMobileMenuOpen}
               >
-                <Menu className={cn("h-6 w-6")} aria-hidden="true" />
+                <Menu className={cn("h-7 w-7 text-[hsl(var(--nav-icon-dark))]", isMobileMenuOpen && "hidden")} aria-hidden="true" />
+                 <X className={cn("h-7 w-7 text-[hsl(var(--nav-icon-dark))]", !isMobileMenuOpen && "hidden")} aria-hidden="true" />
               </Button>
             </SheetTrigger>
             <SheetContent
@@ -199,7 +207,7 @@ export const MainNav: FC = () => {
                     <h1 className={cn("text-xl font-bold text-[hsl(var(--nav-text-dark))]")}>ChillLearn</h1>
                   </Link>
                 </SheetTitle>
-                {/* The default SheetClose from SheetContent will appear here, no need to add another one explicitly */}
+                 {/* SheetClose is automatically rendered by SheetContent if not explicitly placed */}
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
@@ -268,3 +276,4 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+
