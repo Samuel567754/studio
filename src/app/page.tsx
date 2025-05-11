@@ -155,7 +155,7 @@ export default function OfficialHomePage() {
     <div className="space-y-12">
       <header className="relative text-center rounded-xl overflow-hidden shadow-2xl h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex flex-col justify-center items-center mt-8 md:mt-12">
         <Image
-          src="https://images.unsplash.com/photo-1735485410401-53efd6a63e3e?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTQzfHxsZWFybmluZyUyMGFwcHxlbnwwfHwwfHx8MA%3D%3D"
+          src="https://images.unsplash.com/photo-1662967221311-1153979919a6?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTY0fHxsZWFybmluZyUyMGFwcHxlbnwwfHwwfHx8MA%3D%3D"
           alt="Children interacting with colorful letters and learning tools"
           layout="fill"
           objectFit="cover"
