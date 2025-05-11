@@ -11,12 +11,12 @@ export default function TimesTablePracticePage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-md">
           <Image
-            src="https://picsum.photos/seed/multiplication-chart-kids/300/200" 
-            alt="Colorful multiplication chart for kids"
+            src="https://images.unsplash.com/photo-1546833998-877b37c2e5c6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dGltZXMlMjB0YWJsZSUyMG1hdGhzfGVufDB8fDB8fHww" 
+            alt="Chalkboard with multiplication times table written"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="multiplication practice" 
+            data-ai-hint="times table chalkboard" 
           />
            <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
            <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
@@ -30,3 +30,4 @@ export default function TimesTablePracticePage() {
     </div>
   );
 }
+
