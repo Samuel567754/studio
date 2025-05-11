@@ -4,17 +4,17 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4",
+  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 transition-all duration-300 ease-in-out", // Added transition
   {
     variants: {
       variant: {
         default: "bg-background text-foreground border-border [&>svg]:text-foreground",
         destructive:
-          "border-transparent text-[hsl(var(--alert-destructive-fg))] bg-[hsl(var(--alert-destructive-bg))] [&>svg]:text-[hsl(var(--alert-destructive-icon-color))]",
+          "border-transparent text-[hsl(var(--alert-destructive-fg-raw))] bg-gradient-to-br from-[hsl(var(--alert-destructive-bg-start-raw))] to-[hsl(var(--alert-destructive-bg-end-raw))] [&>svg]:text-[hsl(var(--alert-destructive-icon-color-raw))]",
         success:
-          "border-transparent text-[hsl(var(--alert-success-fg))] bg-[hsl(var(--alert-success-bg))] [&>svg]:text-[hsl(var(--alert-success-icon-color))]",
+          "border-transparent text-[hsl(var(--alert-success-fg-raw))] bg-gradient-to-br from-[hsl(var(--alert-success-bg-start-raw))] to-[hsl(var(--alert-success-bg-end-raw))] [&>svg]:text-[hsl(var(--alert-success-icon-color-raw))]",
         info:
-          "border-transparent text-[hsl(var(--alert-info-fg))] bg-[hsl(var(--alert-info-bg))] [&>svg]:text-[hsl(var(--alert-info-icon-color))]",
+          "border-transparent text-[hsl(var(--alert-info-fg-raw))] bg-gradient-to-br from-[hsl(var(--alert-info-bg-start-raw))] to-[hsl(var(--alert-info-bg-end-raw))] [&>svg]:text-[hsl(var(--alert-info-icon-color-raw))]",
       },
     },
     defaultVariants: {

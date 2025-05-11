@@ -63,52 +63,36 @@
     --sidebar-ring: var(--ring); /* Use main ring */
 
     /* Modern Toast Colors - Light Mode */
-    --toast-success-bg-raw: 130 60% 92%;    /* Light Mint Green */
-    --toast-success-fg-raw: 130 60% 20%;    /* Dark Mint Green */
-    --toast-success-border-l-raw: 130 55% 50%; /* Vibrant Mint Green */
+    --toast-success-bg-start-raw: 130 75% 90%; /* Lighter Mint Green */
+    --toast-success-bg-end-raw: 130 65% 82%;   /* Slightly Darker/Saturated Mint Green */
+    --toast-success-fg-raw: 130 60% 20%;     /* Dark Mint Green for text */
+    --toast-success-border-l-raw: 130 50% 55%;/* Vibrant Mint Green for border */
 
-    --toast-info-bg-raw: 200 70% 94%;     /* Light Sky Blue */
-    --toast-info-fg-raw: 200 70% 25%;     /* Dark Sky Blue */
-    --toast-info-border-l-raw: 200 75% 55%;  /* Vibrant Sky Blue */
+    --toast-info-bg-start-raw: 200 80% 92%;    /* Lighter Sky Blue */
+    --toast-info-bg-end-raw: 200 70% 85%;      /* Slightly Darker/Saturated Sky Blue */
+    --toast-info-fg-raw: 200 70% 22%;        /* Dark Sky Blue for text */
+    --toast-info-border-l-raw: 200 70% 60%;   /* Vibrant Sky Blue for border */
     
-    --toast-destructive-bg-raw: 0 70% 95%;  /* Light Coral Pink */
-    --toast-destructive-fg-raw: 0 70% 30%;  /* Dark Coral Red */
-    --toast-destructive-border-l-raw: 0 75% 60%; /* Vibrant Coral Red */
+    --toast-destructive-bg-start-raw: 0 85% 93%; /* Lighter Coral Pink */
+    --toast-destructive-bg-end-raw: 0 75% 88%;   /* Slightly Darker/Saturated Coral Pink */
+    --toast-destructive-fg-raw: 0 70% 28%;     /* Dark Coral Red for text */
+    --toast-destructive-border-l-raw: 0 70% 60%; /* Vibrant Coral Red for border */
 
     /* Modern Alert Colors - Light Mode */
-    --alert-success-bg-raw: 130 60% 92%;   /* Light Mint Green */
-    --alert-success-fg-raw: 130 60% 20%;   /* Dark Mint Green */
-    --alert-success-icon-color-raw: 130 55% 45%; /* Vibrant Mint Green for Icon */
+    --alert-success-bg-start-raw: 130 75% 94%;    /* Very Light Mint Green */
+    --alert-success-bg-end-raw: 130 65% 88%;      /* Light Mint Green */
+    --alert-success-fg-raw: 130 60% 18%;        /* Darker Mint Green for text */
+    --alert-success-icon-color-raw: 130 55% 45%;  /* Vibrant Mint Green for Icon */
 
-    --alert-info-bg-raw: 200 70% 94%;    /* Light Sky Blue */
-    --alert-info-fg-raw: 200 70% 25%;    /* Dark Sky Blue */
-    --alert-info-icon-color-raw: 200 75% 50%; /* Vibrant Sky Blue for Icon */
+    --alert-info-bg-start-raw: 200 85% 95%;     /* Very Light Sky Blue */
+    --alert-info-bg-end-raw: 200 75% 89%;       /* Light Sky Blue */
+    --alert-info-fg-raw: 200 70% 20%;         /* Darker Sky Blue for text */
+    --alert-info-icon-color-raw: 200 75% 50%;   /* Vibrant Sky Blue for Icon */
     
-    --alert-destructive-bg-raw: 0 70% 95%; /* Light Coral Pink */
-    --alert-destructive-fg-raw: 0 70% 30%; /* Dark Coral Red */
-    --alert-destructive-icon-color-raw: 0 75% 55%; /* Vibrant Coral Red for Icon */
-
-
-    /* Convert raw HSL to usable CSS vars */
-    --toast-success-bg: hsl(var(--toast-success-bg-raw));
-    --toast-success-fg: hsl(var(--toast-success-fg-raw));
-    --toast-success-border-l: hsl(var(--toast-success-border-l-raw));
-    --toast-info-bg: hsl(var(--toast-info-bg-raw));
-    --toast-info-fg: hsl(var(--toast-info-fg-raw));
-    --toast-info-border-l: hsl(var(--toast-info-border-l-raw));
-    --toast-destructive-bg: hsl(var(--toast-destructive-bg-raw));
-    --toast-destructive-fg: hsl(var(--toast-destructive-fg-raw));
-    --toast-destructive-border-l: hsl(var(--toast-destructive-border-l-raw));
-
-    --alert-success-bg: hsl(var(--alert-success-bg-raw));
-    --alert-success-fg: hsl(var(--alert-success-fg-raw));
-    --alert-success-icon-color: hsl(var(--alert-success-icon-color-raw));
-    --alert-info-bg: hsl(var(--alert-info-bg-raw));
-    --alert-info-fg: hsl(var(--alert-info-fg-raw));
-    --alert-info-icon-color: hsl(var(--alert-info-icon-color-raw));
-    --alert-destructive-bg: hsl(var(--alert-destructive-bg-raw));
-    --alert-destructive-fg: hsl(var(--alert-destructive-fg-raw));
-    --alert-destructive-icon-color: hsl(var(--alert-destructive-icon-color-raw));
+    --alert-destructive-bg-start-raw: 0 90% 95%;  /* Very Light Coral Pink */
+    --alert-destructive-bg-end-raw: 0 80% 90%;    /* Light Coral Pink */
+    --alert-destructive-fg-raw: 0 70% 25%;      /* Darker Coral Red for text */
+    --alert-destructive-icon-color-raw: 0 75% 55%;/* Vibrant Coral Red for Icon */
   }
 
   .dark {
@@ -159,30 +143,36 @@
     --sidebar-ring: var(--ring);
 
     /* Modern Toast Colors - Dark Mode */
-    --toast-success-bg-raw: 130 40% 25%;    /* Darker Mint Green */
-    --toast-success-fg-raw: 130 70% 85%;    /* Light Mint for Text */
-    --toast-success-border-l-raw: 130 60% 60%; /* Vibrant Mint Green Accent */
+    --toast-success-bg-start-raw: 130 45% 28%;    /* Darker Mint Green */
+    --toast-success-bg-end-raw: 130 40% 22%;      /* Even Darker Mint Green */
+    --toast-success-fg-raw: 130 75% 88%;        /* Light Mint for Text */
+    --toast-success-border-l-raw: 130 60% 60%;   /* Vibrant Mint Green Accent */
 
-    --toast-info-bg-raw: 200 45% 28%;     /* Darker Sky Blue */
-    --toast-info-fg-raw: 200 75% 88%;     /* Light Sky Blue for Text */
-    --toast-info-border-l-raw: 200 70% 65%;  /* Vibrant Sky Blue Accent */
+    --toast-info-bg-start-raw: 200 50% 30%;     /* Darker Sky Blue */
+    --toast-info-bg-end-raw: 200 45% 24%;       /* Even Darker Sky Blue */
+    --toast-info-fg-raw: 200 80% 90%;         /* Light Sky Blue for Text */
+    --toast-info-border-l-raw: 200 70% 65%;      /* Vibrant Sky Blue Accent */
     
-    --toast-destructive-bg-raw: 0 50% 30%;   /* Darker Coral Red */
-    --toast-destructive-fg-raw: 0 70% 90%;   /* Light Coral Pink for Text */
+    --toast-destructive-bg-start-raw: 0 55% 33%;   /* Darker Coral Red */
+    --toast-destructive-bg-end-raw: 0 50% 26%;     /* Even Darker Coral Red */
+    --toast-destructive-fg-raw: 0 75% 92%;       /* Light Coral Pink for Text */
     --toast-destructive-border-l-raw: 0 70% 60%;  /* Vibrant Coral Red Accent */
 
     /* Modern Alert Colors - Dark Mode */
-    --alert-success-bg-raw: 130 40% 25%;    /* Darker Mint Green */
-    --alert-success-fg-raw: 130 70% 85%;    /* Light Mint for Text */
-    --alert-success-icon-color-raw: 130 60% 60%; /* Vibrant Mint Green for Icon */
+    --alert-success-bg-start-raw: 130 45% 25%;    /* Darker Mint Green */
+    --alert-success-bg-end-raw: 130 40% 19%;      /* Even Darker Mint Green */
+    --alert-success-fg-raw: 130 75% 85%;        /* Light Mint for Text */
+    --alert-success-icon-color-raw: 130 60% 65%;  /* Vibrant Mint Green for Icon */
 
-    --alert-info-bg-raw: 200 45% 28%;     /* Darker Sky Blue */
-    --alert-info-fg-raw: 200 75% 88%;     /* Light Sky Blue for Text */
-    --alert-info-icon-color-raw: 200 70% 65%;  /* Vibrant Sky Blue for Icon */
+    --alert-info-bg-start-raw: 200 50% 28%;     /* Darker Sky Blue */
+    --alert-info-bg-end-raw: 200 45% 22%;       /* Even Darker Sky Blue */
+    --alert-info-fg-raw: 200 80% 88%;         /* Light Sky Blue for Text */
+    --alert-info-icon-color-raw: 200 70% 68%;   /* Vibrant Sky Blue for Icon */
     
-    --alert-destructive-bg-raw: 0 50% 30%;   /* Darker Coral Red */
-    --alert-destructive-fg-raw: 0 70% 90%;   /* Light Coral Pink for Text */
-    --alert-destructive-icon-color-raw: 0 70% 60%;  /* Vibrant Coral Red for Icon */
+    --alert-destructive-bg-start-raw: 0 55% 30%;   /* Darker Coral Red */
+    --alert-destructive-bg-end-raw: 0 50% 24%;     /* Even Darker Coral Red */
+    --alert-destructive-fg-raw: 0 75% 90%;       /* Light Coral Pink for Text */
+    --alert-destructive-icon-color-raw: 0 70% 62%;  /* Vibrant Coral Red for Icon */
   }
 }
 
@@ -211,11 +201,11 @@
     content: "";
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.45); /* Adjusted light mode overlay opacity */
+    background-color: rgba(0, 0, 0, 0.55); /* Adjusted light mode overlay opacity */
     z-index: -1; /* On top of image, behind content */
   }
   .dark body::after {
-    background-color: rgba(0, 0, 0, 0.75); /* Adjusted dark mode overlay opacity */
+    background-color: rgba(0, 0, 0, 0.80); /* Adjusted dark mode overlay opacity */
   }
 
 
