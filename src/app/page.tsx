@@ -5,7 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, BookOpenText, Sigma, Sparkles, Puzzle, FileType2 as TextSelectIcon } from 'lucide-react';
+import { ArrowRight, BookOpenText, Sigma, Sparkles, Puzzle, FileType2 as TextSelectIcon, Volume2, Play, Pause, Info, XCircle } from 'lucide-react';
+import { speakText, playErrorSound, playNotificationSound } from '@/lib/audio';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback } from 'react';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 const mainSections = [
   {
@@ -44,11 +49,113 @@ const mainSections = [
 ];
 
 export default function OfficialHomePage() {
+  const { soundEffectsEnabled } = useAppSettingsStore();
+  const { toast } = useToast();
+  const { username } = useUserProfileStore();
+  const [isMounted, setIsMounted] = useState(false);
+  const [isHeroAudioPlaying, setIsHeroAudioPlaying] = useState(false);
+  const [currentHeroUtterance, setCurrentHeroUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [isExploreAudioPlaying, setIsExploreAudioPlaying] = useState(false);
+  const [currentExploreUtterance, setCurrentExploreUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => { // Cleanup speech on unmount
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleHeroSpeechEnd = useCallback(() => {
+    setIsHeroAudioPlaying(false);
+    setCurrentHeroUtterance(null);
+  }, []);
+
+  const handleHeroSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
+    if (event.error !== 'interrupted' && event.error !== 'canceled') {
+      console.error("Hero speech error:", event.error);
+      toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, description: "Could not play welcome audio." });
+      playErrorSound();
+    }
+    handleHeroSpeechEnd();
+  }, [toast, handleHeroSpeechEnd]);
+
+  const handleExploreSpeechEnd = useCallback(() => {
+    setIsExploreAudioPlaying(false);
+    setCurrentExploreUtterance(null);
+  }, []);
+  
+  const handleExploreSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
+    if (event.error !== 'interrupted' && event.error !== 'canceled') {
+      console.error("Explore speech error:", event.error);
+      toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, description: "Could not play explore audio." });
+      playErrorSound();
+    }
+    handleExploreSpeechEnd();
+  }, [toast, handleExploreSpeechEnd]);
+
+  const playAudio = useCallback((
+    text: string, 
+    isPlayingStateSetter: React.Dispatch<React.SetStateAction<boolean>>, 
+    utteranceStateSetter: React.Dispatch<React.SetStateAction<SpeechSynthesisUtterance | null>>,
+    onEndCallback: () => void,
+    onErrorCallback: (event: SpeechSynthesisErrorEvent) => void,
+    currentUtterance: SpeechSynthesisUtterance | null
+  ) => {
+    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) {
+      toast({ variant: "info", title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Audio Disabled</div>, description: "Sound effects are turned off in settings." });
+      return;
+    }
+    if (currentUtterance) {
+      window.speechSynthesis.cancel();
+      onEndCallback(); // Reset state if an utterance was active
+    }
+    const newUtterance = speakText(text, undefined, onEndCallback, onErrorCallback);
+    if (newUtterance) {
+      utteranceStateSetter(newUtterance);
+      isPlayingStateSetter(true);
+    } else {
+      onEndCallback();
+    }
+  }, [soundEffectsEnabled, toast]);
+
+  const toggleHeroSpeech = () => {
+    const text = `Welcome to ChillLearn${username ? `, ${username}` : ''}. Your fun and interactive partner for mastering words, practicing spelling, enjoying AI-powered reading, and exploring the world of math!`;
+    if (currentHeroUtterance && isHeroAudioPlaying) {
+      window.speechSynthesis.cancel();
+      handleHeroSpeechEnd();
+    } else {
+      playAudio(text, setIsHeroAudioPlaying, setCurrentHeroUtterance, handleHeroSpeechEnd, handleHeroSpeechError, currentHeroUtterance);
+    }
+    playNotificationSound();
+  };
+  
+  const toggleExploreSpeech = () => {
+    const text = `Ready to Explore More? Check out your Profile to see your progress, visit the Tutorial for a detailed guide, or customize your experience in Settings.`;
+    if (currentExploreUtterance && isExploreAudioPlaying) {
+      window.speechSynthesis.cancel();
+      handleExploreSpeechEnd();
+    } else {
+      playAudio(text, setIsExploreAudioPlaying, setCurrentExploreUtterance, handleExploreSpeechEnd, handleExploreSpeechError, currentExploreUtterance);
+    }
+    playNotificationSound();
+  };
+
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Sparkles className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+
   return (
     <div className="space-y-12">
-      <header className="relative text-center rounded-xl overflow-hidden shadow-2xl h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex flex-col justify-center items-center mt-8">
+      <header className="relative text-center rounded-xl overflow-hidden shadow-2xl h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex flex-col justify-center items-center mt-8 md:mt-12">
         <Image
-          src="https://plus.unsplash.com/premium_photo-1722156533656-b22cbcf1c82e?w=1200&h=800&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzd8fGxlYXJuaW5nJTIwYXBwfGVufDB8fDB8fHww"
+          src="https://images.unsplash.com/photo-1735485410401-53efd6a63e3e?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTQzfHxsZWFybmluZyUyMGFwcHxlbnwwfHwwfHx8MA%3D%3D"
           alt="Children interacting with colorful letters and learning tools"
           layout="fill"
           objectFit="cover"
@@ -58,9 +165,16 @@ export default function OfficialHomePage() {
         />
         <div className="absolute inset-0 bg-black/60" /> 
         <div className="relative z-10 container mx-auto px-4 py-10 text-white">
-          <BookOpenText className="mx-auto h-16 w-16 md:h-20 md:w-20 text-white mb-4 animate-in fade-in-0 zoom-in-50 duration-700 ease-out" />
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <BookOpenText className="h-16 w-16 md:h-20 md:w-20 text-white animate-in fade-in-0 zoom-in-50 duration-700 ease-out" />
+            {soundEffectsEnabled && (
+                <Button onClick={toggleHeroSpeech} variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full h-12 w-12" aria-label={isHeroAudioPlaying ? "Stop welcome message" : "Play welcome message"}>
+                    {isHeroAudioPlaying ? <Pause className="h-7 w-7" /> : <Volume2 className="h-7 w-7" />}
+                </Button>
+            )}
+          </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            Welcome to <span className="text-gradient-primary-accent">ChillLearn</span>
+            Welcome to <span className="text-gradient-primary-accent">ChillLearn</span>{username ? `, ${username}!` : '!'}
           </h1>
           <p className="text-lg md:text-xl text-gray-200 max-w-2xl mx-auto mb-10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 delay-200">
             Your fun and interactive partner for mastering words, practicing spelling, enjoying AI-powered reading, and exploring the world of math!
@@ -125,7 +239,14 @@ export default function OfficialHomePage() {
          <div className="relative z-10 container mx-auto px-4">
             <Card className="max-w-2xl mx-auto p-6 md:p-10 shadow-xl bg-card/80 dark:bg-card/70 border border-primary/20">
                 <CardHeader>
-                    <CardTitle className="text-3xl md:text-4xl font-semibold text-gradient-primary-accent mb-2">Ready to Explore More?</CardTitle>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <CardTitle className="text-3xl md:text-4xl font-semibold text-gradient-primary-accent">Ready to Explore More?</CardTitle>
+                     {soundEffectsEnabled && (
+                        <Button onClick={toggleExploreSpeech} variant="ghost" size="icon" className="text-gray-200 dark:text-gray-200 hover:bg-white/10 rounded-full h-10 w-10" aria-label={isExploreAudioPlaying ? "Stop explore message" : "Play explore message"}>
+                            {isExploreAudioPlaying ? <Pause className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+                        </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <p className="text-lg md:text-xl text-gray-200 dark:text-gray-200">
