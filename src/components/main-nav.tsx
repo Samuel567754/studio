@@ -17,6 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Added AlertDialogTrigger
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
@@ -118,7 +119,7 @@ export const MainNav: FC = () => {
                 <div className="h-7 w-28 bg-muted rounded-md animate-pulse hidden sm:block"></div>
             </div>
             <div className="flex items-center gap-2 md:hidden">
-                 <div className="h-9 w-9 bg-muted rounded-full animate-pulse"></div>
+                 <div className="h-10 w-10 bg-muted rounded-full animate-pulse"></div>
             </div>
             <div className="hidden md:flex items-center gap-1">
                 {[...Array(navLinks.length)].map((_, i) => (
@@ -167,12 +168,12 @@ export const MainNav: FC = () => {
                   "rounded-full aspect-square h-10 w-10 transition-colors duration-200",
                   isMobileMenuOpen
                     ? (isMobile ? "bg-[hsl(20_90%_65%)]/20 text-[hsl(20_90%_65%)]" : "bg-accent/20 text-accent")
-                    : (isMobile ? "hover:bg-[hsl(210_25%_20%)]" : "hover:bg-accent/10")
+                    : (isMobile ? "hover:bg-[hsl(210_25%_20%)] text-white" : "hover:bg-accent/10 text-foreground")
                 )}
                 aria-label="Open main navigation menu"
                 aria-expanded={isMobileMenuOpen}
               >
-                <Menu className={cn("h-8 w-8", isMobile ? "text-[hsl(40_20%_90%)]" : "text-foreground")} aria-hidden="true" />
+                <Menu className={cn("h-6 w-6")} aria-hidden="true" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className={cn(
