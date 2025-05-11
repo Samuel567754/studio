@@ -9,7 +9,7 @@ export default function AiWordProblemPage() {
   return (
     <div className="space-y-8">
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
-        <div className="relative w-full max-w-xs mx-auto h-32 md:h-40 rounded-lg overflow-hidden shadow-md">
+        <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-md">
           <Image
             src="https://images.unsplash.com/photo-1722962496035-d6c08f9085be?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fGNoaWxkcmVuJTIwbWF0aGVtYXRpY3N8ZW58MHx8MHx8fDA%3D" 
             alt="Children collaborating on a math word problem"
