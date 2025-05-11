@@ -14,7 +14,7 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award } from 'lucide-react'; // Updated icon
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award } from 'lucide-react'; 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -133,24 +133,36 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
-      <header className="text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
-        <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-primary/30">
-            <Image
-                src="https://picsum.photos/seed/child-award-avatar/200" // More relevant image
-                alt={username ? `${username}'s profile avatar with a learning award theme` : "User profile avatar with a learning award theme"}
-                layout="fill"
-                objectFit="cover"
-                className="rounded-full"
-                data-ai-hint="child award avatar" // Updated hint
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent flex items-end justify-center p-2">
-                 <Award className="h-10 w-10 text-white/80 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
-            </div>
+      <header className="relative text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out rounded-xl overflow-hidden shadow-2xl p-8 md:p-12 min-h-[300px] flex flex-col justify-center items-center">
+        <Image
+          src="https://picsum.photos/seed/profile-banner-stars/1200/400"
+          alt="Abstract background with stars and educational motifs for profile header"
+          layout="fill"
+          objectFit="cover"
+          className="brightness-50"
+          data-ai-hint="stars education"
+          priority
+        />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="relative z-10 text-white">
+          <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-primary/50 mb-4">
+              <Image
+                  src="https://picsum.photos/seed/child-award-avatar/200" 
+                  alt={username ? `${username}'s profile avatar with a learning award theme` : "User profile avatar with a learning award theme"}
+                  layout="fill"
+                  objectFit="cover"
+                  className="rounded-full"
+                  data-ai-hint="child award avatar" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end justify-center p-2">
+                   <Award className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+              </div>
+          </div>
+          <h1 className="text-4xl font-bold text-gradient-primary-accent drop-shadow-md">
+            {username ? `${username}'s Learning Profile` : "Your Learning Profile"}
+          </h1>
+          <p className="text-lg text-gray-200 mt-2 drop-shadow-sm">A snapshot of your progress and preferences.</p>
         </div>
-        <h1 className="text-4xl font-bold text-gradient-primary-accent">
-          {username ? `${username}'s Learning Profile` : "Your Learning Profile"}
-        </h1>
-        <p className="text-lg text-muted-foreground">A snapshot of your progress and preferences.</p>
       </header>
 
       <Card className="shadow-xl border-accent/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
@@ -325,4 +337,5 @@ export default function ProfilePage() {
 
 
     
+
 
