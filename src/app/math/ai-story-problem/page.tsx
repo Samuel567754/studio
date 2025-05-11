@@ -3,7 +3,7 @@
 
 import Image from 'next/image';
 import { AiStoryProblemGameUI } from '@/components/math/ai-story-problem-game-ui';
-import { BookOpenText, MessageSquarePlus } from 'lucide-react'; // Updated icon
+import { BookOpenText, MessageSquarePlus } from 'lucide-react'; 
 
 export default function AiStoryProblemPage() {
   return (
@@ -11,12 +11,12 @@ export default function AiStoryProblemPage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-xs mx-auto h-32 md:h-40 rounded-lg overflow-hidden shadow-md">
           <Image
-            src="https://picsum.photos/seed/math-fairytale/300/200" // More relevant image
-            alt="Fairytale book with math symbols floating out"
+            src="https://images.unsplash.com/photo-1685358279653-868c0b99fe6c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGNoaWxkcmVuJTIwbWF0aGVtYXRpY3N8ZW58MHx8MHx8fDA%3D" 
+            alt="Child happily engaged with math story elements"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="fairytale book math" // Updated hint
+            data-ai-hint="child math" 
           />
            <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent flex flex-col items-center justify-center p-2">
              <MessageSquarePlus className="h-10 w-10 md:h-12 md:w-12 text-primary drop-shadow-lg" aria-hidden="true" />
@@ -30,4 +30,3 @@ export default function AiStoryProblemPage() {
     </div>
   );
 }
-
