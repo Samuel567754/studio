@@ -1,5 +1,5 @@
 
-import type { Puzzle, BookOpenCheck, TextSelect, Map } from 'lucide-react'; // Example, adjust as needed
+import type { Puzzle, BookOpenCheck, TextSelect, Map, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Compass, FileType2 as TextSelectIconLucide } from 'lucide-react'; // Example, adjust as needed
 
 export interface TutorialStep {
   id: string;
@@ -8,6 +8,11 @@ export interface TutorialStep {
   ariaLabel: string;
   icon?: React.ElementType | string; // Allow string for data, map to component later
   targetElementSelector?: string; // For interactive walkthrough targeting
+  imageSrc?: string;
+  imageAlt?: string;
+  aiHint?: string;
+  linkHref?: string;
+  linkText?: string;
 }
 
 export const tutorialStepsData: TutorialStep[] = [
@@ -17,47 +22,75 @@ export const tutorialStepsData: TutorialStep[] = [
     content: "This guide will walk you through the main features of the ChillLearn application, helping you make the most of your learning experience. Let's get started! You can also launch an interactive walkthrough using the button above.",
     ariaLabel: 'Welcome section introduction',
     icon: "HelpCircle", 
-    targetElementSelector: '#main-header', 
+    targetElementSelector: '#main-header',
+    imageSrc: "https://images.unsplash.com/photo-1662967221311-1153979919a6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTY0fHxsZWFybmluZyUyMGFwcHxlbnwwfHwwfHx8MA%3D%3D",
+    imageAlt: "Children interacting with colorful learning tools",
+    aiHint: "learning app children",
   },
   {
     id: 'word-practice-hub',
-    title: () => "Word Practice Zone (Your Literacy Hub - '/word-practice')",
-    content: "The 'Word Practice' page (found at /word-practice) is your central hub for all word-related activities.\n\nFrom here, you can access:\n- Learn New Words: Get AI suggestions, set your reading level, and build your crucial practice list.\n- Spelling Practice: Master words from your list with interactive exercises.\n- Identify Words: Test your recognition by choosing the correct word from options.\n- Reading Adventures: Read AI-generated stories featuring your practice words.",
+    title: () => "Word Practice Zone (Your Literacy Hub)",
+    content: "The 'Word Practice' page is your central hub for all word-related activities.\n\nFrom here, you can access:\n- Learn New Words: Get AI suggestions, set your reading level, and build your crucial practice list.\n- Spelling Practice: Master words from your list with interactive exercises.\n- Identify Words: Test your recognition by choosing the correct word from options.\n- Reading Adventures: Read AI-generated stories featuring your practice words.",
     ariaLabel: "Explanation of the Word Practice Zone, linking to Learn, Spell, Identify, and Read sections.",
-    icon: "FileType2", // Mapped to TextSelectIcon
+    icon: "FileType2", 
     targetElementSelector: '[href="/word-practice"]',
+    imageSrc: "https://plus.unsplash.com/premium_photo-1683749808835-6f8f186a903e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzN8fHdvcmQlMjBwcmFjdGljZXxlbnwwfHwwfHx8MA%3D%3D",
+    imageAlt: "Colorful letters and learning tools for word practice",
+    aiHint: "children letters learning",
+    linkHref: "/word-practice",
+    linkText: "Go to Word Practice Zone"
   },
   {
     id: 'ai-games',
-    title: () => 'AI Word Games (Interactive Fun - /ai-games)',
+    title: () => 'AI Word Games (Interactive Fun)',
     content: "Visit the 'AI Games' section for more engaging ways to practice your vocabulary.\n\n- Fill in the Blank: Read an AI-generated sentence and choose the correct word to complete it.\n- Word Definition Match: Test your understanding by matching words to their AI-generated definitions.",
     ariaLabel: "Overview of the AI Word Games section, featuring Fill in the Blank and Definition Match.",
     icon: "Puzzle", 
     targetElementSelector: '[href="/ai-games"]',
+    imageSrc: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8YWl8ZW58MHx8MHx8fDA%3D",
+    imageAlt: "Abstract AI patterns representing word games",
+    aiHint: "AI games abstract",
+    linkHref: "/ai-games",
+    linkText: "Play AI Word Games"
   },
   {
     id: 'math',
-    title: () => 'Math Zone (Explore Numeracy - /math)',
+    title: () => 'Math Zone (Explore Numeracy)',
     content: "The 'Math Zone' is your hub for various math activities:\n\n- AI Word Problems & Story Problems: Solve math challenges created by AI.\n- Arithmetic Games: Tackle addition, subtraction, multiplication, and division.\n- Times Table Practice: Master your multiplication facts.\n- Number Comparison & Sequencing: Test your number sense.\nMany games feature audio read-aloud and voice input options!",
     ariaLabel: "Overview of the Math Zone and its various game sections.",
     icon: "Sigma",
     targetElementSelector: '[href="/math"]',
+    imageSrc: "https://images.unsplash.com/photo-1718306201865-cae4a08311fe?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzR8fGNoaWxkcmVuJTIwbWF0aGVtYXRpY3MlMjBiYWNrZ3JvdW5kfGVufDB8fDB8fHww",
+    imageAlt: "Abstract math background with numbers and shapes",
+    aiHint: "math background",
+    linkHref: "/math",
+    linkText: "Explore Math Zone"
   },
   {
     id: 'profile',
-    title: () => 'Profile Page (Track Your Progress - /profile)',
+    title: () => 'Profile Page (Track Your Progress)',
     content: "Visit your 'Profile' page for a snapshot of your learning journey.\nHere you'll find:\n- Your name and favorite topics (editable!).\n- Statistics on practice words and mastered words.\n- Your current learning preferences.",
     ariaLabel: "Overview of the Profile page.",
     icon: "User",
     targetElementSelector: '[href="/profile"]',
+    imageSrc: "https://images.unsplash.com/photo-1731877818770-820faabe2d4c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTIyfHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D",
+    imageAlt: "User profile abstract background",
+    aiHint: "abstract pattern profile",
+    linkHref: "/profile",
+    linkText: "View Your Profile"
   },
   {
     id: 'settings',
-    title: () => 'Settings Page (Customize Your App - /settings)',
+    title: () => 'Settings Page (Customize Your App)',
     content: "Tailor the ChillLearn app on the 'Settings' page.\nAdjust:\n- Theme: Light, dark, or system default.\n- Font: Family and size.\n- Audio: Sound effects, speech voice, rate, and pitch.",
     ariaLabel: "Details on the Settings page.",
-    icon: "SettingsIcon", // This might need to be SlidersHorizontal for better theming
+    icon: "SettingsIcon",
     targetElementSelector: '[href="/settings"]',
+    imageSrc: "https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D",
+    imageAlt: "Settings page abstract background",
+    aiHint: "app background settings",
+    linkHref: "/settings",
+    linkText: "Go to Settings"
   },
   {
     id: 'navigation',
@@ -65,16 +98,64 @@ export const tutorialStepsData: TutorialStep[] = [
     content: "Getting around is easy:\n- Main Homepage ('/'): Your dashboard for quick access to all learning areas (Word Practice, AI Games, Math Zone).\n- Desktop/Tablet: Use the navigation links at the top.\n- Mobile: A bottom navigation bar and a Quick Link FAB (Floating Action Button) provide fast access.\n- Quick Learn Button: Takes you directly to the 'Learn New Words' section within 'Word Practice'.",
     ariaLabel: "How to navigate the application on different devices.",
     icon: "Compass",
-    targetElementSelector: '[data-tour-id="main-navigation"]', // Assuming main-nav has this
+    targetElementSelector: '[data-tour-id="main-navigation"]',
+    imageSrc: "https://plus.unsplash.com/premium_photo-1722156533662-f58d3e13c07c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NjV8fGFwcCUyMHdhbGslMjB0aHJvdWdofGVufDB8fDB8fHww",
+    imageAlt: "Abstract representation of app navigation",
+    aiHint: "app walkthrough guide",
+    linkHref: "/",
+    linkText: "Go to Homepage"
   },
 ];
 
+// walkthroughModalSteps can also be updated similarly if needed for consistency,
+// but the primary request is for the main tutorial guide page.
 export const walkthroughModalSteps: TutorialStep[] = [
- { id: 'intro-modal', title: (username) => username ? `Hi ${username}, Welcome!` : 'Welcome to ChillLearn!', content: "Let's quickly see where everything is. This tour will highlight key sections.", ariaLabel: 'Modal: Introduction', icon: "Smile", targetElementSelector: 'body' },
-  { id: 'home-modal', title: () => "Homepage", content: "This is your main dashboard. From here, you can jump to any learning activity zone like Word Practice, AI Games, or the Math Zone.", ariaLabel: 'Modal: Homepage', icon: "HomeIcon", targetElementSelector: '[data-tour-id="main-content-area"]' },
-  { id: 'word-practice-modal', title: () => "Word Practice Zone", content: "Go to 'Word Practice' (from the top or bottom nav) to learn new words, practice spelling, identify words, and read stories. Remember to visit 'Learn New Words' within this zone first to build your practice list!", ariaLabel: 'Modal: Word Practice Zone', icon: "FileType2", targetElementSelector: '[href="/word-practice"]' },
-  { id: 'ai-math-modal', title: () => "AI Games & Math Zone", content: "Explore 'AI Games' for fun vocabulary challenges and the 'Math Zone' for various numerical activities. These use words from your practice list where applicable.", ariaLabel: 'Modal: AI Games and Math Zone', icon: "Puzzle", targetElementSelector: '[href="/ai-games"]' }, 
-  { id: 'profile-settings-modal', title: () => "Profile & Settings", content: "Check your 'Profile' to see progress and update your name/topics. In 'Settings', you can change the app's look and sound.", ariaLabel: 'Modal: Profile and Settings', icon: "User",targetElementSelector: '[href="/profile"]'},
-  { id: 'finish-modal', title: () => "You're Ready!", content: "That's the basics! Explore and have fun learning. You can find this full guide on the 'Guide' page if you need a refresher.", ariaLabel: 'Modal: End of tour', icon: "CheckCircle2", targetElementSelector: 'body' }
+ { 
+    id: 'intro-modal', 
+    title: (username) => username ? `Hi ${username}, Welcome!` : 'Welcome to ChillLearn!', 
+    content: "Let's quickly see where everything is. This tour will highlight key sections.", 
+    ariaLabel: 'Modal: Introduction', 
+    icon: "Smile", 
+    targetElementSelector: 'body' 
+  },
+  { 
+    id: 'home-modal', 
+    title: () => "Homepage", 
+    content: "This is your main dashboard. From here, you can jump to any learning activity zone like Word Practice, AI Games, or the Math Zone.", 
+    ariaLabel: 'Modal: Homepage', 
+    icon: "HomeIcon", 
+    targetElementSelector: '[data-tour-id="main-content-area"]' 
+  },
+  { 
+    id: 'word-practice-modal', 
+    title: () => "Word Practice Zone", 
+    content: "Go to 'Word Practice' (from the top or bottom nav) to learn new words, practice spelling, identify words, and read stories. Remember to visit 'Learn New Words' within this zone first to build your practice list!", 
+    ariaLabel: 'Modal: Word Practice Zone', 
+    icon: "FileType2", 
+    targetElementSelector: '[href="/word-practice"]' 
+  },
+  { 
+    id: 'ai-math-modal', 
+    title: () => "AI Games & Math Zone", 
+    content: "Explore 'AI Games' for fun vocabulary challenges and the 'Math Zone' for various numerical activities. These use words from your practice list where applicable.", 
+    ariaLabel: 'Modal: AI Games and Math Zone', 
+    icon: "Puzzle", 
+    targetElementSelector: '[href="/ai-games"]' 
+  }, 
+  { 
+    id: 'profile-settings-modal', 
+    title: () => "Profile & Settings", 
+    content: "Check your 'Profile' to see progress and update your name/topics. In 'Settings', you can change the app's look and sound.", 
+    ariaLabel: 'Modal: Profile and Settings', 
+    icon: "User",
+    targetElementSelector: '[href="/profile"]'
+  },
+  { 
+    id: 'finish-modal', 
+    title: () => "You're Ready!", 
+    content: "That's the basics! Explore and have fun learning. You can find this full guide on the 'Guide' page if you need a refresher.", 
+    ariaLabel: 'Modal: End of tour', 
+    icon: "CheckCircle2", 
+    targetElementSelector: 'body' 
+  }
 ];
-

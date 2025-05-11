@@ -3,9 +3,10 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass, Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, Map, FileType2 as TextSelectIcon } from 'lucide-react'; 
+import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass, Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, Map, FileType2 as TextSelectIconLucide, ArrowRight } from 'lucide-react'; 
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { cn } from '@/lib/utils';
@@ -19,7 +20,7 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 const getIconComponent = (iconName?: string): React.ElementType | undefined => {
   if (!iconName) return undefined;
   const icons: { [key: string]: React.ElementType } = {
-    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon 
+    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIconLucide 
   };
   return icons[iconName] || HelpCircle; 
 };
@@ -230,10 +231,29 @@ export default function TutorialPage() {
                 )}
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {section.imageSrc && (
+                <div className="relative w-full h-48 md:h-56 rounded-lg overflow-hidden shadow-md my-3">
+                  <Image
+                    src={section.imageSrc}
+                    alt={section.imageAlt || sectionTitle}
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-lg"
+                    data-ai-hint={section.aiHint || "tutorial image"}
+                  />
+                </div>
+              )}
               <CardDescription className="text-base text-foreground/90 dark:text-foreground/80 whitespace-pre-line leading-relaxed" aria-label={section.ariaLabel}>
                 {section.content}
               </CardDescription>
+              {section.linkHref && section.linkText && (
+                <Button asChild variant="outline" className="mt-3 w-full sm:w-auto">
+                  <Link href={section.linkHref}>
+                    {section.linkText} <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         );
@@ -241,4 +261,3 @@ export default function TutorialPage() {
     </div>
   );
 }
-
