@@ -48,12 +48,12 @@ export default function OfficialHomePage() {
     <div className="space-y-12">
       <header className="relative text-center rounded-xl overflow-hidden shadow-2xl h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex flex-col justify-center items-center mt-8">
         <Image
-          src="https://plus.unsplash.com/premium_photo-1683749808835-6f8f186a903e?w=1200&h=800&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzN8fHdvcmQlMjBwcmFjdGljZXxlbnwwfHwwfHx8MA%3D%3D"
+          src="https://plus.unsplash.com/premium_photo-1722156533656-b22cbcf1c82e?w=1200&h=800&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzd8fGxlYXJuaW5nJTIwYXBwfGVufDB8fDB8fHww"
           alt="Children interacting with colorful letters and learning tools"
           layout="fill"
           objectFit="cover"
           className="brightness-50" 
-          data-ai-hint="children letters learning"
+          data-ai-hint="learning app children"
           priority
         />
         <div className="absolute inset-0 bg-black/60" /> 
