@@ -62,31 +62,32 @@
     --sidebar-border: 210 20% 85%; /* Slightly darker than main border */
     --sidebar-ring: var(--ring); /* Use main ring */
 
-    /* Duolingo-inspired Toast Colors - Light Mode */
-    --toast-success-bg-raw: 130 55% 50%; /* Clear Positive Green */
-    --toast-success-fg-raw: 0 0% 100%;   /* White */
-    --toast-success-border-l-raw: 130 55% 40%; /* Slightly Darker Green */
+    /* Modern Toast Colors - Light Mode */
+    --toast-success-bg-raw: 130 60% 92%;    /* Light Mint Green */
+    --toast-success-fg-raw: 130 60% 20%;    /* Dark Mint Green */
+    --toast-success-border-l-raw: 130 55% 50%; /* Vibrant Mint Green */
 
-    --toast-info-bg-raw: 205 80% 55%; /* Friendly Informative Blue */
-    --toast-info-fg-raw: 0 0% 100%;   /* White */
-    --toast-info-border-l-raw: 205 80% 45%; /* Slightly Darker Blue */
+    --toast-info-bg-raw: 200 70% 94%;     /* Light Sky Blue */
+    --toast-info-fg-raw: 200 70% 25%;     /* Dark Sky Blue */
+    --toast-info-border-l-raw: 200 75% 55%;  /* Vibrant Sky Blue */
     
-    --toast-destructive-bg-raw: 0 75% 60%; /* Clear, Not Overly Harsh Red */
-    --toast-destructive-fg-raw: 0 0% 100%; /* White */
-    --toast-destructive-border-l-raw: 0 75% 50%; /* Slightly Darker Red */
+    --toast-destructive-bg-raw: 0 70% 95%;  /* Light Coral Pink */
+    --toast-destructive-fg-raw: 0 70% 30%;  /* Dark Coral Red */
+    --toast-destructive-border-l-raw: 0 75% 60%; /* Vibrant Coral Red */
 
-    /* Duolingo-inspired Alert Colors */
-    --alert-success-bg-raw: var(--primary); /* Vibrant Teal */
-    --alert-success-fg-raw: var(--primary-foreground);
-    --alert-success-icon-color-raw: var(--primary-foreground);
+    /* Modern Alert Colors - Light Mode */
+    --alert-success-bg-raw: 130 60% 92%;   /* Light Mint Green */
+    --alert-success-fg-raw: 130 60% 20%;   /* Dark Mint Green */
+    --alert-success-icon-color-raw: 130 55% 45%; /* Vibrant Mint Green for Icon */
 
-    --alert-info-bg-raw: 200 80% 55%; /* Vibrant blue */
-    --alert-info-fg-raw: 0 0% 100%;
-    --alert-info-icon-color-raw: 0 0% 100%;
+    --alert-info-bg-raw: 200 70% 94%;    /* Light Sky Blue */
+    --alert-info-fg-raw: 200 70% 25%;    /* Dark Sky Blue */
+    --alert-info-icon-color-raw: 200 75% 50%; /* Vibrant Sky Blue for Icon */
     
-    --alert-destructive-bg-raw: var(--destructive);
-    --alert-destructive-fg-raw: var(--destructive-foreground);
-    --alert-destructive-icon-color-raw: var(--destructive-foreground);
+    --alert-destructive-bg-raw: 0 70% 95%; /* Light Coral Pink */
+    --alert-destructive-fg-raw: 0 70% 30%; /* Dark Coral Red */
+    --alert-destructive-icon-color-raw: 0 75% 55%; /* Vibrant Coral Red for Icon */
+
 
     /* Convert raw HSL to usable CSS vars */
     --toast-success-bg: hsl(var(--toast-success-bg-raw));
@@ -157,31 +158,31 @@
     --sidebar-border: 210 25% 20%;    /* Slightly lighter than main dark border */
     --sidebar-ring: var(--ring);
 
-     /* Duolingo-inspired Toast Colors - Dark Mode (Consistent with Light Mode for strong feedback) */
-    --toast-success-bg-raw: 130 55% 50%; /* Clear Positive Green */
-    --toast-success-fg-raw: 0 0% 100%;   /* White */
-    --toast-success-border-l-raw: 130 55% 40%; /* Slightly Darker Green */
+    /* Modern Toast Colors - Dark Mode */
+    --toast-success-bg-raw: 130 40% 25%;    /* Darker Mint Green */
+    --toast-success-fg-raw: 130 70% 85%;    /* Light Mint for Text */
+    --toast-success-border-l-raw: 130 60% 60%; /* Vibrant Mint Green Accent */
 
-    --toast-info-bg-raw: 205 80% 55%; /* Friendly Informative Blue */
-    --toast-info-fg-raw: 0 0% 100%;   /* White */
-    --toast-info-border-l-raw: 205 80% 45%; /* Slightly Darker Blue */
+    --toast-info-bg-raw: 200 45% 28%;     /* Darker Sky Blue */
+    --toast-info-fg-raw: 200 75% 88%;     /* Light Sky Blue for Text */
+    --toast-info-border-l-raw: 200 70% 65%;  /* Vibrant Sky Blue Accent */
     
-    --toast-destructive-bg-raw: 0 75% 60%; /* Clear, Not Overly Harsh Red */
-    --toast-destructive-fg-raw: 0 0% 100%; /* White */
-    --toast-destructive-border-l-raw: 0 75% 50%; /* Slightly Darker Red */
+    --toast-destructive-bg-raw: 0 50% 30%;   /* Darker Coral Red */
+    --toast-destructive-fg-raw: 0 70% 90%;   /* Light Coral Pink for Text */
+    --toast-destructive-border-l-raw: 0 70% 60%;  /* Vibrant Coral Red Accent */
 
-    /* Duolingo-inspired Alert Colors - Dark Mode */
-    --alert-success-bg-raw: var(--primary); /* Brighter Vibrant Teal */
-    --alert-success-fg-raw: var(--primary-foreground);
-    --alert-success-icon-color-raw: var(--primary-foreground);
+    /* Modern Alert Colors - Dark Mode */
+    --alert-success-bg-raw: 130 40% 25%;    /* Darker Mint Green */
+    --alert-success-fg-raw: 130 70% 85%;    /* Light Mint for Text */
+    --alert-success-icon-color-raw: 130 60% 60%; /* Vibrant Mint Green for Icon */
 
-    --alert-info-bg-raw: 200 75% 60%; /* Vibrant blue for dark mode */
-    --alert-info-fg-raw: 0 0% 100%;
-    --alert-info-icon-color-raw: 0 0% 100%;
+    --alert-info-bg-raw: 200 45% 28%;     /* Darker Sky Blue */
+    --alert-info-fg-raw: 200 75% 88%;     /* Light Sky Blue for Text */
+    --alert-info-icon-color-raw: 200 70% 65%;  /* Vibrant Sky Blue for Icon */
     
-    --alert-destructive-bg-raw: var(--destructive);
-    --alert-destructive-fg-raw: var(--destructive-foreground);
-    --alert-destructive-icon-color-raw: var(--destructive-foreground);
+    --alert-destructive-bg-raw: 0 50% 30%;   /* Darker Coral Red */
+    --alert-destructive-fg-raw: 0 70% 90%;   /* Light Coral Pink for Text */
+    --alert-destructive-icon-color-raw: 0 70% 60%;  /* Vibrant Coral Red for Icon */
   }
 }
 
@@ -210,11 +211,11 @@
     content: "";
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.35); /* Adjusted light mode overlay opacity */
+    background-color: rgba(0, 0, 0, 0.45); /* Adjusted light mode overlay opacity */
     z-index: -1; /* On top of image, behind content */
   }
   .dark body::after {
-    background-color: rgba(0, 0, 0, 0.65); /* Adjusted dark mode overlay opacity */
+    background-color: rgba(0, 0, 0, 0.75); /* Adjusted dark mode overlay opacity */
   }
 
 

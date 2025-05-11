@@ -12,7 +12,7 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { setHasCompletedPersonalization, getHasCompletedPersonalization, getHasSeenIntroduction } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { playSuccessSound, playNotificationSound } from '@/lib/audio';
-import { UserPlus, ArrowRight, Sparkles, Heart, Check, UserCog } from 'lucide-react'; // Updated icon
+import { UserPlus, ArrowRight, Sparkles, Heart, Check, UserCog, Info } from 'lucide-react'; 
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -88,7 +88,7 @@ export default function PersonalizePage() {
     } else {
        toast({
         variant: "info",
-        title: "Personalization Complete",
+        title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Personalization Complete</div>,
         description: "You can set your details later in your profile. Let's get started!",
       });
       playNotificationSound();
@@ -200,6 +200,3 @@ export default function PersonalizePage() {
     </div>
   );
 }
-
-
-

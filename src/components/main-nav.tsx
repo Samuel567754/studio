@@ -162,5 +162,3 @@ export const MainNav: FC = () => {
     </header>
   );
 };
-
-

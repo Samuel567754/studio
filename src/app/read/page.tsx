@@ -8,14 +8,16 @@ import { getStoredWordList, getStoredReadingLevel, getStoredMasteredWords } from
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Info } from 'lucide-react'; // Changed BookOpenCheck to BookOpen
+import { BookOpen, Info, CheckCircle2, XCircle } from 'lucide-react'; 
 import { Card } from '@/components/ui/card';
+import { useToast } from "@/hooks/use-toast"; 
 
 export default function ReadingPage() {
   const [wordList, setWordList] = useState<string[]>([]);
   const [masteredWords, setMasteredWords] = useState<string[]>([]);
   const [readingLevel, setReadingLevel] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
+  const { toast } = useToast();
 
   const loadReadingData = useCallback(() => {
     setWordList(getStoredWordList());

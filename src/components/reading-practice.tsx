@@ -29,7 +29,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const [passage, setPassage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isPaused, setIsPaused] = useState(false); // Corrected initial state
+  const [isPaused, setIsPaused] = useState(false); 
   const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
   const [currentSpokenWordInfo, setCurrentSpokenWordInfo] = useState<SpokenWordInfo | null>(null);
   const { username, favoriteTopics } = useUserProfileStore();
@@ -47,7 +47,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel(); 
-      resetSpeechState(); // Ensure state is reset when speech is explicitly stopped
+      resetSpeechState(); 
     }
   }, [resetSpeechState]);
 
@@ -107,7 +107,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         words: wordsToPractice, 
         readingLevel, 
         masteredWords,
-        favoriteTopics: favoriteTopics || undefined // Pass favorite topics
+        favoriteTopics: favoriteTopics || undefined 
       };
       const result = await generateReadingPassage(input);
       if (result.passage) {
@@ -144,14 +144,18 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const toggleSpeech = useCallback(() => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis || !passage) {
         if (!passage && soundEffectsEnabled) {
-             toast({ variant: "info", title: "No Passage", description: "Generate a passage first to read aloud." });
+             toast({ 
+                variant: "info", 
+                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />No Passage</div>, 
+                description: "Generate a passage first to read aloud." 
+            });
         }
         return;
     }
 
     const speech = window.speechSynthesis;
 
-    if (currentUtterance && isSpeaking) { // Check if there's an active utterance
+    if (currentUtterance && isSpeaking) { 
         if (isPaused) { 
             speech.resume();
             setIsPaused(false);
@@ -161,14 +165,14 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             setIsPaused(true);
             playNotificationSound();
         }
-    } else { // Start new speech
+    } else { 
       const utterance = speakText(passage, handleSpeechBoundary, handleSpeechEnd, handleSpeechError);
       if (utterance) {
         setCurrentUtterance(utterance);
         setIsSpeaking(true);
         setIsPaused(false);
       } else {
-        resetSpeechState(); // Ensure state is reset if speakText fails to return an utterance
+        resetSpeechState(); 
       }
     }
   }, [passage, isSpeaking, isPaused, soundEffectsEnabled, handleSpeechBoundary, handleSpeechEnd, handleSpeechError, resetSpeechState, toast, currentUtterance]);
@@ -356,12 +360,12 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           <div className="space-y-4">
             <div className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden shadow-md">
               <Image 
-                src="https://picsum.photos/seed/child-reading-adventure/600/400" // More relevant image
+                src="https://picsum.photos/seed/child-reading-adventure/600/400" 
                 alt="Child joyfully reading a book, with imaginative scenes emerging from it"
                 layout="fill"
                 objectFit="cover"
                 className="rounded-lg"
-                data-ai-hint="child reading adventure" // Updated hint
+                data-ai-hint="child reading adventure" 
               />
             </div>
             <Alert variant="default" className="bg-card/50 dark:bg-card/30 border-primary/30 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
@@ -399,5 +403,3 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     </Card>
   );
 };
-
-

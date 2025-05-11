@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCw, Scaling, Mic, MicOff, Smile } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCw, Scaling, Mic, MicOff, Smile, Info } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
@@ -120,22 +120,42 @@ export const NumberComparisonUI = () => {
         if (number !== null && currentProblem) {
           if (number === currentProblem.num1) {
             handleAnswerRef.current(currentProblem.num1); 
-            toast({ title: "Heard you!", description: `You said: "${spokenText}". Choosing ${currentProblem.num1}.`, variant: "info" });
+            toast({ 
+                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>, 
+                description: `You said: "${spokenText}". Choosing ${currentProblem.num1}.`, 
+                variant: "info" 
+            });
           } else if (number === currentProblem.num2) {
             handleAnswerRef.current(currentProblem.num2); 
-            toast({ title: "Heard you!", description: `You said: "${spokenText}". Choosing ${currentProblem.num2}.`, variant: "info" });
+            toast({ 
+                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>, 
+                description: `You said: "${spokenText}". Choosing ${currentProblem.num2}.`, 
+                variant: "info" 
+            });
           } else {
-            toast({ title: "Couldn't match", description: `Heard: "${spokenText}". That's not one of the options. Try again or click.`, variant: "info" });
+            toast({ 
+                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't match</div>, 
+                description: `Heard: "${spokenText}". That's not one of the options. Try again or click.`, 
+                variant: "info" 
+            });
           }
         } else {
-          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or click an option.`, variant: "info" });
+          toast({ 
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>, 
+            description: `Heard: "${spokenText}". Please try again or click an option.`, 
+            variant: "info" 
+            });
         }
         setIsListening(false);
       };
 
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try clicking.`, variant: "destructive" });
+        toast({ 
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>, 
+            description: `Could not recognize speech: ${event.error}. Try clicking.`, 
+            variant: "destructive" 
+        });
         setIsListening(false);
       };
       recognitionRef.current.onend = () => {
@@ -157,7 +177,12 @@ export const NumberComparisonUI = () => {
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please click an option.", variant: "info", duration: 5000 });
+        toast({ 
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>, 
+            description: "Your browser doesn't support voice input. Please click an option.", 
+            variant: "info", 
+            duration: 5000 
+        });
         return;
     }
     if (isListening) {
@@ -170,10 +195,18 @@ export const NumberComparisonUI = () => {
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null);
-        toast({ title: "Listening...", description: "Say one of the numbers.", variant: "info" });
+        toast({ 
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>, 
+            description: "Say one of the numbers.", 
+            variant: "info" 
+        });
       } catch (error) {
         console.error("Error starting speech recognition:", error);
-        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
+        toast({ 
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>, 
+            description: "Could not start microphone. Check permissions.", 
+            variant: "destructive" 
+        });
         setIsListening(false);
       }
     }
@@ -260,6 +293,3 @@ export const NumberComparisonUI = () => {
     </Card>
   );
 };
-
-
-    

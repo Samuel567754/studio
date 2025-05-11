@@ -5,23 +5,23 @@ import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass, Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, Map } from 'lucide-react'; // Updated icon
+import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass, Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, Map } from 'lucide-react'; 
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { playErrorSound, playNotificationSound } from '@/lib/audio';
 import { useWalkthroughStore } from '@/stores/walkthrough-store';
-import { tutorialStepsData, type TutorialStep } from '@/components/tutorial/tutorial-data'; // Import tutorial data
-import { useUserProfileStore } from '@/stores/user-profile-store'; // Import user profile store
+import { tutorialStepsData, type TutorialStep } from '@/components/tutorial/tutorial-data'; 
+import { useUserProfileStore } from '@/stores/user-profile-store'; 
 
 // Helper to map string icon names from data to actual Lucide components
 const getIconComponent = (iconName?: string): React.ElementType | undefined => {
   if (!iconName) return undefined;
   const icons: { [key: string]: React.ElementType } = {
-    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass
+    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon 
   };
-  return icons[iconName] || HelpCircle; // Default to HelpCircle if not found
+  return icons[iconName] || HelpCircle; 
 };
 
 
@@ -35,7 +35,7 @@ export default function TutorialPage() {
   const { soundEffectsEnabled } = useAppSettingsStore();
   const { openWalkthrough } = useWalkthroughStore();
   const { toast } = useToast();
-  const { username } = useUserProfileStore(); // Get username
+  const { username } = useUserProfileStore(); 
 
   useEffect(() => {
     setIsMounted(true);
@@ -150,7 +150,7 @@ export default function TutorialPage() {
             className="rounded-lg"
             data-ai-hint="app walkthrough guide" 
           />
-          <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/60" /> 
           <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent flex flex-col items-center justify-center p-4">
              <Map className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
              <h1 className="text-4xl font-bold text-gradient-primary-accent mt-3 drop-shadow-md">App Tutorial & Guide</h1>
@@ -241,7 +241,3 @@ export default function TutorialPage() {
     </div>
   );
 }
-
-
-
-

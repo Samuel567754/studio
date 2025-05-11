@@ -90,7 +90,11 @@ export default function DefinitionMatchPage() {
       }
     } catch (error) {
       console.error("Error generating definition match game:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not generate a game. Please try again or change words." });
+      toast({ 
+        variant: "destructive", 
+        title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>, 
+        description: "Could not generate a game. Please try again or change words." 
+      });
       playErrorSound();
     } finally {
       setIsLoadingGame(false);

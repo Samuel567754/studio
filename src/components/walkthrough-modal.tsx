@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X, Smile, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, CheckCircle2 as CheckCircle2Icon } from 'lucide-react'; 
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X, Smile, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, CheckCircle2 as CheckCircle2Icon, Info, HelpCircle } from 'lucide-react'; 
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -29,18 +29,19 @@ interface WalkthroughModalProps {
 }
 
 const getWalkthroughIconComponent = (iconName?: string): React.ElementType => {
-  if (!iconName) return Compass; // Default fallback
+  if (!iconName) return Compass; 
   const icons: { [key: string]: React.ElementType } = {
     Smile: Smile,
     HomeIcon: HomeIcon,
-    FileType2: TextSelectIcon, // Maps "FileType2" string to TextSelectIcon component
+    FileType2: TextSelectIcon, 
     Puzzle: Puzzle,
     User: User,
-    CheckCircle2: CheckCircle2Icon, // Maps "CheckCircle2" string to CheckCircle2Icon component
+    CheckCircle2: CheckCircle2Icon, 
     Compass: Compass,
-    // Add any other icons used by name in walkthroughModalSteps here
+    HelpCircle: HelpCircle,
+    Map: Map,
   };
-  return icons[iconName] || Compass; // Fallback to Compass if name not found
+  return icons[iconName] || Compass; 
 };
 
 

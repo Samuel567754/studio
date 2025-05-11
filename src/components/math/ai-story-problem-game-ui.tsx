@@ -62,7 +62,11 @@ export const AiStoryProblemGameUI = () => {
       }
     } catch (error) {
       console.error("Error generating math story problem:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not generate a story problem. Please try again." });
+      toast({ 
+        variant: "destructive", 
+        title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>, 
+        description: "Could not generate a story problem. Please try again." 
+      });
       playErrorSound();
     } finally {
       setIsLoading(false);
@@ -75,7 +79,11 @@ export const AiStoryProblemGameUI = () => {
          setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: 'info', message: 'Please enter an answer.' } } : qs));
       } else {
         console.error("Attempted to submit answer for an invalid question index or uninitialized state.");
-        toast({ variant: "destructive", title: "Error", description: "Something went wrong. Please try generating a new story." });
+        toast({ 
+            variant: "destructive", 
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>, 
+            description: "Something went wrong. Please try generating a new story." 
+        });
       }
       return;
     }
@@ -142,7 +150,12 @@ export const AiStoryProblemGameUI = () => {
       };
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try typing.`, variant: "destructive" });
+        toast({ 
+            title: "Voice Input Error", 
+            description: `Could not recognize speech: ${event.error}. Try typing.`, 
+            variant: "destructive",
+            // title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>,
+        });
         setIsListening(null);
       };
       recognitionRef.current.onend = () => setIsListening(null);
@@ -168,7 +181,12 @@ export const AiStoryProblemGameUI = () => {
         toast({ title: "Listening...", description: `Speak your answer for question ${questionIndex + 1}.`, variant: "info" });
       } catch (error) {
         console.error("Error starting speech recognition:", error);
-        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
+        toast({ 
+            title: "Mic Error", 
+            description: "Could not start microphone. Check permissions.", 
+            variant: "destructive",
+            // title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>,
+        });
         setIsListening(null);
       }
     }

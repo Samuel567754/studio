@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathWordProblem, type GenerateMathWordProblemInput, type GenerateMathWordProblemOutput } from '@/ai/flows/generate-math-word-problem';
-import { CheckCircle2, XCircle, Loader2, Brain, RefreshCw, Volume2, Mic, MicOff, Smile, Lightbulb } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Brain, RefreshCw, Volume2, Mic, MicOff, Smile, Lightbulb, Info } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
@@ -129,17 +129,29 @@ export const AiWordProblemGameUI = () => {
         const number = parseSpokenNumber(spokenText);
         if (number !== null) {
           setUserAnswer(String(number));
-           toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
+           toast({ 
+             title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>, 
+             description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, 
+             variant: "info" 
+            });
            setTimeout(() => handleSubmitRef.current(), 0);
         } else {
-          toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
+          toast({ 
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>, 
+            description: `Heard: "${spokenText}". Please try again or type the number.`, 
+            variant: "info" 
+          });
         }
         setIsListening(false);
       };
 
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-        toast({ title: "Voice Input Error", description: `Could not recognize speech: ${event.error}. Try typing.`, variant: "destructive" });
+        toast({ 
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>, 
+            description: `Could not recognize speech: ${event.error}. Try typing.`, 
+            variant: "destructive" 
+        });
         setIsListening(false);
       };
       
@@ -163,7 +175,12 @@ export const AiWordProblemGameUI = () => {
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-        toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input. Please type your answer.", variant: "info", duration: 5000 });
+        toast({ 
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>, 
+            description: "Your browser doesn't support voice input. Please type your answer.", 
+            variant: "info", 
+            duration: 5000 
+        });
         return;
     }
     if (isListening) {
@@ -175,10 +192,18 @@ export const AiWordProblemGameUI = () => {
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null); 
-        toast({ title: "Listening...", description: "Speak your answer.", variant: "info" });
+        toast({ 
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>, 
+            description: "Speak your answer.", 
+            variant: "info" 
+        });
       } catch (error) {
         console.error("Error starting speech recognition:", error);
-        toast({ title: "Mic Error", description: "Could not start microphone. Check permissions.", variant: "destructive" });
+        toast({ 
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>, 
+            description: "Could not start microphone. Check permissions.", 
+            variant: "destructive" 
+        });
         setIsListening(false);
       }
     }
@@ -297,4 +322,3 @@ export const AiWordProblemGameUI = () => {
     </Card>
   );
 };
-
