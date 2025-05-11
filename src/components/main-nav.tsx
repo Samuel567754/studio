@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC } from 'react';
@@ -28,7 +29,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const navLinks = [
   { href: '/', label: 'Home', icon: HomeIcon },
   { href: '/word-practice', label: 'Word Practice', icon: TextSelectIcon },
-  { href: '/ai-games', label: 'AI Word Games', icon: Puzzle },
+  { href: '/ai-games', label: 'AI Games', icon: Puzzle },
   { href: '/math', label: 'Math Zone', icon: Sigma },
   { href: '/tutorial', label: 'Tutorial', icon: Map },
   { href: '/profile', label: 'Profile', icon: User },
@@ -189,12 +190,7 @@ export const MainNav: FC = () => {
                     <h1 className={cn("text-xl font-bold", isMobile ? "text-[hsl(175_70%_55%)]" : "text-primary")}>ChillLearn</h1>
                   </Link>
                 </SheetTitle>
-                 <SheetClose asChild>
-                    <Button variant="ghost" size="icon" className={cn(isMobile && "text-[hsl(40_20%_90%)] hover:bg-[hsl(210_25%_20%)]")}>
-                        <X className="h-5 w-5" />
-                        <span className="sr-only">Close menu</span>
-                    </Button>
-                </SheetClose>
+                {/* The SheetContent component itself renders a close button. No need for an explicit one here. */}
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
@@ -265,3 +261,4 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+
