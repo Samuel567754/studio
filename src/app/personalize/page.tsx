@@ -12,7 +12,7 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { setHasCompletedPersonalization, getHasCompletedPersonalization, getHasSeenIntroduction } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { playSuccessSound, playNotificationSound } from '@/lib/audio';
-import { UserPlus, ArrowRight, Sparkles, Heart, Check } from 'lucide-react';
+import { UserPlus, ArrowRight, Sparkles, Heart, Check, UserCog } from 'lucide-react'; // Updated icon
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -128,14 +128,14 @@ export default function PersonalizePage() {
         <CardHeader className="text-center items-center space-y-3">
           <div className="relative w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-accent/30 mb-3">
               <Image
-                  src="https://picsum.photos/seed/personalize-avatar/200"
-                  alt="Personalization avatar"
+                  src="https://picsum.photos/seed/child-profile-avatar/200" // More relevant image
+                  alt="Happy child avatar for personalization"
                   layout="fill"
                   objectFit="cover"
-                  data-ai-hint="avatar user"
+                  data-ai-hint="child avatar happy" // Updated hint
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent flex items-center justify-center p-2">
-                   <Sparkles className="h-10 w-10 text-white/90 drop-shadow-lg" aria-hidden="true" />
+                   <UserCog className="h-10 w-10 text-white/90 drop-shadow-lg" aria-hidden="true" />
               </div>
           </div>
           <CardTitle className="text-3xl font-bold text-gradient-primary-accent">
@@ -200,4 +200,5 @@ export default function PersonalizePage() {
     </div>
   );
 }
+
 

@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass, Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon } from 'lucide-react';
+import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass, Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, Map } from 'lucide-react'; // Updated icon
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,7 @@ import { useUserProfileStore } from '@/stores/user-profile-store'; // Import use
 const getIconComponent = (iconName?: string): React.ElementType | undefined => {
   if (!iconName) return undefined;
   const icons: { [key: string]: React.ElementType } = {
-    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle
+    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map
   };
   return icons[iconName] || HelpCircle; // Default to HelpCircle if not found
 };
@@ -143,15 +143,15 @@ export default function TutorialPage() {
       <header className="text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-sm mx-auto h-40 md:h-48 rounded-lg overflow-hidden shadow-lg">
            <Image 
-            src="https://picsum.photos/seed/tutorial-guide/400/300" 
-            alt="Friendly guide pointing the way"
+            src="https://picsum.photos/seed/treasure-map-guide/400/300" 
+            alt="Friendly cartoon character holding a treasure map and pointing the way"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="guide map person"
+            data-ai-hint="treasure map guide character" // Updated hint
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex flex-col items-center justify-center p-4">
-             <HelpCircle className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+             <Map className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
           </div>
         </div>
         <h1 className="text-4xl font-bold text-gradient-primary-accent mt-3">App Tutorial & Guide</h1>
@@ -240,4 +240,5 @@ export default function TutorialPage() {
     </div>
   );
 }
+
 

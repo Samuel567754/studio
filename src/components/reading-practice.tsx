@@ -356,12 +356,12 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           <div className="space-y-4">
             <div className="relative w-full h-48 md:h-64 rounded-lg overflow-hidden shadow-md">
               <Image 
-                src="https://picsum.photos/seed/reading-passage/600/400" 
-                alt="Child reading a book with imagination bubbles"
+                src="https://picsum.photos/seed/child-reading-adventure/600/400" // More relevant image
+                alt="Child joyfully reading a book, with imaginative scenes emerging from it"
                 layout="fill"
                 objectFit="cover"
                 className="rounded-lg"
-                data-ai-hint="child reading imagination"
+                data-ai-hint="child reading adventure" // Updated hint
               />
             </div>
             <Alert variant="default" className="bg-card/50 dark:bg-card/30 border-primary/30 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
@@ -399,4 +399,5 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     </Card>
   );
 };
+
 

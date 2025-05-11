@@ -165,12 +165,12 @@ export default function FillInTheBlankPage() {
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
         <div className="flex flex-col items-center gap-4">
           <Image 
-            src="https://picsum.photos/seed/fill-blank-empty/200/150" 
-            alt="Empty page with a question mark"
+            src="https://picsum.photos/seed/child-puzzle-piece/200/150" 
+            alt="Child holding a puzzle piece with a question mark"
             width={200}
             height={150}
             className="rounded-lg shadow-md mb-3"
-            data-ai-hint="empty page question"
+            data-ai-hint="child puzzle question" // Updated hint
           />
           <Lightbulb className="h-6 w-6 text-primary" aria-hidden="true" />
           <AlertTitle className="text-xl font-semibold mb-2">Add Words to Play!</AlertTitle>
@@ -290,3 +290,4 @@ export default function FillInTheBlankPage() {
     </div>
   );
 }
+

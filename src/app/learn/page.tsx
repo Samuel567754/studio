@@ -307,12 +307,12 @@ export default function LearnPage() {
             </div>
             <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-auto">
               <Image
-                src="https://picsum.photos/seed/learn-welcome/150/150"
-                alt="Child learning with a tablet"
+                src="https://picsum.photos/seed/child-laptop-learn/150/150" // More relevant image
+                alt="Child smiling while learning on a laptop"
                 width={120}
                 height={120}
                 className="rounded-lg shadow-md"
-                data-ai-hint="happy child learning"
+                data-ai-hint="child laptop learning" // Updated hint
               />
             </div>
           </div>
@@ -321,3 +321,4 @@ export default function LearnPage() {
     </div>
   );
 }
+

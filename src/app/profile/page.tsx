@@ -14,7 +14,7 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart } from 'lucide-react';
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award } from 'lucide-react'; // Updated icon
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -136,15 +136,15 @@ export default function ProfilePage() {
       <header className="text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-primary/30">
             <Image
-                src="https://picsum.photos/seed/profile-avatar/200"
-                alt={username ? `${username}'s profile avatar` : "User profile avatar placeholder"}
+                src="https://picsum.photos/seed/child-award-avatar/200" // More relevant image
+                alt={username ? `${username}'s profile avatar with a learning award theme` : "User profile avatar with a learning award theme"}
                 layout="fill"
                 objectFit="cover"
                 className="rounded-full"
-                data-ai-hint="profile avatar"
+                data-ai-hint="child award avatar" // Updated hint
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent flex items-end justify-center p-2">
-                 <User className="h-10 w-10 text-white/80 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+                 <Award className="h-10 w-10 text-white/80 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
             </div>
         </div>
         <h1 className="text-4xl font-bold text-gradient-primary-accent">
@@ -325,3 +325,4 @@ export default function ProfilePage() {
 
 
     
+

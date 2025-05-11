@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Lightbulb, Edit3, Target, BookMarked, TextSelect } from 'lucide-react';
+import { Lightbulb, Edit3, Target, BookMarked, FileType2 as TextSelectIcon, GraduationCap, Pencil, BookOpen } from 'lucide-react'; // Updated icons
 
 export default function WordPracticePage() {
   const practiceSections = [
@@ -13,29 +13,29 @@ export default function WordPracticePage() {
       title: "Learn New Words",
       description: "Discover new words with AI suggestions tailored to your level. Build your personal practice list.",
       href: "/learn",
-      icon: Lightbulb,
-      dataAiHint: "idea lightbulb brain",
+      icon: GraduationCap, // Updated icon
+      dataAiHint: "child learning alphabet", // Updated hint
     },
     {
       title: "Spelling Practice",
       description: "Sharpen your spelling skills. Practice words from your list and master them one by one.",
       href: "/spell",
-      icon: Edit3,
-      dataAiHint: "pencil writing paper",
+      icon: Pencil, // Updated icon
+      dataAiHint: "child writing letters", // Updated hint
     },
     {
       title: "Identify Words",
       description: "Test your word recognition! Listen and choose the correct word in a fun, interactive game.",
       href: "/identify",
       icon: Target,
-      dataAiHint: "target aim game",
+      dataAiHint: "child pointing word", // Updated hint
     },
     {
       title: "Reading Adventures",
       description: "Dive into AI-generated stories featuring your practice words. Read or listen along!",
       href: "/read",
-      icon: BookMarked,
-      dataAiHint: "open book story",
+      icon: BookOpen, // Updated icon
+      dataAiHint: "storybook open fantasy", // Updated hint
     },
   ];
 
@@ -44,15 +44,15 @@ export default function WordPracticePage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
-            src="https://picsum.photos/seed/word-practice-hub/600/400" 
-            alt="Collection of letters and learning tools"
+            src="https://picsum.photos/seed/word-practice-banner/600/400" 
+            alt="Children interacting with colorful letters and books"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="letters books learning"
+            data-ai-hint="children letters books" // Updated hint
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex flex-col items-center justify-center p-4">
-            <TextSelect className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+            <TextSelectIcon className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
             <h1 className="text-4xl font-bold text-gradient-primary-accent mt-2">Word Practice Zone</h1>
             <p className="text-lg text-foreground/90 drop-shadow-sm">Master words through various activities.</p>
           </div>
@@ -88,3 +88,4 @@ export default function WordPracticePage() {
     </div>
   );
 }
+

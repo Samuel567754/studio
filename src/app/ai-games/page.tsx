@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Puzzle, Edit, BookOpenCheck, TextSelect } from 'lucide-react'; // Added BookOpenCheck
+import { Puzzle, Brain, Edit, BookOpenCheck, FileType2 as TextSelect } from 'lucide-react'; // Added Brain
 
 export default function AiGamesPage() {
   const gameSections = [
@@ -14,14 +14,14 @@ export default function AiGamesPage() {
       description: "Read a sentence and choose the word that best fits the blank. Tests vocabulary in context!",
       href: "/ai-games/fill-blank",
       icon: Edit,
-      dataAiHint: "pencil writing sentence",
+      dataAiHint: "child pencil sentence", // Updated hint
     },
     {
       title: "Word Definition Match",
       description: "Match words to their correct AI-generated definitions. Boost your understanding!",
       href: "/ai-games/definition-match",
       icon: BookOpenCheck, 
-      dataAiHint: "dictionary book definition",
+      dataAiHint: "child dictionary book", // Updated hint
     },
     // Add more AI games here in the future
   ];
@@ -31,12 +31,12 @@ export default function AiGamesPage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
-            src="https://picsum.photos/seed/ai-games-hub/600/400" 
-            alt="Abstract representation of AI and games"
+            src="https://picsum.photos/seed/ai-game-banner/600/400" 
+            alt="Children playing educational games on tablets with AI icons"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="AI brain game"
+            data-ai-hint="children tablet games" // Updated hint
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex flex-col items-center justify-center p-4">
             <Puzzle className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
@@ -79,7 +79,7 @@ export default function AiGamesPage() {
                 <CardContent>
                     <p className="text-center text-muted-foreground">Check back later for new AI-powered word adventures.</p>
                      <div className="flex justify-center mt-4">
-                        <TextSelect className="h-12 w-12 text-accent/50" />
+                        <Brain className="h-12 w-12 text-accent/50" /> 
                     </div>
                 </CardContent>
             </Card>
@@ -88,3 +88,4 @@ export default function AiGamesPage() {
     </div>
   );
 }
+

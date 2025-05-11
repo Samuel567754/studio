@@ -5,17 +5,17 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Plus, HelpCircle, User, SettingsIcon, X, Sigma, HomeIcon, Puzzle, TextSelect } from 'lucide-react';
+import { LayoutGrid, Plus, HelpCircle, User, SettingsIcon, X, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Map } from 'lucide-react'; // Updated icons
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 const fabNavLinks = [
   { href: '/', label: 'Home', icon: HomeIcon },
-  { href: '/word-practice', label: 'Word Practice', icon: TextSelect },
+  { href: '/word-practice', label: 'Word Practice', icon: TextSelectIcon },
   { href: '/ai-games', label: 'AI Games', icon: Puzzle },
   { href: '/math', label: 'Math', icon: Sigma },
-  { href: '/tutorial', label: 'Guide', icon: HelpCircle },
+  { href: '/tutorial', label: 'Guide', icon: Map }, // Updated icon
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -66,3 +66,4 @@ export const QuickLinkFAB: FC = () => {
     </Popover>
   );
 };
+

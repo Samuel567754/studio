@@ -163,12 +163,12 @@ export default function DefinitionMatchPage() {
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
         <div className="flex flex-col items-center gap-4">
           <Image 
-            src="https://picsum.photos/seed/definition-empty/200/150" 
-            alt="Empty page with a dictionary icon"
+            src="https://picsum.photos/seed/dictionary-learn/200/150" 
+            alt="Child looking at an open dictionary with a magnifying glass"
             width={200}
             height={150}
             className="rounded-lg shadow-md mb-3"
-            data-ai-hint="empty dictionary book"
+            data-ai-hint="child dictionary learn" // Updated hint
           />
           <Lightbulb className="h-6 w-6 text-primary" aria-hidden="true" />
           <AlertTitle className="text-xl font-semibold mb-2">Add Words to Play!</AlertTitle>
@@ -280,3 +280,4 @@ export default function DefinitionMatchPage() {
     </div>
   );
 }
+

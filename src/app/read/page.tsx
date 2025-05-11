@@ -62,12 +62,12 @@ export default function ReadingPage() {
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
         <div className="flex flex-col items-center gap-4">
           <Image 
-            src="https://picsum.photos/200/150" 
-            alt="Empty bookshelf"
+            src="https://picsum.photos/seed/empty-storybook/200/150" 
+            alt="An empty storybook with a curious child peeking"
             width={200}
             height={150}
             className="rounded-lg shadow-md mb-3"
-            data-ai-hint="empty bookshelf"
+            data-ai-hint="empty storybook child" // Updated hint
           />
           <Info className="h-6 w-6 text-primary" />
           <AlertTitle className="text-xl font-semibold mb-2">No Words for Reading Practice!</AlertTitle>
@@ -92,4 +92,5 @@ export default function ReadingPage() {
     </div>
   );
 }
+
 

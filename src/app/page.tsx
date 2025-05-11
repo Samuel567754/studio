@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, BookOpenText, Sigma, Sparkles, Puzzle, TextSelect } from 'lucide-react';
+import { ArrowRight, BookOpenText, Sigma, Sparkles, Puzzle, FileType2 as TextSelectIcon } from 'lucide-react'; // Changed TextSelect to FileType2
 
 const mainSections = [
   {
@@ -13,10 +13,10 @@ const mainSections = [
     title: "Word Practice Zone",
     description: "Learn new words, practice spelling, identify words by ear, and read AI-generated stories.",
     href: "/word-practice",
-    icon: TextSelect,
-    imageSrc: "https://picsum.photos/seed/word-practice/600/400",
-    imageAlt: "Collection of learning tools for words",
-    aiHint: "letters books pen",
+    icon: TextSelectIcon, // Updated icon
+    imageSrc: "https://picsum.photos/seed/abc-blocks/600/400", // More relevant image
+    imageAlt: "Colorful alphabet blocks and a child learning words",
+    aiHint: "alphabet blocks child", // Updated hint
     color: "text-primary",
     bgFrom: "from-primary/10",
     bgTo: "to-primary/5",
@@ -27,9 +27,9 @@ const mainSections = [
     description: "Challenge yourself with interactive AI-powered word games like Fill-in-the-Blank and Definition Match.",
     href: "/ai-games",
     icon: Puzzle, 
-    imageSrc: "https://picsum.photos/seed/ai-word-games/600/400",
+    imageSrc: "https://picsum.photos/seed/kids-tablet-game/600/400", // More relevant image
     imageAlt: "Child playing an interactive word game on a tablet",
-    aiHint: "child tablet game",
+    aiHint: "child tablet game", // Updated hint
     color: "text-orange-500", 
     bgFrom: "from-orange-500/10",
     bgTo: "to-orange-500/5",
@@ -40,9 +40,9 @@ const mainSections = [
     description: "Explore a world of numbers with engaging arithmetic games, times tables, AI word problems, and more.",
     href: "/math",
     icon: Sigma,
-    imageSrc: "https://picsum.photos/seed/math/600/400",
-    imageAlt: "Colorful numbers and math symbols",
-    aiHint: "numbers math symbols",
+    imageSrc: "https://picsum.photos/seed/math-doodles/600/400", // More relevant image
+    imageAlt: "Colorful numbers, math symbols, and doodles on a chalkboard",
+    aiHint: "math doodles chalkboard", // Updated hint
     color: "text-purple-500",
     bgFrom: "from-purple-500/10",
     bgTo: "to-purple-500/5",
@@ -62,7 +62,7 @@ export default function OfficialHomePage() {
             <Sparkles className="h-16 w-16 text-accent" />
         </div>
         <div className="absolute bottom-12 right-16 transform rotate-6 opacity-20 dark:opacity-10">
-            <TextSelect className="h-20 w-20 text-primary" />
+            <TextSelectIcon className="h-20 w-20 text-primary" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4">
@@ -142,3 +142,4 @@ export default function OfficialHomePage() {
     </div>
   );
 }
+

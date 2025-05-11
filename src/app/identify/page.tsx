@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -129,12 +130,12 @@ export default function IdentifyWordPage() {
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
         <div className="flex flex-col items-center gap-4">
           <Image 
-            src="https://picsum.photos/200/150" 
-            alt="Child looking thoughtful"
+            src="https://picsum.photos/seed/magnifying-glass-words/200/150" 
+            alt="Child with a magnifying glass looking at words"
             width={200}
             height={150}
             className="rounded-lg shadow-md mb-3"
-            data-ai-hint="confused child thinking"
+            data-ai-hint="child magnifying glass words" // Updated hint
           />
           <Target className="h-6 w-6 text-primary" aria-hidden="true" />
           <AlertTitle className="text-xl font-semibold mb-2">Not Enough Words!</AlertTitle>
@@ -179,4 +180,5 @@ export default function IdentifyWordPage() {
     </div>
   );
 }
+
 

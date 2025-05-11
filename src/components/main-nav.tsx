@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, SettingsIcon, User, HelpCircle, Sigma, HomeIcon, Puzzle, TextSelect, Brain, Trash2, Info } from 'lucide-react';
+import { BookOpenText, Menu, X, SettingsIcon, User, HelpCircle, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Brain, Trash2, Info, GraduationCap, Map } from 'lucide-react'; // Updated icons
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -16,10 +16,10 @@ import { playNotificationSound } from '@/lib/audio';
 
 const navLinks = [
   { href: '/', label: 'Home', icon: HomeIcon },
-  { href: '/word-practice', label: 'Word Practice', icon: TextSelect },
+  { href: '/word-practice', label: 'Word Practice', icon: TextSelectIcon },
   { href: '/ai-games', label: 'AI Word Games', icon: Puzzle },
   { href: '/math', label: 'Math Zone', icon: Sigma },
-  { href: '/tutorial', label: 'Tutorial', icon: HelpCircle },
+  { href: '/tutorial', label: 'Tutorial', icon: Map }, // Updated icon
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -109,7 +109,7 @@ export const MainNav: FC = () => {
           <NavLinkItems />
           <Button variant="default" size="sm" className="ml-2 btn-glow md:h-10 md:px-4 md:py-2" asChild>
             <Link href="/learn">
-              <Brain className="mr-2 h-4 w-4" aria-hidden="true" /> Quick Learn
+              <GraduationCap className="mr-2 h-4 w-4" aria-hidden="true" /> Quick Learn
             </Link>
           </Button>
         </nav>
@@ -136,7 +136,7 @@ export const MainNav: FC = () => {
                 <NavLinkItems isMobile />
                 <Button variant="default" size="lg" asChild className="mt-4 w-full btn-glow">
                   <Link href="/learn" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Brain className="mr-2 h-5 w-5" aria-hidden="true" /> Quick Learn
+                    <GraduationCap className="mr-2 h-5 w-5" aria-hidden="true" /> Quick Learn
                   </Link>
                 </Button>
               </nav>
@@ -154,4 +154,5 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+
 

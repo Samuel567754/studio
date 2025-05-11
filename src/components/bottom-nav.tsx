@@ -5,15 +5,15 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { SettingsIcon, User, HelpCircle, Sigma, HomeIcon, Puzzle, TextSelect } from 'lucide-react';
+import { SettingsIcon, User, HelpCircle, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Brain, Map } from 'lucide-react'; // Updated icons
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Home', icon: HomeIcon },
-  { href: '/word-practice', label: 'Words', icon: TextSelect },
+  { href: '/word-practice', label: 'Words', icon: TextSelectIcon },
   { href: '/ai-games', label: 'AI Games', icon: Puzzle },
   { href: '/math', label: 'Math', icon: Sigma },
-  { href: '/tutorial', label: 'Guide', icon: HelpCircle },
+  { href: '/tutorial', label: 'Guide', icon: Map }, // Updated icon for Tutorial/Guide
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon }, 
 ];
@@ -55,3 +55,4 @@ export const BottomNav: FC = () => {
     </nav>
   );
 };
+

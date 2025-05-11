@@ -8,20 +8,21 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { setHasSeenIntroduction, getHasSeenIntroduction, getHasCompletedPersonalization } from '@/lib/storage';
-import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon, SkipForward } from 'lucide-react';
+import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon, SkipForward, Palette, FileType2, Puzzle, Brain, PencilLine, BookOpen, BarChartHorizontal, SlidersHorizontal, Info, GraduationCap } from 'lucide-react';
 import { playNotificationSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 
 const features = [
-  { icon: HomeIcon, title: "Homepage Hub", description: "Your central dashboard for accessing all learning activities.", imageSrc: "https://picsum.photos/seed/homepage/600/400", aiHint: "dashboard home screen" },
-  { icon: Lightbulb, title: "AI Word Learning", description: "Get smart word suggestions tailored to your reading level.", imageSrc: "https://picsum.photos/seed/ai-learn/600/400", aiHint: "AI brain lightbulb" },
-  { icon: Edit3, title: "Spelling Practice", description: "Master words with interactive spelling exercises.", imageSrc: "https://picsum.photos/seed/spelling/600/400", aiHint: "pencil letters blocks" },
-  { icon: Target, title: "Word Identification", description: "Fun games to test your word recognition skills.", imageSrc: "https://picsum.photos/seed/identify-game/600/400", aiHint: "target word game" },
-  { icon: BookMarked, title: "AI Reading Passages", description: "Read engaging stories created with your learned words.", imageSrc: "https://picsum.photos/seed/ai-read/600/400", aiHint: "AI book story" },
-  { icon: Sigma, title: "Math Zone", description: "Explore numbers with fun arithmetic and times table games.", imageSrc: "https://picsum.photos/seed/math-fun/600/400", aiHint: "math symbols numbers" },
-  { icon: User, title: "Track Your Progress", description: "See your learning journey on your personal profile.", imageSrc: "https://picsum.photos/seed/progress-track/600/400", aiHint: "chart graph progress" },
-  { icon: SettingsIcon, title: "Customize Your App", description: "Adjust themes, fonts, and audio settings.", imageSrc: "https://picsum.photos/seed/customize/600/400", aiHint: "settings gear customize" },
-  { icon: HelpCircle, title: "Interactive Guides", description: "Easy-to-follow tutorials and walkthroughs.", imageSrc: "https://picsum.photos/seed/guides/600/400", aiHint: "guide help map" },
+  { icon: HomeIcon, title: "Homepage Hub", description: "Your central dashboard for accessing all learning activities.", imageSrc: "https://picsum.photos/seed/kids-dashboard/600/400", aiHint: "kids dashboard homepage" },
+  { icon: GraduationCap, title: "AI Word Learning", description: "Get smart word suggestions tailored to your reading level.", imageSrc: "https://picsum.photos/seed/ai-learning-kids/600/400", aiHint: "AI brain kids" },
+  { icon: PencilLine, title: "Spelling Practice", description: "Master words with interactive spelling exercises.", imageSrc: "https://picsum.photos/seed/kids-spelling/600/400", aiHint: "kids spelling blocks" },
+  { icon: Target, title: "Word Identification", description: "Fun games to test your word recognition skills.", imageSrc: "https://picsum.photos/seed/word-game-kids/600/400", aiHint: "kids word game" },
+  { icon: BookOpen, title: "AI Reading Passages", description: "Read engaging stories created with your learned words.", imageSrc: "https://picsum.photos/seed/ai-storybook-kids/600/400", aiHint: "kids AI storybook" },
+  { icon: Brain, title: "AI Word Games", description: "Play fun Fill-in-the-Blank and Definition Match games powered by AI.", imageSrc: "https://picsum.photos/seed/ai-puzzle-kids/600/400", aiHint: "kids AI puzzle" },
+  { icon: Sigma, title: "Math Zone", description: "Explore numbers with fun arithmetic and AI-powered problems.", imageSrc: "https://picsum.photos/seed/math-play-kids/600/400", aiHint: "kids math play" },
+  { icon: BarChartHorizontal, title: "Track Your Progress", description: "See your learning journey on your personal profile.", imageSrc: "https://picsum.photos/seed/kids-progress-chart/600/400", aiHint: "kids progress chart" },
+  { icon: Palette, title: "Customize Your App", description: "Adjust themes, fonts, and audio settings.", imageSrc: "https://picsum.photos/seed/kids-customize-settings/600/400", aiHint: "kids settings customize" },
+  { icon: Info, title: "Interactive Guides", description: "Easy-to-follow tutorials and walkthroughs.", imageSrc: "https://picsum.photos/seed/kids-guide-map/600/400", aiHint: "kids guide map" },
 ];
 
 const AUTOPLAY_INTERVAL = 5000; // 5 seconds
@@ -235,3 +236,4 @@ export default function IntroductionPage() {
     </div>
   );
 }
+
