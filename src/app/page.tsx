@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from 'next/link';
@@ -128,7 +129,7 @@ export default function OfficialHomePage() {
                     <CardTitle className="text-3xl md:text-4xl font-semibold text-gradient-primary-accent mb-2">Ready to Explore More?</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <p className="text-lg md:text-xl text-gray-100 dark:text-gray-200">
+                    <p className="text-lg md:text-xl text-gray-200 dark:text-gray-200">
                         Check out your <Link href="/profile" className="text-primary hover:underline font-semibold">Profile</Link> to see your progress,
                         visit the <Link href="/tutorial" className="text-accent hover:underline font-semibold">Tutorial</Link> for a detailed guide,
                         or customize your experience in <Link href="/settings" className="text-green-400 hover:underline font-semibold">Settings</Link>.
@@ -145,3 +146,4 @@ export default function OfficialHomePage() {
     </div>
   );
 }
+
