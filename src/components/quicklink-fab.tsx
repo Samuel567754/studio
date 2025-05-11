@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC } from 'react';
@@ -47,16 +48,16 @@ export const QuickLinkFAB: FC = () => {
           aria-label="Open quick navigation menu"
           aria-expanded={isOpen}
         >
-          <div className="relative h-6 w-6">
+          <div className="relative h-full w-full flex items-center justify-center">
             <LayoutGrid
               className={cn(
-                "absolute inset-0 h-6 w-6 transform transition-all duration-300 ease-in-out",
+                "absolute h-6 w-6 transform transition-all duration-300 ease-in-out",
                 isOpen ? "rotate-45 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
               )}
             />
             <X
               className={cn(
-                "absolute inset-0 h-6 w-6 transform transition-all duration-300 ease-in-out",
+                "absolute h-6 w-6 transform transition-all duration-300 ease-in-out",
                 isOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-45 scale-0 opacity-0"
               )}
             />
