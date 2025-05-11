@@ -210,11 +210,11 @@
     content: "";
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.15); /* Default (Light mode) overlay */
+    background-color: rgba(0, 0, 0, 0.35); /* Adjusted light mode overlay opacity */
     z-index: -1; /* On top of image, behind content */
   }
   .dark body::after {
-    background-color: rgba(0, 0, 0, 0.45); /* Darker overlay for dark mode for better contrast */
+    background-color: rgba(0, 0, 0, 0.65); /* Adjusted dark mode overlay opacity */
   }
 
 
