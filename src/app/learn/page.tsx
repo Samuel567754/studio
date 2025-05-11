@@ -286,37 +286,41 @@ export default function LearnPage() {
       )}
 
       {wordList.length === 0 && isMounted && !showProgressionAlert && (
-        <Alert variant="info" className="bg-card/90 border-accent/20 shadow animate-in fade-in-0 zoom-in-95 duration-500 ease-out" aria-live="polite">
-          <div className="flex flex-col sm:flex-row items-start gap-4">
-            <div className='flex-shrink-0'>
-             <Info className="h-5 w-5 mt-1" aria-hidden="true" />
-            </div>
-            <div className="flex-grow">
-              <AlertTitle className="font-semibold text-lg">
-                 {username ? `Welcome, ${username}!` : 'Welcome to ChillLearn AI!'}
-              </AlertTitle>
-              <AlertDescription className="text-base">
-                Start your learning journey:
-                <ol className="list-decimal list-inside mt-2 space-y-1">
-                  <li>Use the "AI Word Suggestions" panel to set your reading level and desired word length.</li>
-                  <li>Click "Get New Words" to see AI-powered suggestions.</li>
-                  <li>Click on any suggested word to add it to your practice list below.</li>
-                  <li>Navigate to "Spell" or "Read" sections to practice your selected words!</li>
-                </ol>
-              </AlertDescription>
-            </div>
-            <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-auto">
-              <Image
-                src="https://picsum.photos/seed/child-laptop-learn/150/150" // More relevant image
-                alt="Child smiling while learning on a laptop"
-                width={120}
-                height={120}
-                className="rounded-lg shadow-md"
-                data-ai-hint="child laptop learning" // Updated hint
-              />
-            </div>
-          </div>
-        </Alert>
+        <Card className="shadow-lg border-accent/20 bg-card animate-in fade-in-0 zoom-in-95 duration-500 ease-out">
+          <CardContent className="p-0"> {/* Remove padding from CardContent if Alert will have its own */}
+            <Alert variant="info" className="bg-transparent border-0" aria-live="polite"> {/* Alert takes full card space */}
+              <div className="flex flex-col sm:flex-row items-start gap-4 p-6"> {/* Add padding here */}
+                <div className='flex-shrink-0'>
+                 <Info className="h-5 w-5 mt-1" aria-hidden="true" />
+                </div>
+                <div className="flex-grow">
+                  <AlertTitle className="font-semibold text-lg">
+                     {username ? `Welcome, ${username}!` : 'Welcome to ChillLearn AI!'}
+                  </AlertTitle>
+                  <AlertDescription className="text-base">
+                    Start your learning journey:
+                    <ol className="list-decimal list-inside mt-2 space-y-1">
+                      <li>Use the "AI Word Suggestions" panel to set your reading level and desired word length.</li>
+                      <li>Click "Get New Words" to see AI-powered suggestions.</li>
+                      <li>Click on any suggested word to add it to your practice list below.</li>
+                      <li>Navigate to "Spell" or "Read" sections to practice your selected words!</li>
+                    </ol>
+                  </AlertDescription>
+                </div>
+                <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-auto">
+                  <Image
+                    src="https://picsum.photos/seed/child-laptop-learn/150/150" // More relevant image
+                    alt="Child smiling while learning on a laptop"
+                    width={120}
+                    height={120}
+                    className="rounded-lg shadow-md"
+                    data-ai-hint="child laptop learning" // Updated hint
+                  />
+                </div>
+              </div>
+            </Alert>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
