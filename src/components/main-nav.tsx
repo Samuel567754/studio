@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FC } from 'react';
@@ -15,8 +14,8 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogHeader as AlertDialogHeaderPrimitive, // Renamed to avoid conflict
+  AlertDialogTitle as AlertDialogTitlePrimitive, // Renamed to avoid conflict
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
@@ -53,7 +52,7 @@ export const MainNav: FC = () => {
   const NavLinkItems: FC<{ isMobileSheet?: boolean }> = ({ isMobileSheet = false }) => (
     <>
       {navLinks.map((link) => {
-        const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/');
+        const isActive = pathname === link.href || (pathname.startsWith(link.href) && item.href !== '/');
         let buttonVariant: "secondary" | "ghost" = isActive ? 'secondary' : 'ghost';
         let buttonClassName = cn(
           "justify-start w-full text-base md:text-sm md:w-auto group transition-colors duration-200 ease-in-out",
@@ -65,7 +64,7 @@ export const MainNav: FC = () => {
             buttonClassName,
             "font-semibold",
             isMobileSheet 
-              ? "bg-[hsl(var(--nav-active-indicator-dark))] text-[hsl(var(--nav-active-text-dark))]" // Use dark active colors for mobile sheet always
+              ? "bg-[hsl(var(--nav-active-indicator-dark))] text-[hsl(var(--nav-active-text-dark))]" 
               : "bg-[hsl(var(--nav-active-indicator-light))] dark:bg-[hsl(var(--nav-active-indicator-dark))] text-[hsl(var(--nav-active-text-light))] dark:text-[hsl(var(--nav-active-text-dark))]"
           );
         } else {
@@ -82,7 +81,7 @@ export const MainNav: FC = () => {
         return (
           <Button
             key={link.href}
-            variant={buttonVariant} // This might be overridden by direct class application
+            variant={buttonVariant} 
             asChild
             className={buttonClassName}
             onClick={() => isMobileSheet && setIsMobileMenuOpen(false)}
@@ -129,7 +128,7 @@ export const MainNav: FC = () => {
                  <div className="h-10 w-10 bg-background/50 rounded-full"></div>
             </div>
             <div className="hidden md:flex items-center gap-1">
-                {[...Array(navLinks.length)].map((_, i) => (
+                {navLinks.map((_, i) => (
                    <div key={i} className="h-8 w-24 bg-background/50 rounded-md"></div>
                 ))}
                 <div className="h-9 w-28 bg-primary/20 rounded-md ml-2"></div>
@@ -146,10 +145,10 @@ export const MainNav: FC = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
           <BookOpenText className={cn(
-            "h-8 w-8 transition-colors duration-300 ease-in-out text-[hsl(var(--nav-icon-light))] dark:text-[hsl(var(--nav-icon-dark))] group-hover:text-accent dark:group-hover:text-accent"
+            "h-8 w-8 transition-colors duration-300 ease-in-out text-[hsl(var(--nav-icon-dark))] dark:text-[hsl(var(--nav-icon-dark))] group-hover:text-accent dark:group-hover:text-accent"
           )} aria-hidden="true" />
           <h1 className={cn(
-            "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-light))] dark:text-[hsl(var(--nav-text-dark))] group-hover:text-accent dark:group-hover:text-accent"
+            "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-dark))] dark:text-[hsl(var(--nav-text-dark))] group-hover:text-accent dark:group-hover:text-accent"
           )}>ChillLearn</h1>
         </Link>
 
@@ -174,10 +173,10 @@ export const MainNav: FC = () => {
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "rounded-full aspect-square h-10 w-10 transition-colors duration-200 text-[hsl(var(--nav-icon-light))] dark:text-[hsl(var(--nav-icon-dark))]",
-                  isMobileMenuOpen
-                    ? "bg-[hsl(var(--nav-active-indicator-light))] dark:bg-[hsl(var(--nav-active-indicator-dark))]"
-                    : "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 dark:hover:bg-[hsl(var(--nav-active-indicator-dark))]/50"
+                  "rounded-full aspect-square h-10 w-10 transition-colors duration-200", 
+                  "text-[hsl(var(--nav-icon-dark))] dark:text-[hsl(var(--nav-icon-dark))]", 
+                  "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 dark:hover:bg-[hsl(var(--nav-active-indicator-dark))]/50",
+                  isMobileMenuOpen && "bg-[hsl(var(--nav-active-indicator-light))] dark:bg-[hsl(var(--nav-active-indicator-dark))]"
                 )}
                 aria-label="Open main navigation menu"
                 aria-expanded={isMobileMenuOpen}
@@ -185,10 +184,10 @@ export const MainNav: FC = () => {
                 <Menu className={cn("h-6 w-6")} aria-hidden="true" />
               </Button>
             </SheetTrigger>
-            <SheetContent 
-              side="right" 
+            <SheetContent
+              side="right"
               className={cn(
-                "w-full max-w-xs p-0 flex flex-col bg-nav-gradient border-l border-[hsl(var(--nav-border-dark))]" // Always use dark gradient for mobile sheet
+                "w-full max-w-xs p-0 flex flex-col bg-nav-gradient border-l border-[hsl(var(--nav-border-dark))]" 
               )}
             >
               <SheetHeader className={cn(
@@ -200,14 +199,7 @@ export const MainNav: FC = () => {
                     <h1 className={cn("text-xl font-bold text-[hsl(var(--nav-text-dark))]")}>ChillLearn</h1>
                   </Link>
                 </SheetTitle>
-                 <SheetClose 
-                  className={cn(
-                    "rounded-full p-1.5 opacity-80 ring-offset-background transition-all hover:opacity-100 text-[hsl(var(--nav-icon-dark))] hover:bg-[hsl(var(--nav-active-indicator-dark))]/50"
-                  )}
-                  aria-label="Close navigation menu"
-                >
-                  <X className="h-5 w-5" />
-                </SheetClose>
+                {/* The default SheetClose from SheetContent will appear here, no need to add another one explicitly */}
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
@@ -240,11 +232,11 @@ export const MainNav: FC = () => {
                       </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className={cn("bg-[hsl(var(--nav-gradient-from-dark))] border-[hsl(var(--nav-border-dark))] text-[hsl(var(--nav-text-dark))]")}>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className={cn("flex items-center gap-2 text-destructive")}>
+                    <AlertDialogHeaderPrimitive>
+                      <AlertDialogTitlePrimitive className={cn("flex items-center gap-2 text-destructive")}>
                          <ShieldAlert className="h-6 w-6 text-destructive" />
                          Confirm Full Reset
-                      </AlertDialogTitle>
+                      </AlertDialogTitlePrimitive>
                       <AlertDialogDescription className={cn("text-[hsl(var(--muted-foreground))] dark:text-[hsl(var(--muted-foreground))]")}>
                         This action is irreversible and will clear all your learning progress,
                         including your word lists, mastered words, reading level, word length preferences,
@@ -253,7 +245,7 @@ export const MainNav: FC = () => {
                         <br/><br/>
                         <strong>Are you absolutely sure you want to reset everything?</strong>
                       </AlertDialogDescription>
-                    </AlertDialogHeader>
+                    </AlertDialogHeaderPrimitive>
                     <AlertDialogFooter>
                       <AlertDialogCancel className={cn("border-[hsl(var(--nav-border-dark))] text-[hsl(var(--nav-text-dark))] bg-transparent hover:bg-[hsl(var(--nav-active-indicator-dark))]/50")}>Cancel</AlertDialogCancel>
                       <AlertDialogAction
