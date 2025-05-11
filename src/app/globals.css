@@ -15,13 +15,13 @@
 
 
     /* Light Mode - Vibrant & Playful Theme */
-    --background: 40 100% 98%; /* Light Cream */
+    --background: 40 100% 98%; /* Light Cream - Opaque, for elements that should not be glassy */
     --foreground: 210 30% 25%; /* Charcoal Blue */
 
-    --card: 0 0% 100%; /* White */
+    --card: 0 0% 100% / 0.75; /* White at 75% opacity for glassy effect */
     --card-foreground: 210 30% 20%; /* Darker Charcoal Blue for card text */
 
-    --popover: 0 0% 100%; /* White */
+    --popover: 0 0% 100% / 0.75; /* White at 75% opacity for glassy effect */
     --popover-foreground: 210 30% 20%; /* Darker Charcoal Blue for popover text */
 
     --primary: 175 70% 45%; /* Vibrant Teal */
@@ -53,7 +53,7 @@
     --chart-5: 160 60% 60%; /* Minty Green shade */
 
     /* Sidebar specific colors (Light) */
-    --sidebar-background: 210 25% 96%; /* Slightly off-white, similar to muted but distinct */
+    --sidebar-background: 210 25% 96% / 0.75; /* Slightly off-white at 75% opacity for glassy effect */
     --sidebar-foreground: 210 30% 30%; /* Darker than main foreground for contrast */
     --sidebar-primary: var(--primary); /* Use main primary */
     --sidebar-primary-foreground: var(--primary-foreground); /* Use main primary-foreground */
@@ -112,13 +112,13 @@
 
   .dark {
     /* Dark Mode - Vibrant & Playful Theme */
-    --background: 210 30% 10%; /* Deep Navy */
+    --background: 210 30% 10%; /* Deep Navy - Opaque */
     --foreground: 40 20% 90%; /* Light Stone */
 
-    --card: 210 30% 15%; /* Slightly Lighter Deep Navy for cards */
+    --card: 210 30% 15% / 0.75; /* Slightly Lighter Deep Navy at 75% opacity for glassy effect */
     --card-foreground: 40 20% 90%; /* Light Stone for card text */
 
-    --popover: 210 30% 12%; /* Darker Deep Navy for popovers */
+    --popover: 210 30% 12% / 0.75; /* Darker Deep Navy at 75% opacity for glassy effect */
     --popover-foreground: 40 20% 90%; /* Light Stone for popover text */
 
     --primary: 175 70% 55%; /* Brighter Vibrant Teal */
@@ -148,7 +148,7 @@
     --chart-5: 160 60% 70%; /* Minty Green shade (dark mode) */
 
     /* Sidebar specific colors (Dark) */
-    --sidebar-background: 210 30% 12%; /* Darker than main dark background */
+    --sidebar-background: 210 30% 12% / 0.75; /* Darker than main dark background at 75% opacity for glassy effect */
     --sidebar-foreground: 40 20% 85%;  /* Slightly dimmer than main dark foreground */
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
@@ -190,11 +190,33 @@
     @apply border-border;
   }
   body {
-    @apply bg-gradient-to-br from-background to-secondary/30 dark:from-background dark:to-primary/10 text-foreground;
+    background-color: hsl(var(--background)); /* Fallback color */
+    @apply text-foreground;
     min-height: 100vh;
     font-family: var(--font-family-base); /* Use custom font family */
     font-size: var(--font-size-base); /* Use custom font size */
   }
+  body::before { /* Background Image */
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url('https://picsum.photos/seed/glassybg/1920/1080');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    z-index: -2; /* Furthest back */
+  }
+  body::after { /* Dark Overlay */
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.15); /* Default (Light mode) overlay */
+    z-index: -1; /* On top of image, behind content */
+  }
+  .dark body::after {
+    background-color: rgba(0, 0, 0, 0.45); /* Darker overlay for dark mode for better contrast */
+  }
+
 
   /* Ensure layout takes full height */
   html, body, #__next {
@@ -209,6 +231,11 @@
 }
 
 @layer components {
+  /* Apply backdrop blur to elements with these background classes */
+  .bg-card, .bg-popover, .bg-sidebar {
+    @apply backdrop-blur-lg; /* Increased blur for more pronounced glassy effect */
+  }
+
   /* Additional global component styles if needed */
   .btn-glow {
     @apply shadow-[0_0_15px_hsl(var(--primary)/0.5),_0_0_20px_hsl(var(--accent)/0.3)];
