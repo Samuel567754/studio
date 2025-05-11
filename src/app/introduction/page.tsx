@@ -8,21 +8,21 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { setHasSeenIntroduction, getHasSeenIntroduction, getHasCompletedPersonalization } from '@/lib/storage';
-import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon, SkipForward, Palette, FileType2, Puzzle, Brain, PencilLine, BookOpen, BarChartHorizontal, SlidersHorizontal, Info, GraduationCap } from 'lucide-react';
+import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon, SkipForward, Palette, FileType2, Puzzle, Brain, PencilLine, BookOpen, BarChartHorizontal, SlidersHorizontal, Info, GraduationCap, Map, Compass } from 'lucide-react';
 import { playNotificationSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 
 const features = [
-  { icon: HomeIcon, title: "Homepage Hub", description: "Your central dashboard for accessing all learning activities.", imageSrc: "https://picsum.photos/seed/kids-dashboard/600/400", aiHint: "kids dashboard homepage" },
-  { icon: GraduationCap, title: "AI Word Learning", description: "Get smart word suggestions tailored to your reading level.", imageSrc: "https://picsum.photos/seed/ai-learning-kids/600/400", aiHint: "AI brain kids" },
-  { icon: PencilLine, title: "Spelling Practice", description: "Master words with interactive spelling exercises.", imageSrc: "https://picsum.photos/seed/kids-spelling/600/400", aiHint: "kids spelling blocks" },
-  { icon: Target, title: "Word Identification", description: "Fun games to test your word recognition skills.", imageSrc: "https://picsum.photos/seed/word-game-kids/600/400", aiHint: "kids word game" },
-  { icon: BookOpen, title: "AI Reading Passages", description: "Read engaging stories created with your learned words.", imageSrc: "https://picsum.photos/seed/ai-storybook-kids/600/400", aiHint: "kids AI storybook" },
-  { icon: Brain, title: "AI Word Games", description: "Play fun Fill-in-the-Blank and Definition Match games powered by AI.", imageSrc: "https://picsum.photos/seed/ai-puzzle-kids/600/400", aiHint: "kids AI puzzle" },
-  { icon: Sigma, title: "Math Zone", description: "Explore numbers with fun arithmetic and AI-powered problems.", imageSrc: "https://picsum.photos/seed/math-play-kids/600/400", aiHint: "kids math play" },
-  { icon: BarChartHorizontal, title: "Track Your Progress", description: "See your learning journey on your personal profile.", imageSrc: "https://picsum.photos/seed/kids-progress-chart/600/400", aiHint: "kids progress chart" },
-  { icon: Palette, title: "Customize Your App", description: "Adjust themes, fonts, and audio settings.", imageSrc: "https://picsum.photos/seed/kids-customize-settings/600/400", aiHint: "kids settings customize" },
-  { icon: Info, title: "Interactive Guides", description: "Easy-to-follow tutorials and walkthroughs.", imageSrc: "https://picsum.photos/seed/kids-guide-map/600/400", aiHint: "kids guide map" },
+  { icon: HomeIcon, title: "Homepage Hub", description: "Your central dashboard for accessing all learning activities.", imageSrc: "https://images.unsplash.com/photo-1634128221889-82ed6efebfc3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&id=M3wxMjA3fDB8MHxzZWFyY2h8NjZ8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D", aiHint: "child laptop learning" },
+  { icon: GraduationCap, title: "AI Word Learning", description: "Get smart word suggestions tailored to your reading level.", imageSrc: "https://plus.unsplash.com/premium_photo-1687819872154-9d4fd3cb7cca?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjl8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D", aiHint: "AI learning words" },
+  { icon: PencilLine, title: "Spelling Practice", description: "Master words with interactive spelling exercises.", imageSrc: "https://images.unsplash.com/photo-1740479049022-5bc6d96cfc73?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHNwZWxsJTIwd29yZHN8ZW58MHx8MHx8fDA%3D", aiHint: "spell words keyboard" },
+  { icon: Target, title: "Word Identification", description: "Fun games to test your word recognition skills.", imageSrc: "https://images.unsplash.com/photo-1653276055789-26fdc328680f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTR8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D", aiHint: "word identification game" },
+  { icon: BookOpen, title: "AI Reading Passages", description: "Read engaging stories created with your learned words.", imageSrc: "https://images.unsplash.com/photo-1604342162684-0cb7869cc445?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzl8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D", aiHint: "reading adventure child" },
+  { icon: Brain, title: "AI Word Games", description: "Play fun Fill-in-the-Blank and Definition Match games powered by AI.", imageSrc: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8YWl8ZW58MHx8MHx8fDA%3D", aiHint: "AI games abstract" },
+  { icon: Sigma, title: "Math Zone", description: "Explore numbers with fun arithmetic and AI-powered problems.", imageSrc: "https://images.unsplash.com/photo-1634128221889-82ed6efebfc3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDd8fGNoaWxkcmVuJTIwbWF0aGVtYXRpY3N8ZW58MHx8MHx8fDA%3D", aiHint: "math game" },
+  { icon: BarChartHorizontal, title: "Track Your Progress", description: "See your learning journey on your personal profile.", imageSrc: "https://images.unsplash.com/photo-1731877818770-820faabe2d4c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTIyfHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D", aiHint: "abstract pattern profile" },
+  { icon: Palette, title: "Customize Your App", description: "Adjust themes, fonts, and audio settings.", imageSrc: "https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D", aiHint: "app background settings" },
+  { icon: Map, title: "Interactive Guides", description: "Easy-to-follow tutorials and walkthroughs.", imageSrc: "https://plus.unsplash.com/premium_photo-1722156533662-f58d3e13c07c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NjV8fGFwcCUyMHdhbGslMjB0aHJvdWdofGVufDB8fDB8fHww", aiHint: "app walkthrough guide" },
 ];
 
 const AUTOPLAY_INTERVAL = 5000; // 5 seconds
@@ -40,7 +40,6 @@ export default function IntroductionPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    // If intro has already been seen, redirect based on personalization status
     if (getHasSeenIntroduction()) {
         if (getHasCompletedPersonalization()) {
             router.replace('/');
@@ -50,11 +49,11 @@ export default function IntroductionPage() {
     }
   }, [router]);
 
-  const completeIntroduction = useCallback(() => {
+  const completeIntroduction = useCallback((skip: boolean = false) => {
     setIsAutoplayActive(false); 
     setHasSeenIntroduction(true);
     playNotificationSound();
-    if (getHasCompletedPersonalization()) {
+    if (skip || getHasCompletedPersonalization()) {
       router.push('/'); 
     } else {
       router.push('/personalize');
@@ -213,7 +212,7 @@ export default function IntroductionPage() {
         <div className="animate-in fade-in-0 slide-in-from-bottom-10 duration-700 delay-[400ms] pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button
             size="lg"
-            onClick={completeIntroduction}
+            onClick={() => completeIntroduction(false)}
             className="px-8 py-5 text-lg sm:text-xl font-semibold btn-glow shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 ease-in-out w-full sm:w-auto"
             aria-label="Get started with ChillLearn AI"
           >
@@ -222,7 +221,7 @@ export default function IntroductionPage() {
           <Button
             variant="outline"
             size="lg"
-            onClick={completeIntroduction}
+            onClick={() => completeIntroduction(true)}
             className="px-8 py-5 text-lg sm:text-xl font-medium w-full sm:w-auto hover:bg-primary/10 hover:text-primary transition-colors duration-200"
             aria-label="Skip introduction and go to app"
           >
@@ -236,4 +235,3 @@ export default function IntroductionPage() {
     </div>
   );
 }
-

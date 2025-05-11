@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from 'next/link';
@@ -15,9 +14,9 @@ const mainSections = [
     description: "Learn new words, practice spelling, identify words by ear, and read AI-generated stories.",
     href: "/word-practice",
     icon: TextSelectIcon,
-    imageSrc: "https://picsum.photos/seed/abc-blocks/600/400",
-    imageAlt: "Colorful alphabet blocks and a child learning words",
-    aiHint: "alphabet blocks child",
+    imageSrc: "https://plus.unsplash.com/premium_photo-1687819872154-9d4fd3cb7cca?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjl8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D",
+    imageAlt: "Child learning words with AI assistance",
+    aiHint: "AI learning words",
     color: "text-primary",
   },
    {
@@ -26,9 +25,9 @@ const mainSections = [
     description: "Challenge yourself with interactive AI-powered word games like Fill-in-the-Blank and Definition Match.",
     href: "/ai-games",
     icon: Puzzle, 
-    imageSrc: "https://picsum.photos/seed/kids-tablet-game/600/400",
-    imageAlt: "Child playing an interactive word game on a tablet",
-    aiHint: "child tablet game",
+    imageSrc: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8YWl8ZW58MHx8MHx8fDA%3D",
+    imageAlt: "Abstract AI patterns representing word games",
+    aiHint: "AI games abstract",
     color: "text-orange-500", 
   },
   {
@@ -37,9 +36,9 @@ const mainSections = [
     description: "Explore a world of numbers with engaging arithmetic games, times tables, AI word problems, and more.",
     href: "/math",
     icon: Sigma,
-    imageSrc: "https://picsum.photos/seed/math-doodles/600/400",
-    imageAlt: "Colorful numbers, math symbols, and doodles on a chalkboard",
-    aiHint: "math doodles chalkboard",
+    imageSrc: "https://images.unsplash.com/photo-1718306201865-cae4a08311fe?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzR8fGNoaWxkcmVuJTIwbWF0aGVtYXRpY3MlMjBiYWNrZ3JvdW5kfGVufDB8fDB8fHww",
+    imageAlt: "Colorful math background with numbers and symbols",
+    aiHint: "math background",
     color: "text-purple-500",
   },
 ];
@@ -49,12 +48,12 @@ export default function OfficialHomePage() {
     <div className="space-y-12">
       <header className="relative text-center rounded-xl overflow-hidden shadow-2xl h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex flex-col justify-center items-center mt-8">
         <Image
-          src="https://picsum.photos/seed/learning-hero/1200/800"
-          alt="Inspiring learning environment with bright colors and abstract shapes"
+          src="https://plus.unsplash.com/premium_photo-1683749808835-6f8f186a903e?w=1200&h=800&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzN8fHdvcmQlMjBwcmFjdGljZXxlbnwwfHwwfHx8MA%3D%3D"
+          alt="Children interacting with colorful letters and learning tools"
           layout="fill"
           objectFit="cover"
           className="brightness-50" 
-          data-ai-hint="learning kids education"
+          data-ai-hint="children letters learning"
           priority
         />
         <div className="absolute inset-0 bg-black/60" /> 
@@ -115,12 +114,12 @@ export default function OfficialHomePage() {
 
       <section className="relative text-center py-16 md:py-24 animate-in fade-in-0 delay-500 duration-500 rounded-xl overflow-hidden shadow-2xl">
          <Image
-            src="https://picsum.photos/seed/explore-more-bg/1200/600"
-            alt="Abstract background with subtle learning motifs"
+            src="https://plus.unsplash.com/premium_photo-1722156533662-f58d3e13c07c?w=1200&h=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NjV8fGFwcCUyMHdhbGslMjB0aHJvdWdofGVufDB8fDB8fHww"
+            alt="Abstract background with subtle learning motifs and app walkthrough guide visuals"
             layout="fill"
             objectFit="cover"
             className="brightness-50"
-            data-ai-hint="learning abstract background"
+            data-ai-hint="learning abstract walkthrough"
          />
          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
          <div className="relative z-10 container mx-auto px-4">
@@ -146,4 +145,3 @@ export default function OfficialHomePage() {
     </div>
   );
 }
-
