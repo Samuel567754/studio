@@ -223,7 +223,7 @@ export default function DefinitionMatchPage() {
           {!isLoadingGame && gameData && (
             <>
               {gameData.hint && !isAttempted && (
-                  <p className="text-sm text-muted-foreground mt-0 mb-3 text-center bg-muted/50 p-2 rounded-md">
+                  <p className="text-sm text-muted-foreground mt-0 mb-3 text-center bg-muted/50 p-2 rounded-md whitespace-normal break-words">
                     <Lightbulb className="inline h-4 w-4 mr-1 text-yellow-500" />
                     Hint: {gameData.hint}
                   </p>
@@ -239,7 +239,7 @@ export default function DefinitionMatchPage() {
                     variant="outline"
                     size="lg"
                     className={cn(
-                      "w-full text-left text-base md:text-lg py-4 h-auto justify-start leading-normal transition-all duration-200 ease-in-out transform hover:scale-105 shadow-sm",
+                      "w-full text-left text-base md:text-lg py-4 h-auto justify-start leading-normal transition-all duration-200 ease-in-out transform hover:scale-105 shadow-sm whitespace-normal break-words", // Added whitespace-normal and break-words
                       isAttempted && option === selectedOption && isCorrect && "bg-green-500/20 border-green-500 text-green-700 dark:text-green-400 hover:bg-green-500/30 ring-2 ring-green-500",
                       isAttempted && option === selectedOption && !isCorrect && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500",
                       isAttempted && option !== selectedOption && option.toLowerCase() === gameData.correctDefinition.toLowerCase() && "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500", 
@@ -271,7 +271,7 @@ export default function DefinitionMatchPage() {
                     <AlertTitle>
                     {isCorrect ? (username ? `That's it, ${username}!` : 'Correct!') : 'Not this time!'}
                     </AlertTitle>
-                    <AlertDescription>
+                    <AlertDescription className="whitespace-normal break-words">
                     {isCorrect ? `You correctly chose the definition for "${gameData.word}"!` : `The correct definition for "${gameData.word}" was: "${gameData.correctDefinition}".`}
                     </AlertDescription>
                 </Alert>
@@ -298,3 +298,4 @@ export default function DefinitionMatchPage() {
     </div>
   );
 }
+
