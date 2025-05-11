@@ -135,24 +135,24 @@ export default function ProfilePage() {
     <div className="space-y-8 max-w-3xl mx-auto">
       <header className="relative text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out rounded-xl overflow-hidden shadow-2xl p-8 md:p-12 min-h-[300px] flex flex-col justify-center items-center">
         <Image
-          src="https://picsum.photos/seed/profile-banner-stars/1200/400"
-          alt="Abstract background with stars and educational motifs for profile header"
+          src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D"
+          alt="Abstract background with colorful shapes for profile header"
           layout="fill"
           objectFit="cover"
           className="brightness-50"
-          data-ai-hint="stars education"
+          data-ai-hint="app background"
           priority
         />
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
         <div className="relative z-10 text-white">
           <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-primary/50 mb-4">
               <Image
-                  src="https://picsum.photos/seed/child-award-avatar/200" 
-                  alt={username ? `${username}'s profile avatar with a learning award theme` : "User profile avatar with a learning award theme"}
+                  src="https://images.unsplash.com/photo-1731877818770-820faabe2d4c?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTIyfHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D" 
+                  alt={username ? `${username}'s profile avatar with an abstract pattern` : "User profile avatar with an abstract pattern"}
                   layout="fill"
                   objectFit="cover"
                   className="rounded-full"
-                  data-ai-hint="child award avatar" 
+                  data-ai-hint="abstract pattern" 
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end justify-center p-2">
                    <Award className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
@@ -337,5 +337,6 @@ export default function ProfilePage() {
 
 
     
+
 
 
