@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC } from 'react';
@@ -11,7 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X, Smile, Compass } from 'lucide-react'; 
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, CheckCircle, X, Smile, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, CheckCircle2 as CheckCircle2Icon } from 'lucide-react'; 
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +27,22 @@ interface WalkthroughModalProps {
   onClose: () => void;
   onFinish: () => void;
 }
+
+const getWalkthroughIconComponent = (iconName?: string): React.ElementType => {
+  if (!iconName) return Compass; // Default fallback
+  const icons: { [key: string]: React.ElementType } = {
+    Smile: Smile,
+    HomeIcon: HomeIcon,
+    FileType2: TextSelectIcon, // Maps "FileType2" string to TextSelectIcon component
+    Puzzle: Puzzle,
+    User: User,
+    CheckCircle2: CheckCircle2Icon, // Maps "CheckCircle2" string to CheckCircle2Icon component
+    Compass: Compass,
+    // Add any other icons used by name in walkthroughModalSteps here
+  };
+  return icons[iconName] || Compass; // Fallback to Compass if name not found
+};
+
 
 export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, onFinish }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -167,7 +184,7 @@ export const WalkthroughModal: FC<WalkthroughModalProps> = ({ isOpen, onClose, o
   }
   
   const progressPercentage = ((currentStepIndex + 1) / walkthroughModalSteps.length) * 100;
-  const IconComponent = currentStepData.icon || Compass;
+  const IconComponent = getWalkthroughIconComponent(typeof currentStepData.icon === 'string' ? currentStepData.icon : undefined);
 
 
   return (
