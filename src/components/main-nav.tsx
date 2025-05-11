@@ -129,11 +129,7 @@ export const MainNav: FC = () => {
                     <h1 className="text-xl font-bold text-primary">ChillLearn</h1>
                   </Link>
                 </SheetTitle>
-                <SheetClose asChild>
-                   <Button variant="ghost" size="icon" className="rounded-full aspect-square hover:bg-accent/20" aria-label="Close navigation menu">
-                      <X className="h-6 w-6 text-foreground" aria-hidden="true" />
-                    </Button>
-                </SheetClose>
+                {/* The SheetContent component itself renders a close button, so no need for an explicit one here */}
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
@@ -158,3 +154,4 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+
