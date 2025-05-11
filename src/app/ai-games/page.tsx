@@ -14,14 +14,14 @@ export default function AiGamesPage() {
       description: "Read a sentence and choose the word that best fits the blank. Tests vocabulary in context!",
       href: "/ai-games/fill-blank",
       icon: Edit,
-      dataAiHint: "child pencil sentence", // Updated hint
+      dataAiHint: "child pencil sentence", 
     },
     {
       title: "Word Definition Match",
       description: "Match words to their correct AI-generated definitions. Boost your understanding!",
       href: "/ai-games/definition-match",
       icon: BookOpenCheck, 
-      dataAiHint: "child dictionary book", // Updated hint
+      dataAiHint: "child dictionary book", 
     },
     // Add more AI games here in the future
   ];
@@ -31,17 +31,18 @@ export default function AiGamesPage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
-            src="https://picsum.photos/seed/ai-game-banner/600/400" 
-            alt="Children playing educational games on tablets with AI icons"
+            src="https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8YWl8ZW58MHx8MHx8fDA%3D" 
+            alt="AI powered word games concept with abstract neural network and letters"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="children tablet games" // Updated hint
+            data-ai-hint="AI games abstract" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex flex-col items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent flex flex-col items-center justify-center p-4">
             <Puzzle className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
-            <h1 className="text-4xl font-bold text-gradient-primary-accent mt-2">AI Word Games</h1>
-            <p className="text-lg text-foreground/90 drop-shadow-sm">Engage with fun, AI-powered word challenges!</p>
+            <h1 className="text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">AI Word Games</h1>
+            <p className="text-lg text-gray-100 drop-shadow-sm">Engage with fun, AI-powered word challenges!</p>
           </div>
         </div>
       </header>
@@ -88,4 +89,3 @@ export default function AiGamesPage() {
     </div>
   );
 }
-
