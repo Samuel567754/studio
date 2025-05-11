@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export const GenerateMathWordProblemInputSchema = z.object({

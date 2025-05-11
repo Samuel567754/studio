@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 const MathQuestionSchema = z.object({

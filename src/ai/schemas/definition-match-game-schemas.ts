@@ -33,4 +33,3 @@ export const GenerateDefinitionMatchGameOutputSchema = z.object({
     .optional()
     .describe('An optional one-sentence hint about the word (e.g., "This word describes a feeling." or "This is a type of animal.").'),
 });
-export type GenerateDefinitionMatchGameOutput = z.infer<typeof GenerateDefinitionMatchGameOutputSchema>;

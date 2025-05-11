@@ -1,5 +1,4 @@
 
-'use server';
 /**
  * @fileOverview Zod schemas for generating comprehension questions for a reading passage.
  */
@@ -24,4 +23,4 @@ export type GenerateComprehensionQuestionsInput = z.infer<typeof GenerateCompreh
 export const GenerateComprehensionQuestionsOutputSchema = z.object({
   questions: z.array(QuestionSchema).min(1).describe('An array of comprehension questions based on the passage.')
 });
-export type GenerateComprehensionQuestionsOutput = z.infer<typeof GenerateComprehensionQuestionsOutputSchema>;
+export type GenerateComprehensionQuestionsOutput = z.
