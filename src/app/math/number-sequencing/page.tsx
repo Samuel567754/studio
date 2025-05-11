@@ -18,12 +18,13 @@ export default function NumberSequencingPage() {
             className="rounded-lg"
             data-ai-hint="sequence puzzle" 
           />
-           <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent flex flex-col items-center justify-center p-2">
+           <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
+           <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
              <Footprints className="h-10 w-10 md:h-12 md:w-12 text-primary drop-shadow-lg" aria-hidden="true" />
+             <h1 className="text-2xl md:text-3xl font-bold text-gradient-primary-accent mt-1 drop-shadow-md">Number Sequencing Fun</h1>
+             <p className="text-sm md:text-md text-gray-100 drop-shadow-sm">What comes next? Complete the number patterns!</p>
            </div>
         </div>
-        <h1 className="text-3xl font-bold text-gradient-primary-accent">Number Sequencing Fun</h1>
-        <p className="text-md text-muted-foreground">What comes next? Complete the number patterns!</p>
       </header>
       <NumberSequencingUI />
     </div>

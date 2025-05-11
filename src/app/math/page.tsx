@@ -65,10 +65,11 @@ export default function MathZonePage() {
             className="rounded-lg"
             data-ai-hint="math background" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex flex-col items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
             <Sigma className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
-            <h1 className="text-4xl font-bold text-gradient-primary-accent mt-2">Math Zone</h1>
-            <p className="text-lg text-foreground/90 drop-shadow-sm">Explore various math activities and games.</p>
+            <h1 className="text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Math Zone</h1>
+            <p className="text-lg text-gray-100 drop-shadow-sm">Explore various math activities and games.</p>
           </div>
         </div>
       </header>

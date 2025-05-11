@@ -18,12 +18,13 @@ export default function AiStoryProblemPage() {
             className="rounded-lg"
             data-ai-hint="child math" 
           />
-           <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent flex flex-col items-center justify-center p-2">
+           <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
+           <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
              <MessageSquarePlus className="h-10 w-10 md:h-12 md:w-12 text-primary drop-shadow-lg" aria-hidden="true" />
+             <h1 className="text-2xl md:text-3xl font-bold text-gradient-primary-accent mt-1 drop-shadow-md">AI Math Story Problems</h1>
+             <p className="text-sm md:text-md text-gray-100 drop-shadow-sm">Read stories and solve math puzzles created by AI!</p>
            </div>
         </div>
-        <h1 className="text-3xl font-bold text-gradient-primary-accent">AI Math Story Problems</h1>
-        <p className="text-md text-muted-foreground">Read stories and solve math puzzles created by AI!</p>
       </header>
       
       <AiStoryProblemGameUI />

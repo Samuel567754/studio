@@ -18,12 +18,13 @@ export default function ArithmeticGamePage() {
             className="rounded-lg"
             data-ai-hint="math game" 
           />
-           <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent flex flex-col items-center justify-center p-2">
+           <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
+           <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
              <Calculator className="h-10 w-10 md:h-12 md:w-12 text-primary drop-shadow-lg" aria-hidden="true" />
+             <h1 className="text-2xl md:text-3xl font-bold text-gradient-primary-accent mt-1 drop-shadow-md">Arithmetic Fun & Games</h1>
+             <p className="text-sm md:text-md text-gray-100 drop-shadow-sm">Test your math skills with exciting challenges!</p>
            </div>
         </div>
-        <h1 className="text-3xl font-bold text-gradient-primary-accent">Arithmetic Fun & Games</h1>
-        <p className="text-md text-muted-foreground">Test your math skills with exciting challenges!</p>
       </header>
       
       <ArithmeticGameUI />
