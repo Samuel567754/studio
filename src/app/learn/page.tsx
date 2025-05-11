@@ -14,7 +14,7 @@ import {
   getProgressionSuggestionDismissed, storeProgressionSuggestionDismissed
 } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { Trash2, CheckCircle, Info, CheckCircle2, AlertTriangle, CornerRightUp, Smile } from 'lucide-react';
+import { Trash2, CheckCircle, Info, CheckCircle2, AlertTriangle, CornerRightUp, Smile, GraduationCap } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -200,7 +200,26 @@ export default function LearnPage() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-8">
+      <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
+        <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
+          <Image 
+            src="https://plus.unsplash.com/premium_photo-1687819872154-9d4fd3cb7cca?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjl8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D" 
+            alt="AI helping a child learn words"
+            layout="fill"
+            objectFit="cover"
+            className="rounded-lg"
+            data-ai-hint="AI learning words" 
+          />
+          <div className="absolute inset-0 bg-black/60" /> 
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+            <GraduationCap className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Learn New Words</h1>
+            <p className="text-md md:text-lg text-gray-100 drop-shadow-sm mt-1">Get AI suggestions and build your practice list.</p>
+          </div>
+        </div>
+      </header>
+
       <WordSuggestion
         onWordSelected={handleWordSelected}
         onNewSuggestedWordsList={handleNewSuggestedWordsList}
@@ -287,9 +306,9 @@ export default function LearnPage() {
 
       {wordList.length === 0 && isMounted && !showProgressionAlert && (
         <Card className="shadow-lg border-accent/20 bg-card animate-in fade-in-0 zoom-in-95 duration-500 ease-out">
-          <CardContent className="p-0"> {/* Remove padding from CardContent if Alert will have its own */}
-            <Alert variant="info" className="bg-transparent border-0" aria-live="polite"> {/* Alert takes full card space */}
-              <div className="flex flex-col sm:flex-row items-start gap-4 p-6"> {/* Add padding here */}
+          <CardContent className="p-0"> 
+            <Alert variant="info" className="bg-transparent border-0" aria-live="polite"> 
+              <div className="flex flex-col sm:flex-row items-start gap-4 p-6"> 
                 <div className='flex-shrink-0'>
                  <Info className="h-5 w-5 mt-1" aria-hidden="true" />
                 </div>
@@ -309,12 +328,12 @@ export default function LearnPage() {
                 </div>
                 <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-auto">
                   <Image
-                    src="https://picsum.photos/seed/child-laptop-learn/150/150" // More relevant image
+                    src="https://images.unsplash.com/photo-1634128221889-82ed6efebfc3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&id=M3wxMjA3fDB8MHxzZWFyY2h8NjZ8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D"
                     alt="Child smiling while learning on a laptop"
                     width={120}
                     height={120}
                     className="rounded-lg shadow-md"
-                    data-ai-hint="child laptop learning" // Updated hint
+                    data-ai-hint="child laptop learning" 
                   />
                 </div>
               </div>
@@ -325,4 +344,3 @@ export default function LearnPage() {
     </div>
   );
 }
-

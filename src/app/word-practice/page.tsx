@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Lightbulb, Edit3, Target, BookMarked, FileType2 as TextSelectIcon, GraduationCap, Pencil, BookOpen } from 'lucide-react'; // Updated icons
+import { GraduationCap, Pencil, Target, BookOpen, FileType2 as TextSelectIcon } from 'lucide-react';
 
 export default function WordPracticePage() {
   const practiceSections = [
@@ -13,29 +13,29 @@ export default function WordPracticePage() {
       title: "Learn New Words",
       description: "Discover new words with AI suggestions tailored to your level. Build your personal practice list.",
       href: "/learn",
-      icon: GraduationCap, // Updated icon
-      dataAiHint: "child learning alphabet", // Updated hint
+      icon: GraduationCap, 
+      dataAiHint: "child learning alphabet", 
     },
     {
       title: "Spelling Practice",
       description: "Sharpen your spelling skills. Practice words from your list and master them one by one.",
       href: "/spell",
-      icon: Pencil, // Updated icon
-      dataAiHint: "child writing letters", // Updated hint
+      icon: Pencil, 
+      dataAiHint: "child writing letters", 
     },
     {
       title: "Identify Words",
       description: "Test your word recognition! Listen and choose the correct word in a fun, interactive game.",
       href: "/identify",
       icon: Target,
-      dataAiHint: "child pointing word", // Updated hint
+      dataAiHint: "child pointing word", 
     },
     {
       title: "Reading Adventures",
       description: "Dive into AI-generated stories featuring your practice words. Read or listen along!",
       href: "/read",
-      icon: BookOpen, // Updated icon
-      dataAiHint: "storybook open fantasy", // Updated hint
+      icon: BookOpen, 
+      dataAiHint: "storybook open fantasy", 
     },
   ];
 
@@ -44,18 +44,18 @@ export default function WordPracticePage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
-            src="https://plus.unsplash.com/premium_photo-1683749808835-6f8f186a903e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzN8fHdvcmQlMjBwcmFjdGljZXxlbnwwfHwwfHx8MA%3D%3D" 
-            alt="Colorful letters and learning tools for word practice"
+            src="https://plus.unsplash.com/premium_photo-1672759267971-b92f09733dc3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8bGVhcm4lMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
+            alt="Child focused on learning words with colorful blocks"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="letters learning" 
+            data-ai-hint="learn words child" 
           />
-          <div className="absolute inset-0 bg-black/60"></div> {/* Darker overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent flex flex-col items-center justify-center p-4">
-            <TextSelectIcon className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
-            <h1 className="text-4xl font-bold text-gradient-primary-accent mt-2">Word Practice Zone</h1>
-            <p className="text-lg text-white drop-shadow-md">Master words through various activities.</p> {/* Ensured text is bright white */}
+          <div className="absolute inset-0 bg-black/60" /> 
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+            <TextSelectIcon className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Word Practice Zone</h1>
+            <p className="text-md md:text-lg text-gray-100 drop-shadow-sm mt-1">Master words through various activities.</p>
           </div>
         </div>
       </header>
@@ -89,4 +89,3 @@ export default function WordPracticePage() {
     </div>
   );
 }
-
