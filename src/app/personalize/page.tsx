@@ -128,11 +128,11 @@ export default function PersonalizePage() {
         <CardHeader className="text-center items-center space-y-3">
           <div className="relative w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-accent/30 mb-3">
               <Image
-                  src="https://picsum.photos/seed/child-profile-avatar/200" // More relevant image
-                  alt="Happy child avatar for personalization"
+                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D" 
+                  alt="Abstract colorful background for app personalization"
                   layout="fill"
                   objectFit="cover"
-                  data-ai-hint="child avatar happy" // Updated hint
+                  data-ai-hint="app background"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent flex items-center justify-center p-2">
                    <UserCog className="h-10 w-10 text-white/90 drop-shadow-lg" aria-hidden="true" />
@@ -200,5 +200,6 @@ export default function PersonalizePage() {
     </div>
   );
 }
+
 
 
