@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -55,7 +56,7 @@ export default function OfficialHomePage() {
           data-ai-hint="learning kids education"
           priority
         />
-        <div className="absolute inset-0 bg-black/40" /> 
+        <div className="absolute inset-0 bg-black/60" /> 
         <div className="relative z-10 container mx-auto px-4 py-10 text-white">
           <BookOpenText className="mx-auto h-16 w-16 md:h-20 md:w-20 text-white mb-4 animate-in fade-in-0 zoom-in-50 duration-700 ease-out" />
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
@@ -120,17 +121,17 @@ export default function OfficialHomePage() {
             className="brightness-50"
             data-ai-hint="learning abstract background"
          />
-         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
          <div className="relative z-10 container mx-auto px-4">
             <Card className="max-w-2xl mx-auto p-6 md:p-10 shadow-xl bg-card/80 dark:bg-card/70 border border-primary/20">
                 <CardHeader>
                     <CardTitle className="text-3xl md:text-4xl font-semibold text-gradient-primary-accent mb-2">Ready to Explore More?</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <p className="text-lg md:text-xl text-foreground/90 dark:text-foreground/80">
+                    <p className="text-lg md:text-xl text-gray-100 dark:text-gray-200">
                         Check out your <Link href="/profile" className="text-primary hover:underline font-semibold">Profile</Link> to see your progress,
                         visit the <Link href="/tutorial" className="text-accent hover:underline font-semibold">Tutorial</Link> for a detailed guide,
-                        or customize your experience in <Link href="/settings" className="text-green-500 hover:underline font-semibold">Settings</Link>.
+                        or customize your experience in <Link href="/settings" className="text-green-400 hover:underline font-semibold">Settings</Link>.
                     </p>
                     <Button size="lg" variant="secondary" asChild className="text-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-transform">
                         <Link href="/tutorial">
