@@ -237,7 +237,7 @@ export default function LearnPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-4xl mx-auto">
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
@@ -319,7 +319,7 @@ export default function LearnPage() {
                       {currentPracticingWord === word && <CheckCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-70" aria-hidden="true" />}
                       <span className={cn(currentPracticingWord === word && "ml-3")}>{word}</span>
                     </Button>
-                    <AlertDialog>
+                    <AlertDialog open={wordToRemove === word} onOpenChange={(isOpen) => !isOpen && setWordToRemove(null)}>
                       <AlertDialogTrigger asChild>
                         <Button
                           variant="ghost"

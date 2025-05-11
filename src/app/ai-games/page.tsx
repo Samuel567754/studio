@@ -14,20 +14,22 @@ export default function AiGamesPage() {
       description: "Read a sentence and choose the word that best fits the blank. Tests vocabulary in context!",
       href: "/ai-games/fill-blank",
       icon: Edit,
-      dataAiHint: "child pencil sentence", 
+      imageSrc: "https://plus.unsplash.com/premium_photo-1682756540097-6a887bbcf9b0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjl8fGFpfGVufDB8fDB8fHww",
+      dataAiHint: "AI sentence puzzle", 
     },
     {
       title: "Word Definition Match",
       description: "Match words to their correct AI-generated definitions. Boost your understanding!",
       href: "/ai-games/definition-match",
       icon: BookOpenCheck, 
-      dataAiHint: "child dictionary book", 
+      imageSrc: "https://plus.unsplash.com/premium_photo-1725907643701-9ba38affe7bb?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nzd8fGFpfGVufDB8fDB8fHww",
+      dataAiHint: "AI definition match", 
     },
     // Add more AI games here in the future
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-4xl lg:max-w-5xl mx-auto">
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
@@ -51,11 +53,24 @@ export default function AiGamesPage() {
         {gameSections.map((section, index) => (
           <Card 
             key={section.title} 
-            className="shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
+            className="shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out overflow-hidden group"
             style={{ animationDelay: `${100 + index * 100}ms` }}
           >
-            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-              <section.icon className="h-10 w-10 text-accent" aria-hidden="true" />
+            <div className="relative h-48 w-full">
+               <Image
+                src={section.imageSrc}
+                alt={section.title}
+                layout="fill"
+                objectFit="cover"
+                className="opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 ease-in-out"
+                data-ai-hint={section.dataAiHint}
+              />
+              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                 <section.icon className="h-16 w-16 text-white/80 opacity-80 drop-shadow-lg" />
+              </div>
+            </div>
+            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2 pt-4">
+              <section.icon className="h-8 w-8 text-accent hidden" aria-hidden="true" /> {/* Icon hidden here, shown on image */}
               <div className="flex-1">
                 <CardTitle className="text-2xl font-semibold text-primary">{section.title}</CardTitle>
               </div>
@@ -89,3 +104,4 @@ export default function AiGamesPage() {
     </div>
   );
 }
+

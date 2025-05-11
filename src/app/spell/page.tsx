@@ -116,7 +116,7 @@ export default function SpellingPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-3xl mx-auto">
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
@@ -183,3 +183,4 @@ export default function SpellingPage() {
     </div>
   );
 }
+

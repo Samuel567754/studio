@@ -14,42 +14,46 @@ export default function WordPracticePage() {
       description: "Discover new words with AI suggestions tailored to your level. Build your personal practice list.",
       href: "/learn",
       icon: GraduationCap, 
-      dataAiHint: "child learning alphabet", 
+      imageSrc: "https://plus.unsplash.com/premium_photo-1687819872154-9d4fd3cb7cca?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjl8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D",
+      dataAiHint: "AI learning words", 
     },
     {
       title: "Spelling Practice",
       description: "Sharpen your spelling skills. Practice words from your list and master them one by one.",
       href: "/spell",
       icon: Pencil, 
-      dataAiHint: "child writing letters", 
+      imageSrc: "https://images.unsplash.com/photo-1740479049022-5bc6d96cfc73?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHNwZWxsJTIwd29yZHN8ZW58MHx8MHx8fDA%3D",
+      dataAiHint: "spell words keyboard", 
     },
     {
       title: "Identify Words",
       description: "Test your word recognition! Listen and choose the correct word in a fun, interactive game.",
       href: "/identify",
       icon: Target,
-      dataAiHint: "child pointing word", 
+      imageSrc: "https://images.unsplash.com/photo-1653276055789-26fdc328680f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTR8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D",
+      dataAiHint: "word identification game", 
     },
     {
       title: "Reading Adventures",
       description: "Dive into AI-generated stories featuring your practice words. Read or listen along!",
       href: "/read",
       icon: BookOpen, 
-      dataAiHint: "storybook open fantasy", 
+      imageSrc: "https://images.unsplash.com/photo-1604342162684-0cb7869cc445?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzl8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D",
+      dataAiHint: "reading adventure child", 
     },
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-4xl lg:max-w-5xl mx-auto">
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
-            src="https://plus.unsplash.com/premium_photo-1672759267971-b92f09733dc3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8bGVhcm4lMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
-            alt="Child focused on learning words with colorful blocks"
+            src="https://plus.unsplash.com/premium_photo-1683749808835-6f8f186a903e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzN8fHdvcmQlMjBwcmFjdGljZXxlbnwwfHwwfHx8MA%3D%3D" 
+            alt="Colorful letters and learning tools for word practice"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="learn words child" 
+            data-ai-hint="children letters learning" 
           />
           <div className="absolute inset-0 bg-black/60" /> 
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
@@ -64,11 +68,24 @@ export default function WordPracticePage() {
         {practiceSections.map((section, index) => (
           <Card 
             key={section.title} 
-            className="shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out"
+            className="shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out overflow-hidden group"
             style={{ animationDelay: `${100 + index * 100}ms` }}
           >
-            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-              <section.icon className="h-10 w-10 text-accent" aria-hidden="true" />
+             <div className="relative h-48 w-full">
+               <Image
+                src={section.imageSrc}
+                alt={section.title}
+                layout="fill"
+                objectFit="cover"
+                className="opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 ease-in-out"
+                data-ai-hint={section.dataAiHint}
+              />
+              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                 <section.icon className="h-16 w-16 text-white/80 opacity-80 drop-shadow-lg" />
+              </div>
+            </div>
+            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2 pt-4">
+              <section.icon className="h-8 w-8 text-accent hidden" aria-hidden="true" />
               <div className="flex-1">
                 <CardTitle className="text-2xl font-semibold text-primary">{section.title}</CardTitle>
               </div>
@@ -89,3 +106,4 @@ export default function WordPracticePage() {
     </div>
   );
 }
+
