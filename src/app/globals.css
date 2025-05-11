@@ -93,6 +93,15 @@
     --alert-destructive-bg-end-raw: 0 80% 90%;    /* Light Coral Pink */
     --alert-destructive-fg-raw: 0 70% 25%;      /* Darker Coral Red for text */
     --alert-destructive-icon-color-raw: 0 75% 55%;/* Vibrant Coral Red for Icon */
+
+    /* Navbar Gradient & Text Colors - Light Mode */
+    --nav-gradient-from-light: 175 75% 60%; /* Brighter Teal */
+    --nav-gradient-to-light: 195 80% 70%;   /* Lighter Cyan-Teal */
+    --nav-text-light: 210 50% 15%;        /* Darkest Blue for max contrast */
+    --nav-icon-light: 210 45% 25%;        /* Slightly Lighter Dark Blue for icons */
+    --nav-active-indicator-light: 0 0% 100% / 0.25; /* Semi-transparent white for active item background */
+    --nav-active-text-light: 210 50% 10%;   /* Even Darker Blue for active text */
+    --nav-border-light: 185 70% 50% / 0.3;  /* Tealish border with opacity */
   }
 
   .dark {
@@ -173,6 +182,15 @@
     --alert-destructive-bg-end-raw: 0 50% 24%;     /* Even Darker Coral Red */
     --alert-destructive-fg-raw: 0 75% 90%;       /* Light Coral Pink for Text */
     --alert-destructive-icon-color-raw: 0 70% 62%;  /* Vibrant Coral Red for Icon */
+
+    /* Navbar Gradient & Text Colors - Dark Mode */
+    --nav-gradient-from-dark: 210 40% 15%;  /* Deep Dark Blue */
+    --nav-gradient-to-dark: 185 50% 25%;    /* Darker Tealish Blue */
+    --nav-text-dark: 30 70% 92%;          /* Very Light Off-White/Cream */
+    --nav-icon-dark: 30 60% 88%;          /* Slightly Dimmer Off-White */
+    --nav-active-indicator-dark: 0 0% 100% / 0.1; /* Subtle transparent white for active item background */
+    --nav-active-text-dark: 30 80% 95%;     /* Brightest Off-White for active text */
+    --nav-border-dark: 200 40% 30% / 0.3;   /* Bluish border with opacity */
   }
 }
 
@@ -201,11 +219,11 @@
     content: "";
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.55); /* Adjusted light mode overlay opacity */
+    background-color: rgba(0, 0, 0, 0.65); /* Adjusted light mode overlay opacity */
     z-index: -1; /* On top of image, behind content */
   }
   .dark body::after {
-    background-color: rgba(0, 0, 0, 0.80); /* Adjusted dark mode overlay opacity */
+    background-color: rgba(0, 0, 0, 0.85); /* Adjusted dark mode overlay opacity */
   }
 
 
@@ -227,6 +245,14 @@
     @apply backdrop-blur-lg; /* Increased blur for more pronounced glassy effect */
   }
 
+  /* Navbar specific background - using Tailwind's gradient syntax directly */
+  .bg-nav-gradient {
+    @apply bg-gradient-to-r from-[hsl(var(--nav-gradient-from-light))] to-[hsl(var(--nav-gradient-to-light))];
+  }
+  .dark .bg-nav-gradient {
+    @apply bg-gradient-to-r from-[hsl(var(--nav-gradient-from-dark))] to-[hsl(var(--nav-gradient-to-dark))];
+  }
+
   /* Additional global component styles if needed */
   .btn-glow {
     @apply shadow-[0_0_15px_hsl(var(--primary)/0.5),_0_0_20px_hsl(var(--accent)/0.3)];
@@ -246,5 +272,20 @@
   .no-scrollbar {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
+  }
+
+  /* Custom top shadow for bottom nav */
+  .shadow-nav-top {
+    box-shadow: 0 -4px 12px -1px hsl(var(--nav-border-light) / 0.3), 0 -2px 8px -2px hsl(var(--nav-border-light) / 0.2);
+  }
+  .dark .shadow-nav-top {
+     box-shadow: 0 -4px 12px -1px hsl(var(--nav-border-dark) / 0.3), 0 -2px 8px -2px hsl(var(--nav-border-dark) / 0.2);
+  }
+   /* Custom bottom shadow for top nav */
+  .shadow-nav-bottom {
+    box-shadow: 0 4px 12px -1px hsl(var(--nav-border-light) / 0.3), 0 2px 8px -2px hsl(var(--nav-border-light) / 0.2);
+  }
+  .dark .shadow-nav-bottom {
+     box-shadow: 0 4px 12px -1px hsl(var(--nav-border-dark) / 0.3), 0 2px 8px -2px hsl(var(--nav-border-dark) / 0.2);
   }
 }

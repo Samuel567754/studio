@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC } from 'react';
@@ -43,7 +44,10 @@ export const QuickLinkFAB: FC = () => {
         <Button
           variant="default"
           size="icon"
-          className="fixed bottom-20 right-5 z-50 h-14 w-14 rounded-full shadow-xl md:hidden btn-glow transition-transform duration-300 ease-out hover:scale-105 active:scale-95"
+          className={cn(
+            "fixed bottom-20 right-5 z-50 h-14 w-14 rounded-full shadow-xl md:hidden transition-transform duration-300 ease-out hover:scale-105 active:scale-95",
+            "bg-gradient-to-br from-primary to-accent text-primary-foreground hover:from-primary/90 hover:to-accent/90 dark:from-primary dark:to-accent dark:text-primary-foreground dark:hover:from-primary/90 dark:hover:to-accent/90"
+          )}
           aria-label="Open quick navigation menu"
           aria-expanded={isOpen}
         >
@@ -64,35 +68,35 @@ export const QuickLinkFAB: FC = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 p-3 md:hidden bg-popover backdrop-blur-sm border-border shadow-2xl rounded-xl"
+        className="w-72 p-2 md:hidden rounded-xl shadow-2xl border-[hsl(var(--nav-border-light))] dark:border-[hsl(var(--nav-border-dark))] bg-nav-gradient backdrop-blur-md"
         side="top"
         align="end"
-        sideOffset={12} // Increased offset for a more floating feel
+        sideOffset={12}
       >
         <div className="flex flex-col gap-1.5">
           {fabNavLinks.map((link, index) => (
             <Button
               key={link.href}
-              variant={isActivePath(pathname, link.href) ? 'secondary' : 'ghost'}
+              variant="ghost" // Using ghost and manually styling active/hover for better control on gradient
               asChild
               className={cn(
-                "justify-start w-full text-md py-3.5 px-4 rounded-lg transition-all duration-150 ease-in-out group",
+                "justify-start w-full text-md py-3 px-4 rounded-lg transition-all duration-150 ease-in-out group focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-popover animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
                 isActivePath(pathname, link.href)
-                  ? "font-semibold bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary"
-                  : "hover:bg-primary/10",
-                "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-popover animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+                  ? "font-semibold bg-[hsl(var(--nav-active-indicator-dark))] text-[hsl(var(--nav-active-text-dark))]" // Use dark active style for popover
+                  : "text-[hsl(var(--nav-text-dark))] hover:bg-[hsl(var(--nav-active-indicator-dark))]/50 hover:text-[hsl(var(--nav-active-text-dark))]",
+                "focus-visible:ring-[hsl(var(--nav-text-dark))]"
               )}
-              style={{ animationDelay: `${index * 40}ms` }} // Staggered animation for items
+              style={{ animationDelay: `${index * 40}ms` }} 
               onClick={() => setIsOpen(false)}
             >
               <Link href={link.href} className="flex items-center gap-3">
                 <link.icon className={cn(
                     "h-5 w-5 transition-colors",
-                    isActivePath(pathname, link.href) ? "text-primary" : "text-foreground/70 group-hover:text-primary/90"
+                    isActivePath(pathname, link.href) ? "text-[hsl(var(--nav-active-text-dark))]" : "text-[hsl(var(--nav-icon-dark))] group-hover:text-[hsl(var(--nav-active-text-dark))]"
                 )} aria-hidden="true" />
                 <span className={cn(
                     "transition-colors",
-                    isActivePath(pathname, link.href) ? "text-primary" : "text-foreground group-hover:text-primary/90"
+                     isActivePath(pathname, link.href) ? "text-[hsl(var(--nav-active-text-dark))]" : "text-[hsl(var(--nav-text-dark))] group-hover:text-[hsl(var(--nav-active-text-dark))]"
                 )}>{link.label}</span>
               </Link>
             </Button>
