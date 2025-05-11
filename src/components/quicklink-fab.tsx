@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FC } from 'react';
@@ -65,7 +64,7 @@ export const QuickLinkFAB: FC = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 p-3 md:hidden bg-popover/90 backdrop-blur-sm border-border shadow-2xl rounded-xl"
+        className="w-72 p-3 md:hidden bg-popover backdrop-blur-sm border-border shadow-2xl rounded-xl"
         side="top"
         align="end"
         sideOffset={12} // Increased offset for a more floating feel

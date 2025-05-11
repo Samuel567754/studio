@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -18,8 +17,6 @@ const mainSections = [
     imageAlt: "Colorful alphabet blocks and a child learning words",
     aiHint: "alphabet blocks child",
     color: "text-primary",
-    bgFrom: "from-primary/10",
-    bgTo: "to-primary/5",
   },
    {
     key: "ai-games",
@@ -31,8 +28,6 @@ const mainSections = [
     imageAlt: "Child playing an interactive word game on a tablet",
     aiHint: "child tablet game",
     color: "text-orange-500", 
-    bgFrom: "from-orange-500/10",
-    bgTo: "to-orange-500/5",
   },
   {
     key: "math",
@@ -44,8 +39,6 @@ const mainSections = [
     imageAlt: "Colorful numbers, math symbols, and doodles on a chalkboard",
     aiHint: "math doodles chalkboard",
     color: "text-purple-500",
-    bgFrom: "from-purple-500/10",
-    bgTo: "to-purple-500/5",
   },
 ];
 
@@ -83,7 +76,7 @@ export default function OfficialHomePage() {
         {mainSections.map((section, index) => (
           <Card 
             key={section.key} 
-            className={`overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 bg-gradient-to-br ${section.bgFrom} ${section.bgTo} animate-in fade-in-0 slide-in-from-bottom-5 duration-500`}
+            className={`overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 bg-card animate-in fade-in-0 slide-in-from-bottom-5 duration-500`}
             style={{ animationDelay: `${100 + index * 100}ms` }}
           >
             <div className="relative h-48 w-full">
@@ -151,4 +144,3 @@ export default function OfficialHomePage() {
     </div>
   );
 }
-

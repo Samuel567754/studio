@@ -18,10 +18,10 @@
     --background: 40 100% 98%; /* Light Cream - Opaque, for elements that should not be glassy */
     --foreground: 210 30% 25%; /* Charcoal Blue */
 
-    --card: 0 0% 100% / 0.75; /* White at 75% opacity for glassy effect */
+    --card: 0 0% 100% / 0.85; /* White at 85% opacity for glassy effect */
     --card-foreground: 210 30% 20%; /* Darker Charcoal Blue for card text */
 
-    --popover: 0 0% 100% / 0.75; /* White at 75% opacity for glassy effect */
+    --popover: 0 0% 100% / 0.85; /* White at 85% opacity for glassy effect */
     --popover-foreground: 210 30% 20%; /* Darker Charcoal Blue for popover text */
 
     --primary: 175 70% 45%; /* Vibrant Teal */
@@ -53,7 +53,7 @@
     --chart-5: 160 60% 60%; /* Minty Green shade */
 
     /* Sidebar specific colors (Light) */
-    --sidebar-background: 210 25% 96% / 0.75; /* Slightly off-white at 75% opacity for glassy effect */
+    --sidebar-background: 210 25% 96% / 0.85; /* Slightly off-white at 85% opacity for glassy effect */
     --sidebar-foreground: 210 30% 30%; /* Darker than main foreground for contrast */
     --sidebar-primary: var(--primary); /* Use main primary */
     --sidebar-primary-foreground: var(--primary-foreground); /* Use main primary-foreground */
@@ -115,10 +115,10 @@
     --background: 210 30% 10%; /* Deep Navy - Opaque */
     --foreground: 40 20% 90%; /* Light Stone */
 
-    --card: 210 30% 15% / 0.75; /* Slightly Lighter Deep Navy at 75% opacity for glassy effect */
+    --card: 210 30% 15% / 0.85; /* Slightly Lighter Deep Navy at 85% opacity for glassy effect */
     --card-foreground: 40 20% 90%; /* Light Stone for card text */
 
-    --popover: 210 30% 12% / 0.75; /* Darker Deep Navy at 75% opacity for glassy effect */
+    --popover: 210 30% 12% / 0.85; /* Darker Deep Navy at 85% opacity for glassy effect */
     --popover-foreground: 40 20% 90%; /* Light Stone for popover text */
 
     --primary: 175 70% 55%; /* Brighter Vibrant Teal */
@@ -148,7 +148,7 @@
     --chart-5: 160 60% 70%; /* Minty Green shade (dark mode) */
 
     /* Sidebar specific colors (Dark) */
-    --sidebar-background: 210 30% 12% / 0.75; /* Darker than main dark background at 75% opacity for glassy effect */
+    --sidebar-background: 210 30% 12% / 0.85; /* Darker than main dark background at 85% opacity for glassy effect */
     --sidebar-foreground: 40 20% 85%;  /* Slightly dimmer than main dark foreground */
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
