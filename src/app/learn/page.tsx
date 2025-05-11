@@ -120,7 +120,7 @@ export default function LearnPage() {
       description: `Focusing on: ${newWordList[wordIndex]}. Practice spelling or add to a reading passage!`
     });
     playSuccessSound();
-    // DO NOT speakText(word) here; this is for newly suggested words.
+    speakText(word); // Speak the newly selected suggested word
   }, [wordList, updateWordList, toast, username]);
 
   // For clicking words in the practice list to activate them
@@ -136,10 +136,10 @@ export default function LearnPage() {
         title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />Word Activated</div>,
         description: `Now practicing: ${actualWordInList}`
       });
-      playNavigationSound(); // More appropriate for activating an existing item
-      speakText(actualWordInList); // SPEAK TEXT HERE for activating from practice list
+      playNavigationSound(); 
+      speakText(actualWordInList); 
     }
-  }, [wordList, toast, username]);
+  }, [wordList, toast]);
   
   const handleNewSuggestedWordsList = useCallback((suggestedWords: string[]) => {
     // This callback is mostly for information or future use.
@@ -171,7 +171,7 @@ export default function LearnPage() {
       title: <div className="flex items-center gap-2"><Trash2 className="h-5 w-5" aria-hidden="true" />Word Removed</div>, 
       description: `"${wordToRemove}" removed from your practice list.` 
     });
-    playErrorSound(); // More fitting for a removal
+    playErrorSound(); 
 
     if (newWordList.length === 0) {
         setCurrentPracticingWord('');
