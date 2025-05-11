@@ -5,13 +5,24 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Brain, Trash2, Info, GraduationCap } from 'lucide-react'; 
+import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Brain, Trash2, Info, GraduationCap, ShieldAlert } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
-import { playNotificationSound } from '@/lib/audio';
+import { playNotificationSound, playErrorSound } from '@/lib/audio';
 
 
 const navLinks = [
@@ -29,6 +40,8 @@ export const MainNav: FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -58,20 +71,19 @@ export const MainNav: FC = () => {
     </>
   );
   
-  const handleResetProgress = () => {
+  const handleConfirmResetProgress = () => {
     if (typeof window !== 'undefined') {
-        if(confirm("This will clear your learned words, mastered words, reading level, word length preferences, introduction and walkthrough status, username, and favorite topics. Are you sure?")) {
-            clearProgressStoredData(); 
-            setIsMobileMenuOpen(false);
-            toast({
-                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Progress Reset</div>,
-                description: "Your learning and app usage data has been cleared. You will see the introduction again.",
-                variant: "info"
-            });
-            playNotificationSound();
-             window.location.href = '/introduction'; 
-        }
+        clearProgressStoredData(); 
+        setIsMobileMenuOpen(false);
+        toast({
+            title: <div className="flex items-center gap-2"><Trash2 className="h-5 w-5" />Progress Reset</div>,
+            description: "Your learning and app usage data has been cleared. You will see the introduction again.",
+            variant: "destructive" // Using destructive variant for reset
+        });
+        playErrorSound(); // More fitting for a reset
+        window.location.href = '/introduction'; 
     }
+    setIsConfirmResetOpen(false);
   };
 
 
@@ -149,10 +161,36 @@ export const MainNav: FC = () => {
                 </Button>
               </nav>
                <div className="mt-auto p-4 border-t border-border/30">
-                  <Button variant="destructive" className="w-full" onClick={handleResetProgress}>
-                      <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Reset All Progress
-                  </Button>
+                <AlertDialog open={isConfirmResetOpen} onOpenChange={setIsConfirmResetOpen}>
+                  <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="w-full">
+                          <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                          Reset All Progress
+                      </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                         <ShieldAlert className="h-6 w-6 text-destructive" />
+                         Confirm Full Reset
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action is irreversible and will clear all your learning progress, 
+                        including your word lists, mastered words, reading level, word length preferences, 
+                        username, favorite topics, and tutorial completion status. 
+                        You will be taken back to the app introduction.
+                        <br/><br/>
+                        <strong>Are you absolutely sure you want to reset everything?</strong>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleConfirmResetProgress} className="bg-destructive hover:bg-destructive/90">
+                        Yes, Reset Everything
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                   <p className="text-xs text-muted-foreground mt-2 text-center">This resets all learning data and app usage preferences. You will see the introduction again.</p>
               </div>
             </SheetContent>

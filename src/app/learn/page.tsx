@@ -14,11 +14,22 @@ import {
   getProgressionSuggestionDismissed, storeProgressionSuggestionDismissed
 } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { Trash2, CheckCircle, Info, CheckCircle2, AlertTriangle, CornerRightUp, Smile, GraduationCap } from 'lucide-react';
+import { Trash2, CheckCircle, Info, CheckCircle2, AlertTriangle, CornerRightUp, Smile, GraduationCap, ShieldAlert } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription as UiCardDescription } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
-import { playSuccessSound, playNotificationSound, speakText } from '@/lib/audio';
+import { playSuccessSound, playNotificationSound, playErrorSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 
 
@@ -33,6 +44,8 @@ export default function LearnPage() {
   const { username } = useUserProfileStore();
 
   const { toast } = useToast();
+
+  const [wordToRemove, setWordToRemove] = useState<string | null>(null);
 
   // Load initial state from localStorage
   useEffect(() => {
@@ -126,16 +139,18 @@ export default function LearnPage() {
     playNotificationSound();
   }, [toast, username]);
 
-  const handleRemoveWord = (wordToRemove: string) => {
+  const confirmRemoveWord = () => {
+    if (!wordToRemove) return;
+
     const newWordList = wordList.filter(w => w !== wordToRemove);
     updateWordList(newWordList); 
 
     toast({ 
-      variant: "info", 
-      title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />Word Removed</div>, 
+      variant: "destructive", 
+      title: <div className="flex items-center gap-2"><Trash2 className="h-5 w-5" aria-hidden="true" />Word Removed</div>, 
       description: `"${wordToRemove}" removed from your practice list.` 
     });
-    playNotificationSound(); 
+    playErrorSound(); // More fitting for a removal
 
     if (newWordList.length === 0) {
         setCurrentPracticingWord('');
@@ -152,6 +167,7 @@ export default function LearnPage() {
         setCurrentPracticingWord(newSelectedWord);
         storeCurrentIndex(newIndex);
     }
+    setWordToRemove(null);
   };
 
   const handleDismissProgressionAlert = () => {
@@ -282,18 +298,39 @@ export default function LearnPage() {
                       {currentPracticingWord === word && <CheckCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-70" aria-hidden="true" />}
                       <span className={cn(currentPracticingWord === word && "ml-3")}>{word}</span>
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "absolute top-1/2 right-1 transform -translate-y-1/2 h-8 w-8 p-0 opacity-60 group-hover:opacity-100 rounded-full transition-opacity",
-                        currentPracticingWord === word ? "text-primary-foreground hover:bg-primary/80" : "text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
-                      )}
-                      onClick={(e) => { e.stopPropagation(); handleRemoveWord(word); }}
-                      aria-label={`Remove ${word} from practice list`}
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            "absolute top-1/2 right-1 transform -translate-y-1/2 h-8 w-8 p-0 opacity-60 group-hover:opacity-100 rounded-full transition-opacity",
+                            currentPracticingWord === word ? "text-primary-foreground hover:bg-primary/80" : "text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                          )}
+                          onClick={(e) => { e.stopPropagation(); setWordToRemove(word); }}
+                          aria-label={`Open confirmation to remove ${word} from practice list`}
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="flex items-center gap-2">
+                            <ShieldAlert className="h-6 w-6 text-destructive" />
+                            Confirm Removal
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to remove the word "<strong>{wordToRemove}</strong>" from your practice list?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setWordToRemove(null)}>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={confirmRemoveWord} className="bg-destructive hover:bg-destructive/90">
+                            Remove Word
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 ))}
               </div>
