@@ -17,7 +17,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader as AlertDialogHeaderPrimitive,
   AlertDialogTitle as AlertDialogTitlePrimitive,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
@@ -54,12 +53,10 @@ export const MainNav: FC = () => {
     <>
       {navLinks.map((link) => {
         const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/');
-        let buttonVariant: "secondary" | "ghost" = isActive ? 'secondary' : 'ghost';
         
-        // Since light theme nav elements now use dark theme styles, many dark: prefixes are implicitly handled by the CSS vars
         let buttonClassName = cn(
           "justify-start w-full text-base md:text-sm md:w-auto group transition-colors duration-200 ease-in-out",
-          "text-[hsl(var(--nav-text-light))]", // Always use the (now dark-styled) light nav text color
+          "text-[hsl(var(--nav-text-light))]", 
           isMobileSheet ? "py-3 px-4 rounded-lg" : "py-2 px-3 rounded-md md:h-10"
         );
 
@@ -67,12 +64,12 @@ export const MainNav: FC = () => {
           buttonClassName = cn(
             buttonClassName,
             "font-semibold",
-            "bg-[hsl(var(--nav-active-indicator-light))] text-[hsl(var(--nav-active-text-light))]" // Active state for both modes
+            "bg-[hsl(var(--nav-active-indicator-light))] text-[hsl(var(--nav-active-text-light))]" 
           );
         } else {
            buttonClassName = cn(
             buttonClassName,
-            "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 hover:text-[hsl(var(--nav-active-text-light))]" // Hover state for both modes
+            "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 hover:text-[hsl(var(--nav-active-text-light))]" 
           );
         }
         
@@ -81,7 +78,7 @@ export const MainNav: FC = () => {
         return (
           <Button
             key={link.href}
-            variant={buttonVariant} 
+            variant="ghost" // Always ghost as bg is handled by active/hover logic
             asChild
             className={buttonClassName}
             onClick={() => isMobileSheet && setIsMobileMenuOpen(false)}
@@ -138,9 +135,8 @@ export const MainNav: FC = () => {
     );
   }
 
-  // Navbar background and border colors are now always the "dark theme nav" style due to globals.css changes
   const navBarBaseClasses = "sticky top-0 z-50 w-full bg-nav-gradient shadow-nav-bottom border-b";
-  const navBarBorderColor = "border-[hsl(var(--nav-border-light))]"; // This var now holds the dark theme border color
+  const navBarBorderColor = "border-[hsl(var(--nav-border-light))]"; 
 
   return (
     <header className={cn(navBarBaseClasses, navBarBorderColor )}>
@@ -184,17 +180,21 @@ export const MainNav: FC = () => {
                 aria-expanded={isMobileMenuOpen}
               >
                 <Menu className={cn("h-7 w-7 text-[hsl(var(--nav-icon-light))]", isMobileMenuOpen && "hidden")} aria-hidden="true" />
-                <X className={cn("h-7 w-7 text-[hsl(var(--nav-icon-light))]", !isMobileMenuOpen && "hidden")} aria-hidden="true" />
+                <X
+                  className={cn("h-7 w-7",
+                    isMobileMenuOpen ? "text-[hsl(var(--nav-active-text-light))]" : "text-[hsl(var(--nav-icon-light))]",
+                    !isMobileMenuOpen && "hidden")}
+                  aria-hidden="true" />
               </Button>
             </SheetTrigger>
             <SheetContent
               side="right"
               className={cn(
-                "w-full max-w-xs p-0 flex flex-col bg-nav-gradient border-l border-[hsl(var(--nav-border-light))]" // Use light var, now dark styled
+                "w-full max-w-xs p-0 flex flex-col bg-nav-gradient border-l border-[hsl(var(--nav-border-light))]" 
               )}
             >
               <SheetHeader className={cn(
-                "flex flex-row items-center justify-between p-4 border-b border-[hsl(var(--nav-border-light))]" // Use light var
+                "flex flex-row items-center justify-between p-4 border-b border-[hsl(var(--nav-border-light))]" 
               )}>
                 <SheetTitle asChild>
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
@@ -202,6 +202,10 @@ export const MainNav: FC = () => {
                     <h1 className={cn("text-xl font-bold text-[hsl(var(--nav-text-light))]")}>ChillLearn</h1>
                   </Link>
                 </SheetTitle>
+                 <SheetClose className="rounded-full p-1.5 opacity-80 ring-offset-background transition-all hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-transparent hover:bg-[hsl(var(--nav-active-indicator-light))]/50 hover:text-[hsl(var(--nav-active-text-light))] text-[hsl(var(--nav-icon-light))]">
+                    <X className="h-5 w-5" />
+                    <span className="sr-only">Close</span>
+                  </SheetClose>
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
@@ -220,7 +224,7 @@ export const MainNav: FC = () => {
                   </Link>
                 </Button>
               </nav>
-               <div className={cn("mt-auto p-4 border-t", "border-[hsl(var(--nav-border-light))]")}> {/* Use light var */}
+               <div className={cn("mt-auto p-4 border-t", "border-[hsl(var(--nav-border-light))]")}> 
                 <AlertDialog open={isConfirmResetOpen} onOpenChange={setIsConfirmResetOpen}>
                   <AlertDialogTrigger asChild>
                       <Button
@@ -233,13 +237,13 @@ export const MainNav: FC = () => {
                           Reset All Progress
                       </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className={cn("bg-[hsl(var(--nav-gradient-from-light))] border-[hsl(var(--nav-border-light))] text-[hsl(var(--nav-text-light))]")}> {/* Use light vars */}
+                  <AlertDialogContent className={cn("bg-[hsl(var(--nav-gradient-from-light))] border-[hsl(var(--nav-border-light))] text-[hsl(var(--nav-text-light))]")}> 
                     <AlertDialogHeaderPrimitive>
                       <AlertDialogTitlePrimitive className={cn("flex items-center gap-2 text-destructive")}>
                          <ShieldAlert className="h-6 w-6 text-destructive" />
                          Confirm Full Reset
                       </AlertDialogTitlePrimitive>
-                      <AlertDialogDescription className={cn("text-[hsl(var(--muted-foreground))]")}> {/* Use main muted for description */}
+                      <AlertDialogDescription className={cn("text-[hsl(var(--nav-text-light))]/80")}> {/* Use nav text light with opacity */}
                         This action is irreversible and will clear all your learning progress,
                         including your word lists, mastered words, reading level, word length preferences,
                         username, favorite topics, and tutorial completion status.
@@ -261,7 +265,7 @@ export const MainNav: FC = () => {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                  <p className={cn("text-xs mt-2 text-center text-[hsl(var(--muted-foreground))]")}>This resets all learning data and app usage preferences. You will see the introduction again.</p>
+                  <p className={cn("text-xs mt-2 text-center text-[hsl(var(--nav-text-light))]/70")}>This resets all learning data and app usage preferences. You will see the introduction again.</p>
               </div>
             </SheetContent>
           </Sheet>
@@ -270,3 +274,4 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+
