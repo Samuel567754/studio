@@ -8,16 +8,14 @@ import { getStoredWordList, getStoredReadingLevel, getStoredMasteredWords } from
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Info, CheckCircle2, XCircle } from 'lucide-react'; 
+import { BookOpen, Info, Loader2 } from 'lucide-react'; 
 import { Card } from '@/components/ui/card';
-import { useToast } from "@/hooks/use-toast"; 
 
 export default function ReadingPage() {
   const [wordList, setWordList] = useState<string[]>([]);
   const [masteredWords, setMasteredWords] = useState<string[]>([]);
   const [readingLevel, setReadingLevel] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
-  const { toast } = useToast();
 
   const loadReadingData = useCallback(() => {
     setWordList(getStoredWordList());
@@ -44,7 +42,10 @@ export default function ReadingPage() {
 
   if (!isMounted) {
      return (
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-6 md:space-y-8 max-w-3xl mx-auto">
+        <header className="text-center space-y-4 animate-pulse">
+            <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg bg-muted shadow-lg"></div>
+        </header>
         <Card className="shadow-lg animate-pulse">
             <div className="p-6">
                 <div className="h-6 w-1/2 bg-muted rounded mb-2"></div>
@@ -55,6 +56,10 @@ export default function ReadingPage() {
                 <div className="h-40 bg-muted rounded"></div>
             </div>
         </Card>
+         <div className="flex justify-center items-center min-h-[100px]">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="sr-only">Loading reading page...</p>
+        </div>
       </div>
     );
   }
@@ -75,7 +80,7 @@ export default function ReadingPage() {
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
             <BookOpen className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
             <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Standard Reading Practice</h1>
-            <p className="text-md md:text-lg text-gray-100 drop-shadow-sm mt-1">Read AI-generated stories with your words.</p>
+            <p className="text-md md:text-lg text-gray-100 drop-shadow-sm mt-1">Read AI-generated stories & test comprehension.</p>
           </div>
         </div>
       </header>
@@ -113,4 +118,3 @@ export default function ReadingPage() {
     </div>
   );
 }
-
