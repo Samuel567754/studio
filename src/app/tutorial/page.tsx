@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass, Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, Map } from 'lucide-react'; 
+import { Volume2, Play, Pause, StopCircle, HelpCircle, XCircle, CheckCircle2, Compass, Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, Map, FileType2 as TextSelectIcon } from 'lucide-react'; 
 import { speakText } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { cn } from '@/lib/utils';
@@ -241,3 +241,4 @@ export default function TutorialPage() {
     </div>
   );
 }
+
