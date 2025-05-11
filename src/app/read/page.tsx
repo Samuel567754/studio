@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { ReadingPractice } from '@/components/reading-practice';
 import { getStoredWordList, getStoredReadingLevel, getStoredMasteredWords } from '@/lib/storage';
@@ -74,7 +74,7 @@ export default function ReadingPage() {
           <div className="absolute inset-0 bg-black/60" /> 
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
             <BookOpen className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
-            <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Reading Adventures</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Standard Reading Practice</h1>
             <p className="text-md md:text-lg text-gray-100 drop-shadow-sm mt-1">Read AI-generated stories with your words.</p>
           </div>
         </div>

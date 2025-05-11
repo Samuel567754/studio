@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, Pencil, Target, BookOpen, FileType2 as TextSelectIcon } from 'lucide-react';
+import { GraduationCap, Pencil, Target, BookOpen, FileType2 as TextSelectIcon, Sparkles } from 'lucide-react';
 
 export default function WordPracticePage() {
   const practiceSections = [
@@ -34,12 +34,20 @@ export default function WordPracticePage() {
       dataAiHint: "word identification game", 
     },
     {
-      title: "Reading Adventures",
+      title: "Standard Reading",
       description: "Dive into AI-generated stories featuring your practice words. Read or listen along!",
       href: "/read",
       icon: BookOpen, 
       imageSrc: "https://images.unsplash.com/photo-1604342162684-0cb7869cc445?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzl8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D",
       dataAiHint: "reading adventure child", 
+    },
+     {
+      title: "Fun AI Reading Time!",
+      description: "Engage with AI-generated stories in a more playful and interactive way. Perfect for practice!",
+      href: "/word-practice/fun-reading",
+      icon: Sparkles, 
+      imageSrc: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGZ1biUyMHJlYWRpbmd8ZW58MHx8MHx8fDA%3D",
+      dataAiHint: "fun reading kids",
     },
   ];
 
