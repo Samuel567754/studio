@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, SettingsIcon, User, HelpCircle, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Brain, Trash2, Info, GraduationCap, Map } from 'lucide-react'; // Updated icons
+import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Brain, Trash2, Info, GraduationCap } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,7 @@ const navLinks = [
   { href: '/word-practice', label: 'Word Practice', icon: TextSelectIcon },
   { href: '/ai-games', label: 'AI Word Games', icon: Puzzle },
   { href: '/math', label: 'Math Zone', icon: Sigma },
-  { href: '/tutorial', label: 'Tutorial', icon: Map }, // Updated icon
+  { href: '/tutorial', label: 'Tutorial', icon: Map }, 
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -44,7 +44,7 @@ export const MainNav: FC = () => {
           asChild
           className={cn(
             "justify-start w-full text-base md:text-sm md:w-auto",
-            isMobile ? "py-3 px-4" : "py-2 px-3 md:h-10", // Ensure desktop links have consistent height
+            isMobile ? "py-3 px-4" : "py-2 px-3 md:h-10", 
             (pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/')) && "font-semibold bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
           )}
           onClick={() => isMobile && setIsMobileMenuOpen(false)}
@@ -117,8 +117,17 @@ export const MainNav: FC = () => {
         <div className="md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full aspect-square h-10 w-10 hover:bg-accent/20" aria-label="Open main navigation menu" aria-expanded={isMobileMenuOpen}>
-                <Menu className="h-6 w-6 text-foreground" aria-hidden="true" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn(
+                  "rounded-full aspect-square h-10 w-10 transition-colors duration-200",
+                  isMobileMenuOpen ? "bg-accent/20 text-accent" : "hover:bg-accent/10"
+                )} 
+                aria-label="Open main navigation menu" 
+                aria-expanded={isMobileMenuOpen}
+              >
+                <Menu className="h-7 w-7 text-foreground" aria-hidden="true" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full max-w-xs p-0 flex flex-col bg-card/95 backdrop-blur-md">
@@ -129,7 +138,6 @@ export const MainNav: FC = () => {
                     <h1 className="text-xl font-bold text-primary">ChillLearn</h1>
                   </Link>
                 </SheetTitle>
-                {/* The SheetContent component itself renders a close button, so no need for an explicit one here */}
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
