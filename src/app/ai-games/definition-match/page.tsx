@@ -163,12 +163,12 @@ export default function DefinitionMatchPage() {
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
         <div className="flex flex-col items-center gap-4">
           <Image 
-            src="https://picsum.photos/seed/dictionary-learn/200/150" 
-            alt="Child looking at an open dictionary with a magnifying glass"
+            src="https://images.unsplash.com/photo-1727434032773-af3cd98375ba?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTZ8fGFpfGVufDB8fDB8fHww"
+            alt="AI circuitry connecting ideas for definitions"
             width={200}
             height={150}
             className="rounded-lg shadow-md mb-3"
-            data-ai-hint="child dictionary learn" // Updated hint
+            data-ai-hint="AI circuit definition"
           />
           <Lightbulb className="h-6 w-6 text-primary" aria-hidden="true" />
           <AlertTitle className="text-xl font-semibold mb-2">Add Words to Play!</AlertTitle>
@@ -184,8 +184,26 @@ export default function DefinitionMatchPage() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      {/* We use currentWordForGame here, as it's the word the AI is defining */}
+    <div className="space-y-8">
+       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
+        <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
+          <Image 
+            src="https://plus.unsplash.com/premium_photo-1725907643701-9ba38affe7bb?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nzd8fGFpfGVufDB8fDB8fHww"
+            alt="AI connecting words to definitions"
+            layout="fill"
+            objectFit="cover"
+            className="rounded-lg"
+            data-ai-hint="AI definition match" 
+          />
+          <div className="absolute inset-0 bg-black/60" /> 
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+            <BookOpenCheck className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Word Definition Match</h1>
+            <p className="text-md md:text-lg text-gray-100 drop-shadow-sm mt-1">Match words to their AI-generated definitions.</p>
+          </div>
+        </div>
+      </header>
+
       <WordDisplay word={currentWordForGame} /> 
       
       <Card className="shadow-lg w-full animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
@@ -280,4 +298,3 @@ export default function DefinitionMatchPage() {
     </div>
   );
 }
-

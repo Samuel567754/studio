@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { WordDisplay } from '@/components/word-display';
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,7 @@ export default function FillInTheBlankPage() {
   const [currentWordForGame, setCurrentWordForGame] = useState<string>('');
   const [readingLevel, setReadingLevel] = useState<string>('beginner');
   const [isMounted, setIsMounted] = useState(false);
-  const { username, favoriteTopics } = useUserProfileStore();
+  const { username } = useUserProfileStore();
   const { toast } = useToast();
 
   const [gameData, setGameData] = useState<GenerateFillInTheBlankGameOutput | null>(null);
@@ -113,7 +113,7 @@ export default function FillInTheBlankPage() {
     }
     setCurrentIndex(newIndex);
     const newWord = wordList[newIndex];
-    setCurrentWordForGame(newWord); // This will trigger useEffect to fetch new game
+    setCurrentWordForGame(newWord); 
     storeCurrentIndex(newIndex);
   };
 
@@ -132,7 +132,6 @@ export default function FillInTheBlankPage() {
         title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Correct, ${username}!` : 'Correct!'}</div>,
         description: `"${gameData.correctWord}" is the right word!`,
       });
-      // Optionally auto-navigate to next word after a delay
       if (wordList.length > 1) {
         setTimeout(() => navigateWord('next'), 2000);
       }
@@ -152,7 +151,6 @@ export default function FillInTheBlankPage() {
   if (!isMounted) {
     return (
       <div className="space-y-6 md:space-y-8" aria-live="polite" aria-busy="true">
-        {/* Simplified Skeleton Loader */}
         <Card className="shadow-lg animate-pulse"><CardContent className="p-6 min-h-[200px] bg-muted rounded-lg"></CardContent></Card>
         <Card className="shadow-lg animate-pulse"><CardContent className="p-6 min-h-[300px] bg-muted rounded-lg"></CardContent></Card>
         <p className="sr-only">Loading fill-in-the-blank game...</p>
@@ -160,17 +158,17 @@ export default function FillInTheBlankPage() {
     );
   }
 
-  if (wordList.length < 1) { // Need at least one word to base the game on
+  if (wordList.length < 1) { 
     return (
       <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
         <div className="flex flex-col items-center gap-4">
           <Image 
-            src="https://picsum.photos/seed/child-puzzle-piece/200/150" 
-            alt="Child holding a puzzle piece with a question mark"
+            src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YWl8ZW58MHx8MHx8fDA%3D" 
+            alt="AI brain generating word puzzle"
             width={200}
             height={150}
             className="rounded-lg shadow-md mb-3"
-            data-ai-hint="child puzzle question" // Updated hint
+            data-ai-hint="AI brain puzzle"
           />
           <Lightbulb className="h-6 w-6 text-primary" aria-hidden="true" />
           <AlertTitle className="text-xl font-semibold mb-2">Add Words to Play!</AlertTitle>
@@ -186,7 +184,26 @@ export default function FillInTheBlankPage() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-8">
+      <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
+        <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
+          <Image 
+            src="https://plus.unsplash.com/premium_photo-1682756540097-6a887bbcf9b0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjl8fGFpfGVufDB8fDB8fHww"
+            alt="AI creating a fill-in-the-blank sentence puzzle"
+            layout="fill"
+            objectFit="cover"
+            className="rounded-lg"
+            data-ai-hint="AI sentence puzzle" 
+          />
+          <div className="absolute inset-0 bg-black/60" /> 
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+            <Edit className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Fill in the Blank</h1>
+            <p className="text-md md:text-lg text-gray-100 drop-shadow-sm mt-1">Complete sentences with AI-generated challenges.</p>
+          </div>
+        </div>
+      </header>
+
       <WordDisplay word={currentWordForGame} />
       
       <Card className="shadow-lg w-full animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
@@ -290,4 +307,3 @@ export default function FillInTheBlankPage() {
     </div>
   );
 }
-

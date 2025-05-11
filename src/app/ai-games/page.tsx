@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Puzzle, Brain, Edit, BookOpenCheck, FileType2 as TextSelect } from 'lucide-react'; // Added Brain
+import { Puzzle, Brain, Edit, BookOpenCheck } from 'lucide-react';
 
 export default function AiGamesPage() {
   const gameSections = [
@@ -31,7 +31,7 @@ export default function AiGamesPage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
-            src="https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8YWl8ZW58MHx8MHx8fDA%3D" 
+            src="https://images.unsplash.com/photo-1674027444485-cec3da58eef4?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8YWl8ZW58MHx8MHx8fDA%3D" 
             alt="AI powered word games concept with abstract neural network and letters"
             layout="fill"
             objectFit="cover"
@@ -39,10 +39,10 @@ export default function AiGamesPage() {
             data-ai-hint="AI games abstract" 
           />
           <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent flex flex-col items-center justify-center p-4">
-            <Puzzle className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
-            <h1 className="text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">AI Word Games</h1>
-            <p className="text-lg text-gray-100 drop-shadow-sm">Engage with fun, AI-powered word challenges!</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+            <Puzzle className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">AI Word Games</h1>
+            <p className="text-md md:text-lg text-gray-100 drop-shadow-sm mt-1">Engage with fun, AI-powered word challenges!</p>
           </div>
         </div>
       </header>
