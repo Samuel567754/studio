@@ -150,7 +150,7 @@ export default function TutorialPage() {
             className="rounded-lg"
             data-ai-hint="app walkthrough guide" 
           />
-          <div className="absolute inset-0 bg-black/60"></div> {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/60" /> {/* Dark overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent flex flex-col items-center justify-center p-4">
              <Map className="h-16 w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
              <h1 className="text-4xl font-bold text-gradient-primary-accent mt-3 drop-shadow-md">App Tutorial & Guide</h1>
@@ -241,6 +241,7 @@ export default function TutorialPage() {
     </div>
   );
 }
+
 
 
 
