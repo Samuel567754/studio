@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, BookOpenText, Sigma, Sparkles, Puzzle, FileType2 as TextSelectIcon, Volume2, Play, Pause, Info, XCircle } from 'lucide-react';
+import { ArrowRight, BookOpenText, Sigma, Sparkles, Puzzle, FileType2 as TextSelectIcon, Volume2, Play, Pause, Info, XCircle, Compass } from 'lucide-react';
 import { speakText, playErrorSound, playNotificationSound } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -226,43 +226,41 @@ export default function OfficialHomePage() {
         ))}
       </section>
 
-      <section className="relative text-center py-16 md:py-24 animate-in fade-in-0 delay-500 duration-500 rounded-xl overflow-hidden shadow-2xl">
+      <section className="relative text-center rounded-xl overflow-hidden shadow-2xl h-[calc(70vh-150px)] min-h-[350px] md:min-h-[400px] lg:min-h-[450px] flex flex-col justify-center items-center my-8 md:my-12 animate-in fade-in-0 delay-500 duration-500">
          <Image
-            src="https://plus.unsplash.com/premium_photo-1722156533662-f58d3e13c07c?w=1200&h=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NjV8fGFwcCUyMHdhbGslMjB0aHJvdWdofGVufDB8fDB8fHww"
-            alt="Abstract background with subtle learning motifs and app walkthrough guide visuals"
+            src="https://images.unsplash.com/photo-1720983415059-43ec4007cf97?w=1200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTk0fHxsZWFybmluZyUyMGFwcHxlbnwwfHwwfHx8MA%3D%3D"
+            alt="Abstract background for exploring app features"
             layout="fill"
             objectFit="cover"
             className="brightness-50"
-            data-ai-hint="learning abstract walkthrough"
+            data-ai-hint="app features abstract"
          />
-         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-         <div className="relative z-10 container mx-auto px-4">
-            <Card className="max-w-2xl mx-auto p-6 md:p-10 shadow-xl bg-card/80 dark:bg-card/70 border border-primary/20">
-                <CardHeader>
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    <CardTitle className="text-3xl md:text-4xl font-semibold text-gradient-primary-accent">Ready to Explore More?</CardTitle>
-                     {soundEffectsEnabled && (
-                        <Button onClick={toggleExploreSpeech} variant="ghost" size="icon" className="text-gray-200 dark:text-gray-200 hover:bg-white/10 rounded-full h-10 w-10" aria-label={isExploreAudioPlaying ? "Stop explore message" : "Play explore message"}>
-                            {isExploreAudioPlaying ? <Pause className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-                        </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <p className="text-lg md:text-xl text-gray-200 dark:text-gray-200">
-                        Check out your <Link href="/profile" className="text-primary hover:underline font-semibold">Profile</Link> to see your progress,
-                        visit the <Link href="/tutorial" className="text-accent hover:underline font-semibold">Tutorial</Link> for a detailed guide,
-                        or customize your experience in <Link href="/settings" className="text-green-400 hover:underline font-semibold">Settings</Link>.
-                    </p>
-                    <Button size="lg" variant="secondary" asChild className="text-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-transform">
-                        <Link href="/tutorial">
-                            <Sparkles className="mr-2 h-5 w-5" /> View Full Guide
-                        </Link>
-                    </Button>
-                </CardContent>
-            </Card>
+         <div className="absolute inset-0 bg-black/60" />
+         <div className="relative z-10 container mx-auto px-4 py-10 text-white">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Compass className="h-12 w-12 md:h-16 md:w-16 text-white animate-in fade-in-0 zoom-in-50 duration-700 ease-out" />
+              {soundEffectsEnabled && (
+                  <Button onClick={toggleExploreSpeech} variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full h-12 w-12" aria-label={isExploreAudioPlaying ? "Stop explore message" : "Play explore message"}>
+                      {isExploreAudioPlaying ? <Pause className="h-7 w-7" /> : <Volume2 className="h-7 w-7" />}
+                  </Button>
+              )}
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-primary-accent">
+              Ready to Explore More?
+            </h1>
+            <p className="text-md md:text-lg text-gray-200 max-w-xl mx-auto mb-8 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 delay-200">
+                Check out your <Link href="/profile" className="text-primary hover:underline font-semibold">Profile</Link> to see your progress,
+                visit the <Link href="/tutorial" className="text-accent hover:underline font-semibold">Tutorial</Link> for a detailed guide,
+                or customize your experience in <Link href="/settings" className="text-green-400 hover:underline font-semibold">Settings</Link>.
+            </p>
+            <Button size="lg" variant="secondary" asChild className="text-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-transform animate-in fade-in-0 zoom-in-75 duration-500 delay-400">
+                <Link href="/tutorial">
+                    <Sparkles className="mr-2 h-5 w-5" /> View Full Guide
+                </Link>
+            </Button>
          </div>
       </section>
     </div>
   );
 }
+
