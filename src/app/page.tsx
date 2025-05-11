@@ -118,24 +118,35 @@ export default function OfficialHomePage() {
         ))}
       </section>
 
-      <section className="text-center py-12 animate-in fade-in-0 delay-500 duration-500">
-         <Card className="max-w-2xl mx-auto p-6 md:p-8 shadow-xl bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-                <CardTitle className="text-2xl md:text-3xl font-semibold text-gradient-primary-accent">Ready to Explore More?</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <p className="text-lg text-muted-foreground">
-                    Check out your <Link href="/profile" className="text-primary hover:underline font-medium">Profile</Link> to see your progress,
-                    visit the <Link href="/tutorial" className="text-accent hover:underline font-medium">Tutorial</Link> for a detailed guide,
-                    or customize your experience in <Link href="/settings" className="text-green-500 hover:underline font-medium">Settings</Link>.
-                </p>
-                <Button size="lg" variant="secondary" asChild>
-                    <Link href="/tutorial">
-                        <Sparkles className="mr-2 h-5 w-5" /> View Full Guide
-                    </Link>
-                </Button>
-            </CardContent>
-         </Card>
+      <section className="relative text-center py-16 md:py-24 animate-in fade-in-0 delay-500 duration-500 rounded-xl overflow-hidden shadow-2xl">
+         <Image
+            src="https://picsum.photos/seed/explore-more-bg/1200/600"
+            alt="Abstract background with subtle learning motifs"
+            layout="fill"
+            objectFit="cover"
+            className="brightness-50"
+            data-ai-hint="learning abstract background"
+         />
+         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+         <div className="relative z-10 container mx-auto px-4">
+            <Card className="max-w-2xl mx-auto p-6 md:p-10 shadow-xl bg-card/80 dark:bg-card/70 border border-primary/20">
+                <CardHeader>
+                    <CardTitle className="text-3xl md:text-4xl font-semibold text-gradient-primary-accent mb-2">Ready to Explore More?</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <p className="text-lg md:text-xl text-foreground/90 dark:text-foreground/80">
+                        Check out your <Link href="/profile" className="text-primary hover:underline font-semibold">Profile</Link> to see your progress,
+                        visit the <Link href="/tutorial" className="text-accent hover:underline font-semibold">Tutorial</Link> for a detailed guide,
+                        or customize your experience in <Link href="/settings" className="text-green-500 hover:underline font-semibold">Settings</Link>.
+                    </p>
+                    <Button size="lg" variant="secondary" asChild className="text-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-transform">
+                        <Link href="/tutorial">
+                            <Sparkles className="mr-2 h-5 w-5" /> View Full Guide
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
+         </div>
       </section>
     </div>
   );
