@@ -17,6 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader as AlertDialogHeaderPrimitive,
   AlertDialogTitle as AlertDialogTitlePrimitive,
+  AlertDialogTrigger, // Added AlertDialogTrigger import
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
@@ -171,7 +172,7 @@ export const MainNav: FC = () => {
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "rounded-full aspect-square h-11 w-11 transition-colors duration-200 focus-visible:ring-0 focus-visible:ring-offset-0", 
+                  "rounded-full aspect-square h-12 w-12 transition-colors duration-200 focus-visible:ring-0 focus-visible:ring-offset-0", 
                   "text-[hsl(var(--nav-icon-light))]", 
                   "hover:bg-[hsl(var(--nav-active-indicator-light))]/50",
                   isMobileMenuOpen && "bg-[hsl(var(--nav-active-indicator-light))]"
@@ -179,7 +180,7 @@ export const MainNav: FC = () => {
                 aria-label="Open main navigation menu"
                 aria-expanded={isMobileMenuOpen}
               >
-                <Menu className={cn("h-7 w-7 text-[hsl(var(--nav-icon-light))]", isMobileMenuOpen && "hidden")} aria-hidden="true" />
+                <Menu className={cn("h-7 w-7", "text-[hsl(var(--nav-icon-light))]", isMobileMenuOpen && "hidden")} aria-hidden="true" />
                 <X
                   className={cn("h-7 w-7",
                     isMobileMenuOpen ? "text-[hsl(var(--nav-active-text-light))]" : "text-[hsl(var(--nav-icon-light))]",
@@ -192,6 +193,7 @@ export const MainNav: FC = () => {
               className={cn(
                 "w-full max-w-xs p-0 flex flex-col bg-nav-gradient border-l border-[hsl(var(--nav-border-light))]" 
               )}
+              // Remove the explicit SheetClose from here as it's handled by SheetHeader's SheetClose
             >
               <SheetHeader className={cn(
                 "flex flex-row items-center justify-between p-4 border-b border-[hsl(var(--nav-border-light))]" 
@@ -202,7 +204,10 @@ export const MainNav: FC = () => {
                     <h1 className={cn("text-xl font-bold text-[hsl(var(--nav-text-light))]")}>ChillLearn</h1>
                   </Link>
                 </SheetTitle>
-                 <SheetClose className="rounded-full p-1.5 opacity-80 ring-offset-background transition-all hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-transparent hover:bg-[hsl(var(--nav-active-indicator-light))]/50 hover:text-[hsl(var(--nav-active-text-light))] text-[hsl(var(--nav-icon-light))]">
+                 <SheetClose className={cn("rounded-full p-1.5 opacity-80 ring-offset-background transition-all hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-transparent",
+                    "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 hover:text-[hsl(var(--nav-active-text-light))]",
+                    isMobileMenuOpen ? "text-[hsl(var(--nav-active-text-light))]" : "text-[hsl(var(--nav-icon-light))]"
+                  )}>
                     <X className="h-5 w-5" />
                     <span className="sr-only">Close</span>
                   </SheetClose>
