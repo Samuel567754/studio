@@ -29,7 +29,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
-import { playSuccessSound, playNotificationSound, playErrorSound } from '@/lib/audio';
+import { playSuccessSound, playNotificationSound, playErrorSound, speakText, playNavigationSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 
 
@@ -102,23 +102,44 @@ export default function LearnPage() {
     storeWordList(newWordList);
   }, []);
 
-  const handleWordSelected = useCallback((word: string) => {
+  // For suggested words (passed to WordSuggestion's onWordSelected prop)
+  const handleSelectSuggestedWord = useCallback((word: string) => {
     let newWordList = [...wordList];
-    if (!newWordList.includes(word)) {
-      newWordList.push(word);
+    const lowerCaseWord = word.toLowerCase();
+    if (!newWordList.map(w => w.toLowerCase()).includes(lowerCaseWord)) {
+      newWordList.push(word); // Store with original casing
       updateWordList(newWordList);
     }
-    const wordIndex = newWordList.indexOf(word);
+    // Find index using lowercase for consistency, but use the actual newWordList which has original casing
+    const wordIndex = newWordList.map(w => w.toLowerCase()).indexOf(lowerCaseWord);
     storeCurrentIndex(wordIndex);
-    setCurrentPracticingWord(word);
-    toast({ 
-      variant: "success", 
-      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />{username ? `${username}, word selected!` : 'Word Selected!'}</div>, 
-      description: `Focusing on: ${word}. Practice spelling or add to a reading passage!` 
+    setCurrentPracticingWord(newWordList[wordIndex]); // Set with original casing
+    toast({
+      variant: "success",
+      title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" aria-hidden="true" />{username ? `${username}, word selected!` : 'Word Selected!'}</div>,
+      description: `Focusing on: ${newWordList[wordIndex]}. Practice spelling or add to a reading passage!`
     });
     playSuccessSound();
-    speakText(word); 
+    // DO NOT speakText(word) here; this is for newly suggested words.
   }, [wordList, updateWordList, toast, username]);
+
+  // For clicking words in the practice list to activate them
+  const handleActivatePracticeWord = useCallback((word: string) => {
+    const lowerCaseWord = word.toLowerCase();
+    const wordIndex = wordList.map(w => w.toLowerCase()).indexOf(lowerCaseWord);
+    if (wordIndex !== -1) {
+      const actualWordInList = wordList[wordIndex]; // Get the word with its original casing
+      storeCurrentIndex(wordIndex);
+      setCurrentPracticingWord(actualWordInList);
+      toast({
+        variant: "info",
+        title: <div className="flex items-center gap-2"><Info className="h-5 w-5" aria-hidden="true" />Word Activated</div>,
+        description: `Now practicing: ${actualWordInList}`
+      });
+      playNavigationSound(); // More appropriate for activating an existing item
+      speakText(actualWordInList); // SPEAK TEXT HERE for activating from practice list
+    }
+  }, [wordList, toast, username]);
   
   const handleNewSuggestedWordsList = useCallback((suggestedWords: string[]) => {
     // This callback is mostly for information or future use.
@@ -142,7 +163,7 @@ export default function LearnPage() {
   const confirmRemoveWord = () => {
     if (!wordToRemove) return;
 
-    const newWordList = wordList.filter(w => w !== wordToRemove);
+    const newWordList = wordList.filter(w => w.toLowerCase() !== wordToRemove.toLowerCase());
     updateWordList(newWordList); 
 
     toast({ 
@@ -157,9 +178,9 @@ export default function LearnPage() {
         storeCurrentIndex(0); 
     } else {
         let newSelectedWord = currentPracticingWord;
-        let newIndex = newWordList.indexOf(newSelectedWord);
+        let newIndex = newWordList.map(w => w.toLowerCase()).indexOf(newSelectedWord.toLowerCase());
 
-        if (newIndex === -1 || currentPracticingWord === wordToRemove) {
+        if (newIndex === -1 || currentPracticingWord.toLowerCase() === wordToRemove.toLowerCase()) {
             newSelectedWord = newWordList[0]; 
             newIndex = 0;
         }
@@ -237,7 +258,7 @@ export default function LearnPage() {
       </header>
 
       <WordSuggestion
-        onWordSelected={handleWordSelected}
+        onWordSelected={handleSelectSuggestedWord}
         onNewSuggestedWordsList={handleNewSuggestedWordsList}
         currentReadingLevel={readingLevel}
         currentWordLength={wordLength}
@@ -286,7 +307,7 @@ export default function LearnPage() {
                     <Button
                       variant={currentPracticingWord === word ? "default" : "secondary"}
                       size="sm" 
-                      onClick={() => handleWordSelected(word)}
+                      onClick={() => handleActivatePracticeWord(word)}
                       className={cn(
                           "text-base md:text-lg py-2 pl-4 pr-10 rounded-full transition-all duration-200 ease-in-out",
                           currentPracticingWord === word && "ring-2 ring-primary-foreground dark:ring-primary ring-offset-2 ring-offset-primary dark:ring-offset-background scale-105 font-semibold",
@@ -381,3 +402,4 @@ export default function LearnPage() {
     </div>
   );
 }
+
