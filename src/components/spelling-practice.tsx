@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC, FormEvent } from 'react';
 import { useState, useEffect } from 'react';
@@ -6,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, XCircle, Sparkles, InfoIcon, Smile } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, InfoIcon, Smile, Volume2 } from 'lucide-react';
 import { playErrorSound, speakText } from '@/lib/audio'; 
 import { addMasteredWord } from '@/lib/storage'; 
-import { useUserProfileStore } from '@/stores/user-profile-store'; // Import user profile store
+import { useUserProfileStore } from '@/stores/user-profile-store'; 
 
 interface SpellingPracticeProps {
   wordToSpell: string;
@@ -19,7 +20,7 @@ interface SpellingPracticeProps {
 export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCorrectSpell }) => {
   const [attempt, setAttempt] = useState('');
   const [feedback, setFeedback] = useState<{type: 'success' | 'destructive' | 'info', message: string} | null>(null);
-  const { username } = useUserProfileStore(); // Get username
+  const { username } = useUserProfileStore(); 
 
   useEffect(() => {
     setAttempt('');
@@ -51,6 +52,12 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     }
   };
 
+  const handleSpeakWordToSpell = () => {
+    if (wordToSpell) {
+      speakText(wordToSpell);
+    }
+  };
+
   if (!wordToSpell) {
     return (
        <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
@@ -68,7 +75,12 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     <Card className="shadow-lg w-full">
       <CardHeader>
         <CardTitle className="flex items-center text-xl font-semibold text-primary"><Sparkles className="mr-2 h-5 w-5"/>Spell the Word</CardTitle>
-        <CardDescription>Try spelling the word: <strong className="text-foreground">{wordToSpell}</strong></CardDescription>
+        <div className="flex items-center justify-between">
+            <CardDescription>Try spelling the word: <strong className="text-foreground">{wordToSpell}</strong></CardDescription>
+            <Button variant="ghost" size="icon" onClick={handleSpeakWordToSpell} aria-label={`Listen to the word ${wordToSpell}`}>
+                <Volume2 className="h-5 w-5"/>
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

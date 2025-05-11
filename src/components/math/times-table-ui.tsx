@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 
 interface TimesTableProblem {
   factor1: number; 
@@ -59,6 +60,7 @@ export const TimesTableUI = () => {
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
   const { username } = useUserProfileStore();
+  const { soundEffectsEnabled } = useAppSettingsStore();
 
   const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); 
 
@@ -92,9 +94,9 @@ export const TimesTableUI = () => {
       const completionMsg = `${username ? `Way to go, ${username}! Y` : 'Y'}ou've completed the ${selectedTable} times table!`;
       setShowCompletionMessage(true);
       setFeedback({ type: 'success', message: completionMsg }); 
-      speakText(completionMsg);
+      if (soundEffectsEnabled) speakText(completionMsg);
     }
-  }, [selectedTable, shuffledMultipliers, currentProblemIndex, username]);
+  }, [selectedTable, shuffledMultipliers, currentProblemIndex, username, soundEffectsEnabled]);
 
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
@@ -117,7 +119,7 @@ export const TimesTableUI = () => {
         const completionMsg = `${username ? `Way to go, ${username}! Y` : 'Y'}ou've completed the ${selectedTable} times table!`;
         setShowCompletionMessage(true);
         setFeedback({ type: 'success', message: completionMsg }); 
-        speakText(completionMsg);
+        if (soundEffectsEnabled) speakText(completionMsg);
       }
     };
 
@@ -130,26 +132,28 @@ export const TimesTableUI = () => {
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! ${currentProblem.factor1} times ${currentProblem.factor2} is ${currentProblem.answer}.`;
       const utterance = speakText(speechSuccessMsg, undefined, handleNextStepLogic);
       
-      if (!utterance) { 
+      if (!utterance && soundEffectsEnabled) { 
         setTimeout(handleNextStepLogic, 1200);
+      } else if (!soundEffectsEnabled) {
+        handleNextStepLogic();
       }
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. ${currentProblem.factor1} × ${currentProblem.factor2} is ${currentProblem.answer}.`;
       setFeedback({ type: 'error', message: errorMessage });
       setCorrectInARow(0); 
       playErrorSound();
-      speakText(`Oops! The answer was ${currentProblem.answer}.`);
+      if (soundEffectsEnabled) speakText(`Oops! The answer was ${currentProblem.answer}.`);
       answerInputRef.current?.focus();
       answerInputRef.current?.select();
     }
-  }, [currentProblem, userAnswer, selectedTable, currentProblemIndex, shuffledMultipliers.length, username]);
+  }, [currentProblem, userAnswer, selectedTable, currentProblemIndex, shuffledMultipliers.length, username, soundEffectsEnabled]);
 
 
   useEffect(() => {
-    if (currentProblem && !isLoading && !showCompletionMessage && currentProblem.speechText) {
+    if (currentProblem && !isLoading && !showCompletionMessage && currentProblem.speechText && soundEffectsEnabled) {
       speakText(currentProblem.speechText);
     }
-  }, [currentProblem, isLoading, showCompletionMessage]);
+  }, [currentProblem, isLoading, showCompletionMessage, soundEffectsEnabled]);
 
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
@@ -210,8 +214,10 @@ export const TimesTableUI = () => {
   };
 
   const handleSpeakQuestion = () => {
-    if (currentProblem?.speechText && !showCompletionMessage) {
+    if (currentProblem?.speechText && !showCompletionMessage && soundEffectsEnabled) {
       speakText(currentProblem.speechText);
+    } else if (!soundEffectsEnabled) {
+       toast({ variant: "info", title: "Audio Disabled", description: "Sound effects are turned off in settings." });
     }
   };
 
@@ -223,6 +229,10 @@ export const TimesTableUI = () => {
             variant: "info", 
             duration: 5000 
         });
+        return;
+    }
+    if (!soundEffectsEnabled) {
+        toast({ variant: "info", title: "Audio Disabled", description: "Voice input requires sound effects to be enabled in settings." });
         return;
     }
     if (isListening) {
@@ -310,7 +320,7 @@ export const TimesTableUI = () => {
                 >
                 {currentProblem.questionText}
                 </p>
-                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening || showCompletionMessage}>
+                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening || showCompletionMessage || !soundEffectsEnabled}>
                     <Volume2 className="h-6 w-6" />
                 </Button>
             </div>
@@ -335,7 +345,7 @@ export const TimesTableUI = () => {
                     onClick={toggleListening} 
                     className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
                     aria-label={isListening ? "Stop listening" : "Speak your answer"}
-                    disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading || showCompletionMessage || !recognitionRef.current}
+                    disabled={(feedback?.type === 'success' && !showCompletionMessage) || isLoading || showCompletionMessage || !recognitionRef.current || !soundEffectsEnabled}
                 >
                     {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
                 </Button>

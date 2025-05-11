@@ -7,7 +7,7 @@ import { WordDisplay } from '@/components/word-display';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex, getStoredReadingLevel } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, BookOpenCheck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, BookOpenCheck, Volume2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { playSuccessSound, playErrorSound, playNavigationSound, speakText } from
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { generateDefinitionMatchGame, type GenerateDefinitionMatchGameInput, type GenerateDefinitionMatchGameOutput } from '@/ai/flows/generate-definition-match-game';
 import { cn } from '@/lib/utils';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 
 export default function DefinitionMatchPage() {
   const [wordList, setWordList] = useState<string[]>([]);
@@ -24,6 +25,7 @@ export default function DefinitionMatchPage() {
   const [isMounted, setIsMounted] = useState(false);
   const { username } = useUserProfileStore();
   const { toast } = useToast();
+  const { soundEffectsEnabled } = useAppSettingsStore();
 
   const [gameData, setGameData] = useState<GenerateDefinitionMatchGameOutput | null>(null);
   const [isLoadingGame, setIsLoadingGame] = useState(false);
@@ -66,6 +68,19 @@ export default function DefinitionMatchPage() {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [loadWordAndSettingsData]);
+  
+  const speakQuestion = useCallback((word: string | undefined) => {
+    if (word && soundEffectsEnabled) {
+      speakText(`What is the definition of ${word}?`);
+    }
+  }, [soundEffectsEnabled]);
+
+  const speakHint = useCallback((hint: string | undefined) => {
+    if (hint && soundEffectsEnabled) {
+      speakText(`Hint: ${hint}`);
+    }
+  }, [soundEffectsEnabled]);
+
 
   const fetchNewDefinitionGame = useCallback(async (wordToDefine: string) => {
     if (!wordToDefine) return;
@@ -85,9 +100,7 @@ export default function DefinitionMatchPage() {
       };
       const result = await generateDefinitionMatchGame(input);
       setGameData(result);
-      if (result?.word) {
-        speakText(`What is the definition of ${result.word}?`);
-      }
+      speakQuestion(result?.word);
     } catch (error) {
       console.error("Error generating definition match game:", error);
       toast({ 
@@ -99,7 +112,7 @@ export default function DefinitionMatchPage() {
     } finally {
       setIsLoadingGame(false);
     }
-  }, [readingLevel, wordList, username, toast]);
+  }, [readingLevel, wordList, username, toast, speakQuestion]);
 
   useEffect(() => {
     if (currentWordForGame && isMounted) {
@@ -227,10 +240,15 @@ export default function DefinitionMatchPage() {
           {!isLoadingGame && gameData && (
             <>
               {gameData.hint && !isAttempted && (
-                  <p className="text-sm text-muted-foreground mt-0 mb-3 text-center bg-muted/50 p-2 rounded-md whitespace-normal break-words">
+                  <div className="flex items-center justify-center text-sm text-muted-foreground mt-0 mb-3 text-center bg-muted/50 p-2 rounded-md whitespace-normal break-words">
                     <Lightbulb className="inline h-4 w-4 mr-1 text-yellow-500" />
                     Hint: {gameData.hint}
-                  </p>
+                    {soundEffectsEnabled && (
+                         <Button variant="ghost" size="icon" className="ml-1 h-6 w-6" onClick={() => speakHint(gameData.hint)} aria-label="Read hint aloud">
+                             <Volume2 className="h-4 w-4"/>
+                         </Button>
+                     )}
+                  </div>
                 )}
               <div 
                 className="grid grid-cols-1 gap-3 md:gap-4"
@@ -327,4 +345,3 @@ export default function DefinitionMatchPage() {
     </div>
   );
 }
-

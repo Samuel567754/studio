@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 
 interface SequenceProblem {
   sequenceDisplay: (number | string)[]; 
@@ -53,6 +54,7 @@ export const NumberSequencingUI = () => {
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
   const { username } = useUserProfileStore();
+  const { soundEffectsEnabled } = useAppSettingsStore();
 
   const loadNewProblem = useCallback(() => {
     setIsLoading(true);
@@ -87,8 +89,10 @@ export const NumberSequencingUI = () => {
       const utterance = speakText(speechSuccessMsg, undefined, () => {
         loadNewProblem();
       });
-      if (!utterance) { 
+      if (!utterance && soundEffectsEnabled) { 
         setTimeout(loadNewProblem, 2000);
+      } else if (!soundEffectsEnabled) {
+        loadNewProblem();
       }
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. The correct number was ${currentProblem.correctAnswer}.`;
@@ -98,11 +102,13 @@ export const NumberSequencingUI = () => {
       const utterance = speakText(speechErrorMsg, undefined, () => {
         loadNewProblem();
       });
-      if (!utterance) { 
+      if (!utterance && soundEffectsEnabled) { 
         setTimeout(loadNewProblem, 3000);
+      } else if (!soundEffectsEnabled) {
+         loadNewProblem();
       }
     }
-  }, [currentProblem, userAnswer, loadNewProblem, username]);
+  }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled]);
 
 
   useEffect(() => {
@@ -110,10 +116,10 @@ export const NumberSequencingUI = () => {
   }, [loadNewProblem]);
 
   useEffect(() => {
-    if (currentProblem && !isLoading && currentProblem.speechText) {
+    if (currentProblem && !isLoading && currentProblem.speechText && soundEffectsEnabled) {
       speakText(currentProblem.speechText);
     }
-  }, [currentProblem, isLoading]);
+  }, [currentProblem, isLoading, soundEffectsEnabled]);
 
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
@@ -171,8 +177,10 @@ export const NumberSequencingUI = () => {
   }, [toast]);
 
   const handleSpeakQuestion = () => {
-    if (currentProblem?.speechText) {
+    if (currentProblem?.speechText && soundEffectsEnabled) {
       speakText(currentProblem.speechText);
+    } else if (!soundEffectsEnabled) {
+       toast({ variant: "info", title: "Audio Disabled", description: "Sound effects are turned off in settings." });
     }
   };
 
@@ -184,6 +192,10 @@ export const NumberSequencingUI = () => {
             variant: "info", 
             duration: 5000 
         });
+        return;
+    }
+     if (!soundEffectsEnabled) {
+        toast({ variant: "info", title: "Audio Disabled", description: "Voice input requires sound effects to be enabled in settings." });
         return;
     }
     if (isListening) {
@@ -243,7 +255,7 @@ export const NumberSequencingUI = () => {
             <p className="text-3xl md:text-4xl font-bold text-gradient-primary-accent select-none" aria-live="polite">
             {currentProblem.sequenceDisplay.join(', ')}
             </p>
-          <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read sequence problem aloud" disabled={isListening}>
+          <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read sequence problem aloud" disabled={isListening || !soundEffectsEnabled}>
             <Volume2 className="h-5 w-5" />
           </Button>
         </div>
@@ -269,7 +281,7 @@ export const NumberSequencingUI = () => {
               onClick={toggleListening} 
               className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
               aria-label={isListening ? "Stop listening" : "Speak your answer"}
-              disabled={feedback?.type === 'success' || isLoading || !recognitionRef.current}
+              disabled={feedback?.type === 'success' || isLoading || !recognitionRef.current || !soundEffectsEnabled}
             >
                 {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
             </Button>

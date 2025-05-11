@@ -7,7 +7,7 @@ import { WordDisplay } from '@/components/word-display';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex, getStoredReadingLevel } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, Edit } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, Edit, Volume2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { playSuccessSound, playErrorSound, playNavigationSound, speakText } from
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { generateFillInTheBlankGame, type GenerateFillInTheBlankGameInput, type GenerateFillInTheBlankGameOutput } from '@/ai/flows/generate-fill-in-the-blank-game';
 import { cn } from '@/lib/utils';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 
 export default function FillInTheBlankPage() {
   const [wordList, setWordList] = useState<string[]>([]);
@@ -24,6 +25,7 @@ export default function FillInTheBlankPage() {
   const [isMounted, setIsMounted] = useState(false);
   const { username } = useUserProfileStore();
   const { toast } = useToast();
+  const { soundEffectsEnabled } = useAppSettingsStore();
 
   const [gameData, setGameData] = useState<GenerateFillInTheBlankGameOutput | null>(null);
   const [isLoadingGame, setIsLoadingGame] = useState(false);
@@ -67,6 +69,18 @@ export default function FillInTheBlankPage() {
     };
   }, [loadWordAndSettingsData]);
 
+  const speakSentence = useCallback((sentence: string | undefined) => {
+    if (sentence && soundEffectsEnabled) {
+      speakText(`Fill in the blank: ${sentence.replace(/_+/g, 'blank')}`);
+    }
+  }, [soundEffectsEnabled]);
+
+  const speakHint = useCallback((hint: string | undefined) => {
+    if (hint && soundEffectsEnabled) {
+      speakText(`Hint: ${hint}`);
+    }
+  }, [soundEffectsEnabled]);
+
   const fetchNewGameProblem = useCallback(async (wordToUse: string) => {
     if (!wordToUse) return;
     setIsLoadingGame(true);
@@ -85,9 +99,7 @@ export default function FillInTheBlankPage() {
       };
       const result = await generateFillInTheBlankGame(input);
       setGameData(result);
-      if (result?.sentenceWithBlank) {
-        speakText(`Fill in the blank: ${result.sentenceWithBlank.replace(/_+/g, 'blank')}`);
-      }
+      speakSentence(result?.sentenceWithBlank);
     } catch (error) {
       console.error("Error generating fill-in-the-blank game:", error);
       toast({ 
@@ -99,7 +111,7 @@ export default function FillInTheBlankPage() {
     } finally {
       setIsLoadingGame(false);
     }
-  }, [readingLevel, wordList, username, toast]);
+  }, [readingLevel, wordList, username, toast, speakSentence]);
 
   useEffect(() => {
     if (currentWordForGame && isMounted) {
@@ -227,18 +239,30 @@ export default function FillInTheBlankPage() {
           {!isLoadingGame && gameData && (
             <>
               <div className="bg-muted/50 p-4 rounded-lg shadow-inner">
-                <p className="text-xl md:text-2xl text-foreground leading-relaxed text-center" aria-live="polite">
-                  {gameData.sentenceWithBlank.split(/(__+)/g).map((part, index) => 
-                    part.match(/__+/) ? 
-                    <span key={index} className="font-bold text-accent inline-block min-w-[60px] border-b-2 border-accent mx-1 text-center align-bottom"></span> : 
-                    part
-                  )}
-                </p>
+                <div className="flex items-center justify-between">
+                    <p className="text-xl md:text-2xl text-foreground leading-relaxed text-center flex-grow" aria-live="polite">
+                    {gameData.sentenceWithBlank.split(/(__+)/g).map((part, index) => 
+                        part.match(/__+/) ? 
+                        <span key={index} className="font-bold text-accent inline-block min-w-[60px] border-b-2 border-accent mx-1 text-center align-bottom"></span> : 
+                        part
+                    )}
+                    </p>
+                    {soundEffectsEnabled && (
+                        <Button variant="ghost" size="icon" onClick={() => speakSentence(gameData.sentenceWithBlank)} aria-label="Read sentence aloud">
+                            <Volume2 className="h-5 w-5"/>
+                        </Button>
+                    )}
+                </div>
                 {gameData.hint && !isAttempted && (
-                  <p className="text-sm text-muted-foreground mt-3 text-center">
+                  <div className="flex items-center justify-center text-sm text-muted-foreground mt-3 text-center">
                     <Lightbulb className="inline h-4 w-4 mr-1 text-yellow-500" />
                     Hint: {gameData.hint}
-                  </p>
+                    {soundEffectsEnabled && (
+                        <Button variant="ghost" size="icon" className="ml-1 h-6 w-6" onClick={() => speakHint(gameData.hint)} aria-label="Read hint aloud">
+                            <Volume2 className="h-4 w-4"/>
+                        </Button>
+                    )}
+                  </div>
                 )}
               </div>
               <div 
@@ -336,4 +360,3 @@ export default function FillInTheBlankPage() {
     </div>
   );
 }
-

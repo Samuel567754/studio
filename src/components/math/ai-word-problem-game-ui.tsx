@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
 type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'random';
@@ -33,6 +34,7 @@ export const AiWordProblemGameUI = () => {
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
   const { username } = useUserProfileStore();
+  const { soundEffectsEnabled } = useAppSettingsStore();
 
   const fetchNewProblem = useCallback(async () => {
     setIsLoading(true);
@@ -46,7 +48,7 @@ export const AiWordProblemGameUI = () => {
       const problemData = await generateMathWordProblem(input);
       setCurrentProblem(problemData);
       answerInputRef.current?.focus();
-      if (problemData?.problemText) {
+      if (problemData?.problemText && soundEffectsEnabled) {
         speakText(problemData.problemText);
       }
     } catch (error) {
@@ -56,7 +58,7 @@ export const AiWordProblemGameUI = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [difficulty, operation, username]);
+  }, [difficulty, operation, username, soundEffectsEnabled]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -80,11 +82,15 @@ export const AiWordProblemGameUI = () => {
       setScore(prev => prev + 1);
       playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! ${currentProblem.problemText} The answer is ${currentProblem.numericalAnswer}.`;
-      const utterance = speakText(speechSuccessMsg, undefined, () => {
+      if (soundEffectsEnabled) {
+        const utterance = speakText(speechSuccessMsg, undefined, () => {
+          fetchNewProblem();
+        });
+        if (!utterance) { 
+          setTimeout(fetchNewProblem, 1500);
+        }
+      } else {
         fetchNewProblem();
-      });
-      if (!utterance) { 
-        setTimeout(fetchNewProblem, 1500);
       }
     } else {
       const errorMessage = (
@@ -98,18 +104,23 @@ export const AiWordProblemGameUI = () => {
       setFeedback({ type: 'error', message: errorMessage });
       playErrorSound();
       const speechErrorMsg = `Oops! The correct answer was ${currentProblem.numericalAnswer}. ${currentProblem.explanation || ''}`;
-      const utterance = speakText(speechErrorMsg, undefined, () => {
+      if (soundEffectsEnabled) {
+        const utterance = speakText(speechErrorMsg, undefined, () => {
+          fetchNewProblem();
+        });
+        if (!utterance) {
+          setTimeout(fetchNewProblem, 2500);
+        }
+      } else {
         fetchNewProblem();
-      });
-      if (!utterance) {
-        setTimeout(fetchNewProblem, 2500);
       }
     }
-  }, [currentProblem, userAnswer, fetchNewProblem, username, operation]);
+  }, [currentProblem, userAnswer, fetchNewProblem, username, operation, soundEffectsEnabled]);
 
   useEffect(() => {
     fetchNewProblem();
-  }, [fetchNewProblem]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Fetch on initial load, dependencies handled by fetchNewProblem itself
   
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
@@ -168,8 +179,10 @@ export const AiWordProblemGameUI = () => {
   }, [toast]);
 
   const handleSpeakProblem = () => {
-    if (currentProblem?.problemText) {
+    if (currentProblem?.problemText && soundEffectsEnabled) {
       speakText(currentProblem.problemText + (currentProblem.explanation ? ` ${currentProblem.explanation}` : ''));
+    } else if (!soundEffectsEnabled) {
+       toast({ variant: "info", title: "Audio Disabled", description: "Sound effects are turned off in settings." });
     }
   };
 
@@ -181,6 +194,10 @@ export const AiWordProblemGameUI = () => {
             variant: "info", 
             duration: 5000 
         });
+        return;
+    }
+    if (!soundEffectsEnabled) {
+        toast({ variant: "info", title: "Audio Disabled", description: "Voice input requires sound effects to be enabled in settings." });
         return;
     }
     if (isListening) {
@@ -262,7 +279,7 @@ export const AiWordProblemGameUI = () => {
               <CardTitle className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-accent"/>
                 Problem: {currentProblem.operationUsed && operation === 'random' && <span className="text-sm text-muted-foreground">(Operation: {currentProblem.operationUsed})</span>}
-                <Button variant="ghost" size="icon" onClick={handleSpeakProblem} aria-label="Read problem aloud" className="ml-auto" disabled={isListening}>
+                <Button variant="ghost" size="icon" onClick={handleSpeakProblem} aria-label="Read problem aloud" className="ml-auto" disabled={isListening || !soundEffectsEnabled}>
                     <Volume2 className="h-5 w-5" />
                 </Button>
               </CardTitle>
@@ -292,7 +309,7 @@ export const AiWordProblemGameUI = () => {
                     onClick={toggleListening} 
                     className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
                     aria-label={isListening ? "Stop listening" : "Speak your answer"}
-                    disabled={feedback?.type === 'success' || isLoading || !recognitionRef.current}
+                    disabled={feedback?.type === 'success' || isLoading || !recognitionRef.current || !soundEffectsEnabled}
                 >
                     {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
                 </Button>

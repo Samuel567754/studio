@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// import { Textarea } from '@/components/ui/textarea'; // Textarea not currently used
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathStoryProblem, type GenerateMathStoryProblemInput, type GenerateMathStoryProblemOutput } from '@/ai/flows/generate-math-story-problem';
 import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCw, Volume2, Mic, MicOff, Smile, Lightbulb } from 'lucide-react';
@@ -18,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
 interface QuestionState {
@@ -39,12 +39,13 @@ export const AiStoryProblemGameUI = () => {
   const { toast } = useToast();
   const answerInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { username, favoriteTopics } = useUserProfileStore();
+  const { soundEffectsEnabled } = useAppSettingsStore();
 
   const fetchNewStoryProblem = useCallback(async () => {
     setIsLoading(true);
     setQuestionStates([]);
     setCurrentStoryProblem(null);
-    setScore(0); // Reset score for new story
+    setScore(0); 
     playNotificationSound();
 
     try {
@@ -57,7 +58,7 @@ export const AiStoryProblemGameUI = () => {
       const storyData = await generateMathStoryProblem(input);
       setCurrentStoryProblem(storyData);
       setQuestionStates(storyData.questions.map(() => ({ userAnswer: '', feedback: null, isCorrect: null })));
-      if (storyData?.storyProblemText) {
+      if (storyData?.storyProblemText && soundEffectsEnabled) {
         speakText(storyData.storyProblemText);
       }
     } catch (error) {
@@ -71,7 +72,7 @@ export const AiStoryProblemGameUI = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [difficulty, customTopics, favoriteTopics, username, toast]);
+  }, [difficulty, customTopics, favoriteTopics, username, toast, soundEffectsEnabled]);
 
   const handleSubmitAnswer = useCallback((questionIndex: number) => {
     if (!currentStoryProblem || !questionStates || questionStates.length <= questionIndex || !questionStates[questionIndex] || questionStates[questionIndex].userAnswer.trim() === '') {
@@ -97,13 +98,12 @@ export const AiStoryProblemGameUI = () => {
     const question = currentStoryProblem.questions[questionIndex];
     if (answerNum === question.numericalAnswer) {
       let successMessage = `${username ? username + ", y" : "Y"}ou got it right! The answer is ${question.numericalAnswer}.`;
-      // Only update score if it hasn't been marked correct before for this attempt of the story
       if(questionStates[questionIndex].isCorrect === null) { 
          setScore(prev => prev + 1);
       }
       setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: {type: 'success', message: successMessage}, isCorrect: true } : qs));
       playSuccessSound();
-      speakText(`Correct! The answer to: ${question.questionText} is ${question.numericalAnswer}.`);
+      if (soundEffectsEnabled) speakText(`Correct! The answer to: ${question.questionText} is ${question.numericalAnswer}.`);
     } else {
       const errorMessage = (
         <>
@@ -113,14 +113,14 @@ export const AiStoryProblemGameUI = () => {
       );
       setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: {type: 'error', message: errorMessage}, isCorrect: false } : qs));
       playErrorSound();
-      speakText(`Oops! The correct answer was ${question.numericalAnswer}. ${question.explanation || ''}`);
+      if (soundEffectsEnabled) speakText(`Oops! The correct answer was ${question.numericalAnswer}. ${question.explanation || ''}`);
     }
-  }, [currentStoryProblem, questionStates, username, toast]);
+  }, [currentStoryProblem, questionStates, username, toast, soundEffectsEnabled]);
 
   useEffect(() => {
     fetchNewStoryProblem();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Fetch on initial load
+  }, []); 
 
   const handleSubmitAnswerRef = useRef(handleSubmitAnswer);
   useEffect(() => {
@@ -142,7 +142,7 @@ export const AiStoryProblemGameUI = () => {
           const qIndex = isListening;
           setQuestionStates(prev => prev.map((qs, i) => i === qIndex ? {...qs, userAnswer: String(number)} : qs ));
           toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
-          setTimeout(() => handleSubmitAnswerRef.current(qIndex), 50); // Added a small delay
+          setTimeout(() => handleSubmitAnswerRef.current(qIndex), 50); 
         } else {
           toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
         }
@@ -154,7 +154,6 @@ export const AiStoryProblemGameUI = () => {
             title: "Voice Input Error", 
             description: `Could not recognize speech: ${event.error}. Try typing.`, 
             variant: "destructive",
-            // title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>,
         });
         setIsListening(null);
       };
@@ -163,12 +162,22 @@ export const AiStoryProblemGameUI = () => {
     return () => recognitionRef.current?.stop();
   }, [toast, isListening]);
 
-  const handleSpeak = (text: string) => speakText(text);
+  const handleSpeak = (text: string) => {
+      if(soundEffectsEnabled) {
+          speakText(text);
+      } else {
+          toast({ variant: "info", title: "Audio Disabled", description: "Sound effects are turned off in settings." });
+      }
+  }
 
   const toggleListening = (questionIndex: number) => {
     if (!recognitionRef.current) {
       toast({ title: "Voice Input Not Supported", description: "Your browser doesn't support voice input.", variant: "info", duration: 5000 });
       return;
+    }
+    if (!soundEffectsEnabled) {
+        toast({ variant: "info", title: "Audio Disabled", description: "Voice input requires sound effects to be enabled in settings." });
+        return;
     }
     if (isListening === questionIndex) {
       recognitionRef.current.stop();
@@ -185,7 +194,6 @@ export const AiStoryProblemGameUI = () => {
             title: "Mic Error", 
             description: "Could not start microphone. Check permissions.", 
             variant: "destructive",
-            // title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>,
         });
         setIsListening(null);
       }
@@ -246,7 +254,7 @@ export const AiStoryProblemGameUI = () => {
               <CardTitle className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-accent"/>
                 Story: {currentStoryProblem.overallTheme && <span className="text-sm text-muted-foreground">({currentStoryProblem.overallTheme})</span>}
-                <Button variant="ghost" size="icon" onClick={() => handleSpeak(currentStoryProblem.storyProblemText)} aria-label="Read story aloud" className="ml-auto" disabled={!!isListening}>
+                <Button variant="ghost" size="icon" onClick={() => handleSpeak(currentStoryProblem.storyProblemText)} aria-label="Read story aloud" className="ml-auto" disabled={!!isListening || !soundEffectsEnabled}>
                     <Volume2 className="h-5 w-5" />
                 </Button>
               </CardTitle>
@@ -274,7 +282,7 @@ export const AiStoryProblemGameUI = () => {
                   <AccordionContent className="px-4 pb-4 pt-2 border-t">
                     <form onSubmit={(e) => { e.preventDefault(); handleSubmitAnswer(index); }} className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleSpeak(q.questionText + (q.explanation ? `. Explanation: ${q.explanation}` : ''))} aria-label={`Read question ${index + 1} aloud`} className="flex-shrink-0" disabled={isListening === index || questionStates[index]?.isCorrect === true}>
+                        <Button variant="ghost" size="icon" onClick={() => handleSpeak(q.questionText + (q.explanation ? `. Explanation: ${q.explanation}` : ''))} aria-label={`Read question ${index + 1} aloud`} className="flex-shrink-0" disabled={isListening === index || questionStates[index]?.isCorrect === true || !soundEffectsEnabled}>
                             <Volume2 className="h-5 w-5" />
                         </Button>
                         <Label htmlFor={`story-q-${index}-answer`} className="sr-only">Answer for question {index + 1}</Label>
@@ -296,7 +304,7 @@ export const AiStoryProblemGameUI = () => {
                             onClick={() => toggleListening(index)} 
                             className={cn("h-12 w-12 flex-shrink-0", isListening === index && "bg-destructive/20 text-destructive animate-pulse")}
                             aria-label={isListening === index ? `Stop listening for question ${index + 1}` : `Speak answer for question ${index + 1}`}
-                            disabled={questionStates[index]?.isCorrect !== null || isLoading || !recognitionRef.current}
+                            disabled={questionStates[index]?.isCorrect !== null || isLoading || !recognitionRef.current || !soundEffectsEnabled}
                         >
                             {isListening === index ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                         </Button>
