@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, BookOpenText, Sigma, Sparkles, Puzzle, FileType2 as TextSelectIcon } from 'lucide-react'; // Changed TextSelect to FileType2
+import { ArrowRight, BookOpenText, Sigma, Sparkles, Puzzle, FileType2 as TextSelectIcon } from 'lucide-react';
 
 const mainSections = [
   {
@@ -13,10 +13,10 @@ const mainSections = [
     title: "Word Practice Zone",
     description: "Learn new words, practice spelling, identify words by ear, and read AI-generated stories.",
     href: "/word-practice",
-    icon: TextSelectIcon, // Updated icon
-    imageSrc: "https://picsum.photos/seed/abc-blocks/600/400", // More relevant image
+    icon: TextSelectIcon,
+    imageSrc: "https://picsum.photos/seed/abc-blocks/600/400",
     imageAlt: "Colorful alphabet blocks and a child learning words",
-    aiHint: "alphabet blocks child", // Updated hint
+    aiHint: "alphabet blocks child",
     color: "text-primary",
     bgFrom: "from-primary/10",
     bgTo: "to-primary/5",
@@ -27,9 +27,9 @@ const mainSections = [
     description: "Challenge yourself with interactive AI-powered word games like Fill-in-the-Blank and Definition Match.",
     href: "/ai-games",
     icon: Puzzle, 
-    imageSrc: "https://picsum.photos/seed/kids-tablet-game/600/400", // More relevant image
+    imageSrc: "https://picsum.photos/seed/kids-tablet-game/600/400",
     imageAlt: "Child playing an interactive word game on a tablet",
-    aiHint: "child tablet game", // Updated hint
+    aiHint: "child tablet game",
     color: "text-orange-500", 
     bgFrom: "from-orange-500/10",
     bgTo: "to-orange-500/5",
@@ -40,9 +40,9 @@ const mainSections = [
     description: "Explore a world of numbers with engaging arithmetic games, times tables, AI word problems, and more.",
     href: "/math",
     icon: Sigma,
-    imageSrc: "https://picsum.photos/seed/math-doodles/600/400", // More relevant image
+    imageSrc: "https://picsum.photos/seed/math-doodles/600/400",
     imageAlt: "Colorful numbers, math symbols, and doodles on a chalkboard",
-    aiHint: "math doodles chalkboard", // Updated hint
+    aiHint: "math doodles chalkboard",
     color: "text-purple-500",
     bgFrom: "from-purple-500/10",
     bgTo: "to-purple-500/5",
@@ -52,25 +52,23 @@ const mainSections = [
 export default function OfficialHomePage() {
   return (
     <div className="space-y-12">
-      <header className="relative text-center py-16 md:py-24 rounded-xl overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 shadow-inner border border-border/10">
-        <div 
-            className="absolute inset-0 opacity-10 dark:opacity-5 bg-repeat" 
-            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}
-            aria-hidden="true"
-        ></div>
-         <div className="absolute top-8 left-10 transform -rotate-12 opacity-20 dark:opacity-10">
-            <Sparkles className="h-16 w-16 text-accent" />
-        </div>
-        <div className="absolute bottom-12 right-16 transform rotate-6 opacity-20 dark:opacity-10">
-            <TextSelectIcon className="h-20 w-20 text-primary" />
-        </div>
-
-        <div className="relative z-10 container mx-auto px-4">
-          <BookOpenText className="mx-auto h-20 w-20 md:h-24 md:w-24 text-primary mb-6 animate-in fade-in-0 zoom-in-50 duration-700 ease-out" />
+      <header className="relative text-center rounded-xl overflow-hidden shadow-2xl h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex flex-col justify-center items-center">
+        <Image
+          src="https://picsum.photos/seed/learning-hero/1200/800"
+          alt="Inspiring learning environment with bright colors and abstract shapes"
+          layout="fill"
+          objectFit="cover"
+          className="brightness-50" 
+          data-ai-hint="learning kids education"
+          priority
+        />
+        <div className="absolute inset-0 bg-black/40" /> 
+        <div className="relative z-10 container mx-auto px-4 py-10 text-white">
+          <BookOpenText className="mx-auto h-16 w-16 md:h-20 md:w-20 text-white mb-4 animate-in fade-in-0 zoom-in-50 duration-700 ease-out" />
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
             Welcome to <span className="text-gradient-primary-accent">ChillLearn</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 delay-200">
+          <p className="text-lg md:text-xl text-gray-200 max-w-2xl mx-auto mb-10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 delay-200">
             Your fun and interactive partner for mastering words, practicing spelling, enjoying AI-powered reading, and exploring the world of math!
           </p>
           <Button asChild size="lg" className="btn-glow text-lg animate-in fade-in-0 zoom-in-75 duration-500 delay-400">
