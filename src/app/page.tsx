@@ -52,7 +52,7 @@ const mainSections = [
 export default function OfficialHomePage() {
   return (
     <div className="space-y-12">
-      <header className="relative text-center rounded-xl overflow-hidden shadow-2xl h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex flex-col justify-center items-center">
+      <header className="relative text-center rounded-xl overflow-hidden shadow-2xl h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex flex-col justify-center items-center mt-8">
         <Image
           src="https://picsum.photos/seed/learning-hero/1200/800"
           alt="Inspiring learning environment with bright colors and abstract shapes"
