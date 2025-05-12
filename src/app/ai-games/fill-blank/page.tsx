@@ -11,7 +11,7 @@ import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbul
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playNotificationSound, playCompletionSound } from '@/lib/audio';
+import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { generateFillInTheBlankGame, type GenerateFillInTheBlankGameInput, type GenerateFillInTheBlankGameOutput } from '@/ai/flows/generate-fill-in-the-blank-game';
 import { cn } from '@/lib/utils';
@@ -170,8 +170,6 @@ export default function FillInTheBlankPage() {
     const currentWordLowerCase = gameData.correctWord.toLowerCase();
 
     const afterCurrentQuestionAudio = () => {
-      // This function is called after the current question's audio feedback is done.
-      // Use the most up-to-date practicedWordsInSession state for the check.
       if (practicedWordsInSession.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
         setGameCompletedThisSession(true);
         toast({
@@ -185,7 +183,6 @@ export default function FillInTheBlankPage() {
           speakText(username ? `Amazing, ${username}! You've completed all words in this Fill-in-the-Blank session!` : "Congratulations! You've completed all words in this Fill-in-the-Blank session!");
         }
       } else if (wordList.length > 1 && !gameCompletedThisSession) { 
-        // Only navigate if game is not completed
         navigateWord('next');
       }
     };
@@ -198,7 +195,6 @@ export default function FillInTheBlankPage() {
         description: `"${gameData.correctWord}" is the right word!`,
       });
 
-      // Update practiced words state immediately
       setPracticedWordsInSession(prev => {
         const newSet = new Set(prev);
         if (!newSet.has(currentWordLowerCase)) {
@@ -210,13 +206,13 @@ export default function FillInTheBlankPage() {
       const spokenSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
       if (soundEffectsEnabled) {
         speakText(spokenSentence, undefined, () => {
-          setTimeout(afterCurrentQuestionAudio, 500); // Delay slightly after speech
+          setTimeout(afterCurrentQuestionAudio, 500); 
         });
       } else {
-        setTimeout(afterCurrentQuestionAudio, 1500); // Longer delay if no speech
+        setTimeout(afterCurrentQuestionAudio, 1500); 
       }
 
-    } else { // Incorrect answer
+    } else { 
       playErrorSound();
       toast({
         variant: "destructive",
@@ -233,7 +229,7 @@ export default function FillInTheBlankPage() {
             const correctSentenceText = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
             const explanationText = `The correct sentence is: ${correctSentenceText}.`;
             speakText(explanationText, undefined, () => {
-              setTimeout(afterCurrentQuestionAudio, 1500); // Still call afterCurrentQuestionAudio to navigate if needed
+              setTimeout(afterCurrentQuestionAudio, 1500); 
             });
           }, incorrectDisplayDuration);
         });
@@ -330,13 +326,30 @@ export default function FillInTheBlankPage() {
           <CardDescription>Choose the word that best completes the sentence.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 min-h-[250px]">
-          {isLoadingGame && (
+          {gameCompletedThisSession ? (
+             <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
+               <div className="flex flex-col items-center gap-4">
+                 <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+                 <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">{username ? `Congratulations, ${username}!` : 'Session Complete!'}</AlertTitle>
+                 <AlertDescription className="text-base">
+                   You've successfully practiced all words in this Fill-in-the-Blank session!
+                 </AlertDescription>
+                 <div className="flex gap-3 mt-3">
+                    <Button onClick={() => loadWordAndSettingsData()} variant="outline">
+                        <RefreshCcw className="mr-2 h-4 w-4" /> Play Again
+                    </Button>
+                    <Button asChild>
+                        <Link href="/ai-games"><ArrowLeft className="mr-2 h-4 w-4" /> Back to AI Games</Link>
+                    </Button>
+                 </div>
+               </div>
+             </Alert>
+          ) : isLoadingGame ? (
             <div className="flex flex-col justify-center items-center p-10">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <p className="mt-4 text-muted-foreground">Crafting a sentence for you...</p>
             </div>
-          )}
-          {!isLoadingGame && gameData && !gameCompletedThisSession && (
+          ) : gameData ? (
             <>
               <div className="bg-muted/50 p-4 rounded-lg shadow-inner">
                 <div className="flex items-center justify-between">
@@ -428,8 +441,7 @@ export default function FillInTheBlankPage() {
                 ))}
               </div>
             </>
-          )}
-          {!isLoadingGame && !gameData && currentWordForGame && !gameCompletedThisSession && (
+          ) : (
              <div className="flex flex-col justify-center items-center p-10">
                 <Info className="h-12 w-12 text-muted-foreground/50" />
                 <p className="mt-4 text-muted-foreground">Could not load game. Try refreshing the word.</p>
@@ -450,68 +462,50 @@ export default function FillInTheBlankPage() {
             </CardFooter>
         )}
       </Card>
-
-       {gameCompletedThisSession && (
-         <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
-           <div className="flex flex-col items-center gap-4">
-             <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
-             <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">{username ? `Congratulations, ${username}!` : 'Session Complete!'}</AlertTitle>
-             <AlertDescription className="text-base">
-               You've successfully practiced all words in this Fill-in-the-Blank session!
-             </AlertDescription>
-             <div className="flex gap-3 mt-3">
-                <Button onClick={() => loadWordAndSettingsData()} variant="outline">
-                    <RefreshCcw className="mr-2 h-4 w-4" /> Play Again
-                </Button>
-                <Button asChild>
-                    <Link href="/ai-games"><ArrowLeft className="mr-2 h-4 w-4" /> Back to AI Games</Link>
-                </Button>
-             </div>
-           </div>
-         </Alert>
-       )}
       
-      <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
-        <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="lg" 
-            onClick={() => navigateWord('prev')} 
-            aria-label="Previous word" 
-            className="w-full sm:w-auto order-2 sm:order-1"
-            disabled={isLoadingGame || gameCompletedThisSession}
-          >
-            <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
-          </Button>
-
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 order-1 sm:order-2 w-full sm:w-auto">
+      {!gameCompletedThisSession && (
+        <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
+          <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
             <Button 
-              variant="default" 
+              variant="outline" 
               size="lg" 
-              onClick={() => fetchNewGameProblem(currentWordForGame)} 
-              aria-label="New problem for current word" 
-              className="w-full sm:w-auto btn-glow" 
-              disabled={isLoadingGame || gameCompletedThisSession}
+              onClick={() => navigateWord('prev')} 
+              aria-label="Previous word" 
+              className="w-full sm:w-auto order-2 sm:order-1"
+              disabled={isLoadingGame}
             >
-              <RefreshCcw className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> New Sentence
+              <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
             </Button>
-            <span className="text-muted-foreground text-sm whitespace-nowrap font-medium" aria-live="polite" aria-atomic="true">
-              Word {currentIndex + 1} / {wordList.length}
-            </span>
-          </div>
 
-          <Button 
-            variant="outline" 
-            size="lg" 
-            onClick={() => navigateWord('next')} 
-            aria-label="Next word" 
-            className="w-full sm:w-auto order-3"
-            disabled={isLoadingGame || gameCompletedThisSession}
-          >
-            Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
-          </Button>
-        </CardContent>
-      </Card>
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 order-1 sm:order-2 w-full sm:w-auto">
+              <Button 
+                variant="default" 
+                size="lg" 
+                onClick={() => fetchNewGameProblem(currentWordForGame)} 
+                aria-label="New problem for current word" 
+                className="w-full sm:w-auto btn-glow" 
+                disabled={isLoadingGame}
+              >
+                <RefreshCcw className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> New Sentence
+              </Button>
+              <span className="text-muted-foreground text-sm whitespace-nowrap font-medium" aria-live="polite" aria-atomic="true">
+                Word {currentIndex + 1} / {wordList.length}
+              </span>
+            </div>
+
+            <Button 
+              variant="outline" 
+              size="lg" 
+              onClick={() => navigateWord('next')} 
+              aria-label="Next word" 
+              className="w-full sm:w-auto order-3"
+              disabled={isLoadingGame}
+            >
+              Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
