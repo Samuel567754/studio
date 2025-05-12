@@ -181,28 +181,37 @@ export default function FillInTheBlankPage() {
       } else {
         setTimeout(performNavigation, 2500);
       }
-    } else {
+    } else { // Incorrect answer
       playErrorSound();
       toast({
         variant: "destructive",
         title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Not quite...</div>,
         description: `You chose "${option}". The word was "${gameData.correctWord}".`,
       });
-      
-      // Immediately set state to show correct word for visual feedback during audio explanation.
-      setShowCorrectWordAfterIncorrectAttempt(true);
+
+      // The incorrect word (selectedOption) is already shown in the blank with red styling.
+      const incorrectDisplayDuration = 1500; // milliseconds to show the incorrect word before swapping
 
       if (soundEffectsEnabled) {
-         const originalSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
-         const textToSpeak = `Oops. You chose ${option}. The correct sentence is: ${originalSentence}`;
-         speakText(textToSpeak, undefined, () => { 
-            // Navigation happens after speech
-            setTimeout(performNavigation, 1500); 
+        const mistakeText = `Oops. You chose ${option}.`;
+        // Speak about the mistake while the incorrect word is shown
+        speakText(mistakeText, undefined, () => {
+          // After mistake is acknowledged via audio, wait for the visual swap, then explain the correct answer
+          setTimeout(() => {
+            setShowCorrectWordAfterIncorrectAttempt(true); // Trigger visual swap to correct word
+            const correctSentenceText = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
+            const explanationText = `The correct sentence is: ${correctSentenceText}.`;
+            speakText(explanationText, undefined, () => {
+              setTimeout(performNavigation, 1500); // Navigate after explanation audio
+            });
+          }, incorrectDisplayDuration);
         });
       } else {
-        // No audio, visual update already triggered by setShowCorrectWordAfterIncorrectAttempt(true)
-        // Navigate after a delay
-        setTimeout(performNavigation, 2500);
+        // No audio: just visual sequence
+        setTimeout(() => {
+          setShowCorrectWordAfterIncorrectAttempt(true); // Swap to correct word
+          setTimeout(performNavigation, 2500); // Navigate after showing correct word for a bit
+        }, incorrectDisplayDuration);
       }
     }
   };
@@ -316,7 +325,7 @@ export default function FillInTheBlankPage() {
                                           wordToShowInBlank = gameData.correctWord;
                                           blankStyleClass = "text-green-600 dark:text-green-500 bg-green-500/10 border border-green-500/30 font-semibold";
                                       } else {
-                                          wordToShowInBlank = selectedOption;
+                                          wordToShowInBlank = selectedOption; // Show user's incorrect word
                                           blankStyleClass = "text-red-700 dark:text-red-400 bg-red-500/20 border border-red-500/50";
                                       }
                                   }
@@ -374,8 +383,8 @@ export default function FillInTheBlankPage() {
                     className={cn(
                       "w-full text-lg md:text-xl py-6 h-auto justify-center transition-all duration-200 ease-in-out transform hover:scale-105 shadow-sm",
                       isAttempted && option === selectedOption && isCorrect && "bg-green-500/20 border-green-500 text-green-700 dark:text-green-400 hover:bg-green-500/30 ring-2 ring-green-500",
-                      isAttempted && option === selectedOption && !isCorrect && !showCorrectWordAfterIncorrectAttempt && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500",
-                      isAttempted && option.toLowerCase() === gameData.correctWord.toLowerCase() && (!isCorrect || option !== selectedOption) && "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500", 
+                      isAttempted && option === selectedOption && !isCorrect && !showCorrectWordAfterIncorrectAttempt && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500", // Style for incorrect selection *before* correct word is shown
+                      isAttempted && option.toLowerCase() === gameData.correctWord.toLowerCase() && (!isCorrect || option !== selectedOption) && "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500", // Style for correct option if user picked wrong
                       !isAttempted && "hover:bg-primary/10 hover:border-primary"
                     )}
                     onClick={() => handleOptionClick(option)}
