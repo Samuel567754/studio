@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -8,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathStoryProblem, type GenerateMathStoryProblemInput, type GenerateMathStoryProblemOutput } from '@/ai/flows/generate-math-story-problem';
-import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCw, Volume2, Mic, MicOff, Smile, Lightbulb } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCw, Volume2, Mic, MicOff, Smile, Lightbulb, Trophy, Info } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
@@ -24,16 +23,21 @@ interface QuestionState {
   userAnswer: string;
   feedback: { type: 'success' | 'error' | 'info'; message: string | JSX.Element } | null;
   isCorrect: boolean | null;
+  isSubmitted: boolean; 
 }
+
+const STORIES_PER_SESSION = 3; // Define how many stories constitute a "session"
 
 export const AiStoryProblemGameUI = () => {
   const [currentStoryProblem, setCurrentStoryProblem] = useState<GenerateMathStoryProblemOutput | null>(null);
   const [questionStates, setQuestionStates] = useState<QuestionState[]>([]);
-  const [score, setScore] = useState(0);
+  const [overallScore, setOverallScore] = useState(0); // Score across all questions in current story
+  const [storiesCompletedInSession, setStoriesCompletedInSession] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState<number | null>(null); // Index of question being listened to
+  const [isListening, setIsListening] = useState<number | null>(null);
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
   const [customTopics, setCustomTopics] = useState<string>('');
+  const [sessionCompleted, setSessionCompleted] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -41,12 +45,22 @@ export const AiStoryProblemGameUI = () => {
   const { username, favoriteTopics } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
-  const fetchNewStoryProblem = useCallback(async () => {
+  const startNewSession = useCallback(() => {
+    setOverallScore(0);
+    setStoriesCompletedInSession(0);
+    setSessionCompleted(false);
+    fetchNewStoryProblem(true);
+  }, []);
+
+  const fetchNewStoryProblem = useCallback(async (isNewSessionStart: boolean = false) => {
     setIsLoading(true);
     setQuestionStates([]);
     setCurrentStoryProblem(null);
-    setScore(0); 
-    playNotificationSound();
+    if(!isNewSessionStart) {
+      setOverallScore(0); // Reset score for the new story, but not for the whole session
+      playNotificationSound();
+    }
+
 
     try {
       const topicsToUse = customTopics.trim() !== '' ? customTopics.trim() : favoriteTopics || undefined;
@@ -57,7 +71,7 @@ export const AiStoryProblemGameUI = () => {
       };
       const storyData = await generateMathStoryProblem(input);
       setCurrentStoryProblem(storyData);
-      setQuestionStates(storyData.questions.map(() => ({ userAnswer: '', feedback: null, isCorrect: null })));
+      setQuestionStates(storyData.questions.map(() => ({ userAnswer: '', feedback: null, isCorrect: null, isSubmitted: false })));
       if (storyData?.storyProblemText && soundEffectsEnabled) {
         speakText(storyData.storyProblemText);
       }
@@ -74,8 +88,24 @@ export const AiStoryProblemGameUI = () => {
     }
   }, [difficulty, customTopics, favoriteTopics, username, toast, soundEffectsEnabled]);
 
+  const handleSessionCompletion = useCallback(() => {
+    setSessionCompleted(true);
+    const completionMessage = username ? `Fantastic, ${username}!` : 'Session Complete!';
+    const description = `You've completed ${STORIES_PER_SESSION} stories. Well done!`;
+    toast({
+      variant: "success",
+      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
+      description: description,
+      duration: 7000,
+    });
+    playCompletionSound();
+    if (soundEffectsEnabled) {
+      speakText(`${completionMessage} ${description}`);
+    }
+  }, [username, soundEffectsEnabled, toast]);
+
   const handleSubmitAnswer = useCallback((questionIndex: number) => {
-    if (!currentStoryProblem || !questionStates || questionStates.length <= questionIndex || !questionStates[questionIndex] || questionStates[questionIndex].userAnswer.trim() === '') {
+    if (sessionCompleted || !currentStoryProblem || !questionStates || questionStates.length <= questionIndex || !questionStates[questionIndex] || questionStates[questionIndex].userAnswer.trim() === '') {
       if (questionStates && questionStates.length > questionIndex && questionStates[questionIndex]) {
          setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: 'info', message: 'Please enter an answer.' } } : qs));
       } else {
@@ -96,31 +126,61 @@ export const AiStoryProblemGameUI = () => {
     }
     
     const question = currentStoryProblem.questions[questionIndex];
-    if (answerNum === question.numericalAnswer) {
-      let successMessage = `${username ? username + ", y" : "Y"}ou got it right! The answer is ${question.numericalAnswer}.`;
+    const isCorrect = answerNum === question.numericalAnswer;
+    
+    let feedbackText: string | JSX.Element;
+    let feedbackType: 'success' | 'error';
+    let speechTextSegment: string;
+
+    if (isCorrect) {
+      feedbackText = `${username ? username + ", y" : "Y"}ou got it right! The answer is ${question.numericalAnswer}.`;
+      feedbackType = 'success';
+      speechTextSegment = `Correct! The answer to: ${question.questionText} is ${question.numericalAnswer}.`;
       if(questionStates[questionIndex].isCorrect === null) { 
-         setScore(prev => prev + 1);
+         setOverallScore(prev => prev + 1);
       }
-      setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: {type: 'success', message: successMessage}, isCorrect: true } : qs));
       playSuccessSound();
-      if (soundEffectsEnabled) speakText(`Correct! The answer to: ${question.questionText} is ${question.numericalAnswer}.`);
     } else {
-      const errorMessage = (
+      feedbackText = (
         <>
           Not quite{username ? `, ${username}` : ''}. The correct answer for "{question.questionText}" was <strong>{question.numericalAnswer}</strong>.
           {question.explanation && <p className="mt-1 text-xs"><em>Explanation: {question.explanation}</em></p>}
         </>
       );
-      setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: {type: 'error', message: errorMessage}, isCorrect: false } : qs));
+      feedbackType = 'error';
+      speechTextSegment = `Oops! The correct answer was ${question.numericalAnswer}. ${question.explanation || ''}`;
       playErrorSound();
-      if (soundEffectsEnabled) speakText(`Oops! The correct answer was ${question.numericalAnswer}. ${question.explanation || ''}`);
     }
-  }, [currentStoryProblem, questionStates, username, toast, soundEffectsEnabled]);
+
+    setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: feedbackType, message: feedbackText }, isCorrect: isCorrect, isSubmitted: true } : qs));
+    
+    const allCurrentStoryQuestionsAnswered = questionStates.every((qs, i) => i === questionIndex ? true : qs.isSubmitted) && (isCorrect || !isCorrect) ; // Check if this submission makes all questions answered
+    
+    const afterSpeechCallback = () => {
+      if (allCurrentStoryQuestionsAnswered) {
+        const newStoriesCompleted = storiesCompletedInSession + 1;
+        setStoriesCompletedInSession(newStoriesCompleted);
+        if (newStoriesCompleted >= STORIES_PER_SESSION) {
+          handleSessionCompletion();
+        } else {
+          // Optional: Small delay before fetching next story to allow user to see all feedback
+          // setTimeout(() => fetchNewStoryProblem(), 2000);
+        }
+      }
+    };
+
+    if (soundEffectsEnabled) {
+      speakText(speechTextSegment, undefined, afterSpeechCallback);
+    } else {
+      afterSpeechCallback();
+    }
+
+  }, [currentStoryProblem, questionStates, username, toast, soundEffectsEnabled, storiesCompletedInSession, handleSessionCompletion, sessionCompleted, fetchNewStoryProblem]);
 
   useEffect(() => {
-    fetchNewStoryProblem();
+    startNewSession(); // Start a new session on initial load
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  }, [difficulty, customTopics]); // Re-start session if difficulty or custom topics change
 
   const handleSubmitAnswerRef = useRef(handleSubmitAnswer);
   useEffect(() => {
@@ -179,6 +239,7 @@ export const AiStoryProblemGameUI = () => {
         toast({ variant: "info", title: "Audio Disabled", description: "Voice input requires sound effects to be enabled in settings." });
         return;
     }
+    if (sessionCompleted) return;
     if (isListening === questionIndex) {
       recognitionRef.current.stop();
       setIsListening(null);
@@ -200,7 +261,7 @@ export const AiStoryProblemGameUI = () => {
     }
   };
 
-  const allQuestionsAnswered = currentStoryProblem && questionStates.every(qs => qs.isCorrect !== null);
+  const allQuestionsAnsweredForCurrentStory = currentStoryProblem && questionStates.every(qs => qs.isSubmitted);
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
@@ -209,7 +270,8 @@ export const AiStoryProblemGameUI = () => {
           <BookOpen className="mr-2 h-6 w-6" /> AI Math Story Time!
         </CardTitle>
         <CardDescription>
-          Read the story and answer the questions. Score: <span className="font-bold text-accent">{score}</span>
+          Story <span className="font-bold text-accent">{storiesCompletedInSession + (allQuestionsAnsweredForCurrentStory && !sessionCompleted ? 1 : currentStoryProblem ? 1 : 0) } / {STORIES_PER_SESSION}</span> |
+          Current Story Score: <span className="font-bold text-accent">{overallScore}</span>
           {currentStoryProblem && currentStoryProblem.questions && ` / ${currentStoryProblem.questions.length}`}
         </CardDescription>
       </CardHeader>
@@ -217,7 +279,7 @@ export const AiStoryProblemGameUI = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="story-difficulty-select">Difficulty</Label>
-            <Select value={difficulty} onValueChange={(val) => setDifficulty(val as DifficultyLevel)} disabled={isLoading}>
+            <Select value={difficulty} onValueChange={(val) => setDifficulty(val as DifficultyLevel)} disabled={isLoading || sessionCompleted}>
               <SelectTrigger id="story-difficulty-select" className="h-11">
                 <SelectValue placeholder="Select difficulty" />
               </SelectTrigger>
@@ -236,19 +298,33 @@ export const AiStoryProblemGameUI = () => {
               value={customTopics}
               onChange={(e) => setCustomTopics(e.target.value)}
               className="h-11"
-              disabled={isLoading}
+              disabled={isLoading || sessionCompleted}
             />
             <p className="text-xs text-muted-foreground mt-1">Overrides your profile's favorite topics for this session if filled.</p>
           </div>
         </div>
-
-        {isLoading && ( 
+        
+        {sessionCompleted ? (
+           <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
+            <div className="flex flex-col items-center gap-4 py-4">
+              <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+              <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {username ? `Congratulations, ${username}!` : 'Session Complete!'}
+              </AlertTitle>
+              <AlertDescription className="text-base">
+                You've successfully completed {STORIES_PER_SESSION} stories in this session!
+              </AlertDescription>
+              <Button onClick={startNewSession} variant="outline" size="lg" className="mt-4">
+                <RefreshCcw className="mr-2 h-4 w-4" /> Play New Session
+              </Button>
+            </div>
+          </Alert>
+        ) :isLoading ? ( 
           <div className="flex flex-col justify-center items-center min-h-[200px] space-y-2">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="text-muted-foreground">Crafting an adventurous story for you...</p>
           </div>
-        )}
-        {!isLoading && currentStoryProblem && (
+        ) : currentStoryProblem ? (
           <div className="space-y-6 animate-in fade-in-0 duration-300">
             <Card className="bg-muted/30 p-4 rounded-lg shadow">
               <CardTitle className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
@@ -282,7 +358,7 @@ export const AiStoryProblemGameUI = () => {
                   <AccordionContent className="px-4 pb-4 pt-2 border-t">
                     <form onSubmit={(e) => { e.preventDefault(); handleSubmitAnswer(index); }} className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleSpeak(q.questionText + (q.explanation ? `. Explanation: ${q.explanation}` : ''))} aria-label={`Read question ${index + 1} aloud`} className="flex-shrink-0" disabled={isListening === index || questionStates[index]?.isCorrect === true || !soundEffectsEnabled}>
+                        <Button variant="ghost" size="icon" onClick={() => handleSpeak(q.questionText + (q.explanation ? `. Explanation: ${q.explanation}` : ''))} aria-label={`Read question ${index + 1} aloud`} className="flex-shrink-0" disabled={isListening === index || questionStates[index]?.isSubmitted || !soundEffectsEnabled}>
                             <Volume2 className="h-5 w-5" />
                         </Button>
                         <Label htmlFor={`story-q-${index}-answer`} className="sr-only">Answer for question {index + 1}</Label>
@@ -295,7 +371,7 @@ export const AiStoryProblemGameUI = () => {
                           onChange={(e) => setQuestionStates(prev => prev.map((qs, i) => i === index ? {...qs, userAnswer: e.target.value} : qs))}
                           placeholder="Your answer"
                           className="text-lg p-2 h-12 text-center shadow-sm focus:ring-2 focus:ring-primary flex-grow"
-                          disabled={questionStates[index]?.isCorrect !== null || isLoading || isListening === index}
+                          disabled={questionStates[index]?.isSubmitted || isLoading || isListening === index}
                         />
                         <Button 
                             type="button" 
@@ -304,12 +380,12 @@ export const AiStoryProblemGameUI = () => {
                             onClick={() => toggleListening(index)} 
                             className={cn("h-12 w-12 flex-shrink-0", isListening === index && "bg-destructive/20 text-destructive animate-pulse")}
                             aria-label={isListening === index ? `Stop listening for question ${index + 1}` : `Speak answer for question ${index + 1}`}
-                            disabled={questionStates[index]?.isCorrect !== null || isLoading || !recognitionRef.current || !soundEffectsEnabled}
+                            disabled={questionStates[index]?.isSubmitted || isLoading || !recognitionRef.current || !soundEffectsEnabled}
                         >
                             {isListening === index ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                         </Button>
                       </div>
-                      <Button type="submit" size="default" className="w-full btn-glow" disabled={questionStates[index]?.isCorrect !== null || isLoading || isListening === index}>
+                      <Button type="submit" size="default" className="w-full btn-glow" disabled={questionStates[index]?.isSubmitted || isLoading || isListening === index}>
                         Check Q{index + 1}
                       </Button>
                        {questionStates[index]?.feedback && (
@@ -325,13 +401,25 @@ export const AiStoryProblemGameUI = () => {
               ))}
             </Accordion>
           </div>
+        ) : (
+             <div className="flex flex-col justify-center items-center min-h-[200px] space-y-2">
+                <Info className="h-12 w-12 text-muted-foreground/50" />
+                <p className="text-muted-foreground">Ready to start? Settings are above.</p>
+            </div>
         )}
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={fetchNewStoryProblem} className="w-full" disabled={isLoading || (!!isListening && !allQuestionsAnswered)}>
-          <RefreshCw className="mr-2 h-4 w-4" /> New Story & Problems
+        <Button 
+          variant="outline" 
+          onClick={() => sessionCompleted ? startNewSession() : fetchNewStoryProblem()} 
+          className="w-full" 
+          disabled={isLoading || (!!isListening && !allQuestionsAnsweredForCurrentStory) || (!sessionCompleted && !allQuestionsAnsweredForCurrentStory)}
+        >
+          <RefreshCw className="mr-2 h-4 w-4" /> 
+          {sessionCompleted ? "Start New Session" : (allQuestionsAnsweredForCurrentStory ? "Next Story & Problems" : "Generate New Story & Problems")}
         </Button>
       </CardFooter>
     </Card>
   );
 };
+

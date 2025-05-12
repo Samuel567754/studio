@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -8,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathWordProblem, type GenerateMathWordProblemInput, type GenerateMathWordProblemOutput } from '@/ai/flows/generate-math-word-problem';
-import { CheckCircle2, XCircle, Loader2, Brain, RefreshCw, Volume2, Mic, MicOff, Smile, Lightbulb, Info } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Brain, RefreshCw, Volume2, Mic, MicOff, Smile, Lightbulb, Info, Trophy } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
@@ -20,15 +19,19 @@ import { useAppSettingsStore } from '@/stores/app-settings-store';
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
 type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'random';
 
+const PROBLEMS_PER_SESSION = 5; // Define how many problems make a "session"
+
 export const AiWordProblemGameUI = () => {
   const [currentProblem, setCurrentProblem] = useState<GenerateMathWordProblemOutput | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string | JSX.Element } | null>(null);
   const [score, setScore] = useState(0);
+  const [problemsSolvedInSession, setProblemsSolvedInSession] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
   const [operation, setOperation] = useState<Operation>('addition');
+  const [sessionCompleted, setSessionCompleted] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -36,12 +39,19 @@ export const AiWordProblemGameUI = () => {
   const { username } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
-  const fetchNewProblem = useCallback(async () => {
+  const startNewSession = useCallback(() => {
+    setScore(0);
+    setProblemsSolvedInSession(0);
+    setSessionCompleted(false);
+    fetchNewProblem(true); // Pass true to indicate it's a new session start
+  }, []); // Removed fetchNewProblem from dependencies to avoid re-triggering
+
+  const fetchNewProblem = useCallback(async (isNewSessionStart: boolean = false) => {
     setIsLoading(true);
     setFeedback(null);
     setUserAnswer('');
     setCurrentProblem(null);
-    playNotificationSound();
+    if(!isNewSessionStart) playNotificationSound();
 
     try {
       const input: GenerateMathWordProblemInput = { difficultyLevel: difficulty, operation, username: username || undefined };
@@ -60,10 +70,27 @@ export const AiWordProblemGameUI = () => {
     }
   }, [difficulty, operation, username, soundEffectsEnabled]);
 
+
+  const handleSessionCompletion = useCallback(() => {
+    setSessionCompleted(true);
+    const completionMessage = username ? `Awesome, ${username}!` : 'Session Complete!';
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job!`;
+    toast({
+      variant: "success",
+      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
+      description: description,
+      duration: 7000,
+    });
+    playCompletionSound();
+    if (soundEffectsEnabled) {
+      speakText(`${completionMessage} ${description}`);
+    }
+  }, [username, soundEffectsEnabled, toast]);
+
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!currentProblem || userAnswer.trim() === '') {
-      setFeedback({ type: 'info', message: 'Please enter an answer.' });
+    if (sessionCompleted || !currentProblem || userAnswer.trim() === '') {
+      if (userAnswer.trim() === '') setFeedback({ type: 'info', message: 'Please enter an answer.' });
       return;
     }
 
@@ -73,7 +100,24 @@ export const AiWordProblemGameUI = () => {
       return;
     }
 
-    if (answerNum === currentProblem.numericalAnswer) {
+    const isCorrect = answerNum === currentProblem.numericalAnswer;
+    
+    const afterFeedbackAudio = () => {
+      if (isCorrect) {
+        const newProblemsSolved = problemsSolvedInSession + 1;
+        setProblemsSolvedInSession(newProblemsSolved);
+        if (newProblemsSolved >= PROBLEMS_PER_SESSION) {
+          handleSessionCompletion();
+        } else {
+          fetchNewProblem();
+        }
+      } else {
+         fetchNewProblem(); // Fetch new problem even if incorrect for continuous play
+      }
+    };
+
+
+    if (isCorrect) {
       let successMessage = `${username ? username + ", that's c" : 'C'}orrect! The answer is ${currentProblem.numericalAnswer}.`;
       if (operation === 'random' && currentProblem.operationUsed) {
         successMessage += ` (Operation: ${currentProblem.operationUsed})`;
@@ -82,16 +126,14 @@ export const AiWordProblemGameUI = () => {
       setScore(prev => prev + 1);
       playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! ${currentProblem.problemText} The answer is ${currentProblem.numericalAnswer}.`;
+      
       if (soundEffectsEnabled) {
-        const utterance = speakText(speechSuccessMsg, undefined, () => {
-          fetchNewProblem();
-        });
-        if (!utterance) { 
-          setTimeout(fetchNewProblem, 1500);
-        }
+        const utterance = speakText(speechSuccessMsg, undefined, afterFeedbackAudio);
+        if (!utterance) setTimeout(afterFeedbackAudio, 1500); // Fallback if speech fails
       } else {
-        fetchNewProblem();
+        afterFeedbackAudio();
       }
+
     } else {
       const errorMessage = (
         <>
@@ -104,23 +146,20 @@ export const AiWordProblemGameUI = () => {
       setFeedback({ type: 'error', message: errorMessage });
       playErrorSound();
       const speechErrorMsg = `Oops! The correct answer was ${currentProblem.numericalAnswer}. ${currentProblem.explanation || ''}`;
+      
       if (soundEffectsEnabled) {
-        const utterance = speakText(speechErrorMsg, undefined, () => {
-          fetchNewProblem();
-        });
-        if (!utterance) {
-          setTimeout(fetchNewProblem, 2500);
-        }
+        const utterance = speakText(speechErrorMsg, undefined, afterFeedbackAudio);
+        if (!utterance) setTimeout(afterFeedbackAudio, 2500); // Fallback
       } else {
-        fetchNewProblem();
+        afterFeedbackAudio();
       }
     }
-  }, [currentProblem, userAnswer, fetchNewProblem, username, operation, soundEffectsEnabled]);
+  }, [currentProblem, userAnswer, fetchNewProblem, username, operation, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted]);
 
   useEffect(() => {
-    fetchNewProblem();
+    startNewSession(); // Start a new session on initial load
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Fetch on initial load, dependencies handled by fetchNewProblem itself
+  }, [difficulty, operation]); // Re-start session if difficulty or operation changes
   
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
@@ -145,7 +184,7 @@ export const AiWordProblemGameUI = () => {
              description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, 
              variant: "info" 
             });
-           setTimeout(() => handleSubmitRef.current(), 0);
+           setTimeout(() => handleSubmitRef.current(), 50); // Added a slight delay
         } else {
           toast({ 
             title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>, 
@@ -200,6 +239,7 @@ export const AiWordProblemGameUI = () => {
         toast({ variant: "info", title: "Audio Disabled", description: "Voice input requires sound effects to be enabled in settings." });
         return;
     }
+    if (sessionCompleted) return;
     if (isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -232,13 +272,16 @@ export const AiWordProblemGameUI = () => {
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <Brain className="mr-2 h-6 w-6" /> AI Word Problem Solver
         </CardTitle>
-        <CardDescription>Current Score: <span className="font-bold text-accent">{score}</span></CardDescription>
+        <CardDescription>
+          Score: <span className="font-bold text-accent">{score}</span> | 
+          Problems Solved: <span className="font-bold text-accent">{problemsSolvedInSession} / {PROBLEMS_PER_SESSION}</span>
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="difficulty-select">Difficulty</Label>
-            <Select value={difficulty} onValueChange={(val) => setDifficulty(val as DifficultyLevel)} disabled={isLoading}>
+            <Select value={difficulty} onValueChange={(val) => setDifficulty(val as DifficultyLevel)} disabled={isLoading || sessionCompleted}>
               <SelectTrigger id="difficulty-select" className="h-11">
                 <SelectValue placeholder="Select difficulty" />
               </SelectTrigger>
@@ -251,7 +294,7 @@ export const AiWordProblemGameUI = () => {
           </div>
           <div>
             <Label htmlFor="operation-select">Operation</Label>
-            <Select value={operation} onValueChange={(val) => setOperation(val as Operation)} disabled={isLoading}>
+            <Select value={operation} onValueChange={(val) => setOperation(val as Operation)} disabled={isLoading || sessionCompleted}>
               <SelectTrigger id="operation-select" className="h-11">
                 <SelectValue placeholder="Select operation" />
               </SelectTrigger>
@@ -265,15 +308,29 @@ export const AiWordProblemGameUI = () => {
             </Select>
           </div>
         </div>
-
-        {isLoading && ( 
+        
+        {sessionCompleted ? (
+          <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
+            <div className="flex flex-col items-center gap-4 py-4">
+              <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+              <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {username ? `Congratulations, ${username}!` : 'Session Complete!'}
+              </AlertTitle>
+              <AlertDescription className="text-base">
+                You've successfully completed {PROBLEMS_PER_SESSION} problems in this session! Your score: {score}.
+              </AlertDescription>
+              <Button onClick={startNewSession} variant="outline" size="lg" className="mt-4">
+                <RefreshCcw className="mr-2 h-4 w-4" /> Play New Session
+              </Button>
+            </div>
+          </Alert>
+        ) : isLoading ? ( 
           <div className="flex flex-col justify-center items-center min-h-[150px] space-y-2">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="text-muted-foreground">Generating an AI-mazing problem for you...</p>
             <p className="sr-only">Loading new problem...</p>
           </div>
-        )}
-        {!isLoading && currentProblem && (
+        ) : currentProblem ? (
           <div className="space-y-4 animate-in fade-in-0 duration-300">
             <Card className="bg-muted/30 p-4 rounded-lg shadow">
               <CardTitle className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
@@ -319,8 +376,13 @@ export const AiWordProblemGameUI = () => {
               </Button>
             </form>
           </div>
+        ) : (
+           <div className="flex flex-col justify-center items-center min-h-[150px] space-y-2">
+                <Info className="h-12 w-12 text-muted-foreground/50" />
+                <p className="text-muted-foreground">Ready to start? Settings are above.</p>
+            </div>
         )}
-        {feedback && (
+        {feedback && !sessionCompleted && ( // Don't show individual feedback if session is completed
           <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
             {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
             <AlertTitle>
@@ -332,10 +394,11 @@ export const AiWordProblemGameUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={fetchNewProblem} className="w-full" disabled={isLoading || isListening}>
-          <RefreshCw className="mr-2 h-4 w-4" /> Skip / New Problem
+        <Button variant="outline" onClick={() => sessionCompleted ? startNewSession() : fetchNewProblem()} className="w-full" disabled={isLoading || isListening}>
+          <RefreshCw className="mr-2 h-4 w-4" /> {sessionCompleted ? "Start New Session" : "Skip / New Problem"}
         </Button>
       </CardFooter>
     </Card>
   );
 };
+
