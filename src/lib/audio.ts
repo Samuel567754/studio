@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAppSettingsStore } from '@/stores/app-settings-store';
@@ -68,14 +69,18 @@ export function playSuccessSound(): void {
 
 export function playCompletionSound(): void {
   // More pronounced, celebratory melodic ascending 'sine' sweep (C4 to G4 to C5)
-  playSoundInternal('sine', { start: 261.63, end: 392.00, bendDuration: 0.12 }, 0.09, 0.35);
+  // This will be a two-part sound for a more "complete" feel
+  const { soundEffectsEnabled } = useAppSettingsStore.getState();
+  if (!soundEffectsEnabled) return;
+
+  playSoundInternal('sine', { start: 261.63, end: 392.00, bendDuration: 0.15 }, 0.09, 0.4); // C4 to G4
   setTimeout(() => {
-    playSoundInternal('sine', { start: 392.00, end: 523.25, bendDuration: 0.1 }, 0.07, 0.25);
-  }, 100); // Stagger the second part of the sweep
-   // Add a bright shimmer
+    playSoundInternal('sine', { start: 392.00, end: 523.25, bendDuration: 0.12 }, 0.08, 0.3); // G4 to C5
+  }, 120); 
+  // Add a bright shimmer at the end
   setTimeout(() => {
-    playSoundInternal('triangle', 1046.50, 0.04, 0.15); // C6
-  }, 150);
+    playSoundInternal('triangle', 1046.50, 0.05, 0.2); // C6
+  }, 200);
 }
 
 
@@ -91,6 +96,8 @@ export function playNavigationSound(): void {
 
 export function playNotificationSound(): void {
   // Brighter, two-tone 'triangle' ping for toasts, settings changes (G5 then C6)
+  const { soundEffectsEnabled } = useAppSettingsStore.getState();
+  if (!soundEffectsEnabled) return;
   playSoundInternal('triangle', 783.99, 0.05, 0.09); 
   setTimeout(() => {
     playSoundInternal('triangle', 1046.50, 0.04, 0.11); 
@@ -115,6 +122,11 @@ export function speakText(
   const { soundEffectsEnabled, speechRate, speechPitch, selectedVoiceURI } = useAppSettingsStore.getState();
   
   if (!soundEffectsEnabled) {
+    // If sound effects (which includes speech) are off, call onEnd immediately if provided,
+    // as the speech operation is effectively "ended" by not starting.
+    if(onEnd) {
+      onEnd();
+    }
     return null;
   }
 
@@ -175,8 +187,13 @@ export function speakText(
       });
       onError(synthErrorEvent);
     }
+    // Ensure onEnd is called even if setup fails, to unblock any dependent logic
+    if (onEnd) {
+      onEnd();
+    }
     return null;
   }
 }
+
 
 

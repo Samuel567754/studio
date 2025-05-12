@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -10,7 +11,7 @@ import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbul
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playNotificationSound } from '@/lib/audio';
+import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playNotificationSound, playCompletionSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { generateFillInTheBlankGame, type GenerateFillInTheBlankGameInput, type GenerateFillInTheBlankGameOutput } from '@/ai/flows/generate-fill-in-the-blank-game';
 import { cn } from '@/lib/utils';
@@ -33,7 +34,6 @@ export default function FillInTheBlankPage() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showCorrectWordAfterIncorrectAttempt, setShowCorrectWordAfterIncorrectAttempt] = useState(false);
 
-  // Game Completion Logic State
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
   const [gameCompletedThisSession, setGameCompletedThisSession] = useState<boolean>(false);
 
@@ -42,7 +42,6 @@ export default function FillInTheBlankPage() {
     setWordList(storedList);
     setReadingLevel(getStoredReadingLevel("beginner"));
 
-    // Reset session progress when word list or settings change significantly
     setPracticedWordsInSession(new Set());
     setGameCompletedThisSession(false);
 
@@ -68,7 +67,7 @@ export default function FillInTheBlankPage() {
       if (event.key === 'sightwords_wordList_v1' || 
           event.key === 'sightwords_currentIndex_v1' ||
           event.key === 'sightwords_readingLevel_v1') {
-        loadWordAndSettingsData(); // This will reset session progress
+        loadWordAndSettingsData();
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -161,22 +160,33 @@ export default function FillInTheBlankPage() {
   };
 
   const handleOptionClick = (option: string) => {
-    if (isAttempted || !gameData) return; 
+    if (isAttempted || !gameData) return;
 
-    setSelectedOption(option); 
-    setIsAttempted(true); 
+    setSelectedOption(option);
+    setIsAttempted(true);
 
     const correct = option.toLowerCase() === gameData.correctWord.toLowerCase();
     setIsCorrect(correct);
+    const currentWordLowerCase = gameData.correctWord.toLowerCase();
 
-    const performNavigation = () => {
-      if (wordList.length > 1) {
-        // Check if all words practiced *after* potential navigation
-        if (practicedWordsInSession.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
-            // Game completed, no auto-navigation, show completion message
-        } else {
-            navigateWord('next');
+    const afterCurrentQuestionAudio = () => {
+      // This function is called after the current question's audio feedback is done.
+      // Use the most up-to-date practicedWordsInSession state for the check.
+      if (practicedWordsInSession.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
+        setGameCompletedThisSession(true);
+        toast({
+          variant: "success",
+          title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Amazing, ${username}!` : 'Congratulations!'}</div>,
+          description: "You've completed all words in this Fill-in-the-Blank session!",
+          duration: 7000,
+        });
+        playCompletionSound();
+        if (soundEffectsEnabled) {
+          speakText(username ? `Amazing, ${username}! You've completed all words in this Fill-in-the-Blank session!` : "Congratulations! You've completed all words in this Fill-in-the-Blank session!");
         }
+      } else if (wordList.length > 1 && !gameCompletedThisSession) { 
+        // Only navigate if game is not completed
+        navigateWord('next');
       }
     };
 
@@ -188,29 +198,24 @@ export default function FillInTheBlankPage() {
         description: `"${gameData.correctWord}" is the right word!`,
       });
 
-      setPracticedWordsInSession(prev => new Set(prev).add(gameData.correctWord.toLowerCase()));
-      
-      // Check for game completion after updating practicedWordsInSession
-      const updatedPracticedWords = new Set(practicedWordsInSession).add(gameData.correctWord.toLowerCase());
-      if (updatedPracticedWords.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
-        setGameCompletedThisSession(true);
-        toast({
-          variant: "success",
-          title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Amazing, ${username}!` : 'Congratulations!'}</div>,
-          description: "You've completed all words in this Fill-in-the-Blank session!",
-          duration: 5000,
-        });
-        playSuccessSound(); // Play a distinct "completion" sound, reusing success for now
-        // No automatic navigation on game completion, user can choose to refresh or move.
-      } else {
-        // Not yet completed, proceed with navigation
-        if (soundEffectsEnabled) {
-          const spokenSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
-          speakText(spokenSentence, undefined, () => { setTimeout(performNavigation, 1000); });
-        } else {
-          setTimeout(performNavigation, 2500);
+      // Update practiced words state immediately
+      setPracticedWordsInSession(prev => {
+        const newSet = new Set(prev);
+        if (!newSet.has(currentWordLowerCase)) {
+          newSet.add(currentWordLowerCase);
         }
+        return newSet;
+      });
+      
+      const spokenSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
+      if (soundEffectsEnabled) {
+        speakText(spokenSentence, undefined, () => {
+          setTimeout(afterCurrentQuestionAudio, 500); // Delay slightly after speech
+        });
+      } else {
+        setTimeout(afterCurrentQuestionAudio, 1500); // Longer delay if no speech
       }
+
     } else { // Incorrect answer
       playErrorSound();
       toast({
@@ -219,24 +224,23 @@ export default function FillInTheBlankPage() {
         description: `You chose "${option}". The word was "${gameData.correctWord}".`,
       });
 
-      const incorrectDisplayDuration = 1500; 
-
+      const incorrectDisplayDuration = 1500;
       if (soundEffectsEnabled) {
         const mistakeText = `Oops. You chose ${option}.`;
         speakText(mistakeText, undefined, () => {
           setTimeout(() => {
-            setShowCorrectWordAfterIncorrectAttempt(true); 
+            setShowCorrectWordAfterIncorrectAttempt(true);
             const correctSentenceText = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
             const explanationText = `The correct sentence is: ${correctSentenceText}.`;
             speakText(explanationText, undefined, () => {
-              setTimeout(performNavigation, 1500); 
+              setTimeout(afterCurrentQuestionAudio, 1500); // Still call afterCurrentQuestionAudio to navigate if needed
             });
           }, incorrectDisplayDuration);
         });
       } else {
         setTimeout(() => {
-          setShowCorrectWordAfterIncorrectAttempt(true); 
-          setTimeout(performNavigation, 2500); 
+          setShowCorrectWordAfterIncorrectAttempt(true);
+          setTimeout(afterCurrentQuestionAudio, 2500); 
         }, incorrectDisplayDuration);
       }
     }
@@ -332,7 +336,7 @@ export default function FillInTheBlankPage() {
               <p className="mt-4 text-muted-foreground">Crafting a sentence for you...</p>
             </div>
           )}
-          {!isLoadingGame && gameData && (
+          {!isLoadingGame && gameData && !gameCompletedThisSession && (
             <>
               <div className="bg-muted/50 p-4 rounded-lg shadow-inner">
                 <div className="flex items-center justify-between">
@@ -425,14 +429,14 @@ export default function FillInTheBlankPage() {
               </div>
             </>
           )}
-          {!isLoadingGame && !gameData && currentWordForGame && (
+          {!isLoadingGame && !gameData && currentWordForGame && !gameCompletedThisSession && (
              <div className="flex flex-col justify-center items-center p-10">
                 <Info className="h-12 w-12 text-muted-foreground/50" />
                 <p className="mt-4 text-muted-foreground">Could not load game. Try refreshing the word.</p>
             </div>
           )}
         </CardContent>
-         {isAttempted && gameData && (
+         {isAttempted && gameData && !gameCompletedThisSession && (
             <CardFooter className="border-t pt-4">
                  <Alert variant={isCorrect ? "success" : "destructive"} className="w-full">
                     {isCorrect ? <Smile className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
@@ -511,3 +515,4 @@ export default function FillInTheBlankPage() {
     </div>
   );
 }
+
