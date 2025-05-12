@@ -69,7 +69,7 @@ export default function FillInTheBlankPage() {
     };
   }, [loadWordAndSettingsData]);
 
-  const speakSentence = useCallback((sentence: string | undefined, forBlanked: boolean = true) => {
+  const speakSentenceForUI = useCallback((sentence: string | undefined, forBlanked: boolean = true) => {
     if (sentence && soundEffectsEnabled) {
       const textToSpeak = forBlanked ? `Fill in the blank: ${sentence.replace(/_+/g, 'blank')}` : sentence;
       speakText(textToSpeak);
@@ -100,7 +100,24 @@ export default function FillInTheBlankPage() {
       };
       const result = await generateFillInTheBlankGame(input);
       setGameData(result);
-      speakSentence(result?.sentenceWithBlank, true);
+      
+      if (result?.sentenceWithBlank) {
+        const sentenceToSpeak = `Fill in the blank: ${result.sentenceWithBlank.replace(/_+/g, 'blank')}`;
+        if (soundEffectsEnabled) {
+          speakText(
+            sentenceToSpeak,
+            undefined, // onBoundary
+            () => { // onEnd for the main sentence
+              if (result.options && result.options.length > 0) {
+                const optionsText = `Your options are: ${result.options.join(', ')}.`;
+                speakText(optionsText); // Speak options.
+              }
+            },
+            undefined // onError
+          );
+        }
+      }
+
     } catch (error) {
       console.error("Error generating fill-in-the-blank game:", error);
       toast({ 
@@ -112,7 +129,7 @@ export default function FillInTheBlankPage() {
     } finally {
       setIsLoadingGame(false);
     }
-  }, [readingLevel, wordList, username, toast, speakSentence]);
+  }, [readingLevel, wordList, username, toast, soundEffectsEnabled]);
 
   useEffect(() => {
     if (currentWordForGame && isMounted) {
@@ -137,11 +154,20 @@ export default function FillInTheBlankPage() {
   const handleOptionClick = (option: string) => {
     if (isAttempted || !gameData) return; 
 
-    setSelectedOption(option); // Set this first so the sentence can re-render with the word
-    setIsAttempted(true); // Then mark as attempted
+    setSelectedOption(option); 
+    setIsAttempted(true); 
 
     const correct = option.toLowerCase() === gameData.correctWord.toLowerCase();
     setIsCorrect(correct);
+
+    const navigationDelay = correct ? 1000 : 1500;
+    const originalTimeoutDelay = correct ? 2500 : 3500;
+
+    const performNavigation = () => {
+      if (wordList.length > 1) {
+        navigateWord('next');
+      }
+    };
 
     if (correct) {
       playSuccessSound();
@@ -151,10 +177,10 @@ export default function FillInTheBlankPage() {
         description: `"${gameData.correctWord}" is the right word!`,
       });
       if (soundEffectsEnabled) {
-        speakText(gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord));
-      }
-      if (wordList.length > 1) {
-        setTimeout(() => navigateWord('next'), 2500);
+        const spokenSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
+        speakText(spokenSentence, undefined, () => { setTimeout(performNavigation, navigationDelay); });
+      } else {
+        setTimeout(performNavigation, originalTimeoutDelay);
       }
     } else {
       playErrorSound();
@@ -165,10 +191,10 @@ export default function FillInTheBlankPage() {
       });
       if (soundEffectsEnabled) {
          const originalSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
-         speakText(`Oops. You chose ${option}. The correct sentence is: ${originalSentence}`);
-      }
-       if (wordList.length > 1) {
-        setTimeout(() => navigateWord('next'), 3500);
+         const textToSpeak = `Oops. You chose ${option}. The correct sentence is: ${originalSentence}`;
+         speakText(textToSpeak, undefined, () => { setTimeout(performNavigation, navigationDelay); });
+      } else {
+        setTimeout(performNavigation, originalTimeoutDelay);
       }
     }
   };
@@ -269,7 +295,7 @@ export default function FillInTheBlankPage() {
                 <div className="flex items-center justify-between">
                     <p className="text-xl md:text-2xl text-foreground leading-relaxed text-center flex-grow flex flex-wrap items-center justify-center" aria-live="polite">
                       {gameData.sentenceWithBlank.split(/(__+)/g).map((part, index) => {
-                          if (part.match(/__+/)) { // This is the blank part
+                          if (part.match(/__+/)) { 
                               if (isAttempted && selectedOption) {
                                   return (
                                       <span
@@ -293,7 +319,7 @@ export default function FillInTheBlankPage() {
                       })}
                     </p>
                     {soundEffectsEnabled && (
-                        <Button variant="ghost" size="icon" onClick={() => speakSentence(gameData.sentenceWithBlank, true)} aria-label="Read sentence aloud">
+                        <Button variant="ghost" size="icon" onClick={() => speakSentenceForUI(gameData.sentenceWithBlank, true)} aria-label="Read sentence aloud">
                             <Volume2 className="h-5 w-5"/>
                         </Button>
                     )}
