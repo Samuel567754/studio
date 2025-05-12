@@ -90,7 +90,7 @@ export default function FillInTheBlankPage() {
     setSelectedOption(null);
     setIsAttempted(false);
     setIsCorrect(null);
-    setShowCorrectWordAfterIncorrectAttempt(false); // Reset this state
+    setShowCorrectWordAfterIncorrectAttempt(false); 
     playNavigationSound();
 
     try {
@@ -111,7 +111,7 @@ export default function FillInTheBlankPage() {
             undefined, 
             () => { 
               if (result.options && result.options.length > 0) {
-                const optionsText = `Your options are: ${result.options.join(', ')}.`;
+                const optionsText = `Your options are: ${result.options.join(', ')}. Select one.`;
                 speakText(optionsText); 
               }
             },
@@ -189,18 +189,20 @@ export default function FillInTheBlankPage() {
         description: `You chose "${option}". The word was "${gameData.correctWord}".`,
       });
       
+      // Immediately set state to show correct word for visual feedback during audio explanation.
+      setShowCorrectWordAfterIncorrectAttempt(true);
+
       if (soundEffectsEnabled) {
          const originalSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
          const textToSpeak = `Oops. You chose ${option}. The correct sentence is: ${originalSentence}`;
          speakText(textToSpeak, undefined, () => { 
-            setShowCorrectWordAfterIncorrectAttempt(true);
+            // Navigation happens after speech
             setTimeout(performNavigation, 1500); 
         });
       } else {
-        setTimeout(() => {
-            setShowCorrectWordAfterIncorrectAttempt(true);
-            setTimeout(performNavigation, 1500);
-        }, 1000);
+        // No audio, visual update already triggered by setShowCorrectWordAfterIncorrectAttempt(true)
+        // Navigate after a delay
+        setTimeout(performNavigation, 2500);
       }
     }
   };
@@ -307,9 +309,9 @@ export default function FillInTheBlankPage() {
 
                               if (isAttempted) {
                                   if (isCorrect) {
-                                      wordToShowInBlank = selectedOption; // which is gameData.correctWord
+                                      wordToShowInBlank = selectedOption; 
                                       blankStyleClass = "text-green-700 dark:text-green-400 bg-green-500/20 border border-green-500/50";
-                                  } else { // Incorrect attempt
+                                  } else { 
                                       if (showCorrectWordAfterIncorrectAttempt) {
                                           wordToShowInBlank = gameData.correctWord;
                                           blankStyleClass = "text-green-600 dark:text-green-500 bg-green-500/10 border border-green-500/30 font-semibold";
