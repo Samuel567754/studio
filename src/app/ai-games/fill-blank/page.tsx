@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -7,11 +6,11 @@ import { WordDisplay } from '@/components/word-display';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex, getStoredReadingLevel } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, Edit, Volume2, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, Edit, Volume2, ArrowLeft, Trophy } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { playSuccessSound, playErrorSound, playNavigationSound, speakText } from '@/lib/audio';
+import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playNotificationSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { generateFillInTheBlankGame, type GenerateFillInTheBlankGameInput, type GenerateFillInTheBlankGameOutput } from '@/ai/flows/generate-fill-in-the-blank-game';
 import { cn } from '@/lib/utils';
@@ -34,10 +33,18 @@ export default function FillInTheBlankPage() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showCorrectWordAfterIncorrectAttempt, setShowCorrectWordAfterIncorrectAttempt] = useState(false);
 
+  // Game Completion Logic State
+  const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
+  const [gameCompletedThisSession, setGameCompletedThisSession] = useState<boolean>(false);
+
   const loadWordAndSettingsData = useCallback(() => {
     const storedList = getStoredWordList();
     setWordList(storedList);
     setReadingLevel(getStoredReadingLevel("beginner"));
+
+    // Reset session progress when word list or settings change significantly
+    setPracticedWordsInSession(new Set());
+    setGameCompletedThisSession(false);
 
     if (storedList.length > 0) {
       const storedIndex = getStoredCurrentIndex();
@@ -61,7 +68,7 @@ export default function FillInTheBlankPage() {
       if (event.key === 'sightwords_wordList_v1' || 
           event.key === 'sightwords_currentIndex_v1' ||
           event.key === 'sightwords_readingLevel_v1') {
-        loadWordAndSettingsData();
+        loadWordAndSettingsData(); // This will reset session progress
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -164,7 +171,12 @@ export default function FillInTheBlankPage() {
 
     const performNavigation = () => {
       if (wordList.length > 1) {
-        navigateWord('next');
+        // Check if all words practiced *after* potential navigation
+        if (practicedWordsInSession.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
+            // Game completed, no auto-navigation, show completion message
+        } else {
+            navigateWord('next');
+        }
       }
     };
 
@@ -175,11 +187,29 @@ export default function FillInTheBlankPage() {
         title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Correct, ${username}!` : 'Correct!'}</div>,
         description: `"${gameData.correctWord}" is the right word!`,
       });
-      if (soundEffectsEnabled) {
-        const spokenSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
-        speakText(spokenSentence, undefined, () => { setTimeout(performNavigation, 1000); });
+
+      setPracticedWordsInSession(prev => new Set(prev).add(gameData.correctWord.toLowerCase()));
+      
+      // Check for game completion after updating practicedWordsInSession
+      const updatedPracticedWords = new Set(practicedWordsInSession).add(gameData.correctWord.toLowerCase());
+      if (updatedPracticedWords.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
+        setGameCompletedThisSession(true);
+        toast({
+          variant: "success",
+          title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Amazing, ${username}!` : 'Congratulations!'}</div>,
+          description: "You've completed all words in this Fill-in-the-Blank session!",
+          duration: 5000,
+        });
+        playSuccessSound(); // Play a distinct "completion" sound, reusing success for now
+        // No automatic navigation on game completion, user can choose to refresh or move.
       } else {
-        setTimeout(performNavigation, 2500);
+        // Not yet completed, proceed with navigation
+        if (soundEffectsEnabled) {
+          const spokenSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
+          speakText(spokenSentence, undefined, () => { setTimeout(performNavigation, 1000); });
+        } else {
+          setTimeout(performNavigation, 2500);
+        }
       }
     } else { // Incorrect answer
       playErrorSound();
@@ -189,28 +219,24 @@ export default function FillInTheBlankPage() {
         description: `You chose "${option}". The word was "${gameData.correctWord}".`,
       });
 
-      // The incorrect word (selectedOption) is already shown in the blank with red styling.
-      const incorrectDisplayDuration = 1500; // milliseconds to show the incorrect word before swapping
+      const incorrectDisplayDuration = 1500; 
 
       if (soundEffectsEnabled) {
         const mistakeText = `Oops. You chose ${option}.`;
-        // Speak about the mistake while the incorrect word is shown
         speakText(mistakeText, undefined, () => {
-          // After mistake is acknowledged via audio, wait for the visual swap, then explain the correct answer
           setTimeout(() => {
-            setShowCorrectWordAfterIncorrectAttempt(true); // Trigger visual swap to correct word
+            setShowCorrectWordAfterIncorrectAttempt(true); 
             const correctSentenceText = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
             const explanationText = `The correct sentence is: ${correctSentenceText}.`;
             speakText(explanationText, undefined, () => {
-              setTimeout(performNavigation, 1500); // Navigate after explanation audio
+              setTimeout(performNavigation, 1500); 
             });
           }, incorrectDisplayDuration);
         });
       } else {
-        // No audio: just visual sequence
         setTimeout(() => {
-          setShowCorrectWordAfterIncorrectAttempt(true); // Swap to correct word
-          setTimeout(performNavigation, 2500); // Navigate after showing correct word for a bit
+          setShowCorrectWordAfterIncorrectAttempt(true); 
+          setTimeout(performNavigation, 2500); 
         }, incorrectDisplayDuration);
       }
     }
@@ -325,7 +351,7 @@ export default function FillInTheBlankPage() {
                                           wordToShowInBlank = gameData.correctWord;
                                           blankStyleClass = "text-green-600 dark:text-green-500 bg-green-500/10 border border-green-500/30 font-semibold";
                                       } else {
-                                          wordToShowInBlank = selectedOption; // Show user's incorrect word
+                                          wordToShowInBlank = selectedOption; 
                                           blankStyleClass = "text-red-700 dark:text-red-400 bg-red-500/20 border border-red-500/50";
                                       }
                                   }
@@ -383,8 +409,8 @@ export default function FillInTheBlankPage() {
                     className={cn(
                       "w-full text-lg md:text-xl py-6 h-auto justify-center transition-all duration-200 ease-in-out transform hover:scale-105 shadow-sm",
                       isAttempted && option === selectedOption && isCorrect && "bg-green-500/20 border-green-500 text-green-700 dark:text-green-400 hover:bg-green-500/30 ring-2 ring-green-500",
-                      isAttempted && option === selectedOption && !isCorrect && !showCorrectWordAfterIncorrectAttempt && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500", // Style for incorrect selection *before* correct word is shown
-                      isAttempted && option.toLowerCase() === gameData.correctWord.toLowerCase() && (!isCorrect || option !== selectedOption) && "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500", // Style for correct option if user picked wrong
+                      isAttempted && option === selectedOption && !isCorrect && !showCorrectWordAfterIncorrectAttempt && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500", 
+                      isAttempted && option.toLowerCase() === gameData.correctWord.toLowerCase() && (!isCorrect || option !== selectedOption) && "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500", 
                       !isAttempted && "hover:bg-primary/10 hover:border-primary"
                     )}
                     onClick={() => handleOptionClick(option)}
@@ -420,6 +446,26 @@ export default function FillInTheBlankPage() {
             </CardFooter>
         )}
       </Card>
+
+       {gameCompletedThisSession && (
+         <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
+           <div className="flex flex-col items-center gap-4">
+             <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+             <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">{username ? `Congratulations, ${username}!` : 'Session Complete!'}</AlertTitle>
+             <AlertDescription className="text-base">
+               You've successfully practiced all words in this Fill-in-the-Blank session!
+             </AlertDescription>
+             <div className="flex gap-3 mt-3">
+                <Button onClick={() => loadWordAndSettingsData()} variant="outline">
+                    <RefreshCcw className="mr-2 h-4 w-4" /> Play Again
+                </Button>
+                <Button asChild>
+                    <Link href="/ai-games"><ArrowLeft className="mr-2 h-4 w-4" /> Back to AI Games</Link>
+                </Button>
+             </div>
+           </div>
+         </Alert>
+       )}
       
       <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
         <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -429,7 +475,7 @@ export default function FillInTheBlankPage() {
             onClick={() => navigateWord('prev')} 
             aria-label="Previous word" 
             className="w-full sm:w-auto order-2 sm:order-1"
-            disabled={isLoadingGame}
+            disabled={isLoadingGame || gameCompletedThisSession}
           >
             <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
           </Button>
@@ -441,7 +487,7 @@ export default function FillInTheBlankPage() {
               onClick={() => fetchNewGameProblem(currentWordForGame)} 
               aria-label="New problem for current word" 
               className="w-full sm:w-auto btn-glow" 
-              disabled={isLoadingGame}
+              disabled={isLoadingGame || gameCompletedThisSession}
             >
               <RefreshCcw className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> New Sentence
             </Button>
@@ -456,7 +502,7 @@ export default function FillInTheBlankPage() {
             onClick={() => navigateWord('next')} 
             aria-label="Next word" 
             className="w-full sm:w-auto order-3"
-            disabled={isLoadingGame}
+            disabled={isLoadingGame || gameCompletedThisSession}
           >
             Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
           </Button>
@@ -465,4 +511,3 @@ export default function FillInTheBlankPage() {
     </div>
   );
 }
-

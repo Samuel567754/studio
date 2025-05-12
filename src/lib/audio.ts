@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAppSettingsStore } from '@/stores/app-settings-store';
@@ -63,13 +62,22 @@ export function playClickSound(): void {
 }
 
 export function playSuccessSound(): void {
-  // Melodic ascending 'sine' sweep (C4 to G4)
-  playSoundWrapper('sine', { start: 261.63, end: 392.00, bendDuration: 0.1 }, 0.08, 0.28);
-  // Add a slightly delayed higher harmony note (E4)
-  setTimeout(() => {
-    playSoundInternal('sine', 329.63, 0.05, 0.15);
-  }, 60);
+  // Slightly shorter, simpler ascending 'sine' sweep (C4 to E4)
+  playSoundWrapper('sine', { start: 261.63, end: 329.63, bendDuration: 0.08 }, 0.07, 0.22);
 }
+
+export function playCompletionSound(): void {
+  // More pronounced, celebratory melodic ascending 'sine' sweep (C4 to G4 to C5)
+  playSoundInternal('sine', { start: 261.63, end: 392.00, bendDuration: 0.12 }, 0.09, 0.35);
+  setTimeout(() => {
+    playSoundInternal('sine', { start: 392.00, end: 523.25, bendDuration: 0.1 }, 0.07, 0.25);
+  }, 100); // Stagger the second part of the sweep
+   // Add a bright shimmer
+  setTimeout(() => {
+    playSoundInternal('triangle', 1046.50, 0.04, 0.15); // C6
+  }, 150);
+}
+
 
 export function playErrorSound(): void {
   // Less harsh descending 'square' wave buzz (A3 to F3)
@@ -170,6 +178,5 @@ export function speakText(
     return null;
   }
 }
-
 
 
