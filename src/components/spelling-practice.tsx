@@ -29,7 +29,11 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
   useEffect(() => {
     setAttempt('');
     setFeedback(null);
-  }, [wordToSpell]);
+    if (wordToSpell && soundEffectsEnabled) {
+      // Announce the word to be spelled when it changes
+      speakText(`Spell the word: ${wordToSpell}`);
+    }
+  }, [wordToSpell, soundEffectsEnabled]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -48,18 +52,20 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
         title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
         description: `You spelled "${wordToSpell}" correctly!`,
       });
-      playSuccessSound(); // Play success sound here
+      playSuccessSound(); 
       
-      // Audio speech for the word is handled by the parent in `handleCorrectSpell` now before calling `onCorrectSpell`
       onCorrectSpell(); 
 
-      // Clear attempt after a short delay to allow user to see feedback
       setTimeout(() => {
         setAttempt('');
-      }, 2500);
+        // Feedback will be cleared by the parent component navigating or by wordToSpell changing
+      }, 1500); // Keep feedback visible for a bit longer before parent potentially clears it
     } else {
       setFeedback({type: 'destructive', message: `Not quite. The word is "${wordToSpell}". Keep trying!`});
       playErrorSound();
+      if (soundEffectsEnabled) {
+        speakText(`Not quite. The word is ${wordToSpell}. Please try again.`);
+      }
     }
   };
 
@@ -67,7 +73,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     if (wordToSpell && soundEffectsEnabled) {
       speakText(wordToSpell);
     } else if (!soundEffectsEnabled) {
-      toast({ variant: "info", title: "Audio Disabled", description: "Sound effects are turned off in settings." });
+      toast({ variant: "info", title: <div className="flex items-center gap-2"><InfoIcon className="h-5 w-5" />Audio Disabled</div>, description: "Sound effects are turned off in settings." });
     }
   };
 
@@ -90,7 +96,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
         <CardTitle className="flex items-center text-xl font-semibold text-primary"><Sparkles className="mr-2 h-5 w-5"/>Spell the Word</CardTitle>
         <div className="flex items-center justify-between">
             <CardDescription>Try spelling the word: <strong className="text-foreground">{wordToSpell}</strong></CardDescription>
-            <Button variant="ghost" size="icon" onClick={handleSpeakWordToSpell} aria-label={`Listen to the word ${wordToSpell}`}>
+            <Button variant="ghost" size="icon" onClick={handleSpeakWordToSpell} aria-label={`Listen to the word ${wordToSpell}`} disabled={!soundEffectsEnabled}>
                 <Volume2 className="h-5 w-5"/>
             </Button>
         </div>
@@ -110,9 +116,10 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
               autoCapitalize="none"
               autoCorrect="off"
               disabled={feedback?.type === 'success'}
+              autoFocus
             />
           </div>
-          <Button type="submit" className="w-full" size="lg" disabled={feedback?.type === 'success'}>Check Spelling</Button>
+          <Button type="submit" className="w-full" size="lg" disabled={feedback?.type === 'success' || !attempt.trim()}>Check Spelling</Button>
         </form>
       </CardContent>
       {feedback && (

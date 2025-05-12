@@ -8,11 +8,11 @@ import { SpellingPractice } from '@/components/spelling-practice';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, CheckCircle2, Smile, Pencil, ArrowLeft, Trophy, RefreshCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, Pencil, ArrowLeft, Trophy, RefreshCcw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { playSuccessSound, playNavigationSound, playCompletionSound, speakText } from '@/lib/audio';
+import { playNavigationSound, playCompletionSound, speakText } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 
@@ -43,8 +43,6 @@ export default function SpellingPage() {
       const storedIndex = getStoredCurrentIndex();
       let validIndex = (storedIndex >= 0 && storedIndex < storedList.length) ? storedIndex : 0;
       
-      // If restarting, always start from the beginning or a random unpracticed word if desired
-      // For now, just reset to 0 if restarting or if current word was the last one and session completes.
       if (isRestart) {
         validIndex = 0;
       }
@@ -58,7 +56,7 @@ export default function SpellingPage() {
       setCurrentWord('');
       setCurrentIndex(0); 
     }
-  }, [gameCompletedThisSession]); // Added gameCompletedThisSession as a dependency
+  }, [gameCompletedThisSession]); 
 
   useEffect(() => {
     loadWordData();
@@ -110,8 +108,8 @@ export default function SpellingPage() {
             }
         } else if (wordList.length > 1 && !gameCompletedThisSession) {
             navigateWord('next');
-        } else if (wordList.length === 1 && !gameCompletedThisSession) { // Only one word, and it's now spelled
-             setGameCompletedThisSession(true); // Mark as complete
+        } else if (wordList.length === 1 && !gameCompletedThisSession) { 
+             setGameCompletedThisSession(true); 
              toast({
                 variant: "success",
                 title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Fantastic, ${username}!` : 'Fantastic!'}</div>,
@@ -123,12 +121,12 @@ export default function SpellingPage() {
         }
     };
     
-    // Toast for correct spelling is handled by SpellingPractice component.
-    // But the overall game logic continues here.
     if (soundEffectsEnabled) {
+        // The SpellingPractice component already plays a "success" sound and shows a toast.
+        // This speaks "Correct! You spelled [word]" and then triggers next step logic.
         speakText(`Correct! You spelled ${currentWord}.`, undefined, afterCurrentWordAudio);
     } else {
-       setTimeout(afterCurrentWordAudio, 1200); // Give time for toast to show
+       setTimeout(afterCurrentWordAudio, 1200); 
     }
   };
   
