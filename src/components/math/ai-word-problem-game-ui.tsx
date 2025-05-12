@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathWordProblem, type GenerateMathWordProblemInput, type GenerateMathWordProblemOutput } from '@/ai/flows/generate-math-word-problem';
-import { CheckCircle2, XCircle, Loader2, Brain, RefreshCw, Volume2, Mic, MicOff, Smile, Lightbulb, Info, Trophy } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Brain, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Info, Trophy } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
@@ -39,13 +40,6 @@ export const AiWordProblemGameUI = () => {
   const { username } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
-  const startNewSession = useCallback(() => {
-    setScore(0);
-    setProblemsSolvedInSession(0);
-    setSessionCompleted(false);
-    fetchNewProblem(true); // Pass true to indicate it's a new session start
-  }, []); // Removed fetchNewProblem from dependencies to avoid re-triggering
-
   const fetchNewProblem = useCallback(async (isNewSessionStart: boolean = false) => {
     setIsLoading(true);
     setFeedback(null);
@@ -70,11 +64,18 @@ export const AiWordProblemGameUI = () => {
     }
   }, [difficulty, operation, username, soundEffectsEnabled]);
 
+  const startNewSession = useCallback(() => {
+    setScore(0);
+    setProblemsSolvedInSession(0);
+    setSessionCompleted(false);
+    fetchNewProblem(true); 
+  }, [fetchNewProblem]);
+
 
   const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
     const completionMessage = username ? `Awesome, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job!`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job! Final score: ${score}.`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
@@ -85,7 +86,7 @@ export const AiWordProblemGameUI = () => {
     if (soundEffectsEnabled) {
       speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast]);
+  }, [username, soundEffectsEnabled, toast, score]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -112,7 +113,7 @@ export const AiWordProblemGameUI = () => {
           fetchNewProblem();
         }
       } else {
-         fetchNewProblem(); // Fetch new problem even if incorrect for continuous play
+         fetchNewProblem(); 
       }
     };
 
@@ -129,7 +130,7 @@ export const AiWordProblemGameUI = () => {
       
       if (soundEffectsEnabled) {
         const utterance = speakText(speechSuccessMsg, undefined, afterFeedbackAudio);
-        if (!utterance) setTimeout(afterFeedbackAudio, 1500); // Fallback if speech fails
+        if (!utterance) setTimeout(afterFeedbackAudio, 1500); 
       } else {
         afterFeedbackAudio();
       }
@@ -149,7 +150,7 @@ export const AiWordProblemGameUI = () => {
       
       if (soundEffectsEnabled) {
         const utterance = speakText(speechErrorMsg, undefined, afterFeedbackAudio);
-        if (!utterance) setTimeout(afterFeedbackAudio, 2500); // Fallback
+        if (!utterance) setTimeout(afterFeedbackAudio, 2500); 
       } else {
         afterFeedbackAudio();
       }
@@ -157,9 +158,9 @@ export const AiWordProblemGameUI = () => {
   }, [currentProblem, userAnswer, fetchNewProblem, username, operation, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted]);
 
   useEffect(() => {
-    startNewSession(); // Start a new session on initial load
+    startNewSession(); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [difficulty, operation]); // Re-start session if difficulty or operation changes
+  }, [difficulty, operation]); 
   
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
@@ -184,7 +185,7 @@ export const AiWordProblemGameUI = () => {
              description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, 
              variant: "info" 
             });
-           setTimeout(() => handleSubmitRef.current(), 50); // Added a slight delay
+           setTimeout(() => handleSubmitRef.current(), 50); 
         } else {
           toast({ 
             title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>, 
@@ -317,7 +318,7 @@ export const AiWordProblemGameUI = () => {
                 {username ? `Congratulations, ${username}!` : 'Session Complete!'}
               </AlertTitle>
               <AlertDescription className="text-base">
-                You've successfully completed {PROBLEMS_PER_SESSION} problems in this session! Your score: {score}.
+                You've successfully completed {PROBLEMS_PER_SESSION} problems in this session! Your final score: {score}.
               </AlertDescription>
               <Button onClick={startNewSession} variant="outline" size="lg" className="mt-4">
                 <RefreshCcw className="mr-2 h-4 w-4" /> Play New Session
@@ -382,7 +383,7 @@ export const AiWordProblemGameUI = () => {
                 <p className="text-muted-foreground">Ready to start? Settings are above.</p>
             </div>
         )}
-        {feedback && !sessionCompleted && ( // Don't show individual feedback if session is completed
+        {feedback && !sessionCompleted && ( 
           <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
             {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
             <AlertTitle>
@@ -395,7 +396,7 @@ export const AiWordProblemGameUI = () => {
       </CardContent>
       <CardFooter>
         <Button variant="outline" onClick={() => sessionCompleted ? startNewSession() : fetchNewProblem()} className="w-full" disabled={isLoading || isListening}>
-          <RefreshCw className="mr-2 h-4 w-4" /> {sessionCompleted ? "Start New Session" : "Skip / New Problem"}
+          <RefreshCcw className="mr-2 h-4 w-4" /> {sessionCompleted ? "Start New Session" : "Skip / New Problem"}
         </Button>
       </CardFooter>
     </Card>
