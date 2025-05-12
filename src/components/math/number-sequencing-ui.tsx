@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -28,7 +29,7 @@ const generateSequenceProblem = (): SequenceProblem => {
   const diffTypes = [1, 2, 3, 5, 10]; 
   const difference = diffTypes[Math.floor(Math.random() * diffTypes.length)];
   const length = 4; 
-  const blankIndex = Math.floor(Math.random() * (length -1)) + 1; 
+  const blankIndex = Math.floor(Math.random() * (length -1)) + 1; // Ensure blank is not first or last for typical "middle" blank
 
   const fullSequence: number[] = [];
   for (let i = 0; i < length; i++) {
@@ -143,7 +144,7 @@ export const NumberSequencingUI = () => {
         const utterance = speakText(speechSuccessMsg, undefined, afterFeedbackAudio);
         if (!utterance) setTimeout(afterFeedbackAudio, 1500);
       } else {
-        afterFeedbackAudio();
+        setTimeout(afterFeedbackAudio,1200);
       }
 
     } else {
@@ -293,11 +294,13 @@ export const NumberSequencingUI = () => {
     if (sessionCompleted) {
         loadNewProblem(true); // Starts a new session
     } else {
-        const newProblemsAttempted = problemsAttemptedInSession + 1;
-        setProblemsAttemptedInSession(newProblemsAttempted);
+        const newProblemsAttempted = problemsAttemptedInSession + 1; // Increment even on skip
+        
         if (newProblemsAttempted >= PROBLEMS_PER_SESSION) {
-            handleSessionCompletion();
+             setProblemsAttemptedInSession(newProblemsAttempted); // Update state before calling completion
+             handleSessionCompletion();
         } else {
+            setProblemsAttemptedInSession(newProblemsAttempted);
             loadNewProblem();
         }
     }
@@ -320,23 +323,28 @@ export const NumberSequencingUI = () => {
 
     return (
       <p 
-        className="text-3xl md:text-4xl font-bold select-none flex-grow text-center flex items-center justify-center flex-wrap gap-x-2" 
+        className="text-3xl md:text-4xl font-bold select-none flex-grow text-center flex items-center justify-center flex-wrap gap-x-1" 
         aria-live="polite"
       >
         {sequenceDisplay.map((item, index) => (
-          item === "__" ? (
-            isAttempted && answerInBlank !== null ? (
-              <span key={`blank-filled-${index}`} className={cn("inline-block px-2 py-0.5 rounded-md transition-colors duration-300 ease-in-out min-w-[40px] md:min-w-[50px] text-center text-4xl md:text-5xl", blankStyleClass)}>
-                {answerInBlank}
-              </span>
+          <React.Fragment key={`item-frag-${index}`}>
+            {item === "__" ? (
+              isAttempted && answerInBlank !== null ? (
+                <span key={`blank-filled-${index}`} className={cn("inline-block px-2 py-0.5 rounded-md transition-colors duration-300 ease-in-out min-w-[40px] md:min-w-[50px] text-center text-4xl md:text-5xl", blankStyleClass)}>
+                  {answerInBlank}
+                </span>
+              ) : (
+                <span key={`blank-empty-${index}`} className="inline-block min-w-[40px] md:min-w-[50px] border-b-2 border-accent text-center text-4xl md:text-5xl align-bottom leading-none">?</span>
+              )
             ) : (
-              <span key={`blank-empty-${index}`} className="inline-block min-w-[40px] md:min-w-[50px] border-b-2 border-accent text-center text-4xl md:text-5xl align-bottom leading-none">?</span>
-            )
-          ) : (
-            <span key={`item-${index}`} className="text-gradient-primary-accent text-4xl md:text-5xl align-bottom leading-none">
-              {item}
-            </span>
-          )
+              <span key={`item-${index}`} className="text-gradient-primary-accent text-4xl md:text-5xl align-bottom leading-none">
+                {item}
+              </span>
+            )}
+            {index < sequenceDisplay.length - 1 && (
+              <span className="text-foreground/70 text-4xl md:text-5xl align-bottom leading-none mx-0.5">,</span>
+            )}
+          </React.Fragment>
         ))}
       </p>
     );
@@ -448,3 +456,4 @@ export const NumberSequencingUI = () => {
     </Card>
   );
 };
+
