@@ -58,33 +58,35 @@ const playSoundWrapper = (
 
 
 export function playClickSound(): void {
-  // Short, crisp, slightly higher-pitched 'triangle' pluck (C5)
-  playSoundWrapper('triangle', 523.25, 0.025, 0.04); 
+  // Sweet, soft, higher-pitched 'triangle' pluck (D#5)
+  playSoundWrapper('triangle', 622.25, 0.02, 0.035); 
 }
 
 export function playSuccessSound(): void {
-  // More distinct ascending 'sawtooth' sweep for positive confirmation
-  playSoundWrapper('sawtooth', { start: 500, end: 900, bendDuration: 0.08 }, 0.12, 0.25);
+  // Melodic ascending 'sine' sweep (C4 to G4)
+  playSoundWrapper('sine', { start: 261.63, end: 392.00, bendDuration: 0.1 }, 0.08, 0.28);
+  // Add a slightly delayed higher harmony note (E4)
+  setTimeout(() => {
+    playSoundInternal('sine', 329.63, 0.05, 0.15);
+  }, 60);
 }
 
 export function playErrorSound(): void {
-  // More noticeable 'sawtooth' buzz, quick decay for error
-  playSoundWrapper('sawtooth', { start: 180, end: 80, bendDuration: 0.08 }, 0.18, 0.3);
+  // Less harsh descending 'square' wave buzz (A3 to F3)
+  playSoundWrapper('square', { start: 220.00, end: 174.61, bendDuration: 0.12 }, 0.07, 0.35);
 }
 
 export function playNavigationSound(): void {
-  // Softer, slightly longer 'triangle' wave for non-button navigation (e.g., next/prev word)
-  playSoundWrapper('triangle', { start: 350, end: 500, bendDuration: 0.06 }, 0.035, 0.12);
+  // Gentle, short 'sine' wave pluck (A4)
+  playSoundWrapper('sine', 440.00, 0.03, 0.08);
 }
 
 export function playNotificationSound(): void {
-  // Brighter, two-tone 'sine' ping for toasts, settings changes
-  // Play first tone
-  playSoundInternal('sine', 783.99, 0.06, 0.1); // G5
-  // Play second tone slightly delayed and higher
+  // Brighter, two-tone 'triangle' ping for toasts, settings changes (G5 then C6)
+  playSoundInternal('triangle', 783.99, 0.05, 0.09); 
   setTimeout(() => {
-    playSoundInternal('sine', 987.77, 0.05, 0.12); // B5
-  }, 70); // 70ms delay
+    playSoundInternal('triangle', 1046.50, 0.04, 0.11); 
+  }, 80); 
 }
 
 export function speakText(
@@ -168,5 +170,6 @@ export function speakText(
     return null;
   }
 }
+
 
 
