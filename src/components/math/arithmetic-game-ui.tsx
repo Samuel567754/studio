@@ -114,21 +114,21 @@ export const ArithmeticGameUI = () => {
     answerInputRef.current?.focus();
   },[soundEffectsEnabled]);
 
-  const handleSessionCompletion = useCallback(() => {
+  const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You solved ${problemsSolvedInSession} problems and scored ${score}.`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}.`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
       description: description,
       duration: 7000,
     });
-    playCompletionSound();
     if (soundEffectsEnabled) {
-      speakText(`${completionMessage} ${description}`);
+        playCompletionSound();
+        speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast, problemsSolvedInSession, score]);
+  }, [username, soundEffectsEnabled, toast]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -148,33 +148,27 @@ export const ArithmeticGameUI = () => {
     const correct = answerNum === currentProblem.answer;
     setIsCorrect(correct);
 
+    let newCurrentScore = score;
+    if(correct) {
+        newCurrentScore = score + 1;
+        setScore(newCurrentScore);
+    }
+
     const afterFeedbackAudio = () => {
-        if (correct) {
-            const newProblemsSolved = problemsSolvedInSession + 1;
-            setProblemsSolvedInSession(newProblemsSolved);
-            if (newProblemsSolved >= PROBLEMS_PER_SESSION) {
-                handleSessionCompletion();
-            } else {
-                loadNewProblem();
-            }
+        const newProblemsSolved = problemsSolvedInSession + 1;
+        setProblemsSolvedInSession(newProblemsSolved);
+
+        if (newProblemsSolved >= PROBLEMS_PER_SESSION) {
+            handleSessionCompletion(newCurrentScore); // Pass calculated score
         } else {
-            // Delay showing correct answer, then load new problem
-            setTimeout(() => {
-                setShowCorrectAnswerAfterIncorrect(true);
-                setAnswerInBlank(currentProblem.answer); // Show correct answer in blank
-                if (soundEffectsEnabled) speakText(`The correct answer was ${currentProblem.answer}.`);
-                setTimeout(() => {
-                    loadNewProblem(); 
-                }, 1800); // Hold correct answer display for a bit
-            }, 1200); // Show incorrect answer display for a bit
+            loadNewProblem();
         }
     };
 
     if (correct) {
       const successMessage = `${username ? username + ", that's c" : 'C'}orrect! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
-      setScore(prev => prev + 1);
-      playSuccessSound();
+      if (soundEffectsEnabled) playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! The answer is ${currentProblem.answer}.`;
       
       if (soundEffectsEnabled) {
@@ -187,14 +181,26 @@ export const ArithmeticGameUI = () => {
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You answered ${answerNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
       const speechErrorMsg = `Oops! You answered ${answerNum}.`;
 
+      const revealCorrectAndProceed = () => {
+          setShowCorrectAnswerAfterIncorrect(true);
+          setAnswerInBlank(currentProblem.answer); 
+          if (soundEffectsEnabled) {
+              const correctAnswerSpeech = `The correct answer was ${currentProblem.answer}.`;
+              const utteranceReveal = speakText(correctAnswerSpeech, undefined, () => setTimeout(afterFeedbackAudio, 500));
+              if(!utteranceReveal) setTimeout(afterFeedbackAudio, 1800);
+          } else {
+              setTimeout(afterFeedbackAudio, 1500);
+          }
+      };
+
       if (soundEffectsEnabled) {
-        const utterance = speakText(speechErrorMsg, undefined, afterFeedbackAudio);
-        if (!utterance) setTimeout(afterFeedbackAudio, 1500); // Delay a bit before revealing correct and moving on
+        const utterance = speakText(speechErrorMsg, undefined, () => setTimeout(revealCorrectAndProceed, 1200));
+        if (!utterance) setTimeout(revealCorrectAndProceed, 1500); 
       } else {
-         afterFeedbackAudio();
+         setTimeout(revealCorrectAndProceed, 1200);
       }
     }
   }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted, score]);
@@ -296,7 +302,7 @@ export const ArithmeticGameUI = () => {
       setIsListening(false);
     } else {
       try {
-        playNotificationSound(); 
+        if (soundEffectsEnabled) playNotificationSound(); 
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null); 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -77,21 +78,21 @@ export const NumberComparisonUI = () => {
     loadNewProblem(true);
   }, [loadNewProblem]);
 
-  const handleSessionCompletion = useCallback(() => {
+  const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You solved ${problemsSolvedInSession} problems and scored ${score}.`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}.`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
       description: description,
       duration: 7000,
     });
-    playCompletionSound();
     if (soundEffectsEnabled) {
-      speakText(`${completionMessage} ${description}`);
+        playCompletionSound();
+        speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast, problemsSolvedInSession, score]);
+  }, [username, soundEffectsEnabled, toast]);
 
   const handleAnswer = useCallback((chosenNum: number) => {
     if (!currentProblem || isAttempted) return; 
@@ -100,12 +101,19 @@ export const NumberComparisonUI = () => {
     setSelectedButton(chosenNum);
     const correct = chosenNum === currentProblem.correctAnswer;
     setIsCorrect(correct);
-
-    setProblemsSolvedInSession(prev => prev + 1);
+    
+    let newCurrentScore = score;
+    if(correct) {
+        newCurrentScore = score + 1;
+        setScore(newCurrentScore);
+    }
+    
+    const newProblemsSolvedCount = problemsSolvedInSession + 1;
+    setProblemsSolvedInSession(newProblemsSolvedCount);
 
     const afterFeedbackAudio = () => {
-      if (problemsSolvedInSession + 1 >= PROBLEMS_PER_SESSION) {
-        handleSessionCompletion();
+      if (newProblemsSolvedCount >= PROBLEMS_PER_SESSION) {
+        handleSessionCompletion(newCurrentScore); // Pass calculated score
       } else {
         loadNewProblem();
       }
@@ -114,8 +122,7 @@ export const NumberComparisonUI = () => {
     if (correct) {
       const successMessage = `${username ? username + ", y" : "Y"}ou got it right! ${chosenNum} is indeed the ${currentProblem.questionType} one.`;
       setFeedback({ type: 'success', message: successMessage });
-      setScore(prev => prev + 1);
-      playSuccessSound();
+      if (soundEffectsEnabled) playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", y" : "Y"}ou got it! ${chosenNum} is ${currentProblem.questionType}.`;
       
       if (soundEffectsEnabled) {
@@ -128,7 +135,7 @@ export const NumberComparisonUI = () => {
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You chose ${chosenNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
       const speechErrorMsg = `Oops! You chose ${chosenNum}.`;
 
       const revealCorrectAnswerAndProceed = () => {
@@ -259,7 +266,7 @@ export const NumberComparisonUI = () => {
       setIsListening(false);
     } else {
       try {
-        playNotificationSound();
+        if (soundEffectsEnabled) playNotificationSound();
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null);

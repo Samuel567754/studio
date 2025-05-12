@@ -45,7 +45,7 @@ export const AiWordProblemGameUI = () => {
     setFeedback(null);
     setUserAnswer('');
     setCurrentProblem(null);
-    if(!isNewSessionStart) playNotificationSound();
+    if(!isNewSessionStart && soundEffectsEnabled) playNotificationSound();
 
     try {
       const input: GenerateMathWordProblemInput = { difficultyLevel: difficulty, operation, username: username || undefined };
@@ -58,7 +58,7 @@ export const AiWordProblemGameUI = () => {
     } catch (error) {
       console.error("Error generating math problem:", error);
       setFeedback({ type: 'error', message: 'Could not generate a problem. Please try again.' });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
     } finally {
       setIsLoading(false);
     }
@@ -72,21 +72,21 @@ export const AiWordProblemGameUI = () => {
   }, [fetchNewProblem]);
 
 
-  const handleSessionCompletion = useCallback(() => {
+  const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
     const completionMessage = username ? `Awesome, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job! Final score: ${score}.`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job! Final score: ${finalScore}.`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
       description: description,
       duration: 7000,
     });
-    playCompletionSound();
     if (soundEffectsEnabled) {
-      speakText(`${completionMessage} ${description}`);
+        playCompletionSound();
+        speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast, score]);
+  }, [username, soundEffectsEnabled, toast]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -102,18 +102,20 @@ export const AiWordProblemGameUI = () => {
     }
 
     const isCorrect = answerNum === currentProblem.numericalAnswer;
+    let newCurrentScore = score;
+    if(isCorrect) {
+        newCurrentScore = score + 1;
+        setScore(newCurrentScore);
+    }
     
     const afterFeedbackAudio = () => {
-      if (isCorrect) {
-        const newProblemsSolved = problemsSolvedInSession + 1;
-        setProblemsSolvedInSession(newProblemsSolved);
-        if (newProblemsSolved >= PROBLEMS_PER_SESSION) {
-          handleSessionCompletion();
-        } else {
-          fetchNewProblem();
-        }
+      const newProblemsSolved = problemsSolvedInSession + 1; // Increment based on attempt, not correctness for session progression
+      setProblemsSolvedInSession(newProblemsSolved);
+
+      if (newProblemsSolved >= PROBLEMS_PER_SESSION) {
+        handleSessionCompletion(newCurrentScore); // Pass the calculated score
       } else {
-         fetchNewProblem(); 
+        fetchNewProblem();
       }
     };
 
@@ -124,8 +126,7 @@ export const AiWordProblemGameUI = () => {
         successMessage += ` (Operation: ${currentProblem.operationUsed})`;
       }
       setFeedback({ type: 'success', message: successMessage });
-      setScore(prev => prev + 1);
-      playSuccessSound();
+      if (soundEffectsEnabled) playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! ${currentProblem.problemText} The answer is ${currentProblem.numericalAnswer}.`;
       
       if (soundEffectsEnabled) {
@@ -145,7 +146,7 @@ export const AiWordProblemGameUI = () => {
         </>
       );
       setFeedback({ type: 'error', message: errorMessage });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
       const speechErrorMsg = `Oops! The correct answer was ${currentProblem.numericalAnswer}. ${currentProblem.explanation || ''}`;
       
       if (soundEffectsEnabled) {
@@ -155,7 +156,7 @@ export const AiWordProblemGameUI = () => {
         afterFeedbackAudio();
       }
     }
-  }, [currentProblem, userAnswer, fetchNewProblem, username, operation, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted]);
+  }, [currentProblem, userAnswer, fetchNewProblem, username, operation, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted, score]);
 
   useEffect(() => {
     startNewSession(); 
@@ -246,7 +247,7 @@ export const AiWordProblemGameUI = () => {
       setIsListening(false);
     } else {
       try {
-        playNotificationSound(); 
+        if (soundEffectsEnabled) playNotificationSound(); 
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null); 

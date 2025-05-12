@@ -88,21 +88,21 @@ export const NumberSequencingUI = () => {
     answerInputRef.current?.focus();
   },[soundEffectsEnabled]);
 
-  const handleSessionCompletion = useCallback(() => {
+  const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${score}.`;
+    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}.`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
       description: description,
       duration: 7000,
     });
-    playCompletionSound();
     if (soundEffectsEnabled) {
-      speakText(`${completionMessage} ${description}`);
+        playCompletionSound();
+        speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast, score]);
+  }, [username, soundEffectsEnabled, toast]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -122,13 +122,19 @@ export const NumberSequencingUI = () => {
     const correct = answerNum === currentProblem.correctAnswer;
     setIsCorrect(correct);
     
+    let newCurrentScore = score;
+    if(correct) {
+        newCurrentScore = score + 1;
+        setScore(newCurrentScore);
+    }
+    
     const newProblemsAttempted = problemsAttemptedInSession + 1;
 
     const afterFeedbackAudio = () => {
         setProblemsAttemptedInSession(newProblemsAttempted);
 
         if (newProblemsAttempted >= PROBLEMS_PER_SESSION) {
-            handleSessionCompletion();
+            handleSessionCompletion(newCurrentScore); // Pass calculated score
         } else {
             loadNewProblem();
         }
@@ -137,8 +143,7 @@ export const NumberSequencingUI = () => {
     if (correct) {
       const successMessage = `${username ? username + ", y" : "Y"}ou got it! The number is ${currentProblem.correctAnswer}.`;
       setFeedback({ type: 'success', message: successMessage });
-      setScore(prev => prev + 1);
-      playSuccessSound();
+      if (soundEffectsEnabled) playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", t" : "T"}hat's right! ${currentProblem.correctAnswer} completes the sequence.`;
       
       if (soundEffectsEnabled) {
@@ -151,7 +156,7 @@ export const NumberSequencingUI = () => {
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You answered ${answerNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
       const speechErrorMsg = `Oops! You answered ${answerNum}.`;
 
       const revealCorrectAndProceed = () => {
@@ -270,7 +275,7 @@ export const NumberSequencingUI = () => {
       setIsListening(false);
     } else {
       try {
-        playNotificationSound();
+        if (soundEffectsEnabled) playNotificationSound();
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null);
@@ -299,7 +304,7 @@ export const NumberSequencingUI = () => {
         
         if (newProblemsAttempted >= PROBLEMS_PER_SESSION) {
              setProblemsAttemptedInSession(newProblemsAttempted); // Update state before calling completion
-             handleSessionCompletion();
+             handleSessionCompletion(score); // Pass current score as it wasn't changed by this problem
         } else {
             setProblemsAttemptedInSession(newProblemsAttempted);
             loadNewProblem();

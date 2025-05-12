@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -72,7 +73,7 @@ export const TimesTableUI = () => {
 
   const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); 
 
-  const resetProblemState = () => {
+  const resetProblemState = useCallback(() => {
     setUserAnswer('');
     setFeedback(null);
     setIsAttempted(false);
@@ -80,29 +81,35 @@ export const TimesTableUI = () => {
     setAnswerInBlank(null);
     setShowCorrectAnswerAfterIncorrect(false);
     answerInputRef.current?.focus();
-  };
+  }, []);
 
-  const loadNextProblem = useCallback(() => {
-    resetProblemState();
-    if (currentProblemIndex < MAX_MULTIPLIER -1) {
-      setCurrentProblemIndex(prev => prev + 1);
-    } else {
-      // This means all 12 multipliers have been shown for the current table
-      setSessionCompleted(true);
-      const completionMsg = `${username ? `Amazing job, ${username}!` : 'Table Complete!'} You scored ${score} out of ${MAX_MULTIPLIER} for the ${selectedTable} times table.`;
-      setFeedback({ type: 'success', message: completionMsg });
-      if (soundEffectsEnabled) {
+
+  const handleSessionCompletion = useCallback((finalScore: number) => {
+    setSessionCompleted(true);
+    const completionMsg = `${username ? `Amazing job, ${username}!` : 'Table Complete!'} You scored ${finalScore} out of ${MAX_MULTIPLIER} for the ${selectedTable} times table.`;
+    // Visual feedback is handled by the sessionCompleted state change
+    if (soundEffectsEnabled) {
         playCompletionSound();
         speakText(completionMsg);
-      }
-      toast({
+    }
+    toast({
         variant: "success",
         title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />Table Mastered!</div>,
         description: completionMsg,
         duration: 7000,
-      });
+    });
+  }, [selectedTable, username, soundEffectsEnabled, toast]);
+
+
+  const loadNextProblem = useCallback((currentSessionScore: number) => {
+    resetProblemState();
+    if (currentProblemIndex < MAX_MULTIPLIER -1) {
+      setCurrentProblemIndex(prev => prev + 1);
+       if (soundEffectsEnabled) playNotificationSound();
+    } else {
+      handleSessionCompletion(currentSessionScore);
     }
-  }, [currentProblemIndex, score, selectedTable, username, soundEffectsEnabled, toast]);
+  }, [currentProblemIndex, soundEffectsEnabled, resetProblemState, handleSessionCompletion]);
 
 
   const startNewTablePractice = useCallback((table: number, isInitialLoad: boolean = false) => {
@@ -116,7 +123,7 @@ export const TimesTableUI = () => {
     resetProblemState();
     if (!isInitialLoad && soundEffectsEnabled) playNotificationSound();
     setIsLoading(false); 
-  }, [soundEffectsEnabled]);
+  }, [soundEffectsEnabled, resetProblemState]);
   
   useEffect(() => {
     startNewTablePractice(selectedTable, true);
@@ -131,7 +138,7 @@ export const TimesTableUI = () => {
       resetProblemState(); // Ensure state is clean for new problem
       setIsLoading(false);
     }
-  }, [selectedTable, shuffledMultipliers, currentProblemIndex, sessionCompleted]);
+  }, [selectedTable, shuffledMultipliers, currentProblemIndex, sessionCompleted, resetProblemState]);
 
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
@@ -151,28 +158,24 @@ export const TimesTableUI = () => {
     setAnswerInBlank(answerNum);
     const correct = answerNum === currentProblem.answer;
     setIsCorrect(correct);
+    
+    let newCurrentScore = score;
+    if (correct) {
+        newCurrentScore = score + 1;
+        setScore(newCurrentScore);
+    }
     setProblemsAttemptedInSession(prev => prev + 1);
 
+
     const afterFeedbackAudio = () => {
-      if (correct) {
-         // Delay before loading next or completing
-        setTimeout(loadNextProblem, 1200);
-      } else {
-          // Delay showing correct answer, then load next problem
-          setTimeout(() => {
-              setShowCorrectAnswerAfterIncorrect(true);
-              setAnswerInBlank(currentProblem.answer); // Show correct answer in blank
-              if (soundEffectsEnabled) speakText(`The correct answer was ${currentProblem.answer}.`);
-              setTimeout(loadNextProblem, 1800); // Hold correct answer display for a bit
-          }, 1200); // Show incorrect answer display for a bit
-      }
+      // Pass the score that will be current after this problem's result
+      loadNextProblem(newCurrentScore);
     };
 
     if (correct) {
       const successMessage = `${username ? username + ", t" : "T"}hat's right! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
-      setScore(prev => prev + 1);
-      playSuccessSound();
+      if (soundEffectsEnabled) playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! The answer is ${currentProblem.answer}.`;
       
       if (soundEffectsEnabled) {
@@ -185,17 +188,29 @@ export const TimesTableUI = () => {
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You answered ${answerNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
       const speechErrorMsg = `Oops! You answered ${answerNum}.`;
 
+      const revealCorrectAndProceed = () => {
+          setShowCorrectAnswerAfterIncorrect(true);
+          setAnswerInBlank(currentProblem.answer); 
+          if (soundEffectsEnabled) {
+              const correctAnswerSpeech = `The correct answer was ${currentProblem.answer}.`;
+              const utteranceReveal = speakText(correctAnswerSpeech, undefined, () => setTimeout(afterFeedbackAudio, 500));
+              if(!utteranceReveal) setTimeout(afterFeedbackAudio, 1800);
+          } else {
+              setTimeout(afterFeedbackAudio, 1500);
+          }
+      };
+
       if (soundEffectsEnabled) {
-        const utterance = speakText(speechErrorMsg, undefined, afterFeedbackAudio);
-        if (!utterance) setTimeout(afterFeedbackAudio, 1500); 
+        const utterance = speakText(speechErrorMsg, undefined, () => setTimeout(revealCorrectAndProceed, 1200));
+        if (!utterance) setTimeout(revealCorrectAndProceed, 1500); 
       } else {
-         afterFeedbackAudio();
+         setTimeout(revealCorrectAndProceed, 1200);
       }
     }
-  }, [currentProblem, userAnswer, loadNextProblem, username, soundEffectsEnabled, sessionCompleted]);
+  }, [currentProblem, userAnswer, loadNextProblem, username, soundEffectsEnabled, sessionCompleted, score]);
 
 
   useEffect(() => {
@@ -290,7 +305,7 @@ export const TimesTableUI = () => {
     } else {
       if (sessionCompleted || isAttempted ) return; 
       try {
-        playNotificationSound();
+        if (soundEffectsEnabled) playNotificationSound();
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null);
@@ -315,7 +330,8 @@ export const TimesTableUI = () => {
     if (sessionCompleted) {
         startNewTablePractice(selectedTable);
     } else {
-        loadNextProblem(); // This will advance to the next problem or complete the session
+        // Skip current problem - pass current score as it's not being updated by this "skip" action
+        loadNextProblem(score); 
     }
   };
   
@@ -476,3 +492,4 @@ export const TimesTableUI = () => {
     </Card>
   );
 };
+
