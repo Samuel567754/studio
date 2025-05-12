@@ -58,28 +58,33 @@ const playSoundWrapper = (
 
 
 export function playClickSound(): void {
-  // Short, crisp, pleasant 'sine' pluck (A4)
-  playSoundWrapper('sine', 440, 0.03, 0.05); 
+  // Short, crisp, slightly higher-pitched 'triangle' pluck (C5)
+  playSoundWrapper('triangle', 523.25, 0.025, 0.04); 
 }
 
 export function playSuccessSound(): void {
-  // Ascending sweep, positive confirmation
-  playSoundWrapper('sine', { start: 600, end: 880, bendDuration: 0.05 }, 0.15, 0.2);
+  // More distinct ascending 'sawtooth' sweep for positive confirmation
+  playSoundWrapper('sawtooth', { start: 500, end: 900, bendDuration: 0.08 }, 0.12, 0.25);
 }
 
 export function playErrorSound(): void {
-  // Low, descending 'square' wave for a more "buzz" or "thud" error sound
-  playSoundWrapper('square', { start: 150, end: 100, bendDuration: 0.1 }, 0.15, 0.25);
+  // More noticeable 'sawtooth' buzz, quick decay for error
+  playSoundWrapper('sawtooth', { start: 180, end: 80, bendDuration: 0.08 }, 0.18, 0.3);
 }
 
 export function playNavigationSound(): void {
-  // Gentle upward sweep for non-button navigation (e.g., next/prev word)
-  playSoundWrapper('sine', { start: 380, end: 550, bendDuration: 0.05 }, 0.04, 0.1);
+  // Softer, slightly longer 'triangle' wave for non-button navigation (e.g., next/prev word)
+  playSoundWrapper('triangle', { start: 350, end: 500, bendDuration: 0.06 }, 0.035, 0.12);
 }
 
 export function playNotificationSound(): void {
-  // Clear, mellow 'sine' ping (C5) for toasts, settings changes, general feedback
-  playSoundWrapper('sine', 523.25, 0.07, 0.15);
+  // Brighter, two-tone 'sine' ping for toasts, settings changes
+  // Play first tone
+  playSoundInternal('sine', 783.99, 0.06, 0.1); // G5
+  // Play second tone slightly delayed and higher
+  setTimeout(() => {
+    playSoundInternal('sine', 987.77, 0.05, 0.12); // B5
+  }, 70); // 70ms delay
 }
 
 export function speakText(
@@ -163,4 +168,5 @@ export function speakText(
     return null;
   }
 }
+
 
