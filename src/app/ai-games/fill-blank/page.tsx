@@ -32,6 +32,7 @@ export default function FillInTheBlankPage() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showCorrectWordAfterIncorrectAttempt, setShowCorrectWordAfterIncorrectAttempt] = useState(false);
 
   const loadWordAndSettingsData = useCallback(() => {
     const storedList = getStoredWordList();
@@ -89,6 +90,7 @@ export default function FillInTheBlankPage() {
     setSelectedOption(null);
     setIsAttempted(false);
     setIsCorrect(null);
+    setShowCorrectWordAfterIncorrectAttempt(false); // Reset this state
     playNavigationSound();
 
     try {
@@ -106,14 +108,14 @@ export default function FillInTheBlankPage() {
         if (soundEffectsEnabled) {
           speakText(
             sentenceToSpeak,
-            undefined, // onBoundary
-            () => { // onEnd for the main sentence
+            undefined, 
+            () => { 
               if (result.options && result.options.length > 0) {
                 const optionsText = `Your options are: ${result.options.join(', ')}.`;
-                speakText(optionsText); // Speak options.
+                speakText(optionsText); 
               }
             },
-            undefined // onError
+            undefined 
           );
         }
       }
@@ -160,9 +162,6 @@ export default function FillInTheBlankPage() {
     const correct = option.toLowerCase() === gameData.correctWord.toLowerCase();
     setIsCorrect(correct);
 
-    const navigationDelay = correct ? 1000 : 1500;
-    const originalTimeoutDelay = correct ? 2500 : 3500;
-
     const performNavigation = () => {
       if (wordList.length > 1) {
         navigateWord('next');
@@ -178,9 +177,9 @@ export default function FillInTheBlankPage() {
       });
       if (soundEffectsEnabled) {
         const spokenSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
-        speakText(spokenSentence, undefined, () => { setTimeout(performNavigation, navigationDelay); });
+        speakText(spokenSentence, undefined, () => { setTimeout(performNavigation, 1000); });
       } else {
-        setTimeout(performNavigation, originalTimeoutDelay);
+        setTimeout(performNavigation, 2500);
       }
     } else {
       playErrorSound();
@@ -189,12 +188,19 @@ export default function FillInTheBlankPage() {
         title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Not quite...</div>,
         description: `You chose "${option}". The word was "${gameData.correctWord}".`,
       });
+      
       if (soundEffectsEnabled) {
          const originalSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
          const textToSpeak = `Oops. You chose ${option}. The correct sentence is: ${originalSentence}`;
-         speakText(textToSpeak, undefined, () => { setTimeout(performNavigation, navigationDelay); });
+         speakText(textToSpeak, undefined, () => { 
+            setShowCorrectWordAfterIncorrectAttempt(true);
+            setTimeout(performNavigation, 1500); 
+        });
       } else {
-        setTimeout(performNavigation, originalTimeoutDelay);
+        setTimeout(() => {
+            setShowCorrectWordAfterIncorrectAttempt(true);
+            setTimeout(performNavigation, 1500);
+        }, 1000);
       }
     }
   };
@@ -296,17 +302,34 @@ export default function FillInTheBlankPage() {
                     <p className="text-xl md:text-2xl text-foreground leading-relaxed text-center flex-grow flex flex-wrap items-center justify-center" aria-live="polite">
                       {gameData.sentenceWithBlank.split(/(__+)/g).map((part, index) => {
                           if (part.match(/__+/)) { 
-                              if (isAttempted && selectedOption) {
+                              let wordToShowInBlank = selectedOption;
+                              let blankStyleClass = "";
+
+                              if (isAttempted) {
+                                  if (isCorrect) {
+                                      wordToShowInBlank = selectedOption; // which is gameData.correctWord
+                                      blankStyleClass = "text-green-700 dark:text-green-400 bg-green-500/20 border border-green-500/50";
+                                  } else { // Incorrect attempt
+                                      if (showCorrectWordAfterIncorrectAttempt) {
+                                          wordToShowInBlank = gameData.correctWord;
+                                          blankStyleClass = "text-green-600 dark:text-green-500 bg-green-500/10 border border-green-500/30 font-semibold";
+                                      } else {
+                                          wordToShowInBlank = selectedOption;
+                                          blankStyleClass = "text-red-700 dark:text-red-400 bg-red-500/20 border border-red-500/50";
+                                      }
+                                  }
+                              }
+
+                              if (isAttempted && wordToShowInBlank) {
                                   return (
                                       <span
                                           key={`blank-filled-${index}`}
                                           className={cn(
-                                              "font-bold inline-block mx-1 px-2 py-0.5 rounded-md transition-all duration-300 ease-in-out text-2xl md:text-3xl align-bottom",
-                                              isCorrect ? "text-green-700 dark:text-green-400 bg-green-500/20 border border-green-500/50"
-                                                        : "text-red-700 dark:text-red-400 bg-red-500/20 border border-red-500/50"
+                                              "font-bold inline-block mx-1 px-2 py-0.5 rounded-md transition-colors duration-300 ease-in-out text-2xl md:text-3xl align-bottom",
+                                              blankStyleClass
                                           )}
                                       >
-                                          {selectedOption}
+                                          {wordToShowInBlank}
                                       </span>
                                   );
                               } else {
@@ -349,8 +372,8 @@ export default function FillInTheBlankPage() {
                     className={cn(
                       "w-full text-lg md:text-xl py-6 h-auto justify-center transition-all duration-200 ease-in-out transform hover:scale-105 shadow-sm",
                       isAttempted && option === selectedOption && isCorrect && "bg-green-500/20 border-green-500 text-green-700 dark:text-green-400 hover:bg-green-500/30 ring-2 ring-green-500",
-                      isAttempted && option === selectedOption && !isCorrect && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500",
-                      isAttempted && option !== selectedOption && option.toLowerCase() === gameData.correctWord.toLowerCase() && "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500", 
+                      isAttempted && option === selectedOption && !isCorrect && !showCorrectWordAfterIncorrectAttempt && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500",
+                      isAttempted && option.toLowerCase() === gameData.correctWord.toLowerCase() && (!isCorrect || option !== selectedOption) && "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500", 
                       !isAttempted && "hover:bg-primary/10 hover:border-primary"
                     )}
                     onClick={() => handleOptionClick(option)}
@@ -359,7 +382,7 @@ export default function FillInTheBlankPage() {
                   >
                     {option}
                     {isAttempted && option === selectedOption && isCorrect && <CheckCircle2 className="ml-3 h-6 w-6 text-green-600 dark:text-green-500" />}
-                    {isAttempted && option === selectedOption && !isCorrect && <XCircle className="ml-3 h-6 w-6 text-red-600 dark:text-red-500" />}
+                    {isAttempted && option === selectedOption && !isCorrect && !showCorrectWordAfterIncorrectAttempt && <XCircle className="ml-3 h-6 w-6 text-red-600 dark:text-red-500" />}
                   </Button>
                 ))}
               </div>
