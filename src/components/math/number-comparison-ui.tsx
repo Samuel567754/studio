@@ -1,18 +1,16 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCw, Scaling, Mic, MicOff, Smile, Info } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, Scaling, Mic, MicOff, Smile, Info, Trophy } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-
 
 interface ComparisonProblem {
   num1: number;
@@ -22,6 +20,8 @@ interface ComparisonProblem {
   questionText: string;
   speechText: string;
 }
+
+const PROBLEMS_PER_SESSION = 5; // Define how many problems make a "session"
 
 const generateComparisonProblem = (): ComparisonProblem => {
   let num1 = Math.floor(Math.random() * 100) + 1; 
@@ -42,69 +42,125 @@ export const NumberComparisonUI = () => {
   const [currentProblem, setCurrentProblem] = useState<ComparisonProblem | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [score, setScore] = useState(0);
+  const [problemsSolvedInSession, setProblemsSolvedInSession] = useState(0);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [selectedButton, setSelectedButton] = useState<number | null>(null); // To style the clicked button
+  const [isAttempted, setIsAttempted] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showCorrectAnswerHighlight, setShowCorrectAnswerHighlight] = useState(false); // To highlight correct after wrong attempt
+
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const { username } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
-  const loadNewProblem = useCallback(() => {
+  const loadNewProblem = useCallback((isNewSessionStart: boolean = false) => {
+    if (!isNewSessionStart && soundEffectsEnabled) playNotificationSound();
     setIsLoading(true);
     setFeedback(null);
-    setSelectedAnswer(null);
+    setSelectedButton(null);
+    setIsAttempted(false);
+    setIsCorrect(null);
+    setShowCorrectAnswerHighlight(false);
+
     const newProblem = generateComparisonProblem();
     setCurrentProblem(newProblem);
     setIsLoading(false);
-    playNotificationSound();
-  }, []);
+  }, [soundEffectsEnabled]);
+
+  const startNewSession = useCallback(() => {
+    setScore(0);
+    setProblemsSolvedInSession(0);
+    setSessionCompleted(false);
+    loadNewProblem(true);
+  }, [loadNewProblem]);
+
+  const handleSessionCompletion = useCallback(() => {
+    setSessionCompleted(true);
+    const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
+    const description = `You solved ${problemsSolvedInSession} problems and scored ${score}.`;
+    toast({
+      variant: "success",
+      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
+      description: description,
+      duration: 7000,
+    });
+    playCompletionSound();
+    if (soundEffectsEnabled) {
+      speakText(`${completionMessage} ${description}`);
+    }
+  }, [username, soundEffectsEnabled, toast, problemsSolvedInSession, score]);
 
   const handleAnswer = useCallback((chosenNum: number) => {
-    if (!currentProblem || selectedAnswer !== null) return; 
+    if (!currentProblem || isAttempted) return; 
 
-    setSelectedAnswer(chosenNum);
-    const isCorrect = chosenNum === currentProblem.correctAnswer;
+    setIsAttempted(true);
+    setSelectedButton(chosenNum);
+    const correct = chosenNum === currentProblem.correctAnswer;
+    setIsCorrect(correct);
 
-    if (isCorrect) {
+    setProblemsSolvedInSession(prev => prev + 1);
+
+    const afterFeedbackAudio = () => {
+      if (problemsSolvedInSession + 1 >= PROBLEMS_PER_SESSION) {
+        handleSessionCompletion();
+      } else {
+        loadNewProblem();
+      }
+    };
+
+    if (correct) {
       const successMessage = `${username ? username + ", y" : "Y"}ou got it right! ${chosenNum} is indeed the ${currentProblem.questionType} one.`;
       setFeedback({ type: 'success', message: successMessage });
       setScore(prev => prev + 1);
       playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", y" : "Y"}ou got it! ${chosenNum} is ${currentProblem.questionType}.`;
-      const utterance = speakText(speechSuccessMsg, undefined, () => {
-        loadNewProblem();
-      });
-      if (!utterance && soundEffectsEnabled) { 
-        setTimeout(loadNewProblem, 2000);
-      } else if (!soundEffectsEnabled) {
-        loadNewProblem();
+      
+      if (soundEffectsEnabled) {
+        const utterance = speakText(speechSuccessMsg, undefined, () => setTimeout(afterFeedbackAudio, 500));
+        if (!utterance) setTimeout(afterFeedbackAudio, 1500); 
+      } else {
+        setTimeout(afterFeedbackAudio, 1200);
       }
+
     } else {
-      const errorMessage = `Not quite${username ? `, ${username}` : ''}. The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`;
+      const errorMessage = `Not quite${username ? `, ${username}` : ''}. You chose ${chosenNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
       playErrorSound();
-      const speechErrorMsg = `Oops! The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`;
-      const utterance = speakText(speechErrorMsg, undefined, () => {
-        loadNewProblem();
-      });
-      if (!utterance && soundEffectsEnabled) { 
-        setTimeout(loadNewProblem, 3000);
-      } else if (!soundEffectsEnabled) {
-         loadNewProblem();
+      const speechErrorMsg = `Oops! You chose ${chosenNum}.`;
+
+      const revealCorrectAnswerAndProceed = () => {
+        setShowCorrectAnswerHighlight(true);
+        setFeedback({type: 'error', message: `The ${currentProblem.questionType} one was ${currentProblem.correctAnswer}.`});
+        if (soundEffectsEnabled) {
+            const correctAnswerSpeech = `The ${currentProblem.questionType} number was ${currentProblem.correctAnswer}.`;
+            const utterance = speakText(correctAnswerSpeech, undefined, () => setTimeout(afterFeedbackAudio, 500));
+            if (!utterance) setTimeout(afterFeedbackAudio, 1800);
+        } else {
+            setTimeout(afterFeedbackAudio, 1500);
+        }
+      };
+      
+      if (soundEffectsEnabled) {
+        const utterance = speakText(speechErrorMsg, undefined, () => setTimeout(revealCorrectAnswerAndProceed, 1200));
+        if (!utterance) setTimeout(revealCorrectAnswerAndProceed, 1500);
+      } else {
+        setTimeout(revealCorrectAnswerAndProceed, 1200);
       }
     }
-  }, [currentProblem, selectedAnswer, loadNewProblem, username, soundEffectsEnabled]);
+  }, [currentProblem, isAttempted, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, score, handleSessionCompletion]);
 
   useEffect(() => {
-    loadNewProblem();
-  }, [loadNewProblem]);
+    startNewSession();
+  }, [startNewSession]);
 
   useEffect(() => {
-    if (currentProblem && !isLoading && currentProblem.speechText && soundEffectsEnabled) {
+    if (currentProblem && !isLoading && !sessionCompleted && currentProblem.speechText && soundEffectsEnabled && !isAttempted) {
       speakText(currentProblem.speechText);
     }
-  }, [currentProblem, isLoading, soundEffectsEnabled]);
+  }, [currentProblem, isLoading, sessionCompleted, soundEffectsEnabled, isAttempted]);
 
   const handleAnswerRef = useRef(handleAnswer);
   useEffect(() => {
@@ -176,7 +232,7 @@ export const NumberComparisonUI = () => {
   }, [toast, currentProblem]);
 
   const handleSpeakQuestion = () => {
-    if (currentProblem?.speechText && soundEffectsEnabled) {
+    if (currentProblem?.speechText && soundEffectsEnabled && !sessionCompleted && !isAttempted) {
       speakText(currentProblem.speechText);
     } else if (!soundEffectsEnabled) {
         toast({ variant: "info", title: "Audio Disabled", description: "Sound effects are turned off in settings." });
@@ -197,11 +253,11 @@ export const NumberComparisonUI = () => {
         toast({ variant: "info", title: "Audio Disabled", description: "Voice input requires sound effects to be enabled in settings." });
         return;
     }
+    if (sessionCompleted || isAttempted) return;
     if (isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
     } else {
-      if (selectedAnswer !== null) return; 
       try {
         playNotificationSound();
         recognitionRef.current.start();
@@ -224,8 +280,15 @@ export const NumberComparisonUI = () => {
     }
   };
   
+  const handleNextProblemOrNewSession = () => {
+    if (sessionCompleted) {
+        startNewSession();
+    } else {
+        loadNewProblem();
+    }
+  };
 
-  if (isLoading || !currentProblem) {
+  if (isLoading && !currentProblem) {
     return (
       <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20">
         <CardHeader className="text-center">
@@ -245,49 +308,87 @@ export const NumberComparisonUI = () => {
     <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
-           <Scaling className="mr-2 h-6 w-6" /> {`Which is ${currentProblem.questionType}?`}
+           <Scaling className="mr-2 h-6 w-6" /> {currentProblem ? `Which is ${currentProblem.questionType}?` : "Number Comparison"}
         </CardTitle>
         <CardDescription>
-          Current Score: <span className="font-bold text-accent">{score}</span>
+          Score: <span className="font-bold text-accent">{score}</span> | Problem: <span className="font-bold text-accent">{Math.min(problemsSolvedInSession + (!isAttempted && currentProblem ? 1:0), PROBLEMS_PER_SESSION)} / {PROBLEMS_PER_SESSION}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex justify-center items-center gap-4 my-4">
-          <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read question aloud" disabled={isListening || !soundEffectsEnabled}>
-            <Volume2 className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={toggleListening}
-            className={cn("h-10 w-10", isListening && "bg-destructive/20 text-destructive animate-pulse")}
-            aria-label={isListening ? "Stop listening" : "Speak your answer"}
-            disabled={selectedAnswer !== null || isLoading || !recognitionRef.current || !soundEffectsEnabled}
-          >
-            {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          {[currentProblem.num1, currentProblem.num2].map((num) => (
-            <Button
-              key={num}
-              variant="outline"
-              size="lg"
-              className={cn(
-                "text-4xl h-24 font-bold transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md",
-                selectedAnswer === num && feedback?.type === 'success' && "bg-green-500/20 border-green-500 text-green-700 dark:text-green-400 ring-2 ring-green-500",
-                selectedAnswer === num && feedback?.type === 'error' && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 ring-2 ring-red-500",
-                selectedAnswer !== null && num === currentProblem.correctAnswer && feedback?.type === 'error' && "bg-green-500/10 border-green-500/50" 
-              )}
-              onClick={() => handleAnswer(num)}
-              disabled={selectedAnswer !== null || isLoading || isListening}
-              aria-pressed={selectedAnswer === num}
-            >
-              {num}
-            </Button>
-          ))}
-        </div>
-        {feedback && (
+        {sessionCompleted ? (
+             <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
+                <div className="flex flex-col items-center gap-4 py-4">
+                <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+                <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {username ? `Congratulations, ${username}!` : 'Session Complete!'}
+                </AlertTitle>
+                <AlertDescription className="text-base">
+                    You've successfully completed {PROBLEMS_PER_SESSION} problems! Final score: {score}.
+                </AlertDescription>
+                </div>
+            </Alert>
+        ) : currentProblem && (
+            <>
+                <div className="flex justify-center items-center gap-4 my-4">
+                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read question aloud" disabled={isListening || !soundEffectsEnabled || sessionCompleted || isAttempted}>
+                    <Volume2 className="h-5 w-5" />
+                </Button>
+                <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={toggleListening}
+                    className={cn("h-10 w-10", isListening && "bg-destructive/20 text-destructive animate-pulse")}
+                    aria-label={isListening ? "Stop listening" : "Speak your answer"}
+                    disabled={isAttempted || isLoading || !recognitionRef.current || !soundEffectsEnabled || sessionCompleted}
+                >
+                    {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                {[currentProblem.num1, currentProblem.num2].map((num) => {
+                    const isSelected = selectedButton === num;
+                    const isActualCorrect = num === currentProblem!.correctAnswer;
+                    let buttonVariant: "default" | "outline" | "secondary" | "destructive" | "ghost" | "link" | null | undefined = "outline";
+                    let specificClasses = "";
+
+                    if (isAttempted) {
+                        if (isSelected) { // This is the button the user clicked
+                            if (isCorrect) {
+                                buttonVariant = "default"; 
+                                specificClasses = "bg-green-500/20 border-green-500 text-green-700 dark:text-green-400 hover:bg-green-500/30 ring-2 ring-green-500";
+                            } else { // User clicked this, and it was wrong
+                                buttonVariant = "destructive";
+                                specificClasses = "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500";
+                            }
+                        } else { // This is the button the user did NOT click
+                            if (showCorrectAnswerHighlight && isActualCorrect) { // And this was the actual correct one
+                                buttonVariant = "secondary";
+                                specificClasses = "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500";
+                            }
+                        }
+                    }
+
+                    return (
+                        <Button
+                        key={num}
+                        variant={buttonVariant}
+                        size="lg"
+                        className={cn(
+                            "text-4xl h-24 font-bold transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md",
+                            specificClasses
+                        )}
+                        onClick={() => handleAnswer(num)}
+                        disabled={isAttempted || isLoading || isListening || sessionCompleted}
+                        aria-pressed={selectedButton === num}
+                        >
+                        {num}
+                        </Button>
+                    );
+                })}
+                </div>
+            </>
+        )}
+        {feedback && !sessionCompleted && isAttempted && (
           <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
              {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
             <AlertTitle>
@@ -298,8 +399,14 @@ export const NumberComparisonUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={loadNewProblem} className="w-full" disabled={isLoading || isListening || (selectedAnswer === null && feedback !== null)}>
-          <RefreshCw className="mr-2 h-4 w-4" /> Skip / Next Problem
+        <Button 
+            variant="outline" 
+            onClick={handleNextProblemOrNewSession} 
+            className="w-full" 
+            disabled={isLoading || isListening || (!isAttempted && currentProblem !== null && !sessionCompleted)}
+        >
+          <RefreshCcw className="mr-2 h-4 w-4" /> 
+          {sessionCompleted ? "Play New Session" : "Skip / Next Problem"}
         </Button>
       </CardFooter>
     </Card>
