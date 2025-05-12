@@ -69,9 +69,10 @@ export default function FillInTheBlankPage() {
     };
   }, [loadWordAndSettingsData]);
 
-  const speakSentence = useCallback((sentence: string | undefined) => {
+  const speakSentence = useCallback((sentence: string | undefined, forBlanked: boolean = true) => {
     if (sentence && soundEffectsEnabled) {
-      speakText(`Fill in the blank: ${sentence.replace(/_+/g, 'blank')}`);
+      const textToSpeak = forBlanked ? `Fill in the blank: ${sentence.replace(/_+/g, 'blank')}` : sentence;
+      speakText(textToSpeak);
     }
   }, [soundEffectsEnabled]);
 
@@ -99,7 +100,7 @@ export default function FillInTheBlankPage() {
       };
       const result = await generateFillInTheBlankGame(input);
       setGameData(result);
-      speakSentence(result?.sentenceWithBlank);
+      speakSentence(result?.sentenceWithBlank, true);
     } catch (error) {
       console.error("Error generating fill-in-the-blank game:", error);
       toast({ 
@@ -136,8 +137,9 @@ export default function FillInTheBlankPage() {
   const handleOptionClick = (option: string) => {
     if (isAttempted || !gameData) return; 
 
-    setSelectedOption(option);
-    setIsAttempted(true);
+    setSelectedOption(option); // Set this first so the sentence can re-render with the word
+    setIsAttempted(true); // Then mark as attempted
+
     const correct = option.toLowerCase() === gameData.correctWord.toLowerCase();
     setIsCorrect(correct);
 
@@ -148,8 +150,11 @@ export default function FillInTheBlankPage() {
         title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Correct, ${username}!` : 'Correct!'}</div>,
         description: `"${gameData.correctWord}" is the right word!`,
       });
+      if (soundEffectsEnabled) {
+        speakText(gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord));
+      }
       if (wordList.length > 1) {
-        setTimeout(() => navigateWord('next'), 2000);
+        setTimeout(() => navigateWord('next'), 2500);
       }
     } else {
       playErrorSound();
@@ -158,8 +163,12 @@ export default function FillInTheBlankPage() {
         title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Not quite...</div>,
         description: `You chose "${option}". The word was "${gameData.correctWord}".`,
       });
+      if (soundEffectsEnabled) {
+         const originalSentence = gameData.sentenceWithBlank.replace(/_+/g, gameData.correctWord);
+         speakText(`Oops. You chose ${option}. The correct sentence is: ${originalSentence}`);
+      }
        if (wordList.length > 1) {
-        setTimeout(() => navigateWord('next'), 3000);
+        setTimeout(() => navigateWord('next'), 3500);
       }
     }
   };
@@ -258,15 +267,33 @@ export default function FillInTheBlankPage() {
             <>
               <div className="bg-muted/50 p-4 rounded-lg shadow-inner">
                 <div className="flex items-center justify-between">
-                    <p className="text-xl md:text-2xl text-foreground leading-relaxed text-center flex-grow" aria-live="polite">
-                    {gameData.sentenceWithBlank.split(/(__+)/g).map((part, index) => 
-                        part.match(/__+/) ? 
-                        <span key={index} className="font-bold text-accent inline-block min-w-[60px] border-b-2 border-accent mx-1 text-center align-bottom"></span> : 
-                        part
-                    )}
+                    <p className="text-xl md:text-2xl text-foreground leading-relaxed text-center flex-grow flex flex-wrap items-center justify-center" aria-live="polite">
+                      {gameData.sentenceWithBlank.split(/(__+)/g).map((part, index) => {
+                          if (part.match(/__+/)) { // This is the blank part
+                              if (isAttempted && selectedOption) {
+                                  return (
+                                      <span
+                                          key={`blank-filled-${index}`}
+                                          className={cn(
+                                              "font-bold inline-block mx-1 px-2 py-0.5 rounded-md transition-all duration-300 ease-in-out text-2xl md:text-3xl align-bottom",
+                                              isCorrect ? "text-green-700 dark:text-green-400 bg-green-500/20 border border-green-500/50"
+                                                        : "text-red-700 dark:text-red-400 bg-red-500/20 border border-red-500/50"
+                                          )}
+                                      >
+                                          {selectedOption}
+                                      </span>
+                                  );
+                              } else {
+                                  return (
+                                      <span key={`blank-empty-${index}`} className="font-bold text-accent inline-block min-w-[100px] border-b-2 border-accent mx-1 text-center align-bottom" style={{height: '2rem'}} />
+                                  );
+                              }
+                          }
+                          return <span key={`text-part-${index}`}>{part}</span>;
+                      })}
                     </p>
                     {soundEffectsEnabled && (
-                        <Button variant="ghost" size="icon" onClick={() => speakSentence(gameData.sentenceWithBlank)} aria-label="Read sentence aloud">
+                        <Button variant="ghost" size="icon" onClick={() => speakSentence(gameData.sentenceWithBlank, true)} aria-label="Read sentence aloud">
                             <Volume2 className="h-5 w-5"/>
                         </Button>
                     )}
@@ -378,3 +405,4 @@ export default function FillInTheBlankPage() {
     </div>
   );
 }
+
