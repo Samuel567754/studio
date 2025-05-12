@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -16,7 +15,7 @@ export default function WordPracticePage() {
       description: "Discover new words with AI suggestions tailored to your level. Build your personal practice list.",
       href: "/learn",
       icon: GraduationCap, 
-      imageSrc: "https://plus.unsplash.com/premium_photo-1687819872154-9d4fd3cb7cca?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjl8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D",
+      imageSrc: "https://plus.unsplash.com/premium_photo-1672759267971-b92f09733dc3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8bGVhcm4lMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D",
       dataAiHint: "AI learning words", 
     },
     {
@@ -50,6 +49,14 @@ export default function WordPracticePage() {
       icon: Sparkles, 
       imageSrc: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGZ1biUyMHJlYWRpbmd8ZW58MHx8MHx8fDA%3D",
       dataAiHint: "fun reading kids",
+    },
+    {
+      title: "Lexi - English Guide",
+      description: "Ask Lexi anything about English vocabulary, grammar, or learning concepts!",
+      href: "/word-practice/english-tutor",
+      icon: MessageSquareQuote, 
+      imageSrc: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YWklMjBsYW5ndWFnZXxlbnwwfHwwfHx8MA%3D%3D", // Placeholder, update if needed
+      dataAiHint: "AI language tutor", 
     },
   ];
 
@@ -116,12 +123,8 @@ export default function WordPracticePage() {
         ))}
       </div>
       
-      {/* Add the English Tutor Assistant section */}
-      <div className="mt-10 pt-6 border-t border-border/30">
-        <EnglishTutorAssistant />
-      </div>
+      {/* The EnglishTutorAssistant is removed from here as it will be on its own page */}
 
     </div>
   );
 }
-
