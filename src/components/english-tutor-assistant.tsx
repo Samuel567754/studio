@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, Bot, User, Loader2, Volume2, MessageCircle, MessageSquareQuestion } from 'lucide-react';
+import { Send, Bot, User, Loader2, Volume2, MessageSquareQuote } from 'lucide-react';
 import { englishTutor, type EnglishTutorInput } from '@/ai/flows/english-tutor-flow';
 import { useToast } from '@/hooks/use-toast';
 import { speakText, playNotificationSound, playErrorSound } from '@/lib/audio';
@@ -102,7 +102,7 @@ export function EnglishTutorAssistant() {
     <Card className="w-full shadow-xl border-accent/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
       <CardHeader>
         <CardTitle className="flex items-center text-xl font-semibold text-accent">
-          <MessageSquareQuestion className="mr-2 h-6 w-6" /> Lexi - Your English Language Guide
+          <MessageSquareQuote className="mr-2 h-6 w-6" /> Lexi - Your English Language Guide
         </CardTitle>
         <CardDescription>Ask me anything about English vocabulary, grammar, or learning concepts!</CardDescription>
       </CardHeader>

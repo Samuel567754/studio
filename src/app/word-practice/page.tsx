@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, Pencil, Target, BookOpen, FileType2 as TextSelectIcon, Sparkles, MessageSquareQuestion } from 'lucide-react';
+import { GraduationCap, Pencil, Target, BookOpen, FileType2 as TextSelectIcon, Sparkles, MessageSquareQuote } from 'lucide-react';
 import { EnglishTutorAssistant } from '@/components/english-tutor-assistant';
 
 
@@ -65,7 +65,7 @@ export default function WordPracticePage() {
             className="rounded-lg"
             data-ai-hint="children letters learning" 
           />
-          <div className="absolute inset-0 bg-black/60" /> 
+          <div className="absolute inset-0 bg-black/70" /> 
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
             <TextSelectIcon className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
             <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Word Practice Zone</h1>
@@ -90,10 +90,12 @@ export default function WordPracticePage() {
                 className="opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 ease-in-out"
                 data-ai-hint={section.dataAiHint}
               />
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                 <section.icon className="h-16 w-16 text-white/80 opacity-80 drop-shadow-lg" />
+              <div className="absolute inset-0 bg-black/60 group-hover:bg-black/50 transition-colors flex flex-col items-center justify-center text-center p-2">
+                 <section.icon className="h-12 w-12 text-white/90 opacity-90 drop-shadow-lg mb-2" />
+                 <h3 className="text-xl font-semibold text-white drop-shadow-md">{section.title}</h3>
               </div>
             </div>
+            {/* Content part remains below image */}
             <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2 pt-4">
               <section.icon className="h-8 w-8 text-accent hidden" aria-hidden="true" />
               <div className="flex-1">
