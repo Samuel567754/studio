@@ -5,7 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, Pencil, Target, BookOpen, FileType2 as TextSelectIcon, Sparkles } from 'lucide-react';
+import { GraduationCap, Pencil, Target, BookOpen, FileType2 as TextSelectIcon, Sparkles, MessageSquareQuestion } from 'lucide-react';
+import { EnglishTutorAssistant } from '@/components/english-tutor-assistant';
+
 
 export default function WordPracticePage() {
   const practiceSections = [
@@ -111,6 +113,12 @@ export default function WordPracticePage() {
           </Card>
         ))}
       </div>
+      
+      {/* Add the English Tutor Assistant section */}
+      <div className="mt-10 pt-6 border-t border-border/30">
+        <EnglishTutorAssistant />
+      </div>
+
     </div>
   );
 }
