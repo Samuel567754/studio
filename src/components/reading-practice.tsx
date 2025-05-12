@@ -1,4 +1,3 @@
-
 'use client';
 import React, { FC, ReactNode, useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
@@ -8,10 +7,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
 import { generateComprehensionQuestions, type GenerateComprehensionQuestionsInput, type GenerateComprehensionQuestionsOutput, type Question } from '@/ai/flows/generate-comprehension-questions';
-import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy, Smile, Edit2, BarChart2 } from 'lucide-react'; 
+import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy, Smile, Edit2, BarChart2, Trophy, ArrowLeft } from 'lucide-react'; 
+import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useUserProfileStore } from '@/stores/user-profile-store';
@@ -58,6 +58,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const [userAnswers, setUserAnswers] = useState<Map<number, string>>(new Map());
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [overallScore, setOverallScore] = useState<number | null>(null);
+  const [gameCompletedThisSession, setGameCompletedThisSession] = useState(false);
 
   const { toast } = useToast();
   const soundEffectsEnabled = useAppSettingsStore(state => state.soundEffectsEnabled);
@@ -76,7 +77,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     }
   }, [resetSpeechState]);
 
-  const resetStateForNewPassage = () => {
+  const resetStateForNewPassage = useCallback(() => {
     setPassage(null);
     setCurrentSpokenWordInfo(null);
     resetSpeechState();
@@ -85,7 +86,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setUserAnswers(new Map());
     setTestResults(null);
     setOverallScore(null);
-  };
+    setGameCompletedThisSession(false); // Reset completion state
+  }, [resetSpeechState]);
 
   const handleSpeechBoundary = useCallback((event: SpeechSynthesisEvent) => {
     if (event.name === 'word' && event.charLength > 0) {
@@ -116,7 +118,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     }
     if (isSpeaking) stopSpeech(); 
     setIsLoading(true);
-    resetStateForNewPassage();
+    resetStateForNewPassage(); // This now also resets gameCompletedThisSession
 
     try {
       const input: GenerateReadingPassageInput = { words: wordsToPractice, readingLevel, masteredWords, favoriteTopics: favoriteTopics || undefined };
@@ -138,7 +140,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     } finally {
       setIsLoading(false);
     }
-  }, [wordsToPractice, readingLevel, masteredWords, favoriteTopics, toast, stopSpeech, isSpeaking, username]);
+  }, [wordsToPractice, readingLevel, masteredWords, favoriteTopics, toast, stopSpeech, isSpeaking, username, resetStateForNewPassage]);
 
   const handleGenerateTest = async () => {
     if (!passage) {
@@ -161,6 +163,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       setQuestionsData(result);
       setIsTestActive(true);
       toast({ variant: "success", title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />Test Ready!</div>, description: "Comprehension test generated."});
+       if(soundEffectsEnabled) speakText("Your comprehension test is ready. Answer the questions.");
     } catch (error) {
       console.error("Error generating comprehension test:", error);
       toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Test Error</div>, description: "Could not generate comprehension test."});
@@ -193,13 +196,21 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     });
     setTestResults(results);
     setOverallScore(correctCount);
-    setIsTestActive(false); // To show results instead of active test
-    playSuccessSound();
+    setIsTestActive(false); 
+    
+    const scoreMessage = `You scored ${correctCount} out of ${questionsData.questions.length}.`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><BarChart2 className="h-5 w-5" />Test Submitted!</div>,
-      description: `You scored ${correctCount} out of ${questionsData.questions.length}.`,
+      description: scoreMessage,
     });
+    
+    setGameCompletedThisSession(true);
+    playCompletionSound();
+    if (soundEffectsEnabled) {
+        const completionSpeech = `${username ? `${username}, you've completed this reading session! ` : "Reading session complete! "}${scoreMessage}`;
+        speakText(completionSpeech);
+    }
   };
 
 
@@ -229,7 +240,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   useEffect(() => { return () => { if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel(); resetSpeechState(); }; }, [resetSpeechState]);
 
-  const renderHighlightedPassage = (): ReactNode[] => { /* ... (same as before) ... */ 
+  const renderHighlightedPassage = (): ReactNode[] => { 
     if (!passage) return [];
     const elements: ReactNode[] = [];
     let keyCounter = 0;
@@ -273,6 +284,37 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   const getPlayPauseAriaLabel = () => isSpeaking && !isPaused ? "Pause reading" : "Read passage aloud";
   const playPauseButtonText = () => isSpeaking && !isPaused ? 'Pause' : (isSpeaking && isPaused ? 'Resume' : 'Read Aloud');
+
+  if (gameCompletedThisSession) {
+    return (
+      <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl font-semibold text-green-600 dark:text-green-400">
+            <Trophy className="mr-2 h-6 w-6 text-yellow-400" /> Session Complete!
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <p className="text-lg">
+            {username ? `Fantastic work, ${username}!` : "Fantastic work!"} You've completed this reading and comprehension session.
+          </p>
+          {overallScore !== null && testResults && (
+            <p className="text-2xl font-bold text-accent">Your Score: {overallScore} / {testResults.length}</p>
+          )}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+            <Button onClick={fetchPassage} size="lg" className="w-full sm:w-auto">
+              <RefreshCcw className="mr-2 h-4 w-4" /> Play Again (New Story)
+            </Button>
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+              <Link href="/word-practice">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Word Practice
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
 
   return (
     <Card className="shadow-lg w-full">
@@ -371,16 +413,12 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
                 </Alert>
               ))}
             </CardContent>
-             <CardFooter>
-                <Button onClick={fetchPassage} className="w-full" size="lg">
-                    <RefreshCcw className="mr-2 h-4 w-4" /> Try Another Story & Test
-                </Button>
-            </CardFooter>
+            {/* Footer removed from results, completion UI handles next actions */}
           </Card>
         )}
 
       </CardContent>
-      {passage && !isLoading && (
+      {passage && !isLoading && !gameCompletedThisSession && (
         <CardFooter className="border-t pt-4 flex-wrap gap-2 justify-between items-center">
             <p className="text-xs text-muted-foreground basis-full sm:basis-auto">Practice words are <strong className="text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2">highlighted</strong>. Spoken words get background.</p>
             <Button onClick={handleCopyPassage} variant="ghost" size="sm" className="text-muted-foreground hover:text-primary basis-full sm:basis-auto">
