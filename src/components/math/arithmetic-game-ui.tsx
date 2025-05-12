@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -24,7 +25,7 @@ interface Problem {
   speechText: string;   
 }
 
-const PROBLEMS_PER_SESSION = 5; // Number of problems per session
+const PROBLEMS_PER_SESSION = 5; 
 
 const generateProblem = (): Problem => {
   const operation = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)] as Operation;
@@ -81,6 +82,11 @@ export const ArithmeticGameUI = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isListening, setIsListening] = useState(false);
   
+  const [isAttempted, setIsAttempted] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [answerInBlank, setAnswerInBlank] = useState<string | number | null>(null);
+  const [showCorrectAnswerAfterIncorrect, setShowCorrectAnswerAfterIncorrect] = useState(false);
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
@@ -96,6 +102,11 @@ export const ArithmeticGameUI = () => {
     setIsLoading(true);
     setFeedback(null);
     setUserAnswer('');
+    setIsAttempted(false);
+    setIsCorrect(null);
+    setAnswerInBlank(null);
+    setShowCorrectAnswerAfterIncorrect(false);
+
     const newProblem = generateProblem();
     setCurrentProblem(newProblem);
     setIsLoading(false);
@@ -132,10 +143,13 @@ export const ArithmeticGameUI = () => {
       return;
     }
     
-    const isCorrect = answerNum === currentProblem.answer;
+    setIsAttempted(true);
+    setAnswerInBlank(answerNum);
+    const correct = answerNum === currentProblem.answer;
+    setIsCorrect(correct);
 
     const afterFeedbackAudio = () => {
-        if (isCorrect) {
+        if (correct) {
             const newProblemsSolved = problemsSolvedInSession + 1;
             setProblemsSolvedInSession(newProblemsSolved);
             if (newProblemsSolved >= PROBLEMS_PER_SESSION) {
@@ -144,11 +158,19 @@ export const ArithmeticGameUI = () => {
                 loadNewProblem();
             }
         } else {
-            loadNewProblem(); // Always load new problem on incorrect for arithmetic
+            // Delay showing correct answer, then load new problem
+            setTimeout(() => {
+                setShowCorrectAnswerAfterIncorrect(true);
+                setAnswerInBlank(currentProblem.answer); // Show correct answer in blank
+                if (soundEffectsEnabled) speakText(`The correct answer was ${currentProblem.answer}.`);
+                setTimeout(() => {
+                    loadNewProblem(); 
+                }, 1800); // Hold correct answer display for a bit
+            }, 1200); // Show incorrect answer display for a bit
         }
     };
 
-    if (isCorrect) {
+    if (correct) {
       const successMessage = `${username ? username + ", that's c" : 'C'}orrect! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
       setScore(prev => prev + 1);
@@ -163,14 +185,14 @@ export const ArithmeticGameUI = () => {
       }
 
     } else {
-      const errorMessage = `Not quite${username ? `, ${username}` : ''}. The correct answer for ${currentProblem.questionText.replace('?', '')} was ${currentProblem.answer}. Try the next one!`;
+      const errorMessage = `Not quite${username ? `, ${username}` : ''}. You answered ${answerNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
       playErrorSound();
-      const speechErrorMsg = `Oops! The correct answer was ${currentProblem.answer}.`;
+      const speechErrorMsg = `Oops! You answered ${answerNum}.`;
 
       if (soundEffectsEnabled) {
         const utterance = speakText(speechErrorMsg, undefined, afterFeedbackAudio);
-        if (!utterance) setTimeout(afterFeedbackAudio, 2500);
+        if (!utterance) setTimeout(afterFeedbackAudio, 1500); // Delay a bit before revealing correct and moving on
       } else {
          afterFeedbackAudio();
       }
@@ -179,14 +201,14 @@ export const ArithmeticGameUI = () => {
 
 
   useEffect(() => {
-    loadNewProblem(true); // Initial load is like starting a new session
+    loadNewProblem(true); 
   }, [loadNewProblem]);
   
   useEffect(() => {
-    if (currentProblem && !isLoading && !sessionCompleted && currentProblem.speechText && soundEffectsEnabled) {
+    if (currentProblem && !isLoading && !sessionCompleted && currentProblem.speechText && soundEffectsEnabled && !isAttempted) {
       speakText(currentProblem.speechText);
     }
-  }, [currentProblem, isLoading, sessionCompleted, soundEffectsEnabled]);
+  }, [currentProblem, isLoading, sessionCompleted, soundEffectsEnabled, isAttempted]);
 
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
@@ -212,7 +234,7 @@ export const ArithmeticGameUI = () => {
             description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, 
             variant: "info" 
            });
-           setTimeout(() => handleSubmitRef.current(), 50); // Auto-submit
+           setTimeout(() => handleSubmitRef.current(), 50); 
         } else {
           toast({ 
             title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>, 
@@ -247,7 +269,7 @@ export const ArithmeticGameUI = () => {
 
 
   const handleSpeakQuestion = () => {
-    if (currentProblem?.speechText && soundEffectsEnabled && !sessionCompleted) {
+    if (currentProblem?.speechText && soundEffectsEnabled && !sessionCompleted && !isAttempted) {
       speakText(currentProblem.speechText);
     } else if (!soundEffectsEnabled) {
        toast({ variant: "info", title: "Audio Disabled", description: "Sound effects are turned off in settings." });
@@ -268,7 +290,7 @@ export const ArithmeticGameUI = () => {
         toast({ variant: "info", title: "Audio Disabled", description: "Voice input requires sound effects to be enabled in settings." });
         return;
     }
-    if (sessionCompleted) return;
+    if (sessionCompleted || isAttempted) return;
     if (isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -297,12 +319,53 @@ export const ArithmeticGameUI = () => {
 
   const handleNextProblemOrNewSession = () => {
     if (sessionCompleted) {
-        loadNewProblem(true); // Start a completely new session
+        loadNewProblem(true); 
     } else {
-        loadNewProblem(); // Load the next problem in the current session
+        loadNewProblem(); 
     }
   };
   
+  const renderEquationWithBlank = () => {
+    if (!currentProblem) return null;
+    const { num1, num2, operation } = currentProblem;
+    let operatorSymbol = '';
+    switch(operation) {
+      case '+': operatorSymbol = '+'; break;
+      case '-': operatorSymbol = '-'; break;
+      case '*': operatorSymbol = '×'; break;
+      case '/': operatorSymbol = '÷'; break;
+    }
+
+    let blankStyleClass = "";
+    if (isAttempted) {
+        if (isCorrect) {
+            blankStyleClass = "text-green-600 dark:text-green-400 bg-green-500/20 border-green-500/50";
+        } else if (showCorrectAnswerAfterIncorrect) {
+            blankStyleClass = "text-green-600 dark:text-green-400 bg-green-500/10 border-green-500/30 font-semibold";
+        } else {
+            blankStyleClass = "text-red-600 dark:text-red-400 bg-red-500/20 border-red-500/50";
+        }
+    }
+
+    return (
+      <p 
+        className="text-5xl md:text-6xl font-bold text-gradient-primary-accent bg-clip-text text-transparent drop-shadow-sm py-2 select-none flex-grow text-center flex items-center justify-center" 
+        aria-live="polite"
+        data-ai-hint="math equation"
+      >
+        {num1} <span className="mx-2 text-foreground/80">{operatorSymbol}</span> {num2} <span className="mx-2 text-foreground/80">=</span> 
+        {isAttempted && answerInBlank !== null ? (
+          <span className={cn("inline-block px-2 py-0.5 rounded-md transition-colors duration-300 ease-in-out min-w-[60px] text-center", blankStyleClass)}>
+            {answerInBlank}
+          </span>
+        ) : (
+          <span className="inline-block min-w-[60px] border-b-2 border-accent text-center">?</span>
+        )}
+      </p>
+    );
+  };
+
+
   return (
     <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
       <CardHeader className="text-center">
@@ -335,14 +398,8 @@ export const ArithmeticGameUI = () => {
         ) : currentProblem && (
           <div className="text-center space-y-4 animate-in fade-in-0 duration-300">
             <div className="flex justify-center items-center gap-4 my-2">
-                <p 
-                    className="text-5xl md:text-6xl font-bold text-gradient-primary-accent bg-clip-text text-transparent drop-shadow-sm py-2 select-none flex-grow text-center" 
-                    aria-live="polite"
-                    data-ai-hint="math equation"
-                >
-                    {currentProblem.questionText}
-                </p>
-                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening || !soundEffectsEnabled || sessionCompleted}>
+                {renderEquationWithBlank()}
+                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening || !soundEffectsEnabled || sessionCompleted || isAttempted}>
                     <Volume2 className="h-6 w-6" />
                 </Button>
             </div>
@@ -358,7 +415,7 @@ export const ArithmeticGameUI = () => {
                   placeholder="Your answer"
                   className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary flex-grow"
                   aria-label="Enter your answer for the math problem"
-                  disabled={feedback?.type === 'success' || isLoading || isListening || sessionCompleted}
+                  disabled={isAttempted || isLoading || isListening || sessionCompleted}
                 />
                 <Button 
                     type="button" 
@@ -367,18 +424,18 @@ export const ArithmeticGameUI = () => {
                     onClick={toggleListening} 
                     className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
                     aria-label={isListening ? "Stop listening" : "Speak your answer"}
-                    disabled={feedback?.type === 'success' || isLoading || isListening || !recognitionRef.current || !soundEffectsEnabled || sessionCompleted}
+                    disabled={isAttempted || isLoading || isListening || !recognitionRef.current || !soundEffectsEnabled || sessionCompleted}
                 >
                     {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
                 </Button>
               </div>
-              <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={feedback?.type === 'success' || isLoading || isListening || sessionCompleted}>
+              <Button type="submit" size="lg" className="w-full btn-glow !text-lg" disabled={isAttempted || isLoading || isListening || sessionCompleted}>
                 Check Answer
               </Button>
             </form>
           </div>
         )}
-        {feedback && !sessionCompleted && (
+        {feedback && !sessionCompleted && isAttempted && (
           <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
             {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
             <AlertTitle>
@@ -394,7 +451,7 @@ export const ArithmeticGameUI = () => {
             variant="outline" 
             onClick={handleNextProblemOrNewSession} 
             className="w-full" 
-            disabled={isLoading || isListening}
+            disabled={isLoading || isListening || (!isAttempted && currentProblem !== null && !sessionCompleted)} // Disable skip if problem is active and not yet attempted
         >
           <RefreshCcw className="mr-2 h-4 w-4" /> 
           {sessionCompleted ? "Start New Session" : "Skip / Next Problem"}
@@ -403,3 +460,4 @@ export const ArithmeticGameUI = () => {
     </Card>
   );
 };
+
