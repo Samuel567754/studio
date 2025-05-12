@@ -8,12 +8,13 @@ import { SpellingPractice } from '@/components/spelling-practice';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, CheckCircle2, Smile, Pencil, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, CheckCircle2, Smile, Pencil, ArrowLeft, Trophy, RefreshCcw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { playSuccessSound, playNavigationSound } from '@/lib/audio';
+import { playSuccessSound, playNavigationSound, playCompletionSound, speakText } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 
 export default function SpellingPage() {
   const [wordList, setWordList] = useState<string[]>([]);
@@ -21,15 +22,33 @@ export default function SpellingPage() {
   const [currentWord, setCurrentWord] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
   const { username } = useUserProfileStore();
-
+  const { soundEffectsEnabled } = useAppSettingsStore();
   const { toast } = useToast();
 
-  const loadWordData = useCallback(() => {
+  const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
+  const [gameCompletedThisSession, setGameCompletedThisSession] = useState<boolean>(false);
+
+
+  const loadWordData = useCallback((isRestart: boolean = false) => {
     const storedList = getStoredWordList();
     setWordList(storedList);
+
+    if (isRestart || !gameCompletedThisSession || storedList.length === 0) {
+      setPracticedWordsInSession(new Set());
+      setGameCompletedThisSession(false);
+    }
+    
+
     if (storedList.length > 0) {
       const storedIndex = getStoredCurrentIndex();
-      const validIndex = (storedIndex >= 0 && storedIndex < storedList.length) ? storedIndex : 0;
+      let validIndex = (storedIndex >= 0 && storedIndex < storedList.length) ? storedIndex : 0;
+      
+      // If restarting, always start from the beginning or a random unpracticed word if desired
+      // For now, just reset to 0 if restarting or if current word was the last one and session completes.
+      if (isRestart) {
+        validIndex = 0;
+      }
+
       setCurrentIndex(validIndex);
       setCurrentWord(storedList[validIndex]);
       if (storedIndex !== validIndex) { 
@@ -39,7 +58,7 @@ export default function SpellingPage() {
       setCurrentWord('');
       setCurrentIndex(0); 
     }
-  }, []);
+  }, [gameCompletedThisSession]); // Added gameCompletedThisSession as a dependency
 
   useEffect(() => {
     loadWordData();
@@ -58,7 +77,7 @@ export default function SpellingPage() {
 
 
   const navigateWord = (direction: 'next' | 'prev') => {
-    if (wordList.length === 0) return;
+    if (wordList.length === 0 || gameCompletedThisSession) return;
     let newIndex = currentIndex;
     if (direction === 'next') {
       newIndex = (currentIndex + 1) % wordList.length;
@@ -72,21 +91,44 @@ export default function SpellingPage() {
   };
 
   const handleCorrectSpell = () => {
-    toast({
-      variant: "success",
-      title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
-      description: `You spelled "${currentWord}" correctly!`,
-    });
-    playSuccessSound();
-    if (wordList.length > 1) {
-      setTimeout(() => navigateWord('next'), 1200); 
-    } else if (wordList.length === 1) {
-        toast({
-            variant: "success",
-            title: <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" />{username ? `${username}, l` : 'L'}ist Complete!</div>,
-            description: "You've spelled the only word in your list. Add more words to continue!",
-            duration: 4000,
-        });
+    const currentWordLowerCase = currentWord.toLowerCase();
+    const newPracticedWords = new Set(practicedWordsInSession).add(currentWordLowerCase);
+    setPracticedWordsInSession(newPracticedWords);
+
+    const afterCurrentWordAudio = () => {
+        if (newPracticedWords.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
+            setGameCompletedThisSession(true);
+            toast({
+                variant: "success",
+                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Amazing, ${username}!` : 'Congratulations!'}</div>,
+                description: "You've spelled all words in this session!",
+                duration: 7000,
+            });
+            playCompletionSound();
+            if (soundEffectsEnabled) {
+                speakText(username ? `Amazing, ${username}! You've spelled all words in this session!` : "Congratulations! You've spelled all words in this session!");
+            }
+        } else if (wordList.length > 1 && !gameCompletedThisSession) {
+            navigateWord('next');
+        } else if (wordList.length === 1 && !gameCompletedThisSession) { // Only one word, and it's now spelled
+             setGameCompletedThisSession(true); // Mark as complete
+             toast({
+                variant: "success",
+                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Fantastic, ${username}!` : 'Fantastic!'}</div>,
+                description: "You've spelled the word! Add more to keep practicing.",
+                duration: 7000,
+            });
+            playCompletionSound();
+            if (soundEffectsEnabled) speakText(username ? `Fantastic, ${username}! You've spelled the word!` : "Fantastic! You've spelled the word!");
+        }
+    };
+    
+    // Toast for correct spelling is handled by SpellingPractice component.
+    // But the overall game logic continues here.
+    if (soundEffectsEnabled) {
+        speakText(`Correct! You spelled ${currentWord}.`, undefined, afterCurrentWordAudio);
+    } else {
+       setTimeout(afterCurrentWordAudio, 1200); // Give time for toast to show
     }
   };
   
@@ -148,7 +190,7 @@ export default function SpellingPage() {
          <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
             <div className="flex flex-col items-center gap-4">
             <Image 
-                src="https://plus.unsplash.com/premium_photo-1687686677116-40e822dfbc51?w=600&auto=format&fit=crop&q=60&ixlibrb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDF8fHNwZWxsJTIwd29yZHN8ZW58MHx8MHx8fDA%3D" 
+                src="https://plus.unsplash.com/premium_photo-1687686677116-40e822dfbc51?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDF8fHNwZWxsJTIwd29yZHN8ZW58MHx8MHx8fDA%3D" 
                 alt="Pencil and paper ready for spelling"
                 width={200}
                 height={150}
@@ -168,10 +210,36 @@ export default function SpellingPage() {
         <>
             <WordDisplay word={currentWord} />
             <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
+              {gameCompletedThisSession ? (
+                 <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
+                    <CardContent className="p-6">
+                        <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50">
+                            <div className="flex flex-col items-center gap-4 py-4">
+                                <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+                                <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                    {username ? `Great Work, ${username}!` : 'Session Complete!'}
+                                </AlertTitle>
+                                <AlertDescription className="text-base">
+                                    You've successfully spelled all words in this session!
+                                </AlertDescription>
+                                <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full max-w-xs">
+                                    <Button onClick={() => loadWordData(true)} variant="outline" className="w-full">
+                                        <RefreshCcw className="mr-2 h-4 w-4" /> Play Again
+                                    </Button>
+                                    <Button asChild className="w-full">
+                                        <Link href="/word-practice"><ArrowLeft className="mr-2 h-4 w-4" /> Word Practice Menu</Link>
+                                    </Button>
+                                </div>
+                            </div>
+                        </Alert>
+                    </CardContent>
+                 </Card>
+              ) : (
                 <SpellingPractice wordToSpell={currentWord} onCorrectSpell={handleCorrectSpell} />
+              )}
             </div>
             
-            {wordList.length > 1 && (
+            {!gameCompletedThisSession && wordList.length > 1 && (
                 <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
                     <CardContent className="p-4 flex justify-between items-center gap-2 md:gap-4">
                     <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="flex-1 md:flex-none">
@@ -191,3 +259,4 @@ export default function SpellingPage() {
     </div>
   );
 }
+

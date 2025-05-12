@@ -8,9 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, XCircle, Sparkles, InfoIcon, Smile, Volume2 } from 'lucide-react';
-import { playErrorSound, speakText } from '@/lib/audio'; 
+import { playErrorSound, playSuccessSound, speakText } from '@/lib/audio'; 
 import { addMasteredWord } from '@/lib/storage'; 
 import { useUserProfileStore } from '@/stores/user-profile-store'; 
+import { useToast } from '@/hooks/use-toast';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 
 interface SpellingPracticeProps {
   wordToSpell: string;
@@ -21,6 +23,8 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
   const [attempt, setAttempt] = useState('');
   const [feedback, setFeedback] = useState<{type: 'success' | 'destructive' | 'info', message: string} | null>(null);
   const { username } = useUserProfileStore(); 
+  const { toast } = useToast();
+  const { soundEffectsEnabled } = useAppSettingsStore();
 
   useEffect(() => {
     setAttempt('');
@@ -38,11 +42,18 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       const successMessage = `${username ? username + ", y" : "Y"}ou spelled it right: "${wordToSpell}"!`;
       setFeedback({type: 'success', message: successMessage});
       addMasteredWord(wordToSpell); 
-
-      speakText(wordToSpell, undefined, () => {
-        onCorrectSpell(); 
+      
+      toast({
+        variant: "success",
+        title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
+        description: `You spelled "${wordToSpell}" correctly!`,
       });
+      playSuccessSound(); // Play success sound here
+      
+      // Audio speech for the word is handled by the parent in `handleCorrectSpell` now before calling `onCorrectSpell`
+      onCorrectSpell(); 
 
+      // Clear attempt after a short delay to allow user to see feedback
       setTimeout(() => {
         setAttempt('');
       }, 2500);
@@ -53,8 +64,10 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
   };
 
   const handleSpeakWordToSpell = () => {
-    if (wordToSpell) {
+    if (wordToSpell && soundEffectsEnabled) {
       speakText(wordToSpell);
+    } else if (!soundEffectsEnabled) {
+      toast({ variant: "info", title: "Audio Disabled", description: "Sound effects are turned off in settings." });
     }
   };
 
@@ -119,3 +132,4 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     </Card>
   );
 };
+
