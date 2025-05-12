@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
 import { generateComprehensionQuestions, type GenerateComprehensionQuestionsInput, type GenerateComprehensionQuestionsOutput, type Question } from '@/ai/flows/generate-comprehension-questions';
-import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy, Smile, Edit2, BarChart2, Trophy, ArrowLeft } from 'lucide-react'; 
+import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy, Smile, Edit2, BarChart2, Trophy, ArrowLeft, Volume2 } from 'lucide-react'; 
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -28,11 +28,6 @@ interface SpokenWordInfo {
   charLength: number;
 }
 
-interface UserAnswer {
-  questionIndex: number;
-  answer: string;
-}
-
 interface TestResult {
   questionText: string;
   userAnswer: string;
@@ -42,6 +37,8 @@ interface TestResult {
   options?: string[];
   questionType: 'mcq' | 'true_false';
 }
+
+const PASSING_THRESHOLD_PERCENTAGE = 60;
 
 export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, readingLevel, masteredWords }) => {
   const [passage, setPassage] = useState<string | null>(null);
@@ -59,6 +56,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [overallScore, setOverallScore] = useState<number | null>(null);
   const [gameCompletedThisSession, setGameCompletedThisSession] = useState(false);
+  const [isShowingResults, setIsShowingResults] = useState(false); // To show results before deciding to complete or retry
+  const [showRetryOption, setShowRetryOption] = useState(false); // To show retry button
+
 
   const { toast } = useToast();
   const soundEffectsEnabled = useAppSettingsStore(state => state.soundEffectsEnabled);
@@ -86,7 +86,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setUserAnswers(new Map());
     setTestResults(null);
     setOverallScore(null);
-    setGameCompletedThisSession(false); // Reset completion state
+    setGameCompletedThisSession(false);
+    setIsShowingResults(false);
+    setShowRetryOption(false);
   }, [resetSpeechState]);
 
   const handleSpeechBoundary = useCallback((event: SpeechSynthesisEvent) => {
@@ -118,7 +120,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     }
     if (isSpeaking) stopSpeech(); 
     setIsLoading(true);
-    resetStateForNewPassage(); // This now also resets gameCompletedThisSession
+    resetStateForNewPassage(); 
 
     try {
       const input: GenerateReadingPassageInput = { words: wordsToPractice, readingLevel, masteredWords, favoriteTopics: favoriteTopics || undefined };
@@ -152,6 +154,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setUserAnswers(new Map());
     setTestResults(null);
     setOverallScore(null);
+    setIsShowingResults(false);
+    setShowRetryOption(false);
     playNotificationSound();
     try {
       const input: GenerateComprehensionQuestionsInput = {
@@ -177,16 +181,32 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setUserAnswers(prev => new Map(prev).set(questionIndex, answer));
   };
 
+  const handleFinishSession = (finalScore: number, totalQuestions: number) => {
+    setGameCompletedThisSession(true);
+    const scoreMessage = `You scored ${finalScore} out of ${totalQuestions}.`;
+    toast({
+      variant: finalScore / totalQuestions >= PASSING_THRESHOLD_PERCENTAGE / 100 ? "success" : "info",
+      title: <div className="flex items-center gap-2"><BarChart2 className="h-5 w-5" />Test Submitted!</div>,
+      description: scoreMessage,
+      duration: 7000,
+    });
+    playCompletionSound();
+    if (soundEffectsEnabled) {
+      const completionSpeech = `${username ? `${username}, y` : 'Y'}ou've completed this reading session! ${scoreMessage}`;
+      speakText(completionSpeech);
+    }
+  };
+
   const handleSubmitTest = () => {
     if (!questionsData) return;
     let correctCount = 0;
     const results: TestResult[] = questionsData.questions.map((q, index) => {
-      const userAnswer = userAnswers.get(index) || "";
-      const isCorrect = userAnswer.toLowerCase() === q.correctAnswer.toLowerCase();
+      const userAnswerText = userAnswers.get(index) || "";
+      const isCorrect = userAnswerText.toLowerCase() === q.correctAnswer.toLowerCase();
       if (isCorrect) correctCount++;
       return {
         questionText: q.questionText,
-        userAnswer,
+        userAnswer: userAnswerText,
         correctAnswer: q.correctAnswer,
         isCorrect,
         explanation: q.explanation,
@@ -194,25 +214,61 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         questionType: q.questionType,
       };
     });
+
     setTestResults(results);
     setOverallScore(correctCount);
-    setIsTestActive(false); 
-    
-    const scoreMessage = `You scored ${correctCount} out of ${questionsData.questions.length}.`;
-    toast({
-      variant: "success",
-      title: <div className="flex items-center gap-2"><BarChart2 className="h-5 w-5" />Test Submitted!</div>,
-      description: scoreMessage,
+    setIsTestActive(false);
+    setIsShowingResults(true); // Show results first
+    playNotificationSound();
+
+    let resultSpeech = `You scored ${correctCount} out of ${questionsData.questions.length}. `;
+    results.forEach((res, i) => {
+      resultSpeech += `For question ${i + 1}, you answered ${res.userAnswer || 'nothing'}. The correct answer was ${res.correctAnswer}. ${res.isCorrect ? 'That was correct. ' : 'That was incorrect. '}`;
     });
     
-    setGameCompletedThisSession(true);
-    playCompletionSound();
-    if (soundEffectsEnabled) {
-        const completionSpeech = `${username ? `${username}, you've completed this reading session! ` : "Reading session complete! "}${scoreMessage}`;
-        speakText(completionSpeech);
+    if(soundEffectsEnabled) speakText(resultSpeech);
+
+    const passingScore = Math.ceil(questionsData.questions.length * (PASSING_THRESHOLD_PERCENTAGE / 100));
+    if (correctCount < passingScore) {
+      setShowRetryOption(true);
+      toast({
+        variant: "info",
+        title: "Test Graded",
+        description: `You scored ${correctCount}/${questionsData.questions.length}. You can review your answers or try again.`,
+        duration: 8000
+      });
+    } else {
+      setShowRetryOption(false);
+      handleFinishSession(correctCount, questionsData.questions.length);
     }
   };
 
+  const handleRetryTest = () => {
+    setIsTestActive(true);
+    setUserAnswers(new Map());
+    setTestResults(null);
+    setOverallScore(null);
+    setIsShowingResults(false);
+    setShowRetryOption(false);
+    playNotificationSound();
+    if(soundEffectsEnabled) speakText("Okay, let's try the test again!");
+  };
+
+  const handleFinishSessionWithLowScore = () => {
+     if (overallScore !== null && questionsData) {
+        handleFinishSession(overallScore, questionsData.questions.length);
+     }
+     setShowRetryOption(false); // Hide retry button
+  };
+
+  const speakQuestionWithOptions = (question: Question) => {
+    if (!soundEffectsEnabled) return;
+    let text = `${question.questionText} Your options are: `;
+    question.options.forEach((opt, idx) => {
+      text += `${opt}${idx < question.options.length - 1 ? ', ' : '.'}`;
+    });
+    speakText(text);
+  };
 
   const toggleSpeech = useCallback(() => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis || !passage) {
@@ -362,7 +418,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         )}
 
         {/* Comprehension Test Section */}
-        {passage && !isLoading && !isTestActive && !testResults && (
+        {passage && !isLoading && !isTestActive && !isShowingResults && (
           <Button onClick={handleGenerateTest} disabled={isTestLoading} className="w-full mt-4" size="lg">
             {isTestLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Generating Test...</> : <><Edit2 className="mr-2 h-5 w-5" />Take Comprehension Test</>}
           </Button>
@@ -377,7 +433,14 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             <CardContent className="space-y-6">
               {questionsData.questions.map((q, index) => (
                 <div key={index} className="p-3 border rounded-md bg-background/50">
-                  <p className="font-semibold mb-2 text-foreground/90">{index + 1}. {q.questionText}</p>
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="font-semibold text-foreground/90 flex-grow">{index + 1}. {q.questionText}</p>
+                    {soundEffectsEnabled && (
+                      <Button variant="ghost" size="icon" onClick={() => speakQuestionWithOptions(q)} aria-label={`Read question ${index + 1} and options`}>
+                        <Volume2 className="h-5 w-5" />
+                      </Button>
+                    )}
+                  </div>
                   <RadioGroup onValueChange={(value) => handleAnswerChange(index, value)} value={userAnswers.get(index) || ""}>
                     {q.options.map((opt, optIndex) => (
                       <div key={optIndex} className="flex items-center space-x-2">
@@ -393,32 +456,62 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           </Card>
         )}
 
-        {/* Test Results UI */}
-        {testResults && (
-          <Card className="mt-6 bg-card/80 border-green-500/30">
+        {/* Test Results UI (when isShowingResults is true and not yet completed or retrying) */}
+        {isShowingResults && testResults && !gameCompletedThisSession && (
+          <Card className="mt-6 bg-card/80 border-blue-500/30">
             <CardHeader>
-                <CardTitle className="text-lg text-green-600 dark:text-green-400">Test Results</CardTitle>
+                <CardTitle className="text-lg text-blue-600 dark:text-blue-400">Test Results</CardTitle>
                 <CardDescription>You scored: <strong className="text-xl">{overallScore} / {testResults.length}</strong></CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {testResults.map((res, index) => (
-                <Alert key={index} variant={res.isCorrect ? "success" : "destructive"} className="p-3">
+                <Alert key={index} variant={res.isCorrect ? "success" : "destructive"} className={cn(
+                  "p-3 transition-all duration-300",
+                  res.isCorrect ? "border-green-500/50 bg-green-500/10" : "border-red-500/50 bg-red-500/10"
+                )}>
                   {res.isCorrect ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
-                  <AlertTitle className="font-semibold">Question {index + 1}: {res.questionText}</AlertTitle>
-                  <AlertDescription>
+                  <AlertTitle className={cn("font-semibold", res.isCorrect ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400")}>
+                    Question {index + 1}: {res.questionText}
+                  </AlertTitle>
+                  <AlertDescription className="text-sm">
                     Your answer: "{res.userAnswer || "Not answered"}"
-                    {!res.isCorrect && <span className="block">Correct answer: "{res.correctAnswer}"</span>}
+                    {!res.isCorrect && <span className="block font-medium">Correct answer: "{res.correctAnswer}"</span>}
                     {res.explanation && <span className="block mt-1 text-xs italic">Explanation: {res.explanation}</span>}
                   </AlertDescription>
+                  {res.options && (
+                    <div className="mt-2 space-y-1">
+                      {res.options.map(opt => (
+                        <div key={opt} className={cn("text-xs px-2 py-1 rounded-md",
+                          opt === res.correctAnswer ? "bg-green-500/20 text-green-800 dark:text-green-300" : "",
+                          opt === res.userAnswer && !res.isCorrect ? "bg-red-500/20 text-red-800 dark:text-red-300 line-through" : "",
+                          opt === res.userAnswer && res.isCorrect ? "bg-green-500/20 text-green-800 dark:text-green-300" : ""
+                        )}>
+                          {opt}
+                          {opt === res.userAnswer && res.isCorrect && <CheckCircle2 className="inline h-3 w-3 ml-1" />}
+                          {opt === res.userAnswer && !res.isCorrect && <XCircle className="inline h-3 w-3 ml-1" />}
+                          {opt === res.correctAnswer && opt !== res.userAnswer && <CheckCircle2 className="inline h-3 w-3 ml-1 text-green-600" />}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Alert>
               ))}
             </CardContent>
-            {/* Footer removed from results, completion UI handles next actions */}
+            {showRetryOption && (
+              <CardFooter className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+                <Button onClick={handleRetryTest} variant="outline" size="lg" className="w-full sm:flex-1">
+                    <RefreshCcw className="mr-2 h-4 w-4" /> Try Test Again
+                </Button>
+                 <Button onClick={handleFinishSessionWithLowScore} size="lg" className="w-full sm:flex-1">
+                    Continue & Finish Session
+                </Button>
+              </CardFooter>
+            )}
           </Card>
         )}
 
       </CardContent>
-      {passage && !isLoading && !gameCompletedThisSession && (
+      {passage && !isLoading && !gameCompletedThisSession && !isShowingResults && (
         <CardFooter className="border-t pt-4 flex-wrap gap-2 justify-between items-center">
             <p className="text-xs text-muted-foreground basis-full sm:basis-auto">Practice words are <strong className="text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2">highlighted</strong>. Spoken words get background.</p>
             <Button onClick={handleCopyPassage} variant="ghost" size="sm" className="text-muted-foreground hover:text-primary basis-full sm:basis-auto">
