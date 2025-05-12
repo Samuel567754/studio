@@ -26,6 +26,14 @@ export default function MathZonePage() {
       dataAiHint: "child math", 
     },
     {
+      title: "Matteo - Math Tutor",
+      description: "Ask Matteo any math question. Get help with concepts or problem-solving steps!",
+      href: "/math/math-tutor",
+      icon: Brain, // Using Brain icon for tutor
+      imageSrc: "https://images.unsplash.com/photo-1596495577886-d925057463B0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fG1hdGglMjB0dXRvcnxlbnwwfHwwfHx8MA%3D%3D",
+      dataAiHint: "AI math tutor",
+    },
+    {
       title: "Arithmetic Games",
       description: "Sharpen your skills with fun and interactive arithmetic challenges.",
       href: "/math/arithmetic-game",
@@ -37,7 +45,7 @@ export default function MathZonePage() {
       title: "Times Table Practice",
       description: "Master your multiplication tables with targeted practice.",
       href: "/math/times-table",
-      icon: Grid3x3, // Changed to Grid3x3 for better visual representation
+      icon: Grid3x3, 
       imageSrc: "https://images.unsplash.com/photo-1546833998-877b37c2e5c6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dGltZXMlMjB0YWJsZSUyMG1hdGhzfGVufDB8fDB8fHww",
       dataAiHint: "times table chalkboard", 
     },
@@ -53,7 +61,7 @@ export default function MathZonePage() {
       title: "Number Sequencing",
       description: "Find the missing number in a sequence or complete patterns.",
       href: "/math/number-sequencing",
-      icon: Footprints, // Changed to Footprints for a more thematic icon
+      icon: Footprints, 
       imageSrc: "https://images.unsplash.com/photo-1659720212900-702e1765621d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fE51bWJlciUyMFNlcXVlbmNpbmclMjBGdW58ZW58MHx8MHx8fDA%3D",
       dataAiHint: "number sequence pattern", 
     },
@@ -96,8 +104,9 @@ export default function MathZonePage() {
                 className="opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 ease-in-out"
                 data-ai-hint={section.dataAiHint}
               />
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                 <section.icon className="h-16 w-16 text-white/80 opacity-80 drop-shadow-lg" />
+              <div className="absolute inset-0 bg-black/60 group-hover:bg-black/50 transition-colors flex flex-col items-center justify-center text-center p-2">
+                 <section.icon className="h-12 w-12 text-white/90 opacity-90 drop-shadow-lg mb-2" />
+                 <h3 className="text-xl font-semibold text-white drop-shadow-md">{section.title}</h3>
               </div>
             </div>
             <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2 pt-4">
