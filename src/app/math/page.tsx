@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -30,8 +29,8 @@ export default function MathZonePage() {
       description: "Ask Matteo any math question. Get help with concepts or problem-solving steps!",
       href: "/math/math-tutor",
       icon: Brain, // Using Brain icon for tutor
-      imageSrc: "https://images.unsplash.com/photo-1596495577886-d925057463B0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fG1hdGglMjB0dXRvcnxlbnwwfHwwfHx8MA%3D%3D",
-      dataAiHint: "AI math tutor",
+      imageSrc: "https://plus.unsplash.com/premium_photo-1677094310913-0e393f34cb2c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTMzfHxhaXxlbnwwfHwwfHx8MA%3D%3D",
+      dataAiHint: "AI brain",
     },
     {
       title: "Arithmetic Games",
@@ -131,4 +130,3 @@ export default function MathZonePage() {
     </div>
   );
 }
-
