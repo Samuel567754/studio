@@ -7,11 +7,11 @@ import { WordDisplay } from '@/components/word-display';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex, getStoredReadingLevel } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, BookOpenCheck, Volume2, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, BookOpenCheck, Volume2, ArrowLeft, Trophy } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { playSuccessSound, playErrorSound, playNavigationSound, speakText } from '@/lib/audio';
+import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { generateDefinitionMatchGame, type GenerateDefinitionMatchGameInput, type GenerateDefinitionMatchGameOutput } from '@/ai/flows/generate-definition-match-game';
 import { cn } from '@/lib/utils';
@@ -33,10 +33,17 @@ export default function DefinitionMatchPage() {
   const [isAttempted, setIsAttempted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
+  const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
+  const [gameCompletedThisSession, setGameCompletedThisSession] = useState<boolean>(false);
+
+
   const loadWordAndSettingsData = useCallback(() => {
     const storedList = getStoredWordList();
     setWordList(storedList);
     setReadingLevel(getStoredReadingLevel("beginner"));
+
+    setPracticedWordsInSession(new Set());
+    setGameCompletedThisSession(false);
 
     if (storedList.length > 0) {
       const storedIndex = getStoredCurrentIndex();
@@ -69,13 +76,21 @@ export default function DefinitionMatchPage() {
     };
   }, [loadWordAndSettingsData]);
   
-  const speakQuestion = useCallback((word: string | undefined) => {
-    if (word && soundEffectsEnabled) {
-      speakText(`What is the definition of ${word}?`);
+  const speakQuestionAndOptions = useCallback((word: string | undefined, options: string[] | undefined, hint?: string) => {
+    if (!word || !soundEffectsEnabled) return;
+    
+    let textToSpeak = `What is the definition of ${word}?`;
+    if (hint) {
+        textToSpeak += ` Hint: ${hint}.`;
     }
+    if (options && options.length > 0) {
+        textToSpeak += ` Your options are: ${options.join(', ')}. Select one.`;
+    }
+    speakText(textToSpeak);
+
   }, [soundEffectsEnabled]);
 
-  const speakHint = useCallback((hint: string | undefined) => {
+  const speakHintOnly = useCallback((hint: string | undefined) => {
     if (hint && soundEffectsEnabled) {
       speakText(`Hint: ${hint}`);
     }
@@ -100,7 +115,7 @@ export default function DefinitionMatchPage() {
       };
       const result = await generateDefinitionMatchGame(input);
       setGameData(result);
-      speakQuestion(result?.word);
+      speakQuestionAndOptions(result?.word, result?.options, result?.hint);
     } catch (error) {
       console.error("Error generating definition match game:", error);
       toast({ 
@@ -112,13 +127,13 @@ export default function DefinitionMatchPage() {
     } finally {
       setIsLoadingGame(false);
     }
-  }, [readingLevel, wordList, username, toast, speakQuestion]);
+  }, [readingLevel, wordList, username, toast, speakQuestionAndOptions]);
 
   useEffect(() => {
-    if (currentWordForGame && isMounted) {
+    if (currentWordForGame && isMounted && !gameCompletedThisSession) {
       fetchNewDefinitionGame(currentWordForGame);
     }
-  }, [currentWordForGame, fetchNewDefinitionGame, isMounted]);
+  }, [currentWordForGame, fetchNewDefinitionGame, isMounted, gameCompletedThisSession]);
 
   const navigateWord = (direction: 'next' | 'prev') => {
     if (wordList.length === 0) return;
@@ -141,6 +156,27 @@ export default function DefinitionMatchPage() {
     setIsAttempted(true);
     const correct = option.toLowerCase() === gameData.correctDefinition.toLowerCase();
     setIsCorrect(correct);
+    const currentWordLowerCase = gameData.word.toLowerCase();
+
+
+    const afterCurrentQuestionAudio = () => {
+        if (practicedWordsInSession.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
+            setGameCompletedThisSession(true);
+            toast({
+            variant: "success",
+            title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Amazing, ${username}!` : 'Congratulations!'}</div>,
+            description: "You've completed all words in this Definition Match session!",
+            duration: 7000,
+            });
+            playCompletionSound();
+            if (soundEffectsEnabled) {
+            speakText(username ? `Amazing, ${username}! You've completed all words in this Definition Match session!` : "Congratulations! You've completed all words in this Definition Match session!");
+            }
+        } else if (wordList.length > 1 && !gameCompletedThisSession) { 
+            navigateWord('next');
+        }
+    };
+
 
     if (correct) {
       playSuccessSound();
@@ -149,9 +185,24 @@ export default function DefinitionMatchPage() {
         title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Correct, ${username}!` : 'Correct!'}</div>,
         description: `That's the right definition for "${gameData.word}"!`,
       });
-      if (wordList.length > 1) {
-        setTimeout(() => navigateWord('next'), 2000);
+
+      setPracticedWordsInSession(prev => {
+        const newSet = new Set(prev);
+        if (!newSet.has(currentWordLowerCase)) {
+          newSet.add(currentWordLowerCase);
+        }
+        return newSet;
+      });
+      
+      const spokenFeedback = `Correct! ${option} is the right definition for ${gameData.word}.`;
+      if (soundEffectsEnabled) {
+        speakText(spokenFeedback, undefined, () => {
+          setTimeout(afterCurrentQuestionAudio, 500); 
+        });
+      } else {
+        setTimeout(afterCurrentQuestionAudio, 1500); 
       }
+
     } else {
       playErrorSound();
       toast({
@@ -159,8 +210,14 @@ export default function DefinitionMatchPage() {
         title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Not quite...</div>,
         description: `The correct definition for "${gameData.word}" was: "${gameData.correctDefinition}".`,
       });
-       if (wordList.length > 1) {
-        setTimeout(() => navigateWord('next'), 3500);
+
+      const spokenFeedback = `Oops. The correct definition for ${gameData.word} was: ${gameData.correctDefinition}.`;
+       if (soundEffectsEnabled) {
+        speakText(spokenFeedback, undefined, () => {
+          setTimeout(afterCurrentQuestionAudio, 1500); 
+        });
+      } else {
+        setTimeout(afterCurrentQuestionAudio, 2500); 
       }
     }
   };
@@ -250,20 +307,37 @@ export default function DefinitionMatchPage() {
           <CardDescription>Choose the correct definition for the word displayed above.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 min-h-[300px]">
-          {isLoadingGame && (
+        {gameCompletedThisSession ? (
+             <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
+               <div className="flex flex-col items-center gap-4">
+                 <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+                 <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">{username ? `Congratulations, ${username}!` : 'Session Complete!'}</AlertTitle>
+                 <AlertDescription className="text-base">
+                   You've successfully practiced all words in this Definition Match session!
+                 </AlertDescription>
+                 <div className="flex gap-3 mt-3">
+                    <Button onClick={() => loadWordAndSettingsData()} variant="outline">
+                        <RefreshCcw className="mr-2 h-4 w-4" /> Play Again
+                    </Button>
+                    <Button asChild>
+                        <Link href="/ai-games"><ArrowLeft className="mr-2 h-4 w-4" /> Back to AI Games</Link>
+                    </Button>
+                 </div>
+               </div>
+             </Alert>
+          ) :isLoadingGame ? (
             <div className="flex flex-col justify-center items-center p-10">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <p className="mt-4 text-muted-foreground">Thinking of definitions...</p>
             </div>
-          )}
-          {!isLoadingGame && gameData && (
+          ) : gameData ? (
             <>
               {gameData.hint && !isAttempted && (
                   <div className="flex items-center justify-center text-sm text-muted-foreground mt-0 mb-3 text-center bg-muted/50 p-2 rounded-md whitespace-normal break-words">
                     <Lightbulb className="inline h-4 w-4 mr-1 text-yellow-500" />
                     Hint: {gameData.hint}
                     {soundEffectsEnabled && (
-                         <Button variant="ghost" size="icon" className="ml-1 h-6 w-6" onClick={() => speakHint(gameData.hint)} aria-label="Read hint aloud">
+                         <Button variant="ghost" size="icon" className="ml-1 h-6 w-6" onClick={() => speakHintOnly(gameData.hint)} aria-label="Read hint aloud">
                              <Volume2 className="h-4 w-4"/>
                          </Button>
                      )}
@@ -297,15 +371,14 @@ export default function DefinitionMatchPage() {
                 ))}
               </div>
             </>
-          )}
-          {!isLoadingGame && !gameData && currentWordForGame && (
+          ) : (
              <div className="flex flex-col justify-center items-center p-10">
                 <Info className="h-12 w-12 text-muted-foreground/50" />
                 <p className="mt-4 text-muted-foreground">Could not load game. Try refreshing the word.</p>
             </div>
           )}
         </CardContent>
-         {isAttempted && gameData && (
+         {isAttempted && gameData && !gameCompletedThisSession && (
             <CardFooter className="border-t pt-4">
                  <Alert variant={isCorrect ? "success" : "destructive"} className="w-full">
                     {isCorrect ? <Smile className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
@@ -320,47 +393,50 @@ export default function DefinitionMatchPage() {
         )}
       </Card>
       
-      <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
-        <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="lg" 
-            onClick={() => navigateWord('prev')} 
-            aria-label="Previous word" 
-            className="w-full sm:w-auto order-2 sm:order-1"
-            disabled={isLoadingGame}
-          >
-            <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
-          </Button>
-
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 order-1 sm:order-2 w-full sm:w-auto">
+      {!gameCompletedThisSession && (
+        <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
+            <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
             <Button 
-              variant="default" 
-              size="lg" 
-              onClick={() => fetchNewDefinitionGame(currentWordForGame)} 
-              aria-label="New definitions for current word" 
-              className="w-full sm:w-auto btn-glow" 
-              disabled={isLoadingGame}
+                variant="outline" 
+                size="lg" 
+                onClick={() => navigateWord('prev')} 
+                aria-label="Previous word" 
+                className="w-full sm:w-auto order-2 sm:order-1"
+                disabled={isLoadingGame}
             >
-              <RefreshCcw className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> New Game
+                <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
             </Button>
-            <span className="text-muted-foreground text-sm whitespace-nowrap font-medium" aria-live="polite" aria-atomic="true">
-              Word {currentIndex + 1} / {wordList.length}
-            </span>
-          </div>
 
-          <Button 
-            variant="outline" 
-            size="lg" 
-            onClick={() => navigateWord('next')} 
-            aria-label="Next word" 
-            className="w-full sm:w-auto order-3"
-            disabled={isLoadingGame}
-          >
-            Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
-          </Button>
-        </CardContent>
-      </Card>
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 order-1 sm:order-2 w-full sm:w-auto">
+                <Button 
+                variant="default" 
+                size="lg" 
+                onClick={() => fetchNewDefinitionGame(currentWordForGame)} 
+                aria-label="New definitions for current word" 
+                className="w-full sm:w-auto btn-glow" 
+                disabled={isLoadingGame}
+                >
+                <RefreshCcw className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> New Game
+                </Button>
+                <span className="text-muted-foreground text-sm whitespace-nowrap font-medium" aria-live="polite" aria-atomic="true">
+                Word {currentIndex + 1} / {wordList.length}
+                </span>
+            </div>
+
+            <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={() => navigateWord('next')} 
+                aria-label="Next word" 
+                className="w-full sm:w-auto order-3"
+                disabled={isLoadingGame}
+            >
+                Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
+            </Button>
+            </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
+
