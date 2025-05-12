@@ -7,7 +7,7 @@ import { WordDisplay } from '@/components/word-display';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex, getStoredReadingLevel } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, BookOpenCheck, Volume2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, BookOpenCheck, Volume2, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -177,31 +177,50 @@ export default function DefinitionMatchPage() {
 
   if (wordList.length < 1) {
     return (
-      <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
-        <div className="flex flex-col items-center gap-4">
-          <Image 
-            src="https://images.unsplash.com/photo-1727434032773-af3cd98375ba?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTZ8fGFpfGVufDB8fDB8fHww"
-            alt="AI circuitry connecting ideas for definitions"
-            width={200}
-            height={150}
-            className="rounded-lg shadow-md mb-3"
-            data-ai-hint="AI circuit definition"
-          />
-          <Lightbulb className="h-6 w-6 text-primary" aria-hidden="true" />
-          <AlertTitle className="text-xl font-semibold mb-2">Add Words to Play!</AlertTitle>
-          <AlertDescription className="text-base">
-            You need at least one word in your practice list to play the Word Definition Match game.
-            Please go to the{' '}
-            <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/learn">Learn Words</Link></Button>
-            {' '}page to add words.
-          </AlertDescription>
+      <div className="space-y-8 max-w-3xl mx-auto">
+        <div className="mb-6">
+          <Button asChild variant="outline" className="group">
+            <Link href="/ai-games">
+              <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              Back to AI Games
+            </Link>
+          </Button>
         </div>
-      </Alert>
+        <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
+          <div className="flex flex-col items-center gap-4">
+            <Image 
+              src="https://images.unsplash.com/photo-1727434032773-af3cd98375ba?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTZ8fGFpfGVufDB8fDB8fHww"
+              alt="AI circuitry connecting ideas for definitions"
+              width={200}
+              height={150}
+              className="rounded-lg shadow-md mb-3"
+              data-ai-hint="AI circuit definition"
+            />
+            <Lightbulb className="h-6 w-6 text-primary" aria-hidden="true" />
+            <AlertTitle className="text-xl font-semibold mb-2">Add Words to Play!</AlertTitle>
+            <AlertDescription className="text-base">
+              You need at least one word in your practice list to play the Word Definition Match game.
+              Please go to the{' '}
+              <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/learn">Learn Words</Link></Button>
+              {' '}page to add words.
+            </AlertDescription>
+          </div>
+        </Alert>
+      </div>
     );
   }
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
+       <div className="mb-6">
+        <Button asChild variant="outline" className="group">
+          <Link href="/ai-games">
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to AI Games
+          </Link>
+        </Button>
+      </div>
+
        <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 

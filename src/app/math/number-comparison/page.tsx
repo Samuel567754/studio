@@ -2,12 +2,23 @@
 "use client";
 
 import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 import { NumberComparisonUI } from '@/components/math/number-comparison-ui';
 import { Scaling, Scale } from 'lucide-react'; 
 
 export default function NumberComparisonPage() {
   return (
     <div className="space-y-8">
+      <div className="mb-6">
+        <Button asChild variant="outline" className="group">
+          <Link href="/math">
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to Math Zone
+          </Link>
+        </Button>
+      </div>
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
          <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-md">
           <Image

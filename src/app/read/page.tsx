@@ -8,7 +8,7 @@ import { getStoredWordList, getStoredReadingLevel, getStoredMasteredWords } from
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Info, Loader2 } from 'lucide-react'; 
+import { BookOpen, Info, Loader2, ArrowLeft } from 'lucide-react'; 
 import { Card } from '@/components/ui/card';
 
 export default function ReadingPage() {
@@ -66,6 +66,14 @@ export default function ReadingPage() {
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
+      <div className="mb-6">
+        <Button asChild variant="outline" className="group">
+          <Link href="/word-practice">
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to Word Practice
+          </Link>
+        </Button>
+      </div>
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
