@@ -22,12 +22,12 @@ export default function MathTutorPage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
-            src="https://images.unsplash.com/photo-1596495577886-d925057463B0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fG1hdGglMjB0dXRvcnxlbnwwfHwwfHx8MA%3D%3D" 
-            alt="AI math tutor concept with equations and geometric shapes"
+            src="https://plus.unsplash.com/premium_photo-1677094310913-0e393f34cb2c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTMzfHxhaXxlbnwwfHwwfHx8MA%3D%3D" 
+            alt="Abstract AI brain concept for math tutor"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="AI math tutor" 
+            data-ai-hint="AI brain" 
           />
           <div className="absolute inset-0 bg-black/60" /> 
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
@@ -44,3 +44,4 @@ export default function MathTutorPage() {
     </div>
   );
 }
+
