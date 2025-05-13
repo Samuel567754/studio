@@ -81,30 +81,26 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
 
   const handleRevealAnswer = () => {
     setShowAnswerTemporarily(true);
-    setHintText(`The word was: ${wordToSpell}. Let's try the next one after this.`);
+    setHintText(`The word was: ${wordToSpell}. Let's try the next one after this.`); // Keep hint for context if needed
     playNotificationSound();
   
     const afterRevealSequence = () => {
-      // Consistent delay before moving to the next word,
-      // allowing user to see the revealed answer.
       setTimeout(() => {
-        onCorrectSpell(); 
-      }, 2000); // 2 seconds pause.
+        onCorrectSpell(); // This will trigger navigation to the next word/session completion
+      }, 2000); 
     };
   
     if (soundEffectsEnabled) {
       speakText(
         `Okay, ${username ? username : 'learner'}. The word was ${wordToSpell}. Let's move to the next word soon.`,
-        undefined, // onBoundary
-        afterRevealSequence, // onEnd: speech finished, now wait 2s
-        (errorEvent) => { // onError
+        undefined, 
+        afterRevealSequence, 
+        (errorEvent) => { 
           console.error("Speech error during reveal:", errorEvent.error);
-          // Even if speech errors, proceed to the 2s visual pause then move on.
           afterRevealSequence(); 
         }
       );
     } else {
-      // If sound is not enabled, just start the 2s visual pause then move on.
       afterRevealSequence();
     }
   };
@@ -117,7 +113,20 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       return;
     }
 
-    if (attempt.trim().toLowerCase() === wordToSpell.toLowerCase()) {
+    const isCorrect = attempt.trim().toLowerCase() === wordToSpell.toLowerCase();
+    
+    // Common logic for after speech (success or fail)
+    const afterSpeechCallback = () => {
+      if (isCorrect) {
+        setTimeout(() => {
+          onCorrectSpell();
+        }, 500 + wordToSpell.length * 80); // Adjusted delay
+      } else {
+        // If wrong, input remains for retry. No automatic next word.
+      }
+    };
+
+    if (isCorrect) {
       const successMessage = `${username ? username + ", y" : "Y"}ou spelled it right: "${wordToSpell}"!`;
       setFeedback({type: 'success', message: successMessage});
       addMasteredWord(wordToSpell); 
@@ -135,11 +144,9 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
               title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
               description: `You spelled "${wordToSpell}" correctly!`,
             });
-            setTimeout(() => {
-              onCorrectSpell();
-            }, 500 + wordToSpell.length * 100); // Delay based on word length for animation to show
-          });
-        });
+            afterSpeechCallback();
+          }, afterSpeechCallback); // Call afterSpeechCallback if inner speak fails
+        }, afterSpeechCallback); // Call afterSpeechCallback if outer speak fails
       } else {
           playSuccessSound(); 
           toast({
@@ -147,9 +154,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
             title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
             description: `You spelled "${wordToSpell}" correctly!`,
           });
-          setTimeout(() => {
-            onCorrectSpell();
-          }, 500 + wordToSpell.length * 100);
+          afterSpeechCallback();
       }
       
       setWrongAttempts(0);
@@ -161,12 +166,11 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       setFeedback({type: 'destructive', message: `Not quite. Press the audio icon to hear the word again. Keep trying!`});
       playErrorSound();
       if (soundEffectsEnabled) {
-        speakText(`Not quite. Press the audio icon to hear the word again. Please try again.`);
+        speakText(`Not quite. Please try again.`, undefined, undefined, (err) => console.error("Error speaking 'not quite':", err));
       }
       if (newWrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT && !showHintButton) {
         setShowHintButton(true);
       }
-      // Shake animation for wrong answer
       if (inputRef.current) {
         inputRef.current.classList.add('animate-shake');
         setTimeout(() => inputRef.current?.classList.remove('animate-shake'), 500);
@@ -223,8 +227,8 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
           </div>
         )}
          {showAnswerTemporarily && (
-          <div className="text-center py-4 my-2 bg-destructive/10 rounded-lg" aria-live="polite">
-            <p className="text-4xl md:text-5xl font-bold tracking-wider text-destructive flex justify-center items-center gap-x-1">
+          <div className="text-center py-4 my-2 bg-green-500/10 rounded-lg" aria-live="polite">
+            <p className="text-4xl md:text-5xl font-bold tracking-wider text-green-600 dark:text-green-400 flex justify-center items-center gap-x-1">
               {wordToSpell.split('').map((letter, index) => (
                  <span 
                   key={`revealed-${letter}-${index}`} 
@@ -283,7 +287,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
           </Alert>
         )}
       </CardContent>
-      {feedback && !isWordCorrectlySpelled && (
+      {feedback && !isWordCorrectlySpelled && !showAnswerTemporarily && (
         <CardFooter className="animate-in fade-in-0 zoom-in-95 duration-300">
           <Alert variant={feedback.type} className="w-full">
             {feedback.type === 'success' && <CheckCircle2 className="h-5 w-5" />}
