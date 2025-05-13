@@ -4,8 +4,8 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, Scaling, Mic, MicOff, Smile, Info, Trophy, Gift } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playRewardClaimedSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, Scaling, Mic, MicOff, Smile, Info, Trophy } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,7 @@ interface ComparisonProblem {
   speechText: string;
 }
 
-const PROBLEMS_PER_SESSION = 5; // Define how many problems make a "session"
+const PROBLEMS_PER_SESSION = 5; 
 
 const generateComparisonProblem = (): ComparisonProblem => {
   let num1 = Math.floor(Math.random() * 100) + 1; 
@@ -50,7 +50,6 @@ export const NumberComparisonUI = () => {
   const [isAttempted, setIsAttempted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showCorrectAnswerHighlight, setShowCorrectAnswerHighlight] = useState(false); 
-  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState(false);
 
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -77,14 +76,13 @@ export const NumberComparisonUI = () => {
     setScore(0);
     setProblemsSolvedInSession(0);
     setSessionCompleted(false);
-    setIsRewardClaimedThisSession(false);
     loadNewProblem(true);
   }, [loadNewProblem]);
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. Time to claim your reward!`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}.`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
@@ -115,7 +113,7 @@ export const NumberComparisonUI = () => {
     
 
     const afterFeedbackAudio = () => {
-      setProblemsSolvedInSession(newProblemsSolvedCount); // Update state after audio for accurate display during feedback
+      setProblemsSolvedInSession(newProblemsSolvedCount); 
       if (newProblemsSolvedCount >= PROBLEMS_PER_SESSION) {
         handleSessionCompletion(newCurrentScore);
       } else {
@@ -165,7 +163,8 @@ export const NumberComparisonUI = () => {
 
   useEffect(() => {
     startNewSession();
-  }, [startNewSession]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (currentProblem && !isLoading && !sessionCompleted && currentProblem.speechText && soundEffectsEnabled && !isAttempted) {
@@ -299,20 +298,6 @@ export const NumberComparisonUI = () => {
     }
   };
 
-  const handleClaimReward = () => {
-    setIsRewardClaimedThisSession(true);
-    playRewardClaimedSound();
-    toast({
-      variant: "success",
-      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
-      description: `Sharp eyes, ${username || 'comparer'}! You earned +10 Comparison Coins! 🪙✨`,
-      duration: 5000,
-    });
-    if (soundEffectsEnabled) {
-        speakText(`Reward claimed! You've earned 10 Comparison Coins!`);
-    }
-  };
-
   if (isLoading && !currentProblem) {
     return (
       <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20">
@@ -350,15 +335,6 @@ export const NumberComparisonUI = () => {
                 <AlertDescription className="text-base">
                     You've successfully completed {PROBLEMS_PER_SESSION} problems! Final score: {score}.
                 </AlertDescription>
-                {isRewardClaimedThisSession ? (
-                    <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
-                        <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +10 ✨
-                    </div>
-                ) : (
-                    <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
-                        <Gift className="mr-2 h-5 w-5" /> Claim Your Reward!
-                    </Button>
-                )}
                 </div>
             </Alert>
         ) : currentProblem && (
@@ -446,4 +422,3 @@ export const NumberComparisonUI = () => {
     </Card>
   );
 };
-

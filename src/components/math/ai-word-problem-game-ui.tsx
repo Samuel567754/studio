@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathWordProblem, type GenerateMathWordProblemInput, type GenerateMathWordProblemOutput } from '@/ai/flows/generate-math-word-problem';
-import { CheckCircle2, XCircle, Loader2, Brain, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Info, Trophy, Gift } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playRewardClaimedSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Brain, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Info, Trophy } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
@@ -20,7 +20,7 @@ import { useAppSettingsStore } from '@/stores/app-settings-store';
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
 type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'random';
 
-const PROBLEMS_PER_SESSION = 5; // Define how many problems make a "session"
+const PROBLEMS_PER_SESSION = 5; 
 
 export const AiWordProblemGameUI = () => {
   const [currentProblem, setCurrentProblem] = useState<GenerateMathWordProblemOutput | null>(null);
@@ -33,7 +33,6 @@ export const AiWordProblemGameUI = () => {
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
   const [operation, setOperation] = useState<Operation>('addition');
   const [sessionCompleted, setSessionCompleted] = useState(false);
-  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -70,7 +69,6 @@ export const AiWordProblemGameUI = () => {
     setScore(0);
     setProblemsSolvedInSession(0);
     setSessionCompleted(false);
-    setIsRewardClaimedThisSession(false);
     fetchNewProblem(true); 
   }, [fetchNewProblem]);
 
@@ -78,7 +76,7 @@ export const AiWordProblemGameUI = () => {
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
     const completionMessage = username ? `Awesome, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job! Final score: ${finalScore}. Time to claim your reward!`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job! Final score: ${finalScore}.`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
@@ -270,20 +268,6 @@ export const AiWordProblemGameUI = () => {
       }
     }
   };
-
-  const handleClaimReward = () => {
-    setIsRewardClaimedThisSession(true);
-    playRewardClaimedSound();
-    toast({
-      variant: "success",
-      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
-      description: `Great job, ${username || 'problem solver'}! You've earned +10 Math Points! ➕➖✖️➗✨`,
-      duration: 5000,
-    });
-    if (soundEffectsEnabled) {
-        speakText(`Reward claimed! You've earned 10 Math Points!`);
-    }
-  };
   
   return (
     <Card className="w-full max-w-xl mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
@@ -338,15 +322,6 @@ export const AiWordProblemGameUI = () => {
               <AlertDescription className="text-base">
                 You've successfully completed {PROBLEMS_PER_SESSION} problems in this session! Your final score: {score}.
               </AlertDescription>
-              {isRewardClaimedThisSession ? (
-                  <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
-                      <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +10 ✨
-                  </div>
-              ) : (
-                  <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
-                      <Gift className="mr-2 h-5 w-5" /> Claim Your Reward!
-                  </Button>
-              )}
               <Button onClick={startNewSession} variant="outline" size="lg" className="mt-4">
                 <RefreshCcw className="mr-2 h-4 w-4" /> Play New Session
               </Button>
@@ -429,5 +404,3 @@ export const AiWordProblemGameUI = () => {
     </Card>
   );
 };
-
-

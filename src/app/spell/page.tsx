@@ -8,11 +8,11 @@ import { SpellingPractice } from '@/components/spelling-practice';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, Pencil, ArrowLeft, Trophy, RefreshCcw, Gift, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, Pencil, ArrowLeft, Trophy, RefreshCcw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { playNavigationSound, playCompletionSound, speakText, playRewardClaimedSound } from '@/lib/audio';
+import { playNavigationSound, playCompletionSound, speakText } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 
@@ -26,8 +26,7 @@ export default function SpellingPage() {
   const { toast } = useToast();
 
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
-  const [gameCompletedThisSession, setGameCompletedThisSession] = useState<boolean>(false);
-  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState<boolean>(false);
+  const [sessionCompleted, setSessionCompleted] = useState<boolean>(false);
 
 
   const loadWordData = useCallback((isRestart: boolean = false) => {
@@ -36,8 +35,7 @@ export default function SpellingPage() {
 
     if (isRestart) {
       setPracticedWordsInSession(new Set());
-      setGameCompletedThisSession(false);
-      setIsRewardClaimedThisSession(false);
+      setSessionCompleted(false);
     }
     
 
@@ -77,7 +75,7 @@ export default function SpellingPage() {
 
 
   const navigateWord = (direction: 'next' | 'prev') => {
-    if (wordList.length === 0 || gameCompletedThisSession) return;
+    if (wordList.length === 0 || sessionCompleted) return;
     let newIndex = currentIndex;
     if (direction === 'next') {
       newIndex = (currentIndex + 1) % wordList.length;
@@ -96,8 +94,8 @@ export default function SpellingPage() {
     setPracticedWordsInSession(newPracticedWords);
 
     const afterCurrentWordAudio = () => {
-        if (newPracticedWords.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
-            setGameCompletedThisSession(true);
+        if (newPracticedWords.size === wordList.length && wordList.length > 0 && !sessionCompleted) {
+            setSessionCompleted(true);
             toast({
                 variant: "success",
                 title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Amazing, ${username}!` : 'Congratulations!'}</div>,
@@ -106,12 +104,12 @@ export default function SpellingPage() {
             });
             playCompletionSound();
             if (soundEffectsEnabled) {
-                speakText(username ? `Amazing, ${username}! You've spelled all words in this session! Time to claim your reward.` : "Congratulations! You've spelled all words in this session! Time to claim your reward.");
+                speakText(username ? `Amazing, ${username}! You've spelled all words in this session!` : "Congratulations! You've spelled all words in this session!");
             }
-        } else if (wordList.length > 1 && !gameCompletedThisSession) {
+        } else if (wordList.length > 1 && !sessionCompleted) {
             navigateWord('next');
-        } else if (wordList.length === 1 && !gameCompletedThisSession) { 
-             setGameCompletedThisSession(true); 
+        } else if (wordList.length === 1 && !sessionCompleted) { 
+             setSessionCompleted(true); 
              toast({
                 variant: "success",
                 title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Fantastic, ${username}!` : 'Fantastic!'}</div>,
@@ -119,30 +117,14 @@ export default function SpellingPage() {
                 duration: 7000,
             });
             playCompletionSound();
-            if (soundEffectsEnabled) speakText(username ? `Fantastic, ${username}! You've spelled the word! Time to claim your reward.` : "Fantastic! You've spelled the word! Time to claim your reward.");
+            if (soundEffectsEnabled) speakText(username ? `Fantastic, ${username}! You've spelled the word!` : "Fantastic! You've spelled the word!");
         }
     };
     
     if (soundEffectsEnabled) {
-        // The SpellingPractice component already plays a "success" sound and shows a toast.
-        // This speaks "Correct! You spelled [word]" and then triggers next step logic.
         speakText(`Correct! You spelled ${currentWord}.`, undefined, afterCurrentWordAudio);
     } else {
        setTimeout(afterCurrentWordAudio, 1200); 
-    }
-  };
-
-  const handleClaimReward = () => {
-    setIsRewardClaimedThisSession(true);
-    playRewardClaimedSound();
-    toast({
-      variant: "success",
-      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
-      description: `Great job, ${username || 'learner'}! You've earned +10 Sparkle Points! ✨`,
-      duration: 5000,
-    });
-    if (soundEffectsEnabled) {
-        speakText(`Reward claimed! You've earned 10 Sparkle Points!`);
     }
   };
   
@@ -224,7 +206,7 @@ export default function SpellingPage() {
         <>
             <WordDisplay word={currentWord} />
             <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
-              {gameCompletedThisSession ? (
+              {sessionCompleted ? (
                  <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
                     <CardContent className="p-6">
                         <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50">
@@ -236,15 +218,6 @@ export default function SpellingPage() {
                                 <AlertDescription className="text-base">
                                     You've successfully spelled all words in this session!
                                 </AlertDescription>
-                                {isRewardClaimedThisSession ? (
-                                    <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
-                                        <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +10 ✨
-                                    </div>
-                                ) : (
-                                    <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
-                                        <Gift className="mr-2 h-5 w-5" /> Claim Your Reward!
-                                    </Button>
-                                )}
                                 <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full max-w-xs">
                                     <Button onClick={() => loadWordData(true)} variant="outline" className="w-full">
                                         <RefreshCcw className="mr-2 h-4 w-4" /> Play Again
@@ -262,7 +235,7 @@ export default function SpellingPage() {
               )}
             </div>
             
-            {!gameCompletedThisSession && wordList.length > 1 && (
+            {!sessionCompleted && wordList.length > 1 && (
                 <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
                     <CardContent className="p-4 flex justify-between items-center gap-2 md:gap-4">
                     <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="flex-1 md:flex-none">
@@ -282,5 +255,3 @@ export default function SpellingPage() {
     </div>
   );
 }
-
-

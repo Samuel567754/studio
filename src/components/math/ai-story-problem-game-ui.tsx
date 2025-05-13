@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathStoryProblem, type GenerateMathStoryProblemInput, type GenerateMathStoryProblemOutput } from '@/ai/flows/generate-math-story-problem';
-import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Trophy, Info, Gift } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playRewardClaimedSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Trophy, Info } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
@@ -39,7 +39,6 @@ export const AiStoryProblemGameUI = () => {
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
   const [customTopics, setCustomTopics] = useState<string>('');
   const [sessionCompleted, setSessionCompleted] = useState(false);
-  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -48,7 +47,7 @@ export const AiStoryProblemGameUI = () => {
   const { soundEffectsEnabled } = useAppSettingsStore();
 
   const fetchNewStoryProblem = useCallback(async (isNewSessionStart: boolean = false) => {
-    if (sessionCompleted && !isNewSessionStart) return; // Don't fetch if session is done and not explicitly restarting
+    if (sessionCompleted && !isNewSessionStart) return; 
     setIsLoading(true);
     setQuestionStates([]);
     setCurrentStoryProblem(null);
@@ -66,7 +65,13 @@ export const AiStoryProblemGameUI = () => {
       setCurrentStoryProblem(storyData);
       setQuestionStates(storyData.questions.map(() => ({ userAnswer: '', feedback: null, isCorrect: null, isSubmitted: false })));
       if (storyData?.storyProblemText && soundEffectsEnabled) {
-        speakText(`Story time! ${storyData.overallTheme ? `The theme is ${storyData.overallTheme}.` : ''} ${storyData.storyProblemText}`);
+        const storyText = `Story time! ${storyData.overallTheme ? `The theme is ${storyData.overallTheme}.` : ''} ${storyData.storyProblemText}`;
+        speakText(storyText, undefined, () => {
+          if (storyData.questions && storyData.questions.length > 0 && soundEffectsEnabled) {
+            // Auto-read first question after story, if applicable
+            speakText(`Question 1: ${storyData.questions[0].questionText}`);
+          }
+        });
       }
     } catch (error) {
       console.error("Error generating math story problem:", error);
@@ -85,7 +90,6 @@ export const AiStoryProblemGameUI = () => {
     setCurrentStoryScore(0);
     setStoriesCompletedInSession(0);
     setSessionCompleted(false);
-    setIsRewardClaimedThisSession(false);
     fetchNewStoryProblem(true);
   }, [fetchNewStoryProblem]);
 
@@ -93,7 +97,7 @@ export const AiStoryProblemGameUI = () => {
   const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
     const completionMessage = username ? `Fantastic, ${username}!` : 'Session Complete!';
-    const description = `You've completed ${STORIES_PER_SESSION} stories. Well done! Time to claim your reward.`;
+    const description = `You've completed ${STORIES_PER_SESSION} stories. Well done!`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
@@ -147,7 +151,7 @@ export const AiStoryProblemGameUI = () => {
           {question.explanation && <p className="mt-1 text-xs"><em>Explanation: {question.explanation}</em></p>}
         </>
       );
-      speechTextSegment = `Oops! The correct answer for "${question.questionText}" was ${question.numericalAnswer}. ${question.explanation || ''}`;
+      speechTextSegment = `Oops! The correct answer for "${question.questionText}" was ${question.numericalAnswer}.`;
       if (soundEffectsEnabled) playErrorSound();
     }
 
@@ -157,7 +161,7 @@ export const AiStoryProblemGameUI = () => {
     const allCurrentStoryQuestionsAnswered = updatedQuestionStates.every(qs => qs.isSubmitted);
     
     const afterSpeechCallback = () => {
-      if (allCurrentStoryQuestionsAnswered && !sessionCompleted) { // Ensure not already session completed
+      if (allCurrentStoryQuestionsAnswered && !sessionCompleted) { 
         const newStoriesCompletedCount = storiesCompletedInSession + 1;
         setStoriesCompletedInSession(newStoriesCompletedCount); 
 
@@ -182,6 +186,9 @@ export const AiStoryProblemGameUI = () => {
              }, 800); 
            }
         }
+      } else if (!allCurrentStoryQuestionsAnswered && soundEffectsEnabled && questionIndex + 1 < currentStoryProblem.questions.length) {
+        // Auto-read next question in the same story
+        speakText(`Next question: ${currentStoryProblem.questions[questionIndex + 1].questionText}`);
       }
     };
 
@@ -239,11 +246,12 @@ export const AiStoryProblemGameUI = () => {
     return () => recognitionRef.current?.stop();
   }, [toast, isListening]);
 
-  const handleSpeak = (text: string) => {
+  const handleSpeak = (text: string, onEndCallback?: () => void) => {
       if(soundEffectsEnabled) {
-          speakText(text);
+          speakText(text, undefined, onEndCallback);
       } else {
           toast({ variant: "info", title: "Audio Disabled", description: "Sound effects are turned off in settings." });
+          if (onEndCallback) onEndCallback();
       }
   }
 
@@ -282,20 +290,6 @@ export const AiStoryProblemGameUI = () => {
   const handleNewProblemSet = () => {
     startNewSession();
   }
-
-  const handleClaimReward = () => {
-    setIsRewardClaimedThisSession(true);
-    playRewardClaimedSound();
-    toast({
-      variant: "success",
-      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
-      description: `Great job, ${username || 'storyteller'}! You've earned +20 Story Points! 📚✨`,
-      duration: 5000,
-    });
-    if (soundEffectsEnabled) {
-        speakText(`Reward claimed! You've earned 20 Story Points!`);
-    }
-  };
 
   const allQuestionsAnsweredForCurrentStory = currentStoryProblem && questionStates.every(qs => qs.isSubmitted);
   const displayedStoryNumber = storiesCompletedInSession + (currentStoryProblem && !allQuestionsAnsweredForCurrentStory ? 1 : 0);
@@ -355,15 +349,6 @@ export const AiStoryProblemGameUI = () => {
               <AlertDescription className="text-base">
                 You've successfully completed {STORIES_PER_SESSION} stories in this session!
               </AlertDescription>
-              {isRewardClaimedThisSession ? (
-                  <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
-                      <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +20 📚✨
-                  </div>
-              ) : (
-                  <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
-                      <Gift className="mr-2 h-5 w-5" /> Claim Your Story Reward!
-                  </Button>
-              )}
               <Button onClick={startNewSession} variant="default" size="lg" className="mt-4 btn-glow">
                 <RefreshCcw className="mr-2 h-4 w-4" /> Play New Session
               </Button>
@@ -399,7 +384,10 @@ export const AiStoryProblemGameUI = () => {
                     questionStates[index]?.isCorrect === true && "bg-green-500/10 hover:bg-green-500/15 text-green-700 dark:text-green-400",
                     questionStates[index]?.isCorrect === false && "bg-red-500/10 hover:bg-red-500/15 text-red-700 dark:text-red-500",
                   )}>
-                    <div className="flex-1">
+                    <div className="flex-1 flex items-center">
+                        <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleSpeak(q.questionText); }} aria-label={`Read question ${index + 1} aloud`} className="mr-2 flex-shrink-0" disabled={isListening === index || questionStates[index]?.isSubmitted || !soundEffectsEnabled}>
+                            <Volume2 className="h-4 w-4" />
+                        </Button>
                         <span className="font-semibold">Question {index + 1}: </span>{q.questionText}
                     </div>
                     {questionStates[index]?.isCorrect === true && <CheckCircle2 className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />}
@@ -408,9 +396,6 @@ export const AiStoryProblemGameUI = () => {
                   <AccordionContent className="px-4 pb-4 pt-2 border-t">
                     <form onSubmit={(e) => { e.preventDefault(); handleSubmitAnswer(index); }} className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleSpeak(q.questionText)} aria-label={`Read question ${index + 1} aloud`} className="flex-shrink-0" disabled={isListening === index || questionStates[index]?.isSubmitted || !soundEffectsEnabled}>
-                            <Volume2 className="h-5 w-5" />
-                        </Button>
                         <Label htmlFor={`story-q-${index}-answer`} className="sr-only">Answer for question {index + 1}</Label>
                         <Input
                           id={`story-q-${index}-answer`}
@@ -479,5 +464,3 @@ export const AiStoryProblemGameUI = () => {
     </Card>
   );
 };
-
-

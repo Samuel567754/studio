@@ -69,7 +69,6 @@ export function playSuccessSound(): void {
 
 export function playCompletionSound(): void {
   // More pronounced, celebratory melodic ascending 'sine' sweep (C4 to G4 to C5)
-  // This will be a two-part sound for a more "complete" feel
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
   if (!soundEffectsEnabled) return;
 
@@ -82,26 +81,6 @@ export function playCompletionSound(): void {
     playSoundInternal('triangle', 1046.50, 0.05, 0.2); // C6
   }, 200);
 }
-
-export function playRewardClaimedSound(): void {
-  // A more magical, shimmering sound for claiming rewards
-  const { soundEffectsEnabled } = useAppSettingsStore.getState();
-  if (!soundEffectsEnabled) return;
-
-  // Ascending arpeggio using 'triangle' for sparkle
-  playSoundInternal('triangle', { start: 523.25, end: 659.25, bendDuration: 0.1 }, 0.06, 0.25); // C5 to E5
-  setTimeout(() => {
-    playSoundInternal('triangle', { start: 659.25, end: 783.99, bendDuration: 0.1 }, 0.05, 0.25); // E5 to G5
-  }, 80);
-  setTimeout(() => {
-    playSoundInternal('triangle', { start: 783.99, end: 1046.50, bendDuration: 0.1 }, 0.04, 0.3); // G5 to C6
-  }, 160);
-   // Add a final high sparkle
-  setTimeout(() => {
-    playSoundInternal('sine', 1318.51, 0.03, 0.15); // E6
-  }, 250);
-}
-
 
 export function playErrorSound(): void {
   // Less harsh descending 'square' wave buzz (A3 to F3)
@@ -141,8 +120,6 @@ export function speakText(
   const { soundEffectsEnabled, speechRate, speechPitch, selectedVoiceURI } = useAppSettingsStore.getState();
   
   if (!soundEffectsEnabled) {
-    // If sound effects (which includes speech) are off, call onEnd immediately if provided,
-    // as the speech operation is effectively "ended" by not starting.
     if(onEnd) {
       onEnd();
     }
@@ -150,8 +127,6 @@ export function speakText(
   }
 
   try {
-    // It's important to cancel before creating a new utterance if there's a chance
-    // an old one is speaking or paused, as some browsers handle queueing differently.
     window.speechSynthesis.cancel(); 
     
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
@@ -168,24 +143,17 @@ export function speakText(
     
     if (onBoundary) utterance.onboundary = onBoundary;
     
-    // Centralized end handling
     const handleEnd = () => {
         if (onEnd) onEnd();
     };
     utterance.onend = handleEnd;
 
-    // Centralized error handling
     const handleError = (event: SpeechSynthesisErrorEvent) => {
-        // The calling component (e.g., ReadingPractice) will decide how to log/toast.
-        // We just forward the event.
         if (onError) {
           onError(event);
         } else {
-          // Fallback console logging if no specific onError handler is provided
            if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
              console.error("Unhandled Speech synthesis error in speakText:", event.error, event.utterance?.text.substring(event.charIndex));
-           } else if (event.error) {
-             // console.warn("Unhandled Speech synthesis event (interrupted/canceled) in speakText:", event.error);
            }
         }
     };
@@ -206,15 +174,9 @@ export function speakText(
       });
       onError(synthErrorEvent);
     }
-    // Ensure onEnd is called even if setup fails, to unblock any dependent logic
     if (onEnd) {
       onEnd();
     }
     return null;
   }
 }
-
-
-
-
-

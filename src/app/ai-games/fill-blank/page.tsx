@@ -7,11 +7,11 @@ import { WordDisplay } from '@/components/word-display';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex, getStoredReadingLevel } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, Edit, Volume2, ArrowLeft, Trophy, Gift } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbulb, Loader2, RefreshCcw, Edit, Volume2, ArrowLeft, Trophy } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playCompletionSound, playRewardClaimedSound } from '@/lib/audio';
+import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { generateFillInTheBlankGame, type GenerateFillInTheBlankGameInput, type GenerateFillInTheBlankGameOutput } from '@/ai/flows/generate-fill-in-the-blank-game';
 import { cn } from '@/lib/utils';
@@ -35,8 +35,7 @@ export default function FillInTheBlankPage() {
   const [showCorrectWordAfterIncorrectAttempt, setShowCorrectWordAfterIncorrectAttempt] = useState(false);
 
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
-  const [gameCompletedThisSession, setGameCompletedThisSession] = useState<boolean>(false);
-  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState<boolean>(false);
+  const [sessionCompleted, setSessionCompleted] = useState<boolean>(false);
 
   const loadWordAndSettingsData = useCallback((isRestart: boolean = false) => {
     const storedList = getStoredWordList();
@@ -45,8 +44,7 @@ export default function FillInTheBlankPage() {
 
     if (isRestart) {
       setPracticedWordsInSession(new Set());
-      setGameCompletedThisSession(false);
-      setIsRewardClaimedThisSession(false);
+      setSessionCompleted(false);
     }
 
 
@@ -97,7 +95,7 @@ export default function FillInTheBlankPage() {
   }, [soundEffectsEnabled]);
 
   const fetchNewGameProblem = useCallback(async (wordToUse: string) => {
-    if (!wordToUse || gameCompletedThisSession) return; // Don't fetch if session is already marked complete
+    if (!wordToUse || sessionCompleted) return; 
     setIsLoadingGame(true);
     setGameData(null);
     setSelectedOption(null);
@@ -144,16 +142,16 @@ export default function FillInTheBlankPage() {
     } finally {
       setIsLoadingGame(false);
     }
-  }, [readingLevel, wordList, username, toast, soundEffectsEnabled, gameCompletedThisSession]);
+  }, [readingLevel, wordList, username, toast, soundEffectsEnabled, sessionCompleted]);
 
   useEffect(() => {
-    if (currentWordForGame && isMounted && !gameCompletedThisSession) {
+    if (currentWordForGame && isMounted && !sessionCompleted) {
       fetchNewGameProblem(currentWordForGame);
     }
-  }, [currentWordForGame, fetchNewGameProblem, isMounted, gameCompletedThisSession]);
+  }, [currentWordForGame, fetchNewGameProblem, isMounted, sessionCompleted]);
 
   const navigateWord = (direction: 'next' | 'prev') => {
-    if (wordList.length === 0 || gameCompletedThisSession) return;
+    if (wordList.length === 0 || sessionCompleted) return;
     let newIndex = currentIndex;
     if (direction === 'next') {
       newIndex = (currentIndex + 1) % wordList.length;
@@ -167,7 +165,7 @@ export default function FillInTheBlankPage() {
   };
 
   const handleOptionClick = (option: string) => {
-    if (isAttempted || !gameData || gameCompletedThisSession) return;
+    if (isAttempted || !gameData || sessionCompleted) return;
 
     setSelectedOption(option);
     setIsAttempted(true);
@@ -177,8 +175,8 @@ export default function FillInTheBlankPage() {
     const currentWordLowerCase = gameData.correctWord.toLowerCase();
 
     const afterCurrentQuestionAudio = () => {
-      if (practicedWordsInSession.size === wordList.length && wordList.length > 0 && !gameCompletedThisSession) {
-        setGameCompletedThisSession(true);
+      if (practicedWordsInSession.size === wordList.length && wordList.length > 0 && !sessionCompleted) {
+        setSessionCompleted(true);
         toast({
           variant: "success",
           title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Amazing, ${username}!` : 'Congratulations!'}</div>,
@@ -187,9 +185,9 @@ export default function FillInTheBlankPage() {
         });
         playCompletionSound();
         if (soundEffectsEnabled) {
-          speakText(username ? `Amazing, ${username}! You've completed all words in this Fill-in-the-Blank session! Time to claim your reward.` : "Congratulations! You've completed all words in this Fill-in-the-Blank session! Time to claim your reward.");
+          speakText(username ? `Amazing, ${username}! You've completed all words in this Fill-in-the-Blank session!` : "Congratulations! You've completed all words in this Fill-in-the-Blank session!");
         }
-      } else if (wordList.length > 1 && !gameCompletedThisSession) { 
+      } else if (wordList.length > 1 && !sessionCompleted) { 
         navigateWord('next');
       }
     };
@@ -246,20 +244,6 @@ export default function FillInTheBlankPage() {
           setTimeout(afterCurrentQuestionAudio, 2500); 
         }, incorrectDisplayDuration);
       }
-    }
-  };
-
-  const handleClaimReward = () => {
-    setIsRewardClaimedThisSession(true);
-    playRewardClaimedSound();
-    toast({
-      variant: "success",
-      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
-      description: `Great job, ${username || 'learner'}! You've earned +10 Sparkle Points! ✨`,
-      duration: 5000,
-    });
-    if (soundEffectsEnabled) {
-        speakText(`Reward claimed! You've earned 10 Sparkle Points!`);
     }
   };
   
@@ -347,7 +331,7 @@ export default function FillInTheBlankPage() {
           <CardDescription>Choose the word that best completes the sentence.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 min-h-[250px]">
-          {gameCompletedThisSession ? (
+          {sessionCompleted ? (
              <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
                <div className="flex flex-col items-center gap-4">
                  <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
@@ -355,15 +339,6 @@ export default function FillInTheBlankPage() {
                  <AlertDescription className="text-base">
                    You've successfully practiced all words in this Fill-in-the-Blank session!
                  </AlertDescription>
-                {isRewardClaimedThisSession ? (
-                    <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
-                        <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +10 ✨
-                    </div>
-                ) : (
-                    <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
-                        <Gift className="mr-2 h-5 w-5" /> Claim Your Reward!
-                    </Button>
-                )}
                  <div className="flex flex-col sm:flex-row gap-3 mt-3 w-full max-w-xs">
                     <Button onClick={() => loadWordAndSettingsData(true)} variant="outline" className="w-full">
                         <RefreshCcw className="mr-2 h-4 w-4" /> Play Again
@@ -478,7 +453,7 @@ export default function FillInTheBlankPage() {
             </div>
           )}
         </CardContent>
-         {isAttempted && gameData && !gameCompletedThisSession && (
+         {isAttempted && gameData && !sessionCompleted && (
             <CardFooter className="border-t pt-4">
                  <Alert variant={isCorrect ? "success" : "destructive"} className="w-full">
                     {isCorrect ? <Smile className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
@@ -493,7 +468,7 @@ export default function FillInTheBlankPage() {
         )}
       </Card>
       
-      {!gameCompletedThisSession && (
+      {!sessionCompleted && (
         <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
           <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
             <Button 
@@ -539,5 +514,3 @@ export default function FillInTheBlankPage() {
     </div>
   );
 }
-
-

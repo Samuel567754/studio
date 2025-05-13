@@ -8,9 +8,9 @@ import { getStoredWordList, getStoredReadingLevel, getStoredMasteredWords } from
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Info, Loader2, ArrowLeft, Gift, CheckCircle2, Trophy, RefreshCcw } from 'lucide-react'; 
+import { BookOpen, Info, Loader2, ArrowLeft, Trophy, RefreshCcw } from 'lucide-react'; 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { playRewardClaimedSound, playCompletionSound, speakText } from '@/lib/audio';
+import { playCompletionSound, speakText } from '@/lib/audio';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
@@ -20,8 +20,7 @@ export default function ReadingPage() {
   const [masteredWords, setMasteredWords] = useState<string[]>([]);
   const [readingLevel, setReadingLevel] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
-  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState(false);
-  const [sessionTrulyCompleted, setSessionTrulyCompleted] = useState(false); // Tracks if the reward step is also done
+  const [sessionCompleted, setSessionCompleted] = useState<boolean>(false); 
   const [lastScore, setLastScore] = useState<{ score: number; total: number } | null>(null);
 
   const { username } = useUserProfileStore();
@@ -33,8 +32,7 @@ export default function ReadingPage() {
     setMasteredWords(getStoredMasteredWords());
     setReadingLevel(getStoredReadingLevel("beginner"));
     if (isRestart) {
-      setIsRewardClaimedThisSession(false);
-      setSessionTrulyCompleted(false);
+      setSessionCompleted(false);
       setLastScore(null);
     }
   }, []);
@@ -57,28 +55,21 @@ export default function ReadingPage() {
   }, [loadReadingData]);
 
   const handleSessionCompletion = (score: number, totalQuestions: number) => {
-    setSessionTrulyCompleted(true); 
+    setSessionCompleted(true); 
     setLastScore({ score, total: totalQuestions });
-    // Toast and sound are handled in ReadingPractice, this is for reward logic
-    if (soundEffectsEnabled) {
-      speakText("Time to claim your reading reward!");
-    }
-  };
-
-  const handleClaimReward = () => {
-    setIsRewardClaimedThisSession(true);
-    playRewardClaimedSound();
+    const completionMessage = username ? `Well done, ${username}!` : 'Session Complete!';
+    const scoreMessage = `You scored ${score} out of ${totalQuestions}.`;
     toast({
       variant: "success",
-      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
-      description: `Well read, ${username || 'reader'}! You earned +15 Reading Stars! ⭐`,
-      duration: 5000,
+      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
+      description: scoreMessage,
+      duration: 7000,
     });
-     if (soundEffectsEnabled) {
-        speakText(`Reward claimed! You've earned 15 Reading Stars!`);
+    if (soundEffectsEnabled) {
+      playCompletionSound();
+      speakText(`${completionMessage} ${scoreMessage}`);
     }
   };
-
 
   if (!isMounted) {
      return (
@@ -133,7 +124,7 @@ export default function ReadingPage() {
         </div>
       </header>
 
-      {wordList.length === 0 && !sessionTrulyCompleted ? (
+      {wordList.length === 0 && !sessionCompleted ? (
          <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
             <div className="flex flex-col items-center gap-4">
             <Image 
@@ -154,7 +145,7 @@ export default function ReadingPage() {
             </AlertDescription>
             </div>
         </Alert>
-      ) : sessionTrulyCompleted ? (
+      ) : sessionCompleted ? (
          <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
             <CardHeader className="text-center">
                 <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-2" />
@@ -168,15 +159,6 @@ export default function ReadingPage() {
                 </p>
                 {lastScore && (
                     <p className="text-xl font-semibold">Your Score: <span className="text-accent">{lastScore.score} / {lastScore.total}</span></p>
-                )}
-                {isRewardClaimedThisSession ? (
-                    <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center justify-center gap-2">
-                        <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +15 ⭐
-                    </div>
-                ) : (
-                    <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
-                        <Gift className="mr-2 h-5 w-5" /> Claim Your Reading Stars!
-                    </Button>
                 )}
                 <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                     <Button onClick={() => loadReadingData(true)} size="lg" className="w-full sm:w-auto">
@@ -203,4 +185,3 @@ export default function ReadingPage() {
     </div>
   );
 }
-
