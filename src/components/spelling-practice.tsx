@@ -45,7 +45,8 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     setIsWordCorrectlySpelled(false);
     setShowAnswerTemporarily(false);
     if (wordToSpell && soundEffectsEnabled) {
-      speakText(`Spell the word: ${wordToSpell}`);
+      // Delay slightly to ensure UI updates before speech, avoiding overlap with previous word's sounds
+      setTimeout(() => speakText(`Spell the word: ${wordToSpell}`), 100);
     }
     inputRef.current?.focus();
   }, [wordToSpell, soundEffectsEnabled]);
@@ -59,10 +60,10 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     const firstLetter = wordToSpell.charAt(0).toUpperCase();
     const length = wordToSpell.length;
     let hint = `The word has ${length} letters and starts with "${firstLetter}".`;
-    if (wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 1 && length > 3) {
+    if (wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 1 && length > 3) { // Second hint
       hint += ` The second letter is "${wordToSpell.charAt(1)}".`;
     }
-    if (wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 2 && length > 5) {
+    if (wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 2 && length > 5) { // Third hint
        hint += ` It ends with "${wordToSpell.charAt(length - 1)}".`;
     }
     return hint;
@@ -81,23 +82,28 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
 
   const handleRevealAnswer = () => {
     setShowAnswerTemporarily(true);
-    setHintText(`The word was: ${wordToSpell}. Let's try the next one after this.`); // Keep hint for context if needed
+    // Set a specific message for reveal, or rely on the visual display.
+    // Forcing hintText to update here might override other important feedback.
+    // The visual of the word itself is the main reveal.
+    setHintText(null); // Clear any previous hint
+    setFeedback({ type: 'info', message: `The word was "${wordToSpell}". Let's move on.` });
     playNotificationSound();
   
     const afterRevealSequence = () => {
+      // Delay before calling onCorrectSpell to allow user to see the word
       setTimeout(() => {
         onCorrectSpell(); // This will trigger navigation to the next word/session completion
-      }, 2000); 
+      }, 2500); // Increased delay for better visibility of revealed answer
     };
   
     if (soundEffectsEnabled) {
       speakText(
-        `Okay, ${username ? username : 'learner'}. The word was ${wordToSpell}. Let's move to the next word soon.`,
+        `Okay, ${username ? username : 'learner'}. The word was ${wordToSpell}. Let's try the next one.`,
         undefined, 
         afterRevealSequence, 
         (errorEvent) => { 
           console.error("Speech error during reveal:", errorEvent.error);
-          afterRevealSequence(); 
+          afterRevealSequence(); // Proceed even if speech fails
         }
       );
     } else {
@@ -110,19 +116,18 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     e.preventDefault();
     if (!wordToSpell || !attempt.trim()) {
       setFeedback({type: 'info', message: 'Please enter your spelling attempt.'});
+      if (soundEffectsEnabled) speakText("Please type your spelling.");
       return;
     }
 
     const isCorrect = attempt.trim().toLowerCase() === wordToSpell.toLowerCase();
     
-    // Common logic for after speech (success or fail)
     const afterSpeechCallback = () => {
       if (isCorrect) {
+        // Delay before onCorrectSpell to allow animations/sounds to complete
         setTimeout(() => {
           onCorrectSpell();
-        }, 500 + wordToSpell.length * 80); // Adjusted delay
-      } else {
-        // If wrong, input remains for retry. No automatic next word.
+        }, 1200); // Adjust delay as needed
       }
     };
 
@@ -136,17 +141,17 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       const spelledOutMessage = `That's ${letters}.`;
 
       if (soundEffectsEnabled) {
-        speakText(`Correct! You spelled ${wordToSpell}.`, undefined, () => {
-          speakText(spelledOutMessage, undefined, () => {
-            playSuccessSound(); 
+        speakText(`Correct! You spelled ${wordToSpell}.`, undefined, () => { // Audio 1: Confirmation
+          speakText(spelledOutMessage, undefined, () => { // Audio 2: Letters spelled out
+            playSuccessSound(); // Sound effect
             toast({
               variant: "success",
               title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
               description: `You spelled "${wordToSpell}" correctly!`,
             });
             afterSpeechCallback();
-          }, afterSpeechCallback); // Call afterSpeechCallback if inner speak fails
-        }, afterSpeechCallback); // Call afterSpeechCallback if outer speak fails
+          }, (err) => { console.error("Error speaking letters:", err.error); afterSpeechCallback(); }); // If letters fail, still proceed
+        }, (err) => { console.error("Error speaking confirmation:", err.error); afterSpeechCallback(); }); // If confirmation fails, still proceed
       } else {
           playSuccessSound(); 
           toast({
@@ -163,10 +168,10 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     } else {
       const newWrongAttempts = wrongAttempts + 1;
       setWrongAttempts(newWrongAttempts);
-      setFeedback({type: 'destructive', message: `Not quite. Press the audio icon to hear the word again. Keep trying!`});
+      setFeedback({type: 'destructive', message: `Not quite. You spelled "${attempt.trim()}". Hear the word again or use a hint!`});
       playErrorSound();
       if (soundEffectsEnabled) {
-        speakText(`Not quite. Please try again.`, undefined, undefined, (err) => console.error("Error speaking 'not quite':", err));
+        speakText(`Not quite. You spelled "${attempt.trim()}". Please try again.`, undefined, undefined, (err) => console.error("Error speaking 'not quite':", err.error));
       }
       if (newWrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT && !showHintButton) {
         setShowHintButton(true);
@@ -193,7 +198,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
            <CardTitle className="flex items-center text-xl font-semibold text-primary"><Sparkles className="mr-2 h-5 w-5"/>Spell the Word</CardTitle>
          </CardHeader>
          <CardContent>
-           <p className="text-muted-foreground">Select a word or get suggestions to start spelling practice.</p>
+           <p className="text-muted-foreground">Loading word or select one from your list to start spelling practice.</p>
          </CardContent>
        </Card>
     );
@@ -212,7 +217,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       </CardHeader>
       <CardContent className="space-y-4">
         {isWordCorrectlySpelled && wordToSpell && (
-          <div className="text-center py-4 my-2 bg-green-500/10 rounded-lg" aria-live="polite">
+          <div className="text-center py-4 my-2 bg-green-500/10 rounded-lg" aria-live="polite" role="status">
             <p className="text-5xl md:text-7xl font-bold tracking-wider text-green-600 dark:text-green-400 flex justify-center items-center gap-x-1 md:gap-x-1.5">
               {wordToSpell.split('').map((letter, index) => (
                 <span 
@@ -226,9 +231,9 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
             </p>
           </div>
         )}
-         {showAnswerTemporarily && (
-          <div className="text-center py-4 my-2 bg-green-500/10 rounded-lg" aria-live="polite">
-            <p className="text-4xl md:text-5xl font-bold tracking-wider text-green-600 dark:text-green-400 flex justify-center items-center gap-x-1">
+         {showAnswerTemporarily && wordToSpell && (
+          <div className="text-center py-4 my-2 bg-blue-500/10 rounded-lg" aria-live="polite" role="status">
+            <p className="text-4xl md:text-5xl font-bold tracking-wider text-blue-600 dark:text-blue-400 flex justify-center items-center gap-x-1">
               {wordToSpell.split('').map((letter, index) => (
                  <span 
                   key={`revealed-${letter}-${index}`} 
@@ -239,11 +244,13 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
                 </span>
               ))}
             </p>
+             <p className="text-sm text-muted-foreground mt-2">The word was "{wordToSpell}". Moving to the next one.</p>
           </div>
         )}
 
         {!isWordCorrectlySpelled && !showAnswerTemporarily && (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" aria-labelledby="spell-form-title">
+            <h3 id="spell-form-title" className="sr-only">Spelling Input Area</h3>
             <div>
               <Label htmlFor="spell-input" className="sr-only">Enter spelling</Label>
               <Input
@@ -258,20 +265,21 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
                     feedback?.type === 'destructive' && "border-destructive ring-2 ring-destructive/50 focus-visible:ring-destructive"
                 )}
                 aria-label={`Spell the word you hear`}
+                aria-describedby="feedback-alert"
                 autoCapitalize="none"
                 autoCorrect="off"
-                disabled={feedback?.type === 'success'}
+                disabled={isWordCorrectlySpelled || showAnswerTemporarily}
                 autoFocus
               />
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              <Button type="submit" className="w-full sm:flex-1" size="lg" disabled={feedback?.type === 'success' || !attempt.trim()}>Check Spelling</Button>
-              {showHintButton && !hintText && (
+              <Button type="submit" className="w-full sm:flex-1" size="lg" disabled={isWordCorrectlySpelled || showAnswerTemporarily || !attempt.trim()}>Check Spelling</Button>
+              {showHintButton && !hintText && !isWordCorrectlySpelled && !showAnswerTemporarily && (
                 <Button type="button" variant="outline" onClick={handleShowHint} className="w-full sm:w-auto" size="lg">
                   <Lightbulb className="mr-2 h-5 w-5" /> Get Hint
                 </Button>
               )}
-              {wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 2 && !showAnswerTemporarily && (
+              {wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 2 && !isWordCorrectlySpelled && !showAnswerTemporarily && (
                 <Button type="button" variant="destructive" onClick={handleRevealAnswer} className="w-full sm:w-auto" size="lg">
                   <Eye className="mr-2 h-5 w-5" /> Reveal Answer
                 </Button>
@@ -279,8 +287,8 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
             </div>
           </form>
         )}
-        {hintText && !isWordCorrectlySpelled && (
-          <Alert variant="info" className="mt-4 animate-in fade-in-0">
+        {hintText && !isWordCorrectlySpelled && !showAnswerTemporarily && (
+          <Alert variant="info" className="mt-4 animate-in fade-in-0" role="status">
             <Lightbulb className="h-5 w-5" />
             <AlertTitle>Hint</AlertTitle>
             <AlertDescription>{hintText}</AlertDescription>
@@ -289,7 +297,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       </CardContent>
       {feedback && !isWordCorrectlySpelled && !showAnswerTemporarily && (
         <CardFooter className="animate-in fade-in-0 zoom-in-95 duration-300">
-          <Alert variant={feedback.type} className="w-full">
+          <Alert variant={feedback.type} className="w-full" id="feedback-alert" role="alert">
             {feedback.type === 'success' && <CheckCircle2 className="h-5 w-5" />}
             {feedback.type === 'destructive' && <XCircle className="h-5 w-5" />}
             {feedback.type === 'info' && <InfoIcon className="h-5 w-5" />}
