@@ -1,3 +1,4 @@
+
 "use client";
 import type { FC, FormEvent } from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -82,13 +83,30 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     setShowAnswerTemporarily(true);
     setHintText(`The word was: ${wordToSpell}. Let's try the next one after this.`);
     playNotificationSound();
+  
+    const afterRevealSequence = () => {
+      // Consistent delay before moving to the next word,
+      // allowing user to see the revealed answer.
+      setTimeout(() => {
+        onCorrectSpell(); 
+      }, 2000); // 2 seconds pause.
+    };
+  
     if (soundEffectsEnabled) {
-        speakText(`Okay, ${username ? username : 'learner'}. The word was ${wordToSpell}. Let's move to the next word soon.`);
+      speakText(
+        `Okay, ${username ? username : 'learner'}. The word was ${wordToSpell}. Let's move to the next word soon.`,
+        undefined, // onBoundary
+        afterRevealSequence, // onEnd: speech finished, now wait 2s
+        (errorEvent) => { // onError
+          console.error("Speech error during reveal:", errorEvent.error);
+          // Even if speech errors, proceed to the 2s visual pause then move on.
+          afterRevealSequence(); 
+        }
+      );
+    } else {
+      // If sound is not enabled, just start the 2s visual pause then move on.
+      afterRevealSequence();
     }
-    // Automatically move to next word after a delay
-    setTimeout(() => {
-        onCorrectSpell(); // Treat as "moving on" for the parent component
-    }, 4000); 
   };
 
 
@@ -292,3 +310,4 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     </Card>
   );
 };
+
