@@ -4,17 +4,19 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import {
   getStoredWordList,
   getStoredMasteredWords,
   getStoredReadingLevel,
   getStoredWordLength,
+  clearProgressStoredData, // Import clearProgressStoredData
 } from '@/lib/storage';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award } from 'lucide-react'; 
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert } from 'lucide-react'; 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -22,7 +24,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from "@/hooks/use-toast";
-import { playSuccessSound, playNotificationSound } from '@/lib/audio';
+import { playSuccessSound, playNotificationSound, playErrorSound } from '@/lib/audio';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { cn } from '@/lib/utils';
 
 
 interface ProfileData {
@@ -54,6 +68,9 @@ export default function ProfilePage() {
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const { toast } = useToast();
+  const router = useRouter(); // Initialize useRouter
+  const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
+
 
   useEffect(() => {
     loadUserProfileFromStorage(); 
@@ -100,6 +117,20 @@ export default function ProfilePage() {
       description: `Your information has been saved.`,
     });
     playSuccessSound();
+  };
+
+  const handleConfirmResetProgress = () => {
+    if (typeof window !== 'undefined') {
+        clearProgressStoredData();
+        toast({
+            title: <div className="flex items-center gap-2"><Trash2 className="h-5 w-5" />Progress Reset</div>,
+            description: "Your learning and app usage data has been cleared. You will see the introduction again.",
+            variant: "destructive"
+        });
+        playErrorSound();
+        router.push('/introduction'); // Redirect to introduction page
+    }
+    setIsConfirmResetOpen(false);
   };
 
 
@@ -331,6 +362,56 @@ export default function ProfilePage() {
             </CardContent>
         </Card>
       </div>
+
+       {/* Reset Progress Section */}
+      <Card className="shadow-lg border-destructive/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-600">
+        <CardHeader>
+          <CardTitle className="flex items-center text-2xl font-semibold text-destructive">
+            <Trash2 className="mr-3 h-6 w-6" aria-hidden="true" />
+            Reset All Progress
+          </CardTitle>
+          <CardDescription>
+            This will clear all your learning data, including word lists, mastered words, preferences, and tutorial status. This action is irreversible.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <AlertDialog open={isConfirmResetOpen} onOpenChange={setIsConfirmResetOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                className="w-full sm:w-auto"
+              >
+                <ShieldAlert className="mr-2 h-4 w-4" />
+                Confirm Reset All Progress
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                  <ShieldAlert className="h-6 w-6 text-destructive" />
+                  Are you absolutely sure?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. All your learning progress, word lists, mastered words, settings preferences (username, topics, theme, audio), and tutorial completion status will be permanently deleted. You will be taken back to the app introduction.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setIsConfirmResetOpen(false)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleConfirmResetProgress}
+                  className={cn("bg-destructive hover:bg-destructive/90 text-destructive-foreground")}
+                >
+                  Yes, Reset Everything
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardFooter>
+      </Card>
+
     </div>
   );
 }
+
+
+    
