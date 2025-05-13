@@ -8,11 +8,11 @@ import { SpellingPractice } from '@/components/spelling-practice';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Info, Pencil, ArrowLeft, Trophy, RefreshCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, Pencil, ArrowLeft, Trophy, RefreshCcw, Gift, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { playNavigationSound, playCompletionSound, speakText } from '@/lib/audio';
+import { playNavigationSound, playCompletionSound, speakText, playRewardClaimedSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 
@@ -27,15 +27,17 @@ export default function SpellingPage() {
 
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
   const [gameCompletedThisSession, setGameCompletedThisSession] = useState<boolean>(false);
+  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState<boolean>(false);
 
 
   const loadWordData = useCallback((isRestart: boolean = false) => {
     const storedList = getStoredWordList();
     setWordList(storedList);
 
-    if (isRestart || !gameCompletedThisSession || storedList.length === 0) {
+    if (isRestart) {
       setPracticedWordsInSession(new Set());
       setGameCompletedThisSession(false);
+      setIsRewardClaimedThisSession(false);
     }
     
 
@@ -49,14 +51,14 @@ export default function SpellingPage() {
 
       setCurrentIndex(validIndex);
       setCurrentWord(storedList[validIndex]);
-      if (storedIndex !== validIndex) { 
+      if (storedIndex !== validIndex || isRestart) { 
         storeCurrentIndex(validIndex); 
       }
     } else {
       setCurrentWord('');
       setCurrentIndex(0); 
     }
-  }, [gameCompletedThisSession]); 
+  }, []); 
 
   useEffect(() => {
     loadWordData();
@@ -104,7 +106,7 @@ export default function SpellingPage() {
             });
             playCompletionSound();
             if (soundEffectsEnabled) {
-                speakText(username ? `Amazing, ${username}! You've spelled all words in this session!` : "Congratulations! You've spelled all words in this session!");
+                speakText(username ? `Amazing, ${username}! You've spelled all words in this session! Time to claim your reward.` : "Congratulations! You've spelled all words in this session! Time to claim your reward.");
             }
         } else if (wordList.length > 1 && !gameCompletedThisSession) {
             navigateWord('next');
@@ -117,7 +119,7 @@ export default function SpellingPage() {
                 duration: 7000,
             });
             playCompletionSound();
-            if (soundEffectsEnabled) speakText(username ? `Fantastic, ${username}! You've spelled the word!` : "Fantastic! You've spelled the word!");
+            if (soundEffectsEnabled) speakText(username ? `Fantastic, ${username}! You've spelled the word! Time to claim your reward.` : "Fantastic! You've spelled the word! Time to claim your reward.");
         }
     };
     
@@ -127,6 +129,20 @@ export default function SpellingPage() {
         speakText(`Correct! You spelled ${currentWord}.`, undefined, afterCurrentWordAudio);
     } else {
        setTimeout(afterCurrentWordAudio, 1200); 
+    }
+  };
+
+  const handleClaimReward = () => {
+    setIsRewardClaimedThisSession(true);
+    playRewardClaimedSound();
+    toast({
+      variant: "success",
+      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
+      description: `Great job, ${username || 'learner'}! You've earned +10 Sparkle Points! ✨`,
+      duration: 5000,
+    });
+    if (soundEffectsEnabled) {
+        speakText(`Reward claimed! You've earned 10 Sparkle Points!`);
     }
   };
   
@@ -220,6 +236,15 @@ export default function SpellingPage() {
                                 <AlertDescription className="text-base">
                                     You've successfully spelled all words in this session!
                                 </AlertDescription>
+                                {isRewardClaimedThisSession ? (
+                                    <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
+                                        <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +10 ✨
+                                    </div>
+                                ) : (
+                                    <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
+                                        <Gift className="mr-2 h-5 w-5" /> Claim Your Reward!
+                                    </Button>
+                                )}
                                 <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full max-w-xs">
                                     <Button onClick={() => loadWordData(true)} variant="outline" className="w-full">
                                         <RefreshCcw className="mr-2 h-4 w-4" /> Play Again
@@ -257,4 +282,5 @@ export default function SpellingPage() {
     </div>
   );
 }
+
 

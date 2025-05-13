@@ -83,6 +83,25 @@ export function playCompletionSound(): void {
   }, 200);
 }
 
+export function playRewardClaimedSound(): void {
+  // A more magical, shimmering sound for claiming rewards
+  const { soundEffectsEnabled } = useAppSettingsStore.getState();
+  if (!soundEffectsEnabled) return;
+
+  // Ascending arpeggio using 'triangle' for sparkle
+  playSoundInternal('triangle', { start: 523.25, end: 659.25, bendDuration: 0.1 }, 0.06, 0.25); // C5 to E5
+  setTimeout(() => {
+    playSoundInternal('triangle', { start: 659.25, end: 783.99, bendDuration: 0.1 }, 0.05, 0.25); // E5 to G5
+  }, 80);
+  setTimeout(() => {
+    playSoundInternal('triangle', { start: 783.99, end: 1046.50, bendDuration: 0.1 }, 0.04, 0.3); // G5 to C6
+  }, 160);
+   // Add a final high sparkle
+  setTimeout(() => {
+    playSoundInternal('sine', 1318.51, 0.03, 0.15); // E6
+  }, 250);
+}
+
 
 export function playErrorSound(): void {
   // Less harsh descending 'square' wave buzz (A3 to F3)
@@ -166,7 +185,7 @@ export function speakText(
            if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
              console.error("Unhandled Speech synthesis error in speakText:", event.error, event.utterance?.text.substring(event.charIndex));
            } else if (event.error) {
-             console.warn("Unhandled Speech synthesis event (interrupted/canceled) in speakText:", event.error);
+             // console.warn("Unhandled Speech synthesis event (interrupted/canceled) in speakText:", event.error);
            }
         }
     };
@@ -194,6 +213,7 @@ export function speakText(
     return null;
   }
 }
+
 
 
 

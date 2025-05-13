@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Repeat, ListOrdered, Volume2, Mic, MicOff, Smile, Info, Trophy, RefreshCcw } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Repeat, ListOrdered, Volume2, Mic, MicOff, Smile, Info, Trophy, RefreshCcw, Gift } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playRewardClaimedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
@@ -53,9 +53,10 @@ export const TimesTableUI = () => {
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   
-  const [score, setScore] = useState(0); // Tracks correct answers in the session
-  const [problemsAttemptedInSession, setProblemsAttemptedInSession] = useState(0); // Tracks how many of the 12 multipliers have been presented
+  const [score, setScore] = useState(0); 
+  const [problemsAttemptedInSession, setProblemsAttemptedInSession] = useState(0); 
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isListening, setIsListening] = useState(false);
@@ -86,8 +87,7 @@ export const TimesTableUI = () => {
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
-    const completionMsg = `${username ? `Amazing job, ${username}!` : 'Table Complete!'} You scored ${finalScore} out of ${MAX_MULTIPLIER} for the ${selectedTable} times table.`;
-    // Visual feedback is handled by the sessionCompleted state change
+    const completionMsg = `${username ? `Amazing job, ${username}!` : 'Table Complete!'} You scored ${finalScore} out of ${MAX_MULTIPLIER} for the ${selectedTable} times table. Time to claim your reward!`;
     if (soundEffectsEnabled) {
         playCompletionSound();
         speakText(completionMsg);
@@ -120,6 +120,7 @@ export const TimesTableUI = () => {
     setScore(0);
     setProblemsAttemptedInSession(0);
     setSessionCompleted(false);
+    setIsRewardClaimedThisSession(false);
     resetProblemState();
     if (!isInitialLoad && soundEffectsEnabled) playNotificationSound();
     setIsLoading(false); 
@@ -168,7 +169,6 @@ export const TimesTableUI = () => {
 
 
     const afterFeedbackAudio = () => {
-      // Pass the score that will be current after this problem's result
       loadNextProblem(newCurrentScore);
     };
 
@@ -330,8 +330,21 @@ export const TimesTableUI = () => {
     if (sessionCompleted) {
         startNewTablePractice(selectedTable);
     } else {
-        // Skip current problem - pass current score as it's not being updated by this "skip" action
         loadNextProblem(score); 
+    }
+  };
+
+  const handleClaimReward = () => {
+    setIsRewardClaimedThisSession(true);
+    playRewardClaimedSound();
+    toast({
+      variant: "success",
+      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
+      description: `Awesome, ${username || 'multiplier'}! You earned +12 Multiplication Stars! 🌟✨`,
+      duration: 5000,
+    });
+    if (soundEffectsEnabled) {
+        speakText(`Reward claimed! You've earned 12 Multiplication Stars!`);
     }
   };
   
@@ -424,6 +437,15 @@ export const TimesTableUI = () => {
               <AlertDescription className="text-base">
                 You've practiced all problems for the {selectedTable} times table! Your score: {score}/{MAX_MULTIPLIER}.
               </AlertDescription>
+              {isRewardClaimedThisSession ? (
+                  <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
+                      <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +12 ✨
+                  </div>
+              ) : (
+                  <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
+                      <Gift className="mr-2 h-5 w-5" /> Claim Your Multiplication Stars!
+                  </Button>
+              )}
             </div>
           </Alert>
         ) : currentProblem && (
@@ -492,4 +514,5 @@ export const TimesTableUI = () => {
     </Card>
   );
 };
+
 

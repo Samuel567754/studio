@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathStoryProblem, type GenerateMathStoryProblemInput, type GenerateMathStoryProblemOutput } from '@/ai/flows/generate-math-story-problem';
-import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Trophy, Info } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Trophy, Info, Gift } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playRewardClaimedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
@@ -39,6 +39,7 @@ export const AiStoryProblemGameUI = () => {
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
   const [customTopics, setCustomTopics] = useState<string>('');
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -47,6 +48,7 @@ export const AiStoryProblemGameUI = () => {
   const { soundEffectsEnabled } = useAppSettingsStore();
 
   const fetchNewStoryProblem = useCallback(async (isNewSessionStart: boolean = false) => {
+    if (sessionCompleted && !isNewSessionStart) return; // Don't fetch if session is done and not explicitly restarting
     setIsLoading(true);
     setQuestionStates([]);
     setCurrentStoryProblem(null);
@@ -77,12 +79,13 @@ export const AiStoryProblemGameUI = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [difficulty, customTopics, favoriteTopics, username, toast, soundEffectsEnabled]);
+  }, [difficulty, customTopics, favoriteTopics, username, toast, soundEffectsEnabled, sessionCompleted]);
 
   const startNewSession = useCallback(() => {
     setCurrentStoryScore(0);
     setStoriesCompletedInSession(0);
     setSessionCompleted(false);
+    setIsRewardClaimedThisSession(false);
     fetchNewStoryProblem(true);
   }, [fetchNewStoryProblem]);
 
@@ -90,7 +93,7 @@ export const AiStoryProblemGameUI = () => {
   const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
     const completionMessage = username ? `Fantastic, ${username}!` : 'Session Complete!';
-    const description = `You've completed ${STORIES_PER_SESSION} stories. Well done!`;
+    const description = `You've completed ${STORIES_PER_SESSION} stories. Well done! Time to claim your reward.`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
@@ -154,7 +157,7 @@ export const AiStoryProblemGameUI = () => {
     const allCurrentStoryQuestionsAnswered = updatedQuestionStates.every(qs => qs.isSubmitted);
     
     const afterSpeechCallback = () => {
-      if (allCurrentStoryQuestionsAnswered) {
+      if (allCurrentStoryQuestionsAnswered && !sessionCompleted) { // Ensure not already session completed
         const newStoriesCompletedCount = storiesCompletedInSession + 1;
         setStoriesCompletedInSession(newStoriesCompletedCount); 
 
@@ -176,7 +179,7 @@ export const AiStoryProblemGameUI = () => {
            } else {
              setTimeout(() => {
                 fetchNewStoryProblem();
-             }, 800); // Reduced delay if no sound
+             }, 800); 
            }
         }
       }
@@ -280,9 +283,21 @@ export const AiStoryProblemGameUI = () => {
     startNewSession();
   }
 
+  const handleClaimReward = () => {
+    setIsRewardClaimedThisSession(true);
+    playRewardClaimedSound();
+    toast({
+      variant: "success",
+      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
+      description: `Great job, ${username || 'storyteller'}! You've earned +20 Story Points! 📚✨`,
+      duration: 5000,
+    });
+    if (soundEffectsEnabled) {
+        speakText(`Reward claimed! You've earned 20 Story Points!`);
+    }
+  };
+
   const allQuestionsAnsweredForCurrentStory = currentStoryProblem && questionStates.every(qs => qs.isSubmitted);
-  // Displayed stories completed should reflect the current number of finished stories.
-  // storiesCompletedInSession is updated when a story's processing (including feedback and next step logic) is done.
   const displayedStoryNumber = storiesCompletedInSession + (currentStoryProblem && !allQuestionsAnsweredForCurrentStory ? 1 : 0);
 
 
@@ -340,6 +355,15 @@ export const AiStoryProblemGameUI = () => {
               <AlertDescription className="text-base">
                 You've successfully completed {STORIES_PER_SESSION} stories in this session!
               </AlertDescription>
+              {isRewardClaimedThisSession ? (
+                  <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
+                      <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +20 📚✨
+                  </div>
+              ) : (
+                  <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
+                      <Gift className="mr-2 h-5 w-5" /> Claim Your Story Reward!
+                  </Button>
+              )}
               <Button onClick={startNewSession} variant="default" size="lg" className="mt-4 btn-glow">
                 <RefreshCcw className="mr-2 h-4 w-4" /> Play New Session
               </Button>
@@ -384,7 +408,7 @@ export const AiStoryProblemGameUI = () => {
                   <AccordionContent className="px-4 pb-4 pt-2 border-t">
                     <form onSubmit={(e) => { e.preventDefault(); handleSubmitAnswer(index); }} className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleSpeak(q.questionText + (q.explanation ? `. Explanation: ${q.explanation}` : ''))} aria-label={`Read question ${index + 1} aloud`} className="flex-shrink-0" disabled={isListening === index || questionStates[index]?.isSubmitted || !soundEffectsEnabled}>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => handleSpeak(q.questionText)} aria-label={`Read question ${index + 1} aloud`} className="flex-shrink-0" disabled={isListening === index || questionStates[index]?.isSubmitted || !soundEffectsEnabled}>
                             <Volume2 className="h-5 w-5" />
                         </Button>
                         <Label htmlFor={`story-q-${index}-answer`} className="sr-only">Answer for question {index + 1}</Label>
@@ -442,8 +466,6 @@ export const AiStoryProblemGameUI = () => {
             if (sessionCompleted) {
               startNewSession();
             } else {
-              // If current story is incomplete, this skips it.
-              // If current story is complete and auto-loading, this will also fetch a new one (could be a quick double fetch, but harmless).
               fetchNewStoryProblem(); 
             }
           }}
@@ -457,4 +479,5 @@ export const AiStoryProblemGameUI = () => {
     </Card>
   );
 };
+
 

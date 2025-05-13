@@ -1,14 +1,14 @@
 
 "use client";
 
-import * as React from 'react'; // Added React import
+import * as React from 'react'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, ChevronsRight, Mic, MicOff, Smile, Info, Trophy } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, ChevronsRight, Mic, MicOff, Smile, Info, Trophy, Gift } from 'lucide-react';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playRewardClaimedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
@@ -30,7 +30,7 @@ const generateSequenceProblem = (): SequenceProblem => {
   const diffTypes = [1, 2, 3, 5, 10]; 
   const difference = diffTypes[Math.floor(Math.random() * diffTypes.length)];
   const length = 4; 
-  const blankIndex = Math.floor(Math.random() * (length -1)) + 1; // Ensure blank is not first or last for typical "middle" blank
+  const blankIndex = Math.floor(Math.random() * (length -1)) + 1; 
 
   const fullSequence: number[] = [];
   for (let i = 0; i < length; i++) {
@@ -55,6 +55,7 @@ export const NumberSequencingUI = () => {
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isListening, setIsListening] = useState(false);
+  const [isRewardClaimedThisSession, setIsRewardClaimedThisSession] = useState(false);
   
   const [isAttempted, setIsAttempted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -68,10 +69,12 @@ export const NumberSequencingUI = () => {
   const { soundEffectsEnabled } = useAppSettingsStore();
 
   const loadNewProblem = useCallback((isNewSessionStart: boolean = false) => {
+    if (sessionCompleted && !isNewSessionStart) return;
     if (isNewSessionStart) {
         setScore(0);
         setProblemsAttemptedInSession(0);
         setSessionCompleted(false);
+        setIsRewardClaimedThisSession(false);
     }
     setIsLoading(true);
     setFeedback(null);
@@ -86,12 +89,12 @@ export const NumberSequencingUI = () => {
     setIsLoading(false);
     if (!isNewSessionStart && soundEffectsEnabled) playNotificationSound();
     answerInputRef.current?.focus();
-  },[soundEffectsEnabled]);
+  },[soundEffectsEnabled, sessionCompleted]);
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}.`;
+    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. Time to claim your reward!`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
@@ -134,7 +137,7 @@ export const NumberSequencingUI = () => {
         setProblemsAttemptedInSession(newProblemsAttempted);
 
         if (newProblemsAttempted >= PROBLEMS_PER_SESSION) {
-            handleSessionCompletion(newCurrentScore); // Pass calculated score
+            handleSessionCompletion(newCurrentScore);
         } else {
             loadNewProblem();
         }
@@ -298,17 +301,31 @@ export const NumberSequencingUI = () => {
   
   const handleSkipOrNextProblem = () => {
     if (sessionCompleted) {
-        loadNewProblem(true); // Starts a new session
+        loadNewProblem(true); 
     } else {
-        const newProblemsAttempted = problemsAttemptedInSession + 1; // Increment even on skip
+        const newProblemsAttempted = problemsAttemptedInSession + 1; 
         
         if (newProblemsAttempted >= PROBLEMS_PER_SESSION) {
-             setProblemsAttemptedInSession(newProblemsAttempted); // Update state before calling completion
-             handleSessionCompletion(score); // Pass current score as it wasn't changed by this problem
+             setProblemsAttemptedInSession(newProblemsAttempted); 
+             handleSessionCompletion(score); 
         } else {
             setProblemsAttemptedInSession(newProblemsAttempted);
             loadNewProblem();
         }
+    }
+  };
+
+  const handleClaimReward = () => {
+    setIsRewardClaimedThisSession(true);
+    playRewardClaimedSound();
+    toast({
+      variant: "success",
+      title: <div className="flex items-center gap-2"><Gift className="h-5 w-5 text-yellow-400" /> Reward Claimed!</div>,
+      description: `Pattern master, ${username || 'friend'}! You got +10 Sequence Gems! 💎✨`,
+      duration: 5000,
+    });
+    if (soundEffectsEnabled) {
+        speakText(`Reward claimed! You've earned 10 Sequence Gems!`);
     }
   };
 
@@ -395,6 +412,15 @@ export const NumberSequencingUI = () => {
               <AlertDescription className="text-base">
                 You've successfully completed {PROBLEMS_PER_SESSION} problems! Final score: {score}.
               </AlertDescription>
+              {isRewardClaimedThisSession ? (
+                  <div className="mt-3 text-lg font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
+                      <CheckCircle2 className="h-6 w-6 text-green-500" /> Reward Claimed! +10 ✨
+                  </div>
+              ) : (
+                  <Button onClick={handleClaimReward} size="lg" className="mt-3 btn-glow bg-yellow-500 hover:bg-yellow-600 text-white">
+                      <Gift className="mr-2 h-5 w-5" /> Claim Your Reward!
+                  </Button>
+              )}
             </div>
           </Alert>
         ) : currentProblem && (
@@ -462,4 +488,5 @@ export const NumberSequencingUI = () => {
     </Card>
   );
 };
+
 
