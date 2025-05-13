@@ -1,4 +1,3 @@
-
 "use client";
 import type { FC, FormEvent } from 'react';
 import { useState, useEffect } from 'react';
@@ -47,24 +46,36 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       setFeedback({type: 'success', message: successMessage});
       addMasteredWord(wordToSpell); 
       
-      toast({
-        variant: "success",
-        title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
-        description: `You spelled "${wordToSpell}" correctly!`,
-      });
-      playSuccessSound(); 
+      if (soundEffectsEnabled) {
+        speakText(`Correct! You spelled ${wordToSpell}.`, undefined, () => {
+             toast({
+                variant: "success",
+                title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
+                description: `You spelled "${wordToSpell}" correctly!`,
+             });
+             playSuccessSound(); 
+             onCorrectSpell();
+        });
+      } else {
+          toast({
+            variant: "success",
+            title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
+            description: `You spelled "${wordToSpell}" correctly!`,
+          });
+          playSuccessSound(); 
+          onCorrectSpell();
+      }
       
-      onCorrectSpell(); 
 
       setTimeout(() => {
         setAttempt('');
         // Feedback will be cleared by the parent component navigating or by wordToSpell changing
       }, 1500); // Keep feedback visible for a bit longer before parent potentially clears it
     } else {
-      setFeedback({type: 'destructive', message: `Not quite. The word is "${wordToSpell}". Keep trying!`});
+      setFeedback({type: 'destructive', message: `Not quite. Press the audio icon to hear the word again. Keep trying!`});
       playErrorSound();
       if (soundEffectsEnabled) {
-        speakText(`Not quite. The word is ${wordToSpell}. Please try again.`);
+        speakText(`Not quite. Press the audio icon to hear the word again. Please try again.`);
       }
     }
   };
@@ -95,8 +106,8 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       <CardHeader>
         <CardTitle className="flex items-center text-xl font-semibold text-primary"><Sparkles className="mr-2 h-5 w-5"/>Spell the Word</CardTitle>
         <div className="flex items-center justify-between">
-            <CardDescription>Try spelling the word: <strong className="text-foreground">{wordToSpell}</strong></CardDescription>
-            <Button variant="ghost" size="icon" onClick={handleSpeakWordToSpell} aria-label={`Listen to the word ${wordToSpell}`} disabled={!soundEffectsEnabled}>
+            <CardDescription>Press the audio icon to listen to the word again.</CardDescription>
+            <Button variant="ghost" size="icon" onClick={handleSpeakWordToSpell} aria-label={`Listen to the word to spell`} disabled={!soundEffectsEnabled}>
                 <Volume2 className="h-5 w-5"/>
             </Button>
         </div>
@@ -112,7 +123,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
               onChange={(e) => setAttempt(e.target.value)}
               placeholder="Type your spelling here"
               className="text-xl md:text-2xl p-3 md:p-4 h-auto"
-              aria-label={`Spell the word ${wordToSpell}`}
+              aria-label={`Spell the word you hear`}
               autoCapitalize="none"
               autoCorrect="off"
               disabled={feedback?.type === 'success'}
@@ -139,4 +150,3 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     </Card>
   );
 };
-

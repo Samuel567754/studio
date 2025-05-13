@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { WordDisplay } from '@/components/word-display';
+// import { WordDisplay } from '@/components/word-display'; // Removed WordDisplay
 import { SpellingPractice } from '@/components/spelling-practice';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
@@ -122,7 +121,10 @@ export default function SpellingPage() {
     };
     
     if (soundEffectsEnabled) {
-        speakText(`Correct! You spelled ${currentWord}.`, undefined, afterCurrentWordAudio);
+        // The success toast is handled by SpellingPractice now, so we just need to handle navigation logic.
+        // The onCorrectSpell callback in SpellingPractice will call this after its own audio.
+        // So, we just wait for the parent to call this then proceed.
+        setTimeout(afterCurrentWordAudio, 500); // Small delay to ensure parent audio finishes
     } else {
        setTimeout(afterCurrentWordAudio, 1200); 
     }
@@ -134,8 +136,7 @@ export default function SpellingPage() {
         <Card className="shadow-lg animate-pulse">
             <CardHeader><div className="h-6 w-1/3 bg-muted rounded"></div></CardHeader>
             <CardContent className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
-                <div className="h-20 w-3/4 bg-muted rounded"></div>
-                <div className="h-12 w-1/2 bg-primary/50 rounded"></div>
+                {/* Removed WordDisplay placeholder */}
             </CardContent>
         </Card>
         <Card className="shadow-lg animate-pulse">
@@ -204,7 +205,7 @@ export default function SpellingPage() {
         </Alert>
       ) : (
         <>
-            <WordDisplay word={currentWord} />
+            {/* WordDisplay component removed */}
             <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
               {sessionCompleted ? (
                  <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
