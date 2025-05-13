@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { WordDisplay } from '@/components/word-display';
+// import { WordDisplay } from '@/components/word-display'; // Removed WordDisplay
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex, getStoredReadingLevel } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
@@ -321,7 +321,7 @@ export default function FillInTheBlankPage() {
         </div>
       </header>
 
-      <WordDisplay word={currentWordForGame} />
+      {/* WordDisplay component removed from here */}
       
       <Card className="shadow-lg w-full animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
         <CardHeader>
@@ -514,3 +514,4 @@ export default function FillInTheBlankPage() {
     </div>
   );
 }
+
