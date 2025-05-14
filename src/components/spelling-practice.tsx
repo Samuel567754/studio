@@ -45,7 +45,6 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     setIsWordCorrectlySpelled(false);
     setShowAnswerTemporarily(false);
     if (wordToSpell && soundEffectsEnabled) {
-      // Delay slightly to ensure UI updates before speech, avoiding overlap with previous word's sounds
       setTimeout(() => speakText(`Spell the word: ${wordToSpell}`), 100);
     }
     inputRef.current?.focus();
@@ -60,10 +59,10 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     const firstLetter = wordToSpell.charAt(0).toUpperCase();
     const length = wordToSpell.length;
     let hint = `The word has ${length} letters and starts with "${firstLetter}".`;
-    if (wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 1 && length > 3) { // Second hint
+    if (wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 1 && length > 3) { 
       hint += ` The second letter is "${wordToSpell.charAt(1)}".`;
     }
-    if (wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 2 && length > 5) { // Third hint
+    if (wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 2 && length > 5) { 
        hint += ` It ends with "${wordToSpell.charAt(length - 1)}".`;
     }
     return hint;
@@ -82,28 +81,36 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
 
   const handleRevealAnswer = () => {
     setShowAnswerTemporarily(true);
-    // Set a specific message for reveal, or rely on the visual display.
-    // Forcing hintText to update here might override other important feedback.
-    // The visual of the word itself is the main reveal.
-    setHintText(null); // Clear any previous hint
     setFeedback({ type: 'info', message: `The word was "${wordToSpell}". Let's move on.` });
     playNotificationSound();
   
     const afterRevealSequence = () => {
-      // Delay before calling onCorrectSpell to allow user to see the word
       setTimeout(() => {
-        onCorrectSpell(); // This will trigger navigation to the next word/session completion
-      }, 2500); // Increased delay for better visibility of revealed answer
+        onCorrectSpell(); 
+      }, 2500); 
     };
   
     if (soundEffectsEnabled) {
+      const initialRevealMessage = `Okay, ${username ? username : 'learner'}. The word was ${wordToSpell}.`;
       speakText(
-        `Okay, ${username ? username : 'learner'}. The word was ${wordToSpell}. Let's try the next one.`,
+        initialRevealMessage,
         undefined, 
-        afterRevealSequence, 
+        () => { // onEnd for initialRevealMessage
+          const letters = wordToSpell.split('').join(', '); 
+          const spelledOutMessage = `That's ${letters}. Let's try the next one.`;
+          speakText(
+            spelledOutMessage,
+            undefined,
+            afterRevealSequence, // onEnd for spelledOutMessage
+            (errorEvent) => {
+              console.error("Speech error during letter spelling:", errorEvent.error);
+              afterRevealSequence(); // Proceed even if letter spelling fails
+            }
+          );
+        }, 
         (errorEvent) => { 
-          console.error("Speech error during reveal:", errorEvent.error);
-          afterRevealSequence(); // Proceed even if speech fails
+          console.error("Speech error during initial reveal:", errorEvent.error);
+          afterRevealSequence(); // Proceed even if initial reveal speech fails
         }
       );
     } else {
@@ -124,10 +131,9 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     
     const afterSpeechCallback = () => {
       if (isCorrect) {
-        // Delay before onCorrectSpell to allow animations/sounds to complete
         setTimeout(() => {
           onCorrectSpell();
-        }, 1200); // Adjust delay as needed
+        }, 1200); 
       }
     };
 
@@ -141,17 +147,17 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       const spelledOutMessage = `That's ${letters}.`;
 
       if (soundEffectsEnabled) {
-        speakText(`Correct! You spelled ${wordToSpell}.`, undefined, () => { // Audio 1: Confirmation
-          speakText(spelledOutMessage, undefined, () => { // Audio 2: Letters spelled out
-            playSuccessSound(); // Sound effect
+        speakText(`Correct! You spelled ${wordToSpell}.`, undefined, () => { 
+          speakText(spelledOutMessage, undefined, () => { 
+            playSuccessSound(); 
             toast({
               variant: "success",
               title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
               description: `You spelled "${wordToSpell}" correctly!`,
             });
             afterSpeechCallback();
-          }, (err) => { console.error("Error speaking letters:", err.error); afterSpeechCallback(); }); // If letters fail, still proceed
-        }, (err) => { console.error("Error speaking confirmation:", err.error); afterSpeechCallback(); }); // If confirmation fails, still proceed
+          }, (err) => { console.error("Error speaking letters:", err.error); afterSpeechCallback(); }); 
+        }, (err) => { console.error("Error speaking confirmation:", err.error); afterSpeechCallback(); }); 
       } else {
           playSuccessSound(); 
           toast({
