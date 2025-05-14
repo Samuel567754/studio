@@ -203,7 +203,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Incomplete Test</div>,
         description: "Please answer all questions before submitting.",
       });
-      if (soundEffectsEnabled) playNotificationSound();
+      // Removed: if (soundEffectsEnabled) playNotificationSound();
       return;
     }
 
