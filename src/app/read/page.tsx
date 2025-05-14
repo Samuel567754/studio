@@ -55,24 +55,28 @@ export default function ReadingPage() {
   }, [loadReadingData]);
 
   const handleSessionCompletion = (score: number, totalQuestions: number) => {
-    setSessionCompleted(true); // This will cause ReadingPractice to unmount
+    setSessionCompleted(true); 
     setLastScore({ score, total: totalQuestions });
-    const completionMessage = username ? `Well done, ${username}!` : 'Session Complete!';
-    const scoreMessage = `You scored ${score} out of ${totalQuestions}.`;
+
+    const greeting = username ? `Well done, ${username}!` : 'Session Complete!';
+    const scoreAnnouncement = `You scored ${score} out of ${totalQuestions}.`;
+    const encouragement = score > (totalQuestions / 2) ? "Keep up the great reading!" : "That was a good effort, keep practicing!";
+    
+    const fullToastMessage = `${greeting} ${scoreAnnouncement}`;
+
     toast({
       variant: "success",
-      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
-      description: scoreMessage,
+      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{greeting}</div>,
+      description: scoreAnnouncement,
       duration: 7000,
     });
 
-    // Delay speech slightly to ensure ReadingPractice cleanup has occurred
     setTimeout(() => {
       if (soundEffectsEnabled) {
         playCompletionSound();
-        speakText(`${completionMessage} ${scoreMessage}`);
+        speakText(`${greeting} ${scoreAnnouncement} ${encouragement}`);
       }
-    }, 100); // Small delay, e.g., 100ms
+    }, 150); 
   };
 
   if (!isMounted) {
