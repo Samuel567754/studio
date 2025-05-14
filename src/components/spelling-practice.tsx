@@ -134,14 +134,6 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     const isCorrect = trimmedAttempt.toLowerCase() === wordToSpell.toLowerCase();
     setDisplayedAttempt(trimmedAttempt); 
     
-    const afterSpeechCallback = () => {
-      if (isCorrect) {
-        setTimeout(() => {
-          onCorrectSpell();
-        }, 500); 
-      }
-    };
-
     if (isCorrect) {
       const successMessage = `${username ? username + ", y" : "Y"}ou spelled it right: "${wordToSpell}"!`;
       setFeedback({type: 'success', message: successMessage});
@@ -153,6 +145,12 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
         description: `You spelled "${wordToSpell}" correctly!`,
       });
       addMasteredWord(wordToSpell); 
+
+      const afterSpeechCallback = () => {
+        setTimeout(() => {
+          onCorrectSpell();
+        }, 500); 
+      };
 
       const letters = wordToSpell.split('').join(', '); 
       const spelledOutMessage = `That's ${letters}.`;
@@ -220,7 +218,14 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="text-center py-4 my-2 min-h-[80px] md:min-h-[120px] flex items-center justify-center" aria-live="polite" role="status">
+        <div 
+          className={cn(
+            "text-center py-4 my-2 min-h-[80px] md:min-h-[120px] flex items-center justify-center rounded-lg",
+            (isWordCorrectlySpelled || showAnswerTemporarily || (displayedAttempt && feedback?.type === 'destructive')) && "bg-muted/50 dark:bg-muted/30 p-4 shadow-inner" 
+          )} 
+          aria-live="polite" 
+          role="status"
+        >
             {isWordCorrectlySpelled && wordToSpell && (
             <p className="text-5xl md:text-7xl font-bold tracking-wider text-green-600 dark:text-green-400 flex justify-center items-center gap-x-1 md:gap-x-1.5">
                 {wordToSpell.split('').map((letter, index) => (
