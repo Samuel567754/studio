@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -187,7 +188,7 @@ export default function SpellingPage() {
          <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
             <div className="flex flex-col items-center gap-4">
             <Image 
-                src="https://plus.unsplash.com/premium_photo-1687686677116-40e822dfbc51?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDF8fHNwZWxsJTIwd29yZHN8ZW58MHx8MHx8fDA%3D" 
+                src="https://placehold.co/200x150.png" 
                 alt="Pencil and paper ready for spelling"
                 width={200}
                 height={150}

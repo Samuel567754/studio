@@ -271,7 +271,7 @@ export default function FillInTheBlankPage() {
         <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
           <div className="flex flex-col items-center gap-4">
             <Image 
-              src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YWl8ZW58MHx8MHx8fDA%3D" 
+              src="https://placehold.co/200x150.png" 
               alt="AI brain generating word puzzle"
               width={200}
               height={150}
