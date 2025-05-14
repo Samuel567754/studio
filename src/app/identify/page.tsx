@@ -69,7 +69,7 @@ export default function IdentifyWordPage() {
       setCurrentWord('');
       setCurrentIndex(0);
     }
-  }, [sessionCompleted, speakWordWithPrompt, soundEffectsEnabled]); // Added soundEffectsEnabled
+  }, [sessionCompleted, speakWordWithPrompt, soundEffectsEnabled]); 
 
   useEffect(() => {
     loadWordData();
@@ -220,12 +220,12 @@ export default function IdentifyWordPage() {
         <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
             <div className="flex flex-col items-center gap-4">
             <Image 
-                src="https://images.unsplash.com/photo-1503428593586-e225b39bddfe?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Y2hpbGQlMjBsZWFybmluZyUyMHdvcmRzfGVufDB8fDB8fHww"
+                src="https://images.unsplash.com/photo-1673515334717-da4d85aaf38b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D"
                 alt="Child with a magnifying glass looking at words"
                 width={200}
                 height={150}
                 className="rounded-lg shadow-md mb-3"
-                data-ai-hint="child magnifying glass words"
+                data-ai-hint="child learning words"
             />
             <Target className="h-6 w-6 text-primary" aria-hidden="true" />
             <AlertTitle className="text-xl font-semibold mb-2">Not Enough Words!</AlertTitle>

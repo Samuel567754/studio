@@ -251,12 +251,12 @@ export default function DefinitionMatchPage() {
         <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
           <div className="flex flex-col items-center gap-4">
             <Image 
-              src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8YWklMjBjaXJjdWl0fGVufDB8fDB8fHww"
+              src="https://plus.unsplash.com/premium_photo-1666739032226-63f36dbe95d3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fGxlYXJuaW5nJTIwd29yZHN8ZW58MHx8MHx8fDA%3D"
               alt="AI circuitry connecting ideas for definitions"
               width={200}
               height={150}
               className="rounded-lg shadow-md mb-3"
-              data-ai-hint="AI circuit definition"
+              data-ai-hint="AI definition"
             />
             <Lightbulb className="h-6 w-6 text-primary" aria-hidden="true" />
             <AlertTitle className="text-xl font-semibold mb-2">Add Words to Play!</AlertTitle>

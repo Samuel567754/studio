@@ -184,7 +184,7 @@ export default function SpellingPage() {
          <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
             <div className="flex flex-col items-center gap-4">
             <Image 
-                src="https://images.unsplash.com/photo-1456735190827-d1262f71b8a3?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8c3BlbGxpbmd8ZW58MHx8MHx8fDA%3D" 
+                src="https://plus.unsplash.com/premium_photo-1725400811474-0a8720cb0227?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
                 alt="Pencil and paper ready for spelling"
                 width={200}
                 height={150}
