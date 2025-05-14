@@ -28,6 +28,12 @@ export default function IdentifyWordPage() {
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
   const [sessionCompleted, setSessionCompleted] = useState<boolean>(false);
 
+  const speakWordWithPrompt = useCallback((wordToSpeak: string) => {
+    if (wordToSpeak && soundEffectsEnabled) {
+      speakText(`Identify the word: ${wordToSpeak}`);
+    }
+  }, [soundEffectsEnabled]);
+
   const loadWordData = useCallback((isRestart: boolean = false) => {
     const storedList = getStoredWordList();
     setWordList(storedList);
@@ -49,9 +55,10 @@ export default function IdentifyWordPage() {
       setCurrentIndex(validIndex);
       const newWord = storedList[validIndex];
       setCurrentWord(newWord);
-      if (newWord && soundEffectsEnabled && !sessionCompleted && !isRestart) { // Avoid speaking on initial restart to prevent double audio with game setup
-         // Delay slightly to ensure WordIdentificationGame might have set up its options first
-        setTimeout(() => speakText(newWord), 200);
+      // Delay slightly to ensure WordIdentificationGame might have set up its options first
+      // and to allow UI to settle before speaking.
+      if (!sessionCompleted && !isRestart) { // Avoid speaking on initial restart to prevent double audio with game setup
+        setTimeout(() => speakWordWithPrompt(newWord), 300); 
       }
       if (storedIndex !== validIndex || isRestart) {
         storeCurrentIndex(validIndex);
@@ -60,7 +67,7 @@ export default function IdentifyWordPage() {
       setCurrentWord('');
       setCurrentIndex(0);
     }
-  }, [sessionCompleted, soundEffectsEnabled]);
+  }, [sessionCompleted, speakWordWithPrompt]);
 
   useEffect(() => {
     loadWordData();
@@ -90,10 +97,8 @@ export default function IdentifyWordPage() {
     const newWordToSpeak = wordList[newIndex];
     setCurrentWord(newWordToSpeak);
     storeCurrentIndex(newIndex);
-    if (newWordToSpeak && soundEffectsEnabled) {
-        // Delay speaking to allow UI to update and game component to re-render if needed
-        setTimeout(() => speakText(newWordToSpeak), 100);
-    }
+    // Delay speaking to allow UI to update and game component to re-render if needed
+    setTimeout(() => speakWordWithPrompt(newWordToSpeak), 150); 
     playNavigationSound();
   };
 
@@ -132,7 +137,7 @@ export default function IdentifyWordPage() {
         } else if (wordList.length === 1 && !sessionCompleted && !correct) {
             // Do nothing, allow retry for the single word.
              if (currentWord && soundEffectsEnabled) {
-                setTimeout(() => speakText(currentWord), 1000); // Re-speak the word after incorrect attempt on single word
+                setTimeout(() => speakWordWithPrompt(currentWord), 1000); // Re-speak the word after incorrect attempt on single word
             }
         }
     };
@@ -297,3 +302,4 @@ export default function IdentifyWordPage() {
     </div>
   );
 }
+
