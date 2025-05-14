@@ -90,7 +90,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     const afterRevealSequence = () => {
       setTimeout(() => {
         onCorrectSpell(); 
-      }, 2500); 
+      }, 1500); // Delay before moving on to allow user to see revealed answer
     };
   
     if (soundEffectsEnabled) {
@@ -132,45 +132,39 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
 
     const trimmedAttempt = attempt.trim();
     const isCorrect = trimmedAttempt.toLowerCase() === wordToSpell.toLowerCase();
-    setDisplayedAttempt(trimmedAttempt); // Store the attempt for display
+    setDisplayedAttempt(trimmedAttempt); 
     
     const afterSpeechCallback = () => {
       if (isCorrect) {
         setTimeout(() => {
           onCorrectSpell();
-        }, 1200); 
+        }, 500); // Reduced delay after correct audio finishes
       }
     };
 
     if (isCorrect) {
       const successMessage = `${username ? username + ", y" : "Y"}ou spelled it right: "${wordToSpell}"!`;
+      // Show visual feedback immediately
       setFeedback({type: 'success', message: successMessage});
-      addMasteredWord(wordToSpell); 
       setIsWordCorrectlySpelled(true);
+      playSuccessSound(); 
+      toast({
+        variant: "success",
+        title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
+        description: `You spelled "${wordToSpell}" correctly!`,
+      });
+      addMasteredWord(wordToSpell); 
 
       const letters = wordToSpell.split('').join(', '); 
       const spelledOutMessage = `That's ${letters}.`;
 
       if (soundEffectsEnabled) {
         speakText(`Correct! You spelled ${wordToSpell}.`, undefined, () => { 
-          speakText(spelledOutMessage, undefined, () => { 
-            playSuccessSound(); 
-            toast({
-              variant: "success",
-              title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
-              description: `You spelled "${wordToSpell}" correctly!`,
-            });
-            afterSpeechCallback();
-          }, (err) => { console.error("Error speaking letters:", err.error); afterSpeechCallback(); }); 
+          speakText(spelledOutMessage, undefined, afterSpeechCallback, 
+            (err) => { console.error("Error speaking letters:", err.error); afterSpeechCallback(); }); 
         }, (err) => { console.error("Error speaking confirmation:", err.error); afterSpeechCallback(); }); 
       } else {
-          playSuccessSound(); 
-          toast({
-            variant: "success",
-            title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Great Job, ${username}!` : 'Great Job!'}</div>,
-            description: `You spelled "${wordToSpell}" correctly!`,
-          });
-          afterSpeechCallback();
+        afterSpeechCallback();
       }
       
       setWrongAttempts(0);
@@ -227,7 +221,6 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Animated Word Display Area */}
         <div className="text-center py-4 my-2 min-h-[80px] md:min-h-[120px] flex items-center justify-center" aria-live="polite" role="status">
             {isWordCorrectlySpelled && wordToSpell && (
             <p className="text-5xl md:text-7xl font-bold tracking-wider text-green-600 dark:text-green-400 flex justify-center items-center gap-x-1 md:gap-x-1.5">
@@ -262,7 +255,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
                     {displayedAttempt.split('').map((letter, index) => (
                     <span 
                         key={`attempt-${letter}-${index}`} 
-                        className="inline-block animate-shake" // Use shake for incorrect attempts
+                        className="inline-block animate-shake"
                     >
                         {letter}
                     </span>
@@ -274,7 +267,6 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
             )}
         </div>
         
-        {/* Form (always visible, but disabled when word is spelled/revealed) */}
         <form onSubmit={handleSubmit} className="space-y-4" aria-labelledby="spell-form-title">
           <h3 id="spell-form-title" className="sr-only">Spelling Input Area</h3>
           <div>
