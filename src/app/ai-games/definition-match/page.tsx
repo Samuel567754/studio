@@ -248,26 +248,29 @@ export default function DefinitionMatchPage() {
             </Link>
           </Button>
         </div>
-        <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
-          <div className="flex flex-col items-center gap-4">
+        <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
+          <div className="relative h-80 md:h-96 w-full">
             <Image 
               src="https://plus.unsplash.com/premium_photo-1666739032226-63f36dbe95d3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fGxlYXJuaW5nJTIwd29yZHN8ZW58MHx8MHx8fDA%3D"
               alt="AI circuitry connecting ideas for definitions"
-              width={200}
-              height={150}
-              className="rounded-lg shadow-md mb-3"
+              layout="fill"
+              objectFit="cover"
+              className="absolute inset-0"
               data-ai-hint="AI definition"
             />
-            <Lightbulb className="h-6 w-6 text-primary" aria-hidden="true" />
-            <AlertTitle className="text-xl font-semibold mb-2">Add Words to Play!</AlertTitle>
-            <AlertDescription className="text-base">
-              You need at least one word in your practice list to play the Word Definition Match game.
-              Please go to the{' '}
-              <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/learn">Learn Words</Link></Button>
-              {' '}page to add words.
-            </AlertDescription>
+            <div className="absolute inset-0 bg-black/70" /> 
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-white">
+              <Lightbulb className="h-12 w-12 text-primary mb-4" aria-hidden="true" />
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">Add Words to Play!</h2>
+              <p className="text-lg md:text-xl text-gray-200 mb-6 max-w-md">
+                You need at least one word in your practice list to play the Word Definition Match game.
+              </p>
+              <Button asChild variant="secondary" size="lg" className="btn-glow text-base md:text-lg px-6 py-3">
+                <Link href="/learn">Go to Learn Words</Link>
+              </Button>
+            </div>
           </div>
-        </Alert>
+        </Card>
       </div>
     );
   }

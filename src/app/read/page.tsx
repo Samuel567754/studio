@@ -133,26 +133,29 @@ export default function ReadingPage() {
       </header>
 
       {wordList.length === 0 && !sessionCompleted ? (
-         <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
-            <div className="flex flex-col items-center gap-4">
+        <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
+          <div className="relative h-80 md:h-96 w-full">
             <Image 
-                src="https://plus.unsplash.com/premium_photo-1684743539425-5f726aa89394?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
-                alt="An empty storybook with a curious child peeking"
-                width={200}
-                height={150}
-                className="rounded-lg shadow-md mb-3"
-                data-ai-hint="empty book"
+              src="https://plus.unsplash.com/premium_photo-1684743539425-5f726aa89394?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
+              alt="An empty storybook with a curious child peeking"
+              layout="fill"
+              objectFit="cover"
+              className="absolute inset-0"
+              data-ai-hint="empty book child"
             />
-            <Info className="h-6 w-6 text-primary" />
-            <AlertTitle className="text-xl font-semibold mb-2">No Words for Reading Practice!</AlertTitle>
-            <AlertDescription className="text-base">
-                To generate a reading passage, you need some words in your practice list.
-                Please visit the {' '}
-                <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/learn">Learn Words</Link></Button>
-                {' '}page to select or add words.
-            </AlertDescription>
+            <div className="absolute inset-0 bg-black/70" /> 
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-white">
+              <Info className="h-12 w-12 text-primary mb-4" aria-hidden="true" />
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">No Words for Reading!</h2>
+              <p className="text-lg md:text-xl text-gray-200 mb-6 max-w-md">
+                To generate a reading passage, add words to your practice list.
+              </p>
+              <Button asChild variant="secondary" size="lg" className="btn-glow text-base md:text-lg px-6 py-3">
+                <Link href="/learn">Go to Learn Words</Link>
+              </Button>
             </div>
-        </Alert>
+          </div>
+        </Card>
       ) : sessionCompleted ? (
          <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
             <CardHeader className="text-center">

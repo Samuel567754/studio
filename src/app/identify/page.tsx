@@ -217,26 +217,29 @@ export default function IdentifyWordPage() {
       </header>
 
       {wordList.length < 2 && !sessionCompleted ? (
-        <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
-            <div className="flex flex-col items-center gap-4">
+        <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
+          <div className="relative h-80 md:h-96 w-full">
             <Image 
-                src="https://images.unsplash.com/photo-1673515334717-da4d85aaf38b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D"
-                alt="Child with a magnifying glass looking at words"
-                width={200}
-                height={150}
-                className="rounded-lg shadow-md mb-3"
-                data-ai-hint="child learning words"
+              src="https://images.unsplash.com/photo-1673515334717-da4d85aaf38b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D"
+              alt="Child with a magnifying glass looking at words"
+              layout="fill"
+              objectFit="cover"
+              className="absolute inset-0"
+              data-ai-hint="child learning words"
             />
-            <Target className="h-6 w-6 text-primary" aria-hidden="true" />
-            <AlertTitle className="text-xl font-semibold mb-2">Not Enough Words!</AlertTitle>
-            <AlertDescription className="text-base">
+            <div className="absolute inset-0 bg-black/70" /> 
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-white">
+              <Target className="h-12 w-12 text-primary mb-4" aria-hidden="true" />
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">Not Enough Words!</h2>
+              <p className="text-lg md:text-xl text-gray-200 mb-6 max-w-md">
                 You need at least 2 words in your practice list to play the identification game.
-                Please go to the{' '}
-                <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/learn">Learn Words</Link></Button>
-                {' '}page to add more words.
-            </AlertDescription>
+              </p>
+              <Button asChild variant="secondary" size="lg" className="btn-glow text-base md:text-lg px-6 py-3">
+                <Link href="/learn">Go to Learn Words</Link>
+              </Button>
             </div>
-        </Alert>
+          </div>
+        </Card>
       ) : sessionCompleted ? (
         <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
             <CardContent className="p-6">

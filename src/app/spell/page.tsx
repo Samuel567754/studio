@@ -181,25 +181,29 @@ export default function SpellingPage() {
       </header>
       
       {wordList.length === 0 ? (
-         <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
-            <div className="flex flex-col items-center gap-4">
+        <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
+          <div className="relative h-80 md:h-96 w-full">
             <Image 
-                src="https://plus.unsplash.com/premium_photo-1725400811474-0a8720cb0227?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
-                alt="Pencil and paper ready for spelling"
-                width={200}
-                height={150}
-                className="rounded-lg shadow-md mb-3"
-                data-ai-hint="pencil paper spelling"
+              src="https://plus.unsplash.com/premium_photo-1725400811474-0a8720cb0227?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
+              alt="Pencil and paper ready for spelling"
+              layout="fill"
+              objectFit="cover"
+              className="absolute inset-0"
+              data-ai-hint="pencil paper spelling"
             />
-            <Info className="h-6 w-6 text-primary" aria-hidden="true" />
-            <AlertTitle className="text-xl font-semibold mb-2">No Words to Spell!</AlertTitle>
-            <AlertDescription className="text-base">
-                Your spelling list is empty. Please go to the{' '}
-                <Button variant="link" asChild className="p-0 h-auto text-base"><Link href="/learn">Learn Words</Link></Button>
-                {' '}page to add some words.
-            </AlertDescription>
+            <div className="absolute inset-0 bg-black/70" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-white">
+              <Info className="h-12 w-12 text-primary mb-4" aria-hidden="true" />
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">No Words to Spell!</h2>
+              <p className="text-lg md:text-xl text-gray-200 mb-6 max-w-md">
+                Your spelling list is empty. Please go to the Learn Words page to add some words.
+              </p>
+              <Button asChild variant="secondary" size="lg" className="btn-glow text-base md:text-lg px-6 py-3">
+                <Link href="/learn">Go to Learn Words</Link>
+              </Button>
             </div>
-        </Alert>
+          </div>
+        </Card>
       ) : (
         <>
             <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
