@@ -1,3 +1,4 @@
+
 'use client';
 import React, { FC, ReactNode, useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
@@ -21,6 +22,7 @@ interface ReadingPracticeProps {
   wordsToPractice: string[];
   readingLevel: string;
   masteredWords: string[];
+  onSessionComplete: (score: number, totalQuestions: number) => void;
 }
 
 interface SpokenWordInfo {
@@ -40,7 +42,7 @@ interface TestResult {
 
 const PASSING_THRESHOLD_PERCENTAGE = 60;
 
-export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, readingLevel, masteredWords }) => {
+export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, readingLevel, masteredWords, onSessionComplete }) => {
   const [passage, setPassage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -56,8 +58,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [overallScore, setOverallScore] = useState<number | null>(null);
   const [gameCompletedThisSession, setGameCompletedThisSession] = useState(false);
-  const [isShowingResults, setIsShowingResults] = useState(false); // To show results before deciding to complete or retry
-  const [showRetryOption, setShowRetryOption] = useState(false); // To show retry button
+  const [isShowingResults, setIsShowingResults] = useState(false); 
+  const [showRetryOption, setShowRetryOption] = useState(false); 
 
 
   const { toast } = useToast();
@@ -144,6 +146,11 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     }
   }, [wordsToPractice, readingLevel, masteredWords, favoriteTopics, toast, stopSpeech, isSpeaking, username, resetStateForNewPassage]);
 
+  useEffect(() => {
+    fetchPassage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Fetch passage on initial mount and when key props change
+
   const handleGenerateTest = async () => {
     if (!passage) {
       toast({ variant: "info", title: "No Passage", description: "Generate a passage first to create a test." });
@@ -182,23 +189,25 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   };
 
   const handleFinishSession = (finalScore: number, totalQuestions: number) => {
-    setGameCompletedThisSession(true);
-    const scoreMessage = `You scored ${finalScore} out of ${totalQuestions}.`;
-    toast({
-      variant: finalScore / totalQuestions >= PASSING_THRESHOLD_PERCENTAGE / 100 ? "success" : "info",
-      title: <div className="flex items-center gap-2"><BarChart2 className="h-5 w-5" />Test Submitted!</div>,
-      description: scoreMessage,
-      duration: 7000,
-    });
-    playCompletionSound();
-    if (soundEffectsEnabled) {
-      const completionSpeech = `${username ? `${username}, y` : 'Y'}ou've completed this reading session! ${scoreMessage}`;
-      speakText(completionSpeech);
-    }
+    setGameCompletedThisSession(true); // Mark session as fully completed
+    onSessionComplete(finalScore, totalQuestions); // Notify parent page
   };
 
   const handleSubmitTest = () => {
     if (!questionsData) return;
+
+    // Check if all questions have been answered
+    if (userAnswers.size < questionsData.questions.length) {
+      toast({
+        variant: "info",
+        title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Incomplete Test</div>,
+        description: "Please answer all questions before submitting.",
+      });
+      if (soundEffectsEnabled) playNotificationSound();
+      return;
+    }
+
+
     let correctCount = 0;
     const results: TestResult[] = questionsData.questions.map((q, index) => {
       const userAnswerText = userAnswers.get(index) || "";
@@ -239,6 +248,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       });
     } else {
       setShowRetryOption(false);
+      // Call parent's onSessionComplete which handles its own toast and audio
       handleFinishSession(correctCount, questionsData.questions.length);
     }
   };
@@ -256,6 +266,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   const handleFinishSessionWithLowScore = () => {
      if (overallScore !== null && questionsData) {
+        // Call parent's onSessionComplete which handles its own toast and audio
         handleFinishSession(overallScore, questionsData.questions.length);
      }
      setShowRetryOption(false); // Hide retry button
@@ -341,39 +352,11 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const getPlayPauseAriaLabel = () => isSpeaking && !isPaused ? "Pause reading" : "Read passage aloud";
   const playPauseButtonText = () => isSpeaking && !isPaused ? 'Pause' : (isSpeaking && isPaused ? 'Resume' : 'Read Aloud');
 
-  if (gameCompletedThisSession) {
-    return (
-      <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl font-semibold text-green-600 dark:text-green-400">
-            <Trophy className="mr-2 h-6 w-6 text-yellow-400" /> Session Complete!
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <p className="text-lg">
-            {username ? `Fantastic work, ${username}!` : "Fantastic work!"} You've completed this reading and comprehension session.
-          </p>
-          {overallScore !== null && testResults && (
-            <p className="text-2xl font-bold text-accent">Your Score: {overallScore} / {testResults.length}</p>
-          )}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-            <Button onClick={fetchPassage} size="lg" className="w-full sm:w-auto">
-              <RefreshCcw className="mr-2 h-4 w-4" /> Play Again (New Story)
-            </Button>
-            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-              <Link href="/word-practice">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Word Practice
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  // No need to check gameCompletedThisSession here, parent will hide this component if completed.
+  // The component will reset itself for a new passage via fetchPassage which calls resetStateForNewPassage.
 
   return (
-    <Card className="shadow-lg w-full">
+    <Card className="shadow-xl w-full border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
       <CardHeader>
         <CardTitle className="flex items-center text-xl font-semibold text-primary">
           <BookMarked className="mr-2 h-5 w-5" aria-hidden="true" /> Practice Reading
@@ -522,3 +505,4 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     </Card>
   );
 };
+
