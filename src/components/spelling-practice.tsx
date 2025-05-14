@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, XCircle, Sparkles, InfoIcon, Smile, Volume2, Lightbulb, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, XCircle, Sparkles, InfoIcon, Smile, Volume2, Lightbulb, Eye } from 'lucide-react';
 import { playErrorSound, playSuccessSound, speakText, playNotificationSound } from '@/lib/audio'; 
 import { addMasteredWord } from '@/lib/storage'; 
 import { useUserProfileStore } from '@/stores/user-profile-store'; 
@@ -30,6 +30,8 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
   const [hintText, setHintText] = useState<string | null>(null);
   const [isWordCorrectlySpelled, setIsWordCorrectlySpelled] = useState(false);
   const [showAnswerTemporarily, setShowAnswerTemporarily] = useState(false);
+  const [displayedAttempt, setDisplayedAttempt] = useState<string | null>(null);
+
 
   const { username } = useUserProfileStore(); 
   const { toast } = useToast();
@@ -44,6 +46,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     setHintText(null);
     setIsWordCorrectlySpelled(false);
     setShowAnswerTemporarily(false);
+    setDisplayedAttempt(null);
     if (wordToSpell && soundEffectsEnabled) {
       setTimeout(() => speakText(`Spell the word: ${wordToSpell}`), 100);
     }
@@ -95,22 +98,22 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       speakText(
         initialRevealMessage,
         undefined, 
-        () => { // onEnd for initialRevealMessage
+        () => { 
           const letters = wordToSpell.split('').join(', '); 
           const spelledOutMessage = `That's ${letters}. Let's try the next one.`;
           speakText(
             spelledOutMessage,
             undefined,
-            afterRevealSequence, // onEnd for spelledOutMessage
+            afterRevealSequence, 
             (errorEvent) => {
               console.error("Speech error during letter spelling:", errorEvent.error);
-              afterRevealSequence(); // Proceed even if letter spelling fails
+              afterRevealSequence(); 
             }
           );
         }, 
         (errorEvent) => { 
           console.error("Speech error during initial reveal:", errorEvent.error);
-          afterRevealSequence(); // Proceed even if initial reveal speech fails
+          afterRevealSequence(); 
         }
       );
     } else {
@@ -127,7 +130,9 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       return;
     }
 
-    const isCorrect = attempt.trim().toLowerCase() === wordToSpell.toLowerCase();
+    const trimmedAttempt = attempt.trim();
+    const isCorrect = trimmedAttempt.toLowerCase() === wordToSpell.toLowerCase();
+    setDisplayedAttempt(trimmedAttempt); // Store the attempt for display
     
     const afterSpeechCallback = () => {
       if (isCorrect) {
@@ -174,10 +179,10 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     } else {
       const newWrongAttempts = wrongAttempts + 1;
       setWrongAttempts(newWrongAttempts);
-      setFeedback({type: 'destructive', message: `Not quite. You spelled "${attempt.trim()}". Hear the word again or use a hint!`});
+      setFeedback({type: 'destructive', message: `Not quite. You spelled "${trimmedAttempt}". Hear the word again or use a hint!`});
       playErrorSound();
       if (soundEffectsEnabled) {
-        speakText(`Not quite. You spelled "${attempt.trim()}". Please try again.`, undefined, undefined, (err) => console.error("Error speaking 'not quite':", err.error));
+        speakText(`Not quite. You spelled "${trimmedAttempt}". Please try again.`, undefined, undefined, (err) => console.error("Error speaking 'not quite':", err.error));
       }
       if (newWrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT && !showHintButton) {
         setShowHintButton(true);
@@ -222,77 +227,92 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isWordCorrectlySpelled && wordToSpell && (
-          <div className="text-center py-4 my-2 bg-green-500/10 rounded-lg" aria-live="polite" role="status">
+        {/* Animated Word Display Area */}
+        <div className="text-center py-4 my-2 min-h-[80px] md:min-h-[120px] flex items-center justify-center" aria-live="polite" role="status">
+            {isWordCorrectlySpelled && wordToSpell && (
             <p className="text-5xl md:text-7xl font-bold tracking-wider text-green-600 dark:text-green-400 flex justify-center items-center gap-x-1 md:gap-x-1.5">
-              {wordToSpell.split('').map((letter, index) => (
+                {wordToSpell.split('').map((letter, index) => (
                 <span 
-                  key={`${letter}-${index}`} 
-                  className="inline-block animate-in fade-in zoom-in-50 duration-200 ease-out"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                    key={`${letter}-${index}`} 
+                    className="inline-block animate-in fade-in zoom-in-50 duration-200 ease-out"
+                    style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  {letter}
+                    {letter}
                 </span>
-              ))}
+                ))}
             </p>
+            )}
+            {showAnswerTemporarily && wordToSpell && (
+            <>
+                <p className="text-4xl md:text-5xl font-bold tracking-wider text-blue-600 dark:text-blue-400 flex justify-center items-center gap-x-1">
+                {wordToSpell.split('').map((letter, index) => (
+                    <span 
+                    key={`revealed-${letter}-${index}`} 
+                    className="inline-block animate-in fade-in-0 zoom-in-75 duration-150 ease-out"
+                    style={{ animationDelay: `${index * 80}ms` }}
+                    >
+                    {letter}
+                    </span>
+                ))}
+                </p>
+            </>
+            )}
+            {!isWordCorrectlySpelled && !showAnswerTemporarily && displayedAttempt && feedback?.type === 'destructive' && (
+                 <p className="text-5xl md:text-7xl font-bold tracking-wider text-red-600 dark:text-red-400 flex justify-center items-center gap-x-1 md:gap-x-1.5">
+                    {displayedAttempt.split('').map((letter, index) => (
+                    <span 
+                        key={`attempt-${letter}-${index}`} 
+                        className="inline-block animate-shake" // Use shake for incorrect attempts
+                    >
+                        {letter}
+                    </span>
+                    ))}
+                </p>
+            )}
+            {!isWordCorrectlySpelled && !showAnswerTemporarily && !displayedAttempt && !feedback && (
+                <p className="text-muted-foreground text-lg">Listen and type the word.</p>
+            )}
+        </div>
+        
+        {/* Form (always visible, but disabled when word is spelled/revealed) */}
+        <form onSubmit={handleSubmit} className="space-y-4" aria-labelledby="spell-form-title">
+          <h3 id="spell-form-title" className="sr-only">Spelling Input Area</h3>
+          <div>
+            <Label htmlFor="spell-input" className="sr-only">Enter spelling</Label>
+            <Input
+              id="spell-input"
+              ref={inputRef}
+              type="text"
+              value={attempt}
+              onChange={(e) => setAttempt(e.target.value)}
+              placeholder="Type your spelling here"
+              className={cn(
+                  "text-xl md:text-2xl p-3 md:p-4 h-auto shadow-inner",
+                  feedback?.type === 'destructive' && !isWordCorrectlySpelled && !showAnswerTemporarily && "border-destructive ring-2 ring-destructive/50 focus-visible:ring-destructive"
+              )}
+              aria-label={`Spell the word you hear`}
+              aria-describedby="feedback-alert"
+              autoCapitalize="none"
+              autoCorrect="off"
+              disabled={isWordCorrectlySpelled || showAnswerTemporarily}
+              autoFocus={!isWordCorrectlySpelled && !showAnswerTemporarily}
+            />
           </div>
-        )}
-         {showAnswerTemporarily && wordToSpell && (
-          <div className="text-center py-4 my-2 bg-blue-500/10 rounded-lg" aria-live="polite" role="status">
-            <p className="text-4xl md:text-5xl font-bold tracking-wider text-blue-600 dark:text-blue-400 flex justify-center items-center gap-x-1">
-              {wordToSpell.split('').map((letter, index) => (
-                 <span 
-                  key={`revealed-${letter}-${index}`} 
-                  className="inline-block animate-in fade-in-0 zoom-in-75 duration-150 ease-out"
-                  style={{ animationDelay: `${index * 80}ms` }}
-                >
-                  {letter}
-                </span>
-              ))}
-            </p>
-             <p className="text-sm text-muted-foreground mt-2">The word was "{wordToSpell}". Moving to the next one.</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button type="submit" className="w-full sm:flex-1" size="lg" disabled={isWordCorrectlySpelled || showAnswerTemporarily || !attempt.trim()}>Check Spelling</Button>
+            {showHintButton && !hintText && !isWordCorrectlySpelled && !showAnswerTemporarily && (
+              <Button type="button" variant="outline" onClick={handleShowHint} className="w-full sm:w-auto" size="lg" disabled={isWordCorrectlySpelled || showAnswerTemporarily}>
+                <Lightbulb className="mr-2 h-5 w-5" /> Get Hint
+              </Button>
+            )}
+            {wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 2 && !isWordCorrectlySpelled && !showAnswerTemporarily && (
+              <Button type="button" variant="destructive" onClick={handleRevealAnswer} className="w-full sm:w-auto" size="lg" disabled={isWordCorrectlySpelled || showAnswerTemporarily}>
+                <Eye className="mr-2 h-5 w-5" /> Reveal Answer
+              </Button>
+            )}
           </div>
-        )}
+        </form>
 
-        {!isWordCorrectlySpelled && !showAnswerTemporarily && (
-          <form onSubmit={handleSubmit} className="space-y-4" aria-labelledby="spell-form-title">
-            <h3 id="spell-form-title" className="sr-only">Spelling Input Area</h3>
-            <div>
-              <Label htmlFor="spell-input" className="sr-only">Enter spelling</Label>
-              <Input
-                id="spell-input"
-                ref={inputRef}
-                type="text"
-                value={attempt}
-                onChange={(e) => setAttempt(e.target.value)}
-                placeholder="Type your spelling here"
-                className={cn(
-                    "text-xl md:text-2xl p-3 md:p-4 h-auto shadow-inner",
-                    feedback?.type === 'destructive' && "border-destructive ring-2 ring-destructive/50 focus-visible:ring-destructive"
-                )}
-                aria-label={`Spell the word you hear`}
-                aria-describedby="feedback-alert"
-                autoCapitalize="none"
-                autoCorrect="off"
-                disabled={isWordCorrectlySpelled || showAnswerTemporarily}
-                autoFocus
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button type="submit" className="w-full sm:flex-1" size="lg" disabled={isWordCorrectlySpelled || showAnswerTemporarily || !attempt.trim()}>Check Spelling</Button>
-              {showHintButton && !hintText && !isWordCorrectlySpelled && !showAnswerTemporarily && (
-                <Button type="button" variant="outline" onClick={handleShowHint} className="w-full sm:w-auto" size="lg">
-                  <Lightbulb className="mr-2 h-5 w-5" /> Get Hint
-                </Button>
-              )}
-              {wrongAttempts >= MAX_WRONG_ATTEMPTS_FOR_HINT + 2 && !isWordCorrectlySpelled && !showAnswerTemporarily && (
-                <Button type="button" variant="destructive" onClick={handleRevealAnswer} className="w-full sm:w-auto" size="lg">
-                  <Eye className="mr-2 h-5 w-5" /> Reveal Answer
-                </Button>
-              )}
-            </div>
-          </form>
-        )}
         {hintText && !isWordCorrectlySpelled && !showAnswerTemporarily && (
           <Alert variant="info" className="mt-4 animate-in fade-in-0" role="status">
             <Lightbulb className="h-5 w-5" />
