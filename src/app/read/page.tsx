@@ -55,7 +55,7 @@ export default function ReadingPage() {
   }, [loadReadingData]);
 
   const handleSessionCompletion = (score: number, totalQuestions: number) => {
-    setSessionCompleted(true); 
+    setSessionCompleted(true); // This will cause ReadingPractice to unmount
     setLastScore({ score, total: totalQuestions });
     const completionMessage = username ? `Well done, ${username}!` : 'Session Complete!';
     const scoreMessage = `You scored ${score} out of ${totalQuestions}.`;
@@ -65,10 +65,14 @@ export default function ReadingPage() {
       description: scoreMessage,
       duration: 7000,
     });
-    if (soundEffectsEnabled) {
-      playCompletionSound();
-      speakText(`${completionMessage} ${scoreMessage}`);
-    }
+
+    // Delay speech slightly to ensure ReadingPractice cleanup has occurred
+    setTimeout(() => {
+      if (soundEffectsEnabled) {
+        playCompletionSound();
+        speakText(`${completionMessage} ${scoreMessage}`);
+      }
+    }, 100); // Small delay, e.g., 100ms
   };
 
   if (!isMounted) {
@@ -128,7 +132,7 @@ export default function ReadingPage() {
          <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
             <div className="flex flex-col items-center gap-4">
             <Image 
-                src="https://picsum.photos/seed/empty-storybook/200/150" 
+                src="https://placehold.co/200x150.png" 
                 alt="An empty storybook with a curious child peeking"
                 width={200}
                 height={150}
@@ -185,3 +189,4 @@ export default function ReadingPage() {
     </div>
   );
 }
+
