@@ -90,7 +90,7 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
     const afterRevealSequence = () => {
       setTimeout(() => {
         onCorrectSpell(); 
-      }, 1500); // Delay before moving on to allow user to see revealed answer
+      }, 1500); 
     };
   
     if (soundEffectsEnabled) {
@@ -138,13 +138,12 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
       if (isCorrect) {
         setTimeout(() => {
           onCorrectSpell();
-        }, 500); // Reduced delay after correct audio finishes
+        }, 500); 
       }
     };
 
     if (isCorrect) {
       const successMessage = `${username ? username + ", y" : "Y"}ou spelled it right: "${wordToSpell}"!`;
-      // Show visual feedback immediately
       setFeedback({type: 'success', message: successMessage});
       setIsWordCorrectlySpelled(true);
       playSuccessSound(); 
@@ -227,8 +226,8 @@ export const SpellingPractice: FC<SpellingPracticeProps> = ({ wordToSpell, onCor
                 {wordToSpell.split('').map((letter, index) => (
                 <span 
                     key={`${letter}-${index}`} 
-                    className="inline-block animate-in fade-in zoom-in-50 duration-200 ease-out"
-                    style={{ animationDelay: `${index * 100}ms` }}
+                    className="inline-block animate-in fade-in-0 zoom-in-75 duration-300 ease-out"
+                    style={{ animationDelay: `${index * 80}ms` }}
                 >
                     {letter}
                 </span>
