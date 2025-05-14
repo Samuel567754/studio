@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathStoryProblem, type GenerateMathStoryProblemInput, type GenerateMathStoryProblemOutput } from '@/ai/flows/generate-math-story-problem';
-import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Trophy, Info } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Trophy, Info, ChevronDown } from 'lucide-react';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
@@ -68,7 +68,6 @@ export const AiStoryProblemGameUI = () => {
         const storyText = `Story time! ${storyData.overallTheme ? `The theme is ${storyData.overallTheme}.` : ''} ${storyData.storyProblemText}`;
         speakText(storyText, undefined, () => {
           if (storyData.questions && storyData.questions.length > 0 && soundEffectsEnabled) {
-            // Auto-read first question after story, if applicable
             speakText(`Question 1: ${storyData.questions[0].questionText}`);
           }
         });
@@ -148,7 +147,6 @@ export const AiStoryProblemGameUI = () => {
       feedbackText = (
         <>
           Not quite{username ? `, ${username}` : ''}. The correct answer for "{question.questionText}" was <strong>{question.numericalAnswer}</strong>.
-          {/* Explanation is not read aloud as per previous request, but shown in UI */}
           {question.explanation && <p className="mt-1 text-xs"><em>Explanation: {question.explanation}</em></p>}
         </>
       );
@@ -188,7 +186,6 @@ export const AiStoryProblemGameUI = () => {
            }
         }
       } else if (!allCurrentStoryQuestionsAnswered && soundEffectsEnabled && questionIndex + 1 < currentStoryProblem.questions.length) {
-        // Auto-read next question in the same story
         speakText(`Next question: ${currentStoryProblem.questions[questionIndex + 1].questionText}`);
       }
     };
@@ -380,22 +377,34 @@ export const AiStoryProblemGameUI = () => {
             <Accordion type="multiple" className="w-full space-y-2">
               {currentStoryProblem.questions.map((q, index) => (
                 <AccordionItem value={`item-${index}`} key={index} className="border bg-card p-0 rounded-lg shadow-sm">
-                  <AccordionTrigger className={cn(
-                    "text-left px-4 py-3 hover:no-underline hover:bg-secondary/50 rounded-t-lg transition-colors items-start sm:items-center", // Ensure items-start for mobile text flow
-                    questionStates[index]?.isCorrect === true && "bg-green-500/10 hover:bg-green-500/15 text-green-700 dark:text-green-400",
-                    questionStates[index]?.isCorrect === false && "bg-red-500/10 hover:bg-red-500/15 text-red-700 dark:text-red-500",
+                  <AccordionTrigger 
+                    className={cn(
+                      "text-left px-4 py-3 hover:no-underline hover:bg-secondary/50 rounded-t-lg transition-colors items-start sm:items-center", 
+                      questionStates[index]?.isCorrect === true && "bg-green-500/10 hover:bg-green-500/15 text-green-700 dark:text-green-400",
+                      questionStates[index]?.isCorrect === false && "bg-red-500/10 hover:bg-red-500/15 text-red-700 dark:text-red-500",
                   )}>
-                    <div className="flex-1 flex items-start sm:items-center gap-2 min-w-0"> {/* Added min-w-0 and items-start */}
-                        <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleSpeak(q.questionText); }} aria-label={`Read question ${index + 1} aloud`} className="mr-1 sm:mr-2 flex-shrink-0 self-start sm:self-center" disabled={isListening === index || questionStates[index]?.isSubmitted || !soundEffectsEnabled}>
-                            <Volume2 className="h-4 w-4" />
-                        </Button>
-                        <div className="flex-1 min-w-0 text-left"> {/* Added text-left and min-w-0 */}
+                    <div className="flex-1 flex items-start sm:items-center gap-2 min-w-0">
+                       <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); handleSpeak(q.questionText); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleSpeak(q.questionText); }}}
+                        aria-label={`Read question ${index + 1} aloud`}
+                        className={cn(
+                            "p-1.5 rounded-full hover:bg-primary/10 focus:outline-none focus:ring-1 focus:ring-primary flex-shrink-0 self-start sm:self-center",
+                            (isListening === index || questionStates[index]?.isSubmitted || !soundEffectsEnabled) && "opacity-50 cursor-not-allowed"
+                        )}
+                       >
+                        <Volume2 className="h-4 w-4" />
+                       </span>
+                        <div className="flex-1 min-w-0 text-left">
                             <span className="font-semibold">Question {index + 1}: </span>
-                            <span>{q.questionText}</span> {/* Text should wrap here */}
+                            <span>{q.questionText}</span>
                         </div>
                     </div>
                     {questionStates[index]?.isCorrect === true && <CheckCircle2 className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />}
                     {questionStates[index]?.isCorrect === false && <XCircle className="h-5 w-5 text-red-500 ml-2 flex-shrink-0" />}
+                    {/* ChevronDown will be added by AccordionTrigger itself if not overridden */}
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4 pt-2 border-t">
                     <form onSubmit={(e) => { e.preventDefault(); handleSubmitAnswer(index); }} className="space-y-3">
