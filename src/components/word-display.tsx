@@ -8,39 +8,44 @@ import { speakText } from '@/lib/audio';
 
 interface WordDisplayProps {
   word: string;
+  hideWordText?: boolean; // New optional prop
 }
 
-export const WordDisplay: FC<WordDisplayProps> = ({ word }) => {
+export const WordDisplay: FC<WordDisplayProps> = ({ word, hideWordText = false }) => {
   const handleSpeakWord = () => {
     if (word) {
       speakText(word);
     }
   };
 
+  const cardTitle = hideWordText ? "Listen to the Word" : "Current Word";
+
   return (
     <Card className="shadow-lg w-full bg-gradient-to-br from-card via-card/80 to-secondary/20 dark:from-card dark:via-card/90 dark:to-secondary/10 animate-in fade-in-0 slide-in-from-top-5 duration-500 ease-out">
       <CardHeader>
-        <CardTitle className="text-xl font-semibold text-primary">Current Word</CardTitle>
+        <CardTitle className="text-xl font-semibold text-primary">{cardTitle}</CardTitle>
       </CardHeader>
       <CardContent className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
-        <h2 
-          key={word} // Add key to re-trigger animation on word change
-          className="text-7xl md:text-9xl font-bold tracking-wide break-all text-center 
-                     text-gradient-primary-accent 
-                     drop-shadow-lg py-2
-                     select-none
-                     animate-in fade-in zoom-in-90 duration-300 ease-out"
-          aria-live="polite" // Announce when the word changes
-        >
-          {word || "----"}
-        </h2>
+        {!hideWordText && (
+          <h2 
+            key={word} // Add key to re-trigger animation on word change
+            className="text-7xl md:text-9xl font-bold tracking-wide break-all text-center 
+                       text-gradient-primary-accent 
+                       drop-shadow-lg py-2
+                       select-none
+                       animate-in fade-in zoom-in-90 duration-300 ease-out"
+            aria-live="polite" // Announce when the word changes
+          >
+            {word || "----"}
+          </h2>
+        )}
         <Button 
           onClick={handleSpeakWord} 
           variant="default" 
           size="lg" 
           disabled={!word} 
           className="shadow-md hover:shadow-lg transform transition-transform hover:scale-105 active:scale-95 duration-200 ease-in-out btn-glow"
-          aria-label={word ? `Listen to the word ${word}` : "No word selected to listen to"}
+          aria-label={word ? `Listen to the word ${hideWordText ? '' : word}` : "No word selected to listen to"}
         >
           <Volume2 className="mr-2 h-6 w-6" aria-hidden="true" />
           Say Word
@@ -49,4 +54,3 @@ export const WordDisplay: FC<WordDisplayProps> = ({ word }) => {
     </Card>
   );
 };
-

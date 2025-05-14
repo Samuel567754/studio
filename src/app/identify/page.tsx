@@ -49,7 +49,10 @@ export default function IdentifyWordPage() {
       setCurrentIndex(validIndex);
       const newWord = storedList[validIndex];
       setCurrentWord(newWord);
-      if (newWord && soundEffectsEnabled && !sessionCompleted) speakText(newWord);
+      if (newWord && soundEffectsEnabled && !sessionCompleted && !isRestart) { // Avoid speaking on initial restart to prevent double audio with game setup
+         // Delay slightly to ensure WordIdentificationGame might have set up its options first
+        setTimeout(() => speakText(newWord), 200);
+      }
       if (storedIndex !== validIndex || isRestart) {
         storeCurrentIndex(validIndex);
       }
@@ -87,7 +90,10 @@ export default function IdentifyWordPage() {
     const newWordToSpeak = wordList[newIndex];
     setCurrentWord(newWordToSpeak);
     storeCurrentIndex(newIndex);
-    if (newWordToSpeak && soundEffectsEnabled) speakText(newWordToSpeak);
+    if (newWordToSpeak && soundEffectsEnabled) {
+        // Delay speaking to allow UI to update and game component to re-render if needed
+        setTimeout(() => speakText(newWordToSpeak), 100);
+    }
     playNavigationSound();
   };
 
@@ -124,7 +130,10 @@ export default function IdentifyWordPage() {
             playCompletionSound();
              if (soundEffectsEnabled) speakText(username ? `Awesome, ${username}! You've identified the word!` : "Awesome! You've identified the word!");
         } else if (wordList.length === 1 && !sessionCompleted && !correct) {
-            // Do nothing, allow retry.
+            // Do nothing, allow retry for the single word.
+             if (currentWord && soundEffectsEnabled) {
+                setTimeout(() => speakText(currentWord), 1000); // Re-speak the word after incorrect attempt on single word
+            }
         }
     };
 
@@ -139,7 +148,7 @@ export default function IdentifyWordPage() {
       
       const spokenFeedback = `Correct! You identified ${currentWord}.`;
       if (soundEffectsEnabled) {
-        speakText(spokenFeedback, undefined, afterCurrentWordAudio);
+        speakText(spokenFeedback, undefined, () => setTimeout(afterCurrentWordAudio, 500));
       } else {
         setTimeout(afterCurrentWordAudio, 1200); 
       }
@@ -154,7 +163,7 @@ export default function IdentifyWordPage() {
 
       const spokenFeedback = `Oops. You chose ${selectedWord}. The word was ${currentWord}.`;
       if (soundEffectsEnabled) {
-        speakText(spokenFeedback, undefined, afterCurrentWordAudio);
+        speakText(spokenFeedback, undefined, () => setTimeout(afterCurrentWordAudio, 1500));
       } else {
         setTimeout(afterCurrentWordAudio, 2200); 
       }
@@ -166,8 +175,8 @@ export default function IdentifyWordPage() {
       <div className="space-y-6 md:space-y-8" aria-live="polite" aria-busy="true">
         <Card className="shadow-lg animate-pulse">
             <div className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
-                <div className="h-20 w-3/4 bg-muted rounded"></div>
-                <div className="h-12 w-1/2 bg-primary/50 rounded"></div>
+                <div className="h-20 w-3/4 bg-muted rounded"></div> {/* Placeholder for hidden word */}
+                <div className="h-12 w-1/2 bg-primary/50 rounded"></div> {/* Placeholder for button */}
             </div>
         </Card>
         <Card className="shadow-lg animate-pulse">
@@ -216,7 +225,7 @@ export default function IdentifyWordPage() {
         <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
             <div className="flex flex-col items-center gap-4">
             <Image 
-                src="https://picsum.photos/seed/magnifying-glass-words/200/150" 
+                src="https://placehold.co/200x150.png" 
                 alt="Child with a magnifying glass looking at words"
                 width={200}
                 height={150}
@@ -259,7 +268,7 @@ export default function IdentifyWordPage() {
         </Card>
       ) : (
         <>
-            <WordDisplay word={currentWord} />
+            <WordDisplay word={currentWord} hideWordText={true} />
             <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
                 <WordIdentificationGame 
                 wordToIdentify={currentWord}
@@ -270,14 +279,14 @@ export default function IdentifyWordPage() {
             
             {!sessionCompleted && wordList.length > 1 && ( 
                 <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
-                    <CardContent className="p-4 flex justify-between items-center gap-2 md:gap-4">
-                    <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="flex-1 md:flex-none">
+                    <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-2 md:gap-4">
+                    <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="w-full sm:flex-1 order-1 sm:order-none">
                         <ChevronLeft className="mr-1 md:mr-2 h-5 w-5" aria-hidden="true" /> Previous
                     </Button>
-                    <span className="text-muted-foreground text-sm whitespace-nowrap font-medium" aria-live="polite" aria-atomic="true">
+                    <span className="text-muted-foreground text-sm whitespace-nowrap font-medium order-none sm:order-none" aria-live="polite" aria-atomic="true">
                         Word {currentIndex + 1} / {wordList.length}
                     </span>
-                    <Button variant="outline" size="lg" onClick={() => navigateWord('next')} aria-label="Next word" className="flex-1 md:flex-none">
+                    <Button variant="outline" size="lg" onClick={() => navigateWord('next')} aria-label="Next word" className="w-full sm:flex-1 order-2 sm:order-none">
                         Next <ChevronRight className="ml-1 md:ml-2 h-5 w-5" aria-hidden="true" />
                     </Button>
                     </CardContent>
