@@ -136,7 +136,7 @@ export default function ReadingPage() {
          <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500">
             <div className="flex flex-col items-center gap-4">
             <Image 
-                src="https://placehold.co/200x150.png" 
+                src="https://images.unsplash.com/photo-1491841573253-94161c10903c?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGVtcHR5JTIwc3Rvcnlib29rfGVufDB8fDB8fHww" 
                 alt="An empty storybook with a curious child peeking"
                 width={200}
                 height={150}

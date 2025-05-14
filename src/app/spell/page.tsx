@@ -122,10 +122,7 @@ export default function SpellingPage() {
     };
     
     if (soundEffectsEnabled) {
-        // The success toast is handled by SpellingPractice now, so we just need to handle navigation logic.
-        // The onCorrectSpell callback in SpellingPractice will call this after its own audio.
-        // So, we just wait for the parent to call this then proceed.
-        setTimeout(afterCurrentWordAudio, 500); // Small delay to ensure parent audio finishes
+        setTimeout(afterCurrentWordAudio, 500); 
     } else {
        setTimeout(afterCurrentWordAudio, 1200); 
     }
@@ -137,7 +134,6 @@ export default function SpellingPage() {
         <Card className="shadow-lg animate-pulse">
             <CardHeader><div className="h-6 w-1/3 bg-muted rounded"></div></CardHeader>
             <CardContent className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
-                {/* Removed WordDisplay placeholder */}
             </CardContent>
         </Card>
         <Card className="shadow-lg animate-pulse">
@@ -188,7 +184,7 @@ export default function SpellingPage() {
          <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
             <div className="flex flex-col items-center gap-4">
             <Image 
-                src="https://placehold.co/200x150.png" 
+                src="https://images.unsplash.com/photo-1456735190827-d1262f71b8a3?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8c3BlbGxpbmd8ZW58MHx8MHx8fDA%3D" 
                 alt="Pencil and paper ready for spelling"
                 width={200}
                 height={150}
@@ -206,7 +202,6 @@ export default function SpellingPage() {
         </Alert>
       ) : (
         <>
-            {/* WordDisplay component removed */}
             <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
               {sessionCompleted ? (
                  <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
@@ -257,3 +252,4 @@ export default function SpellingPage() {
     </div>
   );
 }
+

@@ -251,7 +251,7 @@ export default function DefinitionMatchPage() {
         <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
           <div className="flex flex-col items-center gap-4">
             <Image 
-              src="https://placehold.co/200x150.png"
+              src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8YWklMjBjaXJjdWl0fGVufDB8fDB8fHww"
               alt="AI circuitry connecting ideas for definitions"
               width={200}
               height={150}
@@ -444,3 +444,4 @@ export default function DefinitionMatchPage() {
     </div>
   );
 }
+

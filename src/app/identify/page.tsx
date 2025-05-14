@@ -148,15 +148,6 @@ export default function IdentifyWordPage() {
 
 
     if (correct) {
-      // Toast and success sound are handled by WordIdentificationGame component
-      // Or if you want central control:
-      // playSuccessSound(); 
-      // toast({
-      //   variant: "success",
-      //   title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Correct, ${username}!` : 'Correct!'}</div>,
-      //   description: `You identified "${currentWord}"!`,
-      // });
-      
       const spokenFeedback = `Correct! You identified ${currentWord}.`;
       if (soundEffectsEnabled) {
         speakText(spokenFeedback, undefined, () => setTimeout(afterCurrentWordAudio, 500));
@@ -165,13 +156,6 @@ export default function IdentifyWordPage() {
       }
 
     } else {
-      // playErrorSound();
-      // toast({
-      //   variant: "destructive",
-      //   title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Not quite...</div>,
-      //   description: `You chose "${selectedWord}". The word was "${currentWord}".`,
-      // });
-
       const spokenFeedback = `Oops. You chose ${selectedWord}. The word was ${currentWord}.`;
       if (soundEffectsEnabled) {
         speakText(spokenFeedback, undefined, () => setTimeout(afterCurrentWordAudio, 1500));
@@ -236,7 +220,7 @@ export default function IdentifyWordPage() {
         <Alert variant="info" className="max-w-xl mx-auto text-center bg-card shadow-md border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500" aria-live="polite">
             <div className="flex flex-col items-center gap-4">
             <Image 
-                src="https://placehold.co/200x150.png" 
+                src="https://images.unsplash.com/photo-1503428593586-e225b39bddfe?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Y2hpbGQlMjBsZWFybmluZyUyMHdvcmRzfGVufDB8fDB8fHww"
                 alt="Child with a magnifying glass looking at words"
                 width={200}
                 height={150}
