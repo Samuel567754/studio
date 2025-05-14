@@ -196,20 +196,16 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const handleSubmitTest = () => {
     if (!questionsData) return;
 
-    // Check if all questions have been answered
     if (userAnswers.size < questionsData.questions.length) {
       toast({
         variant: "info",
         title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Incomplete Test</div>,
         description: "Please answer all questions before submitting.",
       });
-      if (soundEffectsEnabled) {
-        playNotificationSound();
-        speakText("Please answer all questions before submitting.");
-      }
+      playNotificationSound();
+      if (soundEffectsEnabled) speakText("Please answer all questions before submitting.");
       return;
     }
-
 
     let correctCount = 0;
     const results: TestResult[] = questionsData.questions.map((q, index) => {
@@ -235,7 +231,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
     let resultSpeech = `You scored ${correctCount} out of ${questionsData.questions.length}. `;
     
-    const afterResultSpeechCallback = () => {
+    const afterDetailedReviewCallback = () => {
         const passingScore = Math.ceil(questionsData.questions.length * (PASSING_THRESHOLD_PERCENTAGE / 100));
         if (correctCount < passingScore) {
             setShowRetryOption(true);
@@ -252,15 +248,43 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         }
     };
     
+    const speakDetailedTestReview = async () => {
+      if (soundEffectsEnabled && results && results.length > 0) {
+        for (let i = 0; i < results.length; i++) {
+          const res = results[i];
+          let reviewText = `Question ${i + 1}: ${res.questionText}. `;
+          reviewText += `You answered: ${res.userAnswer || "not answered"}. `;
+          if (res.isCorrect) {
+            reviewText += "That is correct. ";
+          } else {
+            reviewText += `The correct answer was: ${res.correctAnswer}. `;
+          }
+          if (res.explanation) {
+            reviewText += `Explanation: ${res.explanation}. `;
+          }
+          
+          await new Promise<void>((resolve, reject) => {
+            const utterance = speakText(reviewText, undefined, () => resolve(), (errEvent) => {
+              console.error("Speech error during detailed review:", errEvent.error);
+              resolve(); // Resolve even on error to not block the flow
+            });
+            if (!utterance) resolve(); // If speakText returns null (e.g., audio disabled), resolve immediately
+          });
+        }
+      }
+      afterDetailedReviewCallback();
+    };
+
     if(soundEffectsEnabled) {
-        speakText(resultSpeech, undefined, afterResultSpeechCallback, (err) => {
+        speakText(resultSpeech, undefined, speakDetailedTestReview, (err) => {
             console.error("Speech error announcing score:", err.error);
-            afterResultSpeechCallback(); // Proceed even if speech fails
+            speakDetailedTestReview(); // Proceed even if main score speech fails
         });
     } else {
-        afterResultSpeechCallback();
+        afterDetailedReviewCallback(); // Go directly to showing retry/finish if audio is off
     }
   };
+
 
   const handleRetryTest = () => {
     setIsTestActive(true);
