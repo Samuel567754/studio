@@ -148,6 +148,7 @@ export const AiStoryProblemGameUI = () => {
       feedbackText = (
         <>
           Not quite{username ? `, ${username}` : ''}. The correct answer for "{question.questionText}" was <strong>{question.numericalAnswer}</strong>.
+          {/* Explanation is not read aloud as per previous request, but shown in UI */}
           {question.explanation && <p className="mt-1 text-xs"><em>Explanation: {question.explanation}</em></p>}
         </>
       );
@@ -380,15 +381,18 @@ export const AiStoryProblemGameUI = () => {
               {currentStoryProblem.questions.map((q, index) => (
                 <AccordionItem value={`item-${index}`} key={index} className="border bg-card p-0 rounded-lg shadow-sm">
                   <AccordionTrigger className={cn(
-                    "text-left px-4 py-3 hover:no-underline hover:bg-secondary/50 rounded-t-lg transition-colors",
+                    "text-left px-4 py-3 hover:no-underline hover:bg-secondary/50 rounded-t-lg transition-colors items-start sm:items-center", // Ensure items-start for mobile text flow
                     questionStates[index]?.isCorrect === true && "bg-green-500/10 hover:bg-green-500/15 text-green-700 dark:text-green-400",
                     questionStates[index]?.isCorrect === false && "bg-red-500/10 hover:bg-red-500/15 text-red-700 dark:text-red-500",
                   )}>
-                    <div className="flex-1 flex items-center">
-                        <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleSpeak(q.questionText); }} aria-label={`Read question ${index + 1} aloud`} className="mr-2 flex-shrink-0" disabled={isListening === index || questionStates[index]?.isSubmitted || !soundEffectsEnabled}>
+                    <div className="flex-1 flex items-start sm:items-center gap-2 min-w-0"> {/* Added min-w-0 and items-start */}
+                        <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleSpeak(q.questionText); }} aria-label={`Read question ${index + 1} aloud`} className="mr-1 sm:mr-2 flex-shrink-0 self-start sm:self-center" disabled={isListening === index || questionStates[index]?.isSubmitted || !soundEffectsEnabled}>
                             <Volume2 className="h-4 w-4" />
                         </Button>
-                        <span className="font-semibold">Question {index + 1}: </span>{q.questionText}
+                        <div className="flex-1 min-w-0 text-left"> {/* Added text-left and min-w-0 */}
+                            <span className="font-semibold">Question {index + 1}: </span>
+                            <span>{q.questionText}</span> {/* Text should wrap here */}
+                        </div>
                     </div>
                     {questionStates[index]?.isCorrect === true && <CheckCircle2 className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />}
                     {questionStates[index]?.isCorrect === false && <XCircle className="h-5 w-5 text-red-500 ml-2 flex-shrink-0" />}
@@ -464,3 +468,4 @@ export const AiStoryProblemGameUI = () => {
     </Card>
   );
 };
+
