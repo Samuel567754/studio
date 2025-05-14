@@ -203,7 +203,10 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Incomplete Test</div>,
         description: "Please answer all questions before submitting.",
       });
-      // Removed: if (soundEffectsEnabled) playNotificationSound();
+      if (soundEffectsEnabled) {
+        playNotificationSound();
+        speakText("Please answer all questions before submitting.");
+      }
       return;
     }
 
@@ -227,29 +230,35 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setTestResults(results);
     setOverallScore(correctCount);
     setIsTestActive(false);
-    setIsShowingResults(true); // Show results first
+    setIsShowingResults(true); 
     playNotificationSound();
 
     let resultSpeech = `You scored ${correctCount} out of ${questionsData.questions.length}. `;
-    results.forEach((res, i) => {
-      resultSpeech += `For question ${i + 1}, you answered ${res.userAnswer || 'nothing'}. The correct answer was ${res.correctAnswer}. ${res.isCorrect ? 'That was correct. ' : 'That was incorrect. '}`;
-    });
     
-    if(soundEffectsEnabled) speakText(resultSpeech);
-
-    const passingScore = Math.ceil(questionsData.questions.length * (PASSING_THRESHOLD_PERCENTAGE / 100));
-    if (correctCount < passingScore) {
-      setShowRetryOption(true);
-      toast({
-        variant: "info",
-        title: "Test Graded",
-        description: `You scored ${correctCount}/${questionsData.questions.length}. You can review your answers or try again.`,
-        duration: 8000
-      });
+    const afterResultSpeechCallback = () => {
+        const passingScore = Math.ceil(questionsData.questions.length * (PASSING_THRESHOLD_PERCENTAGE / 100));
+        if (correctCount < passingScore) {
+            setShowRetryOption(true);
+            toast({
+                variant: "info",
+                title: "Test Graded",
+                description: `You scored ${correctCount}/${questionsData.questions.length}. You can review your answers or try again.`,
+                duration: 8000
+            });
+            if (soundEffectsEnabled) speakText("You can review your answers or try again.");
+        } else {
+            setShowRetryOption(false);
+            handleFinishSession(correctCount, questionsData.questions.length);
+        }
+    };
+    
+    if(soundEffectsEnabled) {
+        speakText(resultSpeech, undefined, afterResultSpeechCallback, (err) => {
+            console.error("Speech error announcing score:", err.error);
+            afterResultSpeechCallback(); // Proceed even if speech fails
+        });
     } else {
-      setShowRetryOption(false);
-      // Call parent's onSessionComplete which handles its own toast and audio
-      handleFinishSession(correctCount, questionsData.questions.length);
+        afterResultSpeechCallback();
     }
   };
 
@@ -266,10 +275,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   const handleFinishSessionWithLowScore = () => {
      if (overallScore !== null && questionsData) {
-        // Call parent's onSessionComplete which handles its own toast and audio
         handleFinishSession(overallScore, questionsData.questions.length);
      }
-     setShowRetryOption(false); // Hide retry button
+     setShowRetryOption(false); 
   };
 
   const speakQuestionWithOptions = (question: Question) => {
@@ -352,8 +360,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const getPlayPauseAriaLabel = () => isSpeaking && !isPaused ? "Pause reading" : "Read passage aloud";
   const playPauseButtonText = () => isSpeaking && !isPaused ? 'Pause' : (isSpeaking && isPaused ? 'Resume' : 'Read Aloud');
 
-  // No need to check gameCompletedThisSession here, parent will hide this component if completed.
-  // The component will reset itself for a new passage via fetchPassage which calls resetStateForNewPassage.
 
   return (
     <Card className="shadow-xl w-full border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
