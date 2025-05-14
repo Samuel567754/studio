@@ -55,11 +55,13 @@ export default function IdentifyWordPage() {
       setCurrentIndex(validIndex);
       const newWord = storedList[validIndex];
       setCurrentWord(newWord);
-      // Delay slightly to ensure WordIdentificationGame might have set up its options first
-      // and to allow UI to settle before speaking.
-      if (!sessionCompleted && !isRestart) { // Avoid speaking on initial restart to prevent double audio with game setup
-        setTimeout(() => speakWordWithPrompt(newWord), 300); 
+      
+      if (isRestart && storedList.length > 0) { // Only speak on explicit restart if list is not empty
+        setTimeout(() => speakWordWithPrompt(newWord), 300);
+      } else if (!isRestart && !sessionCompleted && storedList.length > 0) { // Speak on initial load if not completed
+         setTimeout(() => speakWordWithPrompt(newWord), 300); 
       }
+
       if (storedIndex !== validIndex || isRestart) {
         storeCurrentIndex(validIndex);
       }
@@ -67,7 +69,7 @@ export default function IdentifyWordPage() {
       setCurrentWord('');
       setCurrentIndex(0);
     }
-  }, [sessionCompleted, speakWordWithPrompt]);
+  }, [sessionCompleted, speakWordWithPrompt, soundEffectsEnabled]); // Added soundEffectsEnabled
 
   useEffect(() => {
     loadWordData();
@@ -97,7 +99,6 @@ export default function IdentifyWordPage() {
     const newWordToSpeak = wordList[newIndex];
     setCurrentWord(newWordToSpeak);
     storeCurrentIndex(newIndex);
-    // Delay speaking to allow UI to update and game component to re-render if needed
     setTimeout(() => speakWordWithPrompt(newWordToSpeak), 150); 
     playNavigationSound();
   };
@@ -106,50 +107,55 @@ export default function IdentifyWordPage() {
     const currentWordLowerCase = currentWord.toLowerCase();
     
     const afterCurrentWordAudio = () => {
-        const newPracticedSet = new Set(practicedWordsInSession);
-        if (correct) newPracticedSet.add(currentWordLowerCase); 
-        setPracticedWordsInSession(newPracticedSet);
+        let newPracticedSet = practicedWordsInSession;
+        if (correct) { // Only add to practiced set if correct
+             newPracticedSet = new Set(practicedWordsInSession).add(currentWordLowerCase);
+             setPracticedWordsInSession(newPracticedSet);
+        }
 
         if (newPracticedSet.size === wordList.length && wordList.length > 0 && !sessionCompleted) {
             setSessionCompleted(true);
+            const completionMessage = username ? `Superb, ${username}!` : 'Congratulations!';
             toast({
                 variant: "success",
-                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Superb, ${username}!` : 'Congratulations!'}</div>,
+                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
                 description: "You've identified all words in this session!",
                 duration: 7000,
             });
             playCompletionSound();
             if (soundEffectsEnabled) {
-                speakText(username ? `Superb, ${username}! You've identified all words in this session!` : "Congratulations! You've identified all words in this session!");
+                speakText(`${completionMessage} You've identified all words in this session!`);
             }
         } else if (wordList.length > 1 && !sessionCompleted) {
             navigateWord('next');
         } else if (wordList.length === 1 && !sessionCompleted && correct) { 
             setSessionCompleted(true);
+            const singleWordMessage = username ? `Awesome, ${username}!` : 'Awesome!';
             toast({
                 variant: "success",
-                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Awesome, ${username}!` : 'Awesome!'}</div>,
+                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{singleWordMessage}</div>,
                 description: "You've identified the word! Add more to keep practicing.",
                 duration: 7000,
             });
             playCompletionSound();
-             if (soundEffectsEnabled) speakText(username ? `Awesome, ${username}! You've identified the word!` : "Awesome! You've identified the word!");
+             if (soundEffectsEnabled) speakText(`${singleWordMessage} You've identified the word!`);
         } else if (wordList.length === 1 && !sessionCompleted && !correct) {
-            // Do nothing, allow retry for the single word.
              if (currentWord && soundEffectsEnabled) {
-                setTimeout(() => speakWordWithPrompt(currentWord), 1000); // Re-speak the word after incorrect attempt on single word
+                setTimeout(() => speakWordWithPrompt(currentWord), 1000); 
             }
         }
     };
 
 
     if (correct) {
-      playSuccessSound();
-      toast({
-        variant: "success",
-        title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Correct, ${username}!` : 'Correct!'}</div>,
-        description: `You identified "${currentWord}"!`,
-      });
+      // Toast and success sound are handled by WordIdentificationGame component
+      // Or if you want central control:
+      // playSuccessSound(); 
+      // toast({
+      //   variant: "success",
+      //   title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Correct, ${username}!` : 'Correct!'}</div>,
+      //   description: `You identified "${currentWord}"!`,
+      // });
       
       const spokenFeedback = `Correct! You identified ${currentWord}.`;
       if (soundEffectsEnabled) {
@@ -159,12 +165,12 @@ export default function IdentifyWordPage() {
       }
 
     } else {
-      playErrorSound();
-      toast({
-        variant: "destructive",
-        title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Not quite...</div>,
-        description: `You chose "${selectedWord}". The word was "${currentWord}".`,
-      });
+      // playErrorSound();
+      // toast({
+      //   variant: "destructive",
+      //   title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Not quite...</div>,
+      //   description: `You chose "${selectedWord}". The word was "${currentWord}".`,
+      // });
 
       const spokenFeedback = `Oops. You chose ${selectedWord}. The word was ${currentWord}.`;
       if (soundEffectsEnabled) {
@@ -180,8 +186,8 @@ export default function IdentifyWordPage() {
       <div className="space-y-6 md:space-y-8" aria-live="polite" aria-busy="true">
         <Card className="shadow-lg animate-pulse">
             <div className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
-                <div className="h-20 w-3/4 bg-muted rounded"></div> {/* Placeholder for hidden word */}
-                <div className="h-12 w-1/2 bg-primary/50 rounded"></div> {/* Placeholder for button */}
+                <div className="h-20 w-3/4 bg-muted rounded"></div> 
+                <div className="h-12 w-1/2 bg-primary/50 rounded"></div>
             </div>
         </Card>
         <Card className="shadow-lg animate-pulse">
