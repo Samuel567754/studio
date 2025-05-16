@@ -3,10 +3,10 @@
 
 import type { FC } from 'react';
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'; // Added CardFooter
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2, Target } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2 } from 'lucide-react';
 import { speakText, playNotificationSound, playErrorSound } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -123,7 +123,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
       stopCurrentSpeech();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, currentStepIndex]); // Rerun when step changes or guide opens/closes
+  }, [isOpen, currentStepIndex]); 
 
 
   const handleNext = () => {
@@ -145,7 +145,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
   const handleSkip = () => {
     stopCurrentSpeech();
     playNotificationSound();
-    onClose();
+    onClose(); // onClose marks walkthrough as completed
   };
 
   const toggleSpeechPlayback = () => {
@@ -172,21 +172,21 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
   const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
   const IconComponent = getWalkthroughIconComponent(currentStepData.icon as string);
 
-  const popoverStyle: React.CSSProperties = {
+  const modalStyle: React.CSSProperties = {
       position: 'fixed',
-      bottom: '20px', // Anchored to bottom
+      top: '50%',
       left: '50%',
-      transform: 'translateX(-50%)', // Center horizontally
-      zIndex: 10000, // Should be above overlay (which is 9998)
-      maxWidth: 'calc(100vw - 32px)',
-      width: '350px',
+      transform: 'translate(-50%, -50%)',
+      zIndex: 10000, 
+      width: '90vw',
+      maxWidth: '500px', // Increased max width
     };
 
 
   return (
     <>
       <div className="walkthrough-overlay" onClick={onClose} />
-      <div style={popoverStyle} className="animate-in fade-in-0 slide-in-from-bottom-10 duration-500">
+      <div style={modalStyle} className="animate-in fade-in-0 zoom-in-95 duration-300">
         <Card className="w-full shadow-2xl border-accent bg-card">
           <CardHeader className="p-4 border-b">
             <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
@@ -197,7 +197,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
 
           <Progress value={progressPercentage} className="w-full h-1 rounded-none bg-muted" indicatorClassName="bg-primary transition-all duration-300 ease-linear" />
           
-          <CardContent className="p-4 max-h-[40vh] overflow-y-auto text-sm text-foreground/80">
+          <CardContent className="p-4 max-h-[40vh] sm:max-h-[50vh] overflow-y-auto text-sm text-foreground/80">
             {currentStepData.imageSrc && (
               <div className="relative w-full h-32 rounded-md overflow-hidden mb-3 shadow-sm">
                 <Image src={currentStepData.imageSrc} alt={currentStepData.imageAlt || "Walkthrough step image"} layout="fill" objectFit="cover" data-ai-hint={currentStepData.aiHint || "guide"} />
@@ -206,47 +206,50 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
             <p className="whitespace-pre-line leading-relaxed">{currentStepData.content}</p>
           </CardContent>
 
-          <CardFooter className="p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-2">
-            <div className="flex items-center gap-2">
-              {soundEffectsEnabled && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleSpeechPlayback}
-                  className={cn("text-muted-foreground", isSpeaking && !isPaused && "text-accent animate-pulse")}
-                  aria-label={isSpeaking && !isPaused ? "Pause audio" : "Play audio"}
-                >
-                  {isSpeaking && !isPaused ? <Pause className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                </Button>
-              )}
-               <span className="text-xs text-muted-foreground">
-                Step {currentStepIndex + 1} of {steps.length}
-              </span>
+          <CardFooter className="p-4 border-t flex flex-col items-stretch gap-3 sm:gap-2">
+            <div className="flex justify-between items-center w-full">
+                <span className="text-xs text-muted-foreground">
+                    Step {currentStepIndex + 1} of {steps.length}
+                </span>
+                {soundEffectsEnabled && (
+                    <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleSpeechPlayback}
+                    className={cn("text-muted-foreground h-8 w-8", isSpeaking && !isPaused && "text-accent animate-pulse")}
+                    aria-label={isSpeaking && !isPaused ? "Pause audio" : "Play audio"}
+                    >
+                    {isSpeaking && !isPaused ? <Pause className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                    </Button>
+                )}
             </div>
 
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                onClick={handlePrev}
-                disabled={currentStepIndex === 0}
-                className="flex-1 sm:flex-initial"
-              >
-                <ArrowLeft className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Prev</span>
-              </Button>
-              {currentStepIndex < steps.length - 1 ? (
-                <Button onClick={handleNext} className="flex-1 sm:flex-initial btn-glow">
-                  <span className="hidden sm:inline">Next</span><ArrowRight className="h-4 w-4 sm:ml-2" />
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <Button
+                    variant="outline"
+                    onClick={handlePrev}
+                    disabled={currentStepIndex === 0}
+                    className="w-full sm:flex-1"
+                >
+                    <ArrowLeft className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Prev</span>
                 </Button>
-              ) : (
-                <Button onClick={onFinish} className="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 text-white btn-glow">
-                  Finish
-                </Button>
-              )}
+                {currentStepIndex < steps.length - 1 ? (
+                    <Button onClick={handleNext} className="w-full sm:flex-1 btn-glow">
+                    <span className="hidden sm:inline">Next</span><ArrowRight className="h-4 w-4 sm:ml-2" />
+                    </Button>
+                ) : (
+                    <Button onClick={onFinish} className="w-full sm:flex-1 bg-green-600 hover:bg-green-700 text-white btn-glow">
+                    Finish
+                    </Button>
+                )}
             </div>
+             <Button variant="ghost" size="sm" onClick={handleSkip} className="w-full text-muted-foreground hover:text-destructive">
+                Skip Tutorial
+            </Button>
           </CardFooter>
-           <Button variant="ghost" size="sm" onClick={handleSkip} className="absolute top-2 right-2 p-1 h-auto text-muted-foreground hover:text-destructive">
+           <Button variant="ghost" size="icon" onClick={handleSkip} className="absolute top-2 right-2 p-1 h-8 w-8 text-muted-foreground hover:text-destructive rounded-full">
               <X className="h-4 w-4"/>
-              <span className="sr-only">Skip tutorial</span>
+              <span className="sr-only">Close tutorial</span>
           </Button>
         </Card>
       </div>
