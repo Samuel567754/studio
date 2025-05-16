@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from 'react';
-import Image from 'next/image';
+import Image from 'next/image'; // Ensure Image is imported
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -15,7 +15,7 @@ import {
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star, Trophy as TrophyIcon } from 'lucide-react'; // Added TrophyIcon
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -29,63 +29,35 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
+  AlertDialogDescription as AlertDialogDescriptionPrimitive,
   AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogHeader as AlertDialogHeaderPrimitive,
+  AlertDialogTitle as AlertDialogTitlePrimitive,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
-
-
-interface ProfileStats {
-  practiceWordCount: number;
-  masteredWordCount: number;
-  readingLevel: string;
-  wordLength: number;
-  practiceWords: string[];
-  masteredWords: string[];
-}
-
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  pointsRequired: number;
-  imageSrc: string;
-  iconAlt: string;
-  color: string;
-  bonusStars: number;
-}
-
-export const achievementsList: Achievement[] = [
-    { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
-    { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
-    { id: "gem_seeker_1", name: "Gem Seeker I", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", color: "text-fuchsia-500", bonusStars: 15 },
-    { id: "treasure_finder", name: "Treasure Discoverer", description: "Unearthed 300 Golden Stars!", pointsRequired: 300, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest", color: "text-orange-500", bonusStars: 20 },
-    { id: "chill_master", name: "ChillLearn Master", description: "Achieved 500 Golden Stars overall!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Laurel Wreath Trophy", color: "text-green-500", bonusStars: 25 },
-];
-
-
-const availableTopics = [
-  "Animals", "Space", "Dinosaurs", "Adventures", "Fairy Tales",
-  "Superheroes", "Sports", "Music", "Nature", "Oceans",
-  "Cars & Trucks", "Fantasy", "Science", "History", "Art", "Robots", "Mystery"
-];
-
+import type { Achievement } from '@/stores/user-profile-store'; // Use Achievement type from store
 
 export default function ProfilePage() {
-  const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
+  const [profileStats, setProfileStats] = useState<{
+    practiceWordCount: number;
+    masteredWordCount: number;
+    readingLevel: string;
+    wordLength: number;
+    practiceWords: string[];
+    masteredWords: string[];
+  } | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const {
     username,
     favoriteTopics,
-    goldenStars,
+    goldenCoins,
     unlockedAchievements,
     isAchievementUnlocked,
     setUsername: setStoreUsername,
     setFavoriteTopics: setStoreFavoriteTopics,
-    loadUserProfileFromStorage
+    loadUserProfileFromStorage,
+    achievementsList
   } = useUserProfileStore();
 
   const [usernameInput, setUsernameInput] = useState<string>('');
@@ -93,7 +65,6 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
-
 
   useEffect(() => {
     loadUserProfileFromStorage();
@@ -119,6 +90,12 @@ export default function ProfilePage() {
       setSelectedTopics(favoriteTopics ? favoriteTopics.split(',').map(t => t.trim()).filter(t => t) : []);
     }
   }, [username, favoriteTopics, isMounted]);
+
+  const availableTopics = [
+    "Animals", "Space", "Dinosaurs", "Adventures", "Fairy Tales",
+    "Superheroes", "Sports", "Music", "Nature", "Oceans",
+    "Cars & Trucks", "Fantasy", "Science", "History", "Art", "Robots", "Mystery"
+  ];
 
   const handleTopicChange = (topic: string) => {
     setSelectedTopics(prev =>
@@ -160,7 +137,9 @@ export default function ProfilePage() {
   if (!isMounted || !profileStats) {
     return (
       <div className="space-y-6" aria-live="polite" aria-busy="true">
-        {/* Skeleton remains the same */}
+        {/* Skeleton placeholder */}
+        <Card className="shadow-lg animate-pulse"><CardHeader><div className="h-8 w-3/4 bg-muted rounded"></div></CardHeader><CardContent><div className="h-40 bg-muted rounded"></div></CardContent></Card>
+        <Card className="shadow-lg animate-pulse"><CardHeader><div className="h-8 w-1/2 bg-muted rounded"></div></CardHeader><CardContent><div className="h-60 bg-muted rounded"></div></CardContent></Card>
       </div>
     );
   }
@@ -269,9 +248,9 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-             <Image src="/assets/images/golden_star_coin.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
+             <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
             <div>
-              <p className="font-semibold text-foreground">{goldenStars}</p>
+              <p className="font-semibold text-foreground">{goldenCoins}</p>
               <p className="text-sm text-muted-foreground">Golden Stars Earned</p>
             </div>
           </div>
@@ -298,7 +277,7 @@ export default function ProfilePage() {
              <Image
                 src="/assets/images/trophy_cup_illustration.png"
                 alt="Trophies &amp; Badges"
-                width={32} 
+                width={32}
                 height={32}
                 className="mr-3 drop-shadow-sm"
               /> My Trophies &amp; Badges
@@ -320,8 +299,8 @@ export default function ProfilePage() {
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <Image
-                    src={ach.imageSrc}
-                    alt={ach.iconAlt}
+                    src={ach.imageSrc} // This uses the imageSrc from the achievement definition
+                    alt={ach.name}
                     width={64}
                     height={64}
                     className="mb-3 drop-shadow-lg"
@@ -333,7 +312,9 @@ export default function ProfilePage() {
             </div>
           ) : (
             <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300">
-              <AlertTitle>Keep Learning!</AlertTitle>
+              <AlertTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-yellow-400"/> Keep Learning!
+              </AlertTitle>
               <AlertDescription>
                 You haven't unlocked any trophies or badges yet. Keep practicing and earning Golden Stars to see them here!
               </AlertDescription>
@@ -396,15 +377,15 @@ export default function ProfilePage() {
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertDialogHeaderPrimitive>
+                <AlertDialogTitlePrimitive className={cn("flex items-center gap-2 text-destructive")}>
                   <ShieldAlert className="h-6 w-6 text-destructive" />
                   Are you absolutely sure?
-                </AlertDialogTitle>
-                <AlertDialogDescription>
+                </AlertDialogTitlePrimitive>
+                <AlertDialogDescriptionPrimitive>
                   This action cannot be undone. All your learning progress, word lists, mastered words, settings preferences (username, topics, theme, audio), tutorial completion status, and Golden Stars will be permanently deleted. You will be taken back to the app introduction.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
+                </AlertDialogDescriptionPrimitive>
+              </AlertDialogHeaderPrimitive>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setIsConfirmResetOpen(false)}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
