@@ -6,7 +6,7 @@ import { useEffect, useCallback, useState, useRef } from 'react';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2, Target } from 'lucide-react';
 import { speakText, playNotificationSound, playErrorSound } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +32,7 @@ const getWalkthroughIconComponent = (iconName?: string): React.ElementType => {
 };
 
 export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onClose, onFinish }) => {
-  const { currentStepIndex, setCurrentStepIndex, nextStep, prevStep, closeWalkthrough } = useWalkthroughStore();
+  const { currentStepIndex, setCurrentStepIndex, nextStep, prevStep } = useWalkthroughStore();
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
   const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
