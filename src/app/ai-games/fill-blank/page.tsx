@@ -19,9 +19,9 @@ import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { CoinsEarnedPopup } from '@/components/points-earned-popup';
 import { CoinsLostPopup } from '@/components/points-lost-popup';
 
-const POINTS_PER_CORRECT_FILL = 2;
-const SESSION_COMPLETION_BONUS_POINTS = 10;
-const PENALTY_PER_WRONG_FOR_BONUS = 2;
+const POINTS_PER_CORRECT_FILL = 1; // Aligned with Math Zone
+const SESSION_COMPLETION_BONUS_POINTS = 5; // Aligned with Math Zone
+const PENALTY_PER_WRONG_FOR_BONUS = 1; // Aligned with Math Zone
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 
 export default function FillInTheBlankPage() {
@@ -200,7 +200,7 @@ export default function FillInTheBlankPage() {
           setLastAwardedCoins(calculatedBonus);
           setShowCoinsEarnedPopup(true);
           if (soundEffectsEnabled) playCoinsEarnedSound();
-          description += ` You earned ${calculatedBonus} bonus Golden Coins!`;
+          description += ` You earned ${calculatedBonus} Golden Coins!`;
         } else {
           description += ` Keep practicing to earn a bonus next time!`;
         }
@@ -222,11 +222,11 @@ export default function FillInTheBlankPage() {
     };
 
     if (correct) {
-      playSuccessSound();
+      playSuccessSound(); // Generic success, not star-specific here.
       addGoldenCoins(POINTS_PER_CORRECT_FILL);
       setLastAwardedCoins(POINTS_PER_CORRECT_FILL);
       setShowCoinsEarnedPopup(true);
-      if (soundEffectsEnabled) playCoinsEarnedSound();
+      // playCoinsEarnedSound(); // Sound handled by popup trigger in ClientRootFeatures
       toast({
         variant: "success",
         title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_FILL} Golden Coins!</div>,
@@ -252,12 +252,13 @@ export default function FillInTheBlankPage() {
 
     } else { 
       playErrorSound();
-      setSessionIncorrectAnswersCount(prev => prev + 1);
+      if (!practicedWordsInSession.has(currentWordLowerCase)) { // Only count incorrect if word wasn't already 'mastered' in this session
+          setSessionIncorrectAnswersCount(prev => prev + 1);
+      }
       deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
       setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
       setShowCoinsLostPopup(true);
-      if (soundEffectsEnabled) playCoinsDeductedSound();
-
+      // playCoinsDeductedSound(); // Sound handled by popup trigger
       toast({
         variant: "destructive",
         title: <div className="flex items-center gap-1"><XCircle className="h-5 w-5" /> Oops! (-{POINTS_DEDUCTED_PER_WRONG_ANSWER} Coin)</div>,
@@ -310,7 +311,7 @@ export default function FillInTheBlankPage() {
         <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
           <div className="relative h-80 md:h-96 w-full">
             <Image 
-              src="https://plus.unsplash.com/premium_photo-1680012287034-16331e4f93c9?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fGxlYXJuaW5nJTIwd29yZHN8ZW58MHx8MHx8fDA%3D" 
+              src="/assets/images/red_crystal_cluster_illustration.png" 
               alt="AI brain generating word puzzle"
               layout="fill"
               objectFit="cover"
@@ -336,8 +337,7 @@ export default function FillInTheBlankPage() {
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto relative">
-      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-      <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+      {/* Popups are now handled by ClientRootFeatures */}
       <div className="mb-6">
         <Button asChild variant="outline" className="group">
           <Link href="/ai-games">
@@ -380,7 +380,7 @@ export default function FillInTheBlankPage() {
                  <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">{username ? `Congratulations, ${username}!` : 'Session Complete!'}</AlertTitle>
                  <AlertDescription className="text-base">
                    You've successfully practiced all words in this Fill-in-the-Blank session!
-                   {lastAwardedCoins > 0 && ` You earned ${lastAwardedCoins} bonus Golden Coins!`}
+                   {/* Bonus coins display logic is now handled by the popup via ClientRootFeatures */}
                  </AlertDescription>
                  <div className="flex flex-col sm:flex-row gap-3 mt-3 w-full max-w-xs">
                     <Button onClick={() => loadWordAndSettingsData(true)} variant="outline" className="w-full">
@@ -557,4 +557,3 @@ export default function FillInTheBlankPage() {
     </div>
   );
 }
-

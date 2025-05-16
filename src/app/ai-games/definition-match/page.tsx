@@ -19,9 +19,9 @@ import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { CoinsEarnedPopup } from '@/components/points-earned-popup';
 import { CoinsLostPopup } from '@/components/points-lost-popup';
 
-const POINTS_PER_CORRECT_DEFINITION = 2;
-const SESSION_COMPLETION_BONUS_POINTS = 10;
-const PENALTY_PER_WRONG_FOR_BONUS = 2;
+const POINTS_PER_CORRECT_DEFINITION = 1; // Aligned with Math Zone
+const SESSION_COMPLETION_BONUS_POINTS = 5; // Aligned with Math Zone
+const PENALTY_PER_WRONG_FOR_BONUS = 1; // Aligned with Math Zone
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 
 export default function DefinitionMatchPage() {
@@ -39,6 +39,8 @@ export default function DefinitionMatchPage() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [buttonAnimation, setButtonAnimation] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
 
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
   const [sessionCompleted, setSessionCompleted] = useState<boolean>(false);
@@ -123,6 +125,7 @@ export default function DefinitionMatchPage() {
     setSelectedOption(null);
     setIsAttempted(false);
     setIsCorrect(null);
+    setButtonAnimation(null);
     if (soundEffectsEnabled) playNavigationSound();
 
     try {
@@ -176,6 +179,8 @@ export default function DefinitionMatchPage() {
     const correct = option.toLowerCase() === gameData.correctDefinition.toLowerCase();
     setIsCorrect(correct);
     const currentWordLowerCase = gameData.word.toLowerCase();
+    setButtonAnimation({ text: option, type: correct ? 'success' : 'error' });
+    setTimeout(() => setButtonAnimation(null), 700);
 
 
     const afterCurrentQuestionAudio = () => {
@@ -189,8 +194,8 @@ export default function DefinitionMatchPage() {
               addGoldenCoins(calculatedBonus);
               setLastAwardedCoins(calculatedBonus);
               setShowCoinsEarnedPopup(true);
-              if (soundEffectsEnabled) playCoinsEarnedSound();
-              description += ` You earned ${calculatedBonus} bonus Golden Coins!`;
+              // playCoinsEarnedSound(); // Sound handled by ClientRootFeatures
+              description += ` You earned ${calculatedBonus} Golden Coins!`;
             } else {
               description += ` Keep practicing to earn a bonus next time!`;
             }
@@ -216,7 +221,7 @@ export default function DefinitionMatchPage() {
       addGoldenCoins(POINTS_PER_CORRECT_DEFINITION);
       setLastAwardedCoins(POINTS_PER_CORRECT_DEFINITION);
       setShowCoinsEarnedPopup(true);
-      if (soundEffectsEnabled) playCoinsEarnedSound();
+      // playCoinsEarnedSound(); // Handled by ClientRootFeatures
       toast({
         variant: "success",
         title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_DEFINITION} Golden Coins!</div>,
@@ -242,11 +247,13 @@ export default function DefinitionMatchPage() {
 
     } else {
       playErrorSound();
-      setSessionIncorrectAnswersCount(prev => prev + 1);
+      if (!practicedWordsInSession.has(currentWordLowerCase)) {
+        setSessionIncorrectAnswersCount(prev => prev + 1);
+      }
       deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
       setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
       setShowCoinsLostPopup(true);
-      if (soundEffectsEnabled) playCoinsDeductedSound();
+      // playCoinsDeductedSound(); // Handled by ClientRootFeatures
 
       toast({
         variant: "destructive",
@@ -289,7 +296,7 @@ export default function DefinitionMatchPage() {
         <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
           <div className="relative h-80 md:h-96 w-full">
             <Image 
-              src="https://plus.unsplash.com/premium_photo-1666739032226-63f36dbe95d3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjF8fGxlYXJuaW5nJTIwd29yZHN8ZW58MHx8MHx8fDA%3D"
+              src="/assets/images/red_crystal_cluster_illustration.png"
               alt="AI circuitry connecting ideas for definitions"
               layout="fill"
               objectFit="cover"
@@ -315,8 +322,7 @@ export default function DefinitionMatchPage() {
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto relative">
-       <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-       <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+       {/* Popups are now handled by ClientRootFeatures */}
        <div className="mb-6">
         <Button asChild variant="outline" className="group">
           <Link href="/ai-games">
@@ -362,7 +368,7 @@ export default function DefinitionMatchPage() {
                  <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">{username ? `Congratulations, ${username}!` : 'Session Complete!'}</AlertTitle>
                  <AlertDescription className="text-base">
                    You've successfully practiced all words in this Definition Match session!
-                   {lastAwardedCoins > 0 && ` You earned ${lastAwardedCoins} bonus Golden Coins!`}
+                   {/* Bonus coins display logic is now handled by the popup via ClientRootFeatures */}
                  </AlertDescription>
                  <div className="flex flex-col sm:flex-row gap-3 mt-3 w-full max-w-xs">
                     <Button onClick={() => loadWordAndSettingsData(true)} variant="outline" className="w-full">
@@ -407,7 +413,9 @@ export default function DefinitionMatchPage() {
                       isAttempted && option === selectedOption && isCorrect && "bg-green-500/20 border-green-500 text-green-700 dark:text-green-400 hover:bg-green-500/30 ring-2 ring-green-500",
                       isAttempted && option === selectedOption && !isCorrect && "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500",
                       isAttempted && option !== selectedOption && option.toLowerCase() === gameData.correctDefinition.toLowerCase() && "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500", 
-                      !isAttempted && "hover:bg-primary/10 hover:border-primary"
+                      !isAttempted && "hover:bg-primary/10 hover:border-primary",
+                      buttonAnimation?.text === option && buttonAnimation.type === 'success' && 'animate-flash-success',
+                      buttonAnimation?.text === option && buttonAnimation.type === 'error' && 'animate-flash-error animate-shake-error'
                     )}
                     onClick={() => handleOptionClick(option)}
                     disabled={isAttempted || isLoadingGame}
@@ -488,4 +496,3 @@ export default function DefinitionMatchPage() {
     </div>
   );
 }
-
