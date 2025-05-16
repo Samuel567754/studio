@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image'; 
-import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert, Star } from 'lucide-react';
+import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import {
@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader as AlertDialogHeaderPrimitive,
   AlertDialogTitle as AlertDialogTitlePrimitive,
-  AlertDialogTrigger,
+  // AlertDialogTrigger // Already imported
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
@@ -166,15 +166,15 @@ export const MainNav: FC = () => {
         {/* Mobile Header: Points + Hamburger Menu */}
         <div className="md:hidden flex items-center gap-2">
           {/* Compact Golden Stars Display for Mobile Header (next to hamburger) */}
-          <div className="flex items-center gap-1 p-1.5 rounded-full bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))] shadow-sm">
+          <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))] shadow-sm">
             <Image 
               src="/assets/images/gold_star_icon.png" 
               alt="Golden Stars" 
-              width={20} 
-              height={20} 
+              width={32} 
+              height={32} 
               className="drop-shadow-sm"
             />
-            <span className="text-sm font-semibold">{goldenStars}</span>
+            <span className="text-lg font-semibold">{goldenStars}</span>
           </div>
 
           {/* Mobile Hamburger Menu Trigger */}
@@ -225,8 +225,6 @@ export const MainNav: FC = () => {
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               
-              {/* Points display for mobile sheet has been removed from here */}
-
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
                 <NavLinkItems isMobileSheet={true} />
                 <Button
