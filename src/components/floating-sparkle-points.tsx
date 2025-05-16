@@ -27,10 +27,10 @@ export function FloatingGoldenStars() {
   return (
     <div
       className={cn(
-        "fixed top-20 left-5 z-50 flex items-center gap-1.5 p-2 rounded-full shadow-xl transition-all duration-300 ease-out", // Reduced gap and padding
+        "fixed top-20 left-5 z-50 flex items-center gap-1.5 p-2 rounded-full shadow-xl transition-all duration-300 ease-out",
         "bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 text-white",
         "border-2 border-yellow-300/70",
-        "md:top-24 md:left-6" // Adjusted desktop positioning slightly lower
+        "md:top-24 md:left-6" 
       )}
       aria-live="polite"
       aria-atomic="true"
@@ -39,13 +39,13 @@ export function FloatingGoldenStars() {
       <Image
         src="/assets/images/gold_star_icon.png" 
         alt="Golden Stars"
-        width={26} 
-        height={26} 
+        width={32} 
+        height={32} 
         className="drop-shadow-sm"
       />
       <span
         className={cn(
-          "text-xl font-bold drop-shadow-sm", // Reduced text size
+          "text-xl font-bold drop-shadow-sm", 
           animatePoints && "golden-stars-update-animation"
         )}
         onAnimationEnd={handlePointsAnimationEnd}

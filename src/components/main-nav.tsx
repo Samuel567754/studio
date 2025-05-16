@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image'; // Import Image component
+import Image from 'next/image'; 
 import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
@@ -230,12 +230,12 @@ export const MainNav: FC = () => {
                   <Image 
                     src="/assets/images/gold_star_icon.png" 
                     alt="Golden Stars" 
-                    width={20} 
-                    height={20} 
+                    width={32} 
+                    height={32} 
                     className="drop-shadow-sm"
                   />
-                  <span className="font-semibold text-sm">{goldenStars}</span>
-                  <span className="text-xs opacity-80">Stars</span>
+                  <span className="font-semibold text-lg">{goldenStars}</span>
+                  <span className="text-sm opacity-80 ml-1">Stars</span>
               </div>
 
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
@@ -304,4 +304,3 @@ export const MainNav: FC = () => {
     </header>
   );
 };
-
