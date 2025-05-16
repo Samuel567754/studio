@@ -57,7 +57,7 @@ export const MainNav: FC = () => {
   useEffect(() => {
     if (isMounted && goldenStars > prevGoldenStarsRef.current) {
       setAnimatePoints(true);
-      playStarsEarnedSound();
+      playStarsEarnedSound(); // Using the specific sound for stars
     }
     prevGoldenStarsRef.current = goldenStars;
   }, [goldenStars, isMounted]);
@@ -141,7 +141,7 @@ export const MainNav: FC = () => {
       />
       <span
         className={cn(
-          "text-lg font-semibold",
+          "text-lg font-semibold", // Increased text size
           animatePoints && "golden-stars-update-animation"
         )}
         onAnimationEnd={handlePointsAnimationEnd}
@@ -175,14 +175,21 @@ export const MainNav: FC = () => {
   return (
     <header className={cn(navBarBaseClasses, navBarBorderColor )}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
-          <BookOpenText className={cn(
-            "h-8 w-8 transition-colors duration-300 ease-in-out text-[hsl(var(--nav-icon-light))] group-hover:text-accent"
-          )} aria-hidden="true" />
-          <h1 className={cn(
-            "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-light))] group-hover:text-accent"
-          )}>ChillLearn</h1>
-        </Link>
+        <div className="flex items-center gap-3"> {/* Added gap-3 here for spacing between logo and stars on desktop */}
+            <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
+                <BookOpenText className={cn(
+                    "h-8 w-8 transition-colors duration-300 ease-in-out text-[hsl(var(--nav-icon-light))] group-hover:text-accent"
+                )} aria-hidden="true" />
+                <h1 className={cn(
+                    "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-light))] group-hover:text-accent"
+                )}>ChillLearn</h1>
+            </Link>
+            {/* CompactGoldenStarsDisplay for desktop, hidden on mobile where it's part of the mobile-specific header items */}
+            <div className="hidden md:flex">
+                {CompactGoldenStarsDisplay}
+            </div>
+        </div>
+
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
@@ -201,7 +208,7 @@ export const MainNav: FC = () => {
 
         {/* Mobile Header: Points + Hamburger Menu */}
         <div className="md:hidden flex items-center gap-2">
-          {CompactGoldenStarsDisplay}
+          {CompactGoldenStarsDisplay} {/* This one is specifically for mobile header */}
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
@@ -315,3 +322,4 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+
