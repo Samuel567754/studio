@@ -12,6 +12,7 @@ import {
 } from '@/lib/storage';
 import { toast } from '@/hooks/use-toast';
 import { playAchievementUnlockedSound, playCoinsEarnedSound } from '@/lib/audio';
+import Image from 'next/image'; // Keep this if it's used by React.createElement logic
 
 // Define Achievement type directly here
 export interface Achievement {
@@ -26,12 +27,11 @@ export interface Achievement {
 }
 
 // Define ACHIEVEMENTS_CONFIG directly here
-// Normalized image paths (single .png, no trailing hyphens)
 export const ACHIEVEMENTS_CONFIG: Achievement[] = [
   { id: "first_sparkle", name: "First Sparkle", description: "Earned your first 10 Golden Coins!", pointsRequired: 10, imageSrc: "/assets/images/star_emoji_illustration.png", iconAlt: "Star Emoji", bonusCoins: 2 },
-  { id: "sparkling_start", name: "Sparkling Start", description: "Collected 20 Golden Coins!", pointsRequired: 20, imageSrc: "/assets/images/golden_glittery_sparkles.png", iconAlt: "Golden Glittery Sparkles", bonusCoins: 3 },
+  { id: "sparkling_start", name: "Sparkling Start", description: "Collected 20 Golden Coins!", pointsRequired: 20, imageSrc: "/assets/images/golden_glittery_sparkles.png.png", iconAlt: "Golden Glittery Sparkles", bonusCoins: 3 },
   { id: "star_cadet", name: "Star Cadet", description: "Collected 30 Golden Coins!", pointsRequired: 30, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Cute Smiling Star", bonusCoins: 5 },
-  { id: "coin_dabbler", name: "Coin Dabbler", description: "Gathered 40 Golden Coins!", pointsRequired: 40, imageSrc: "/assets/images/three_golden_coins_sparkling.png", iconAlt: "Three Golden Coins Sparkling", bonusCoins: 3 },
+  { id: "coin_dabbler", name: "Coin Dabbler", description: "Gathered 40 Golden Coins!", pointsRequired: 40, imageSrc: "/assets/images/three_golden_coins_sparkling.png.png", iconAlt: "Three Golden Coins Sparkling", bonusCoins: 3 },
   { id: "bronze_coin_collector", name: "Bronze Coin Collector", description: "Reached 50 Golden Coins!", pointsRequired: 50, imageSrc: "/assets/images/coin_with_clover_design.png", iconAlt: "Bronze Coin with Clover", bonusCoins: 5 },
   { id: "early_gem", name: "Early Gem", description: "Found your first Gem at 65 Coins!", pointsRequired: 65, imageSrc: "/assets/images/yellow_diamond_icon.png", iconAlt: "Yellow Diamond Icon", bonusCoins: 5 },
   { id: "silver_pouch_hoarder", name: "Silver Pouch Hoarder", description: "Amassed 75 Golden Coins!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", bonusCoins: 10 },
@@ -116,13 +116,12 @@ export const useUserProfileStore = create<UserProfileState>()(
         if (!isAchievementBonus) {
           set({ lastGameCoinsAwarded: { amount, key: Date.now().toString() + Math.random().toString() } });
         }
-        // Defer achievement check slightly to ensure state update is processed
         setTimeout(() => get()._triggerAchievementChecks(), 0);
       },
       deductGoldenCoins: (amount) => {
         if (amount <= 0) return;
         const currentTotal = get().goldenCoins;
-        const newTotal = Math.max(0, currentTotal - amount); // Ensure coins don't go below 0
+        const newTotal = Math.max(0, currentTotal - amount);
         set({ goldenCoins: newTotal });
         persistGoldenCoinsToStorage(newTotal);
         set({ lastCoinsDeducted: { amount, key: Date.now().toString() + Math.random().toString() }});
@@ -148,7 +147,7 @@ export const useUserProfileStore = create<UserProfileState>()(
           set((state) => ({
             pendingClaimAchievements: [...state.pendingClaimAchievements, ...newAchievementsToQueue]
               .sort((a,b) => a.pointsRequired - b.pointsRequired)
-              .filter((ach, index, self) => index === self.findIndex(t => t.id === ach.id))
+              .filter((ach, index, self) => index === self.findIndex(t => t.id === ach.id)) // Ensure uniqueness
           }));
         }
       },
@@ -159,7 +158,7 @@ export const useUserProfileStore = create<UserProfileState>()(
         const achievementToClaim = pending[0];
 
         if (achievementToClaim.bonusCoins && achievementToClaim.bonusCoins > 0) {
-          get().addGoldenCoins(achievementToClaim.bonusCoins, true);
+          get().addGoldenCoins(achievementToClaim.bonusCoins, true); // Mark as achievement bonus
           set({ lastBonusAwarded: { amount: achievementToClaim.bonusCoins, key: Date.now().toString() + Math.random().toString() } });
         }
 
@@ -170,14 +169,13 @@ export const useUserProfileStore = create<UserProfileState>()(
         persistUnlockedAchievementsToStorage(get().unlockedAchievements);
         playAchievementUnlockedSound();
         
-        // Using React.createElement for toast title to avoid JSX parsing issues in .ts file
         const toastTitleContent = React.createElement(
           'div',
           { className: 'flex items-center gap-2' },
-          React.createElement('img', {
+          React.createElement('img', { // Using basic img tag here as next/image can be tricky in non-component files
             src: achievementToClaim.imageSrc,
             alt: achievementToClaim.name,
-            width: 24,
+            width: 24, // Adjusted for consistency
             height: 24,
             style: { borderRadius: '4px' }
           }),
@@ -221,7 +219,7 @@ export const useUserProfileStore = create<UserProfileState>()(
       clearLastCoinsDeducted: () => set({ lastCoinsDeducted: null }),
     }),
     {
-      name: 'user-profile-storage-v5-coins', // Updated store name
+      name: 'user-profile-storage-v5-coins', 
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         username: state.username,
@@ -233,7 +231,7 @@ export const useUserProfileStore = create<UserProfileState>()(
         if (state) {
           setTimeout(() => {
             state._triggerAchievementChecks();
-          }, 500);
+          }, 500); 
         }
       }
     }
