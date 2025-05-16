@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 // import { WordDisplay } from '@/components/word-display'; // Removed WordDisplay
 import { useToast } from "@/hooks/use-toast";
@@ -11,11 +11,18 @@ import { ChevronLeft, ChevronRight, Info, CheckCircle2, XCircle, Smile, Lightbul
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playCompletionSound } from '@/lib/audio';
+import { playSuccessSound, playErrorSound, playNavigationSound, speakText, playCompletionSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { generateFillInTheBlankGame, type GenerateFillInTheBlankGameInput, type GenerateFillInTheBlankGameOutput } from '@/ai/flows/generate-fill-in-the-blank-game';
 import { cn } from '@/lib/utils';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { CoinsEarnedPopup } from '@/components/points-earned-popup';
+import { CoinsLostPopup } from '@/components/points-lost-popup';
+
+const POINTS_PER_CORRECT_FILL = 2;
+const SESSION_COMPLETION_BONUS_POINTS = 10;
+const PENALTY_PER_WRONG_FOR_BONUS = 2;
+const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 
 export default function FillInTheBlankPage() {
   const [wordList, setWordList] = useState<string[]>([]);
@@ -23,7 +30,7 @@ export default function FillInTheBlankPage() {
   const [currentWordForGame, setCurrentWordForGame] = useState<string>('');
   const [readingLevel, setReadingLevel] = useState<string>('beginner');
   const [isMounted, setIsMounted] = useState(false);
-  const { username } = useUserProfileStore();
+  const { username, addGoldenCoins, deductGoldenCoins } = useUserProfileStore();
   const { toast } = useToast();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
@@ -36,6 +43,12 @@ export default function FillInTheBlankPage() {
 
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
   const [sessionCompleted, setSessionCompleted] = useState<boolean>(false);
+  const [sessionIncorrectAnswersCount, setSessionIncorrectAnswersCount] = useState(0);
+
+  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
+  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
+  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
+  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
 
   const loadWordAndSettingsData = useCallback((isRestart: boolean = false) => {
     const storedList = getStoredWordList();
@@ -45,6 +58,7 @@ export default function FillInTheBlankPage() {
     if (isRestart) {
       setPracticedWordsInSession(new Set());
       setSessionCompleted(false);
+      setSessionIncorrectAnswersCount(0);
     }
 
 
@@ -102,7 +116,7 @@ export default function FillInTheBlankPage() {
     setIsAttempted(false);
     setIsCorrect(null);
     setShowCorrectWordAfterIncorrectAttempt(false); 
-    playNavigationSound();
+    if (soundEffectsEnabled) playNavigationSound();
 
     try {
       const input: GenerateFillInTheBlankGameInput = {
@@ -138,7 +152,7 @@ export default function FillInTheBlankPage() {
         title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>, 
         description: "Could not generate a game. Please try again or change words." 
       });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
     } finally {
       setIsLoadingGame(false);
     }
@@ -177,16 +191,31 @@ export default function FillInTheBlankPage() {
     const afterCurrentQuestionAudio = () => {
       if (practicedWordsInSession.size === wordList.length && wordList.length > 0 && !sessionCompleted) {
         setSessionCompleted(true);
+        const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_POINTS - (sessionIncorrectAnswersCount * PENALTY_PER_WRONG_FOR_BONUS));
+        let completionMessage = username ? `Amazing, ${username}!` : 'Congratulations!';
+        let description = `You've completed all words in this Fill-in-the-Blank session!`;
+
+        if (calculatedBonus > 0) {
+          addGoldenCoins(calculatedBonus);
+          setLastAwardedCoins(calculatedBonus);
+          setShowCoinsEarnedPopup(true);
+          if (soundEffectsEnabled) playCoinsEarnedSound();
+          description += ` You earned ${calculatedBonus} bonus Golden Coins!`;
+        } else {
+          description += ` Keep practicing to earn a bonus next time!`;
+        }
+        
         toast({
           variant: "success",
-          title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Amazing, ${username}!` : 'Congratulations!'}</div>,
-          description: "You've completed all words in this Fill-in-the-Blank session!",
+          title: <div className="flex items-center gap-2"><Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />{completionMessage}</div>,
+          description: description,
           duration: 7000,
         });
-        playCompletionSound();
         if (soundEffectsEnabled) {
-          speakText(username ? `Amazing, ${username}! You've completed all words in this Fill-in-the-Blank session!` : "Congratulations! You've completed all words in this Fill-in-the-Blank session!");
+          playCompletionSound();
+          speakText(`${completionMessage} ${description}`);
         }
+
       } else if (wordList.length > 1 && !sessionCompleted) { 
         navigateWord('next');
       }
@@ -194,9 +223,13 @@ export default function FillInTheBlankPage() {
 
     if (correct) {
       playSuccessSound();
+      addGoldenCoins(POINTS_PER_CORRECT_FILL);
+      setLastAwardedCoins(POINTS_PER_CORRECT_FILL);
+      setShowCoinsEarnedPopup(true);
+      if (soundEffectsEnabled) playCoinsEarnedSound();
       toast({
         variant: "success",
-        title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Correct, ${username}!` : 'Correct!'}</div>,
+        title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_FILL} Golden Coins!</div>,
         description: `"${gameData.correctWord}" is the right word!`,
       });
 
@@ -219,9 +252,15 @@ export default function FillInTheBlankPage() {
 
     } else { 
       playErrorSound();
+      setSessionIncorrectAnswersCount(prev => prev + 1);
+      deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+      setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+      setShowCoinsLostPopup(true);
+      if (soundEffectsEnabled) playCoinsDeductedSound();
+
       toast({
         variant: "destructive",
-        title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Not quite...</div>,
+        title: <div className="flex items-center gap-1"><XCircle className="h-5 w-5" /> Oops! (-{POINTS_DEDUCTED_PER_WRONG_ANSWER} Coin)</div>,
         description: `You chose "${option}". The word was "${gameData.correctWord}".`,
       });
 
@@ -249,7 +288,7 @@ export default function FillInTheBlankPage() {
   
   if (!isMounted) {
     return (
-      <div className="space-y-6 md:space-y-8" aria-live="polite" aria-busy="true">
+      <div className="space-y-6 md:space-y-8 relative" aria-live="polite" aria-busy="true">
         <Card className="shadow-lg animate-pulse"><CardContent className="p-6 min-h-[200px] bg-muted rounded-lg"></CardContent></Card>
         <Card className="shadow-lg animate-pulse"><CardContent className="p-6 min-h-[300px] bg-muted rounded-lg"></CardContent></Card>
         <p className="sr-only">Loading fill-in-the-blank game...</p>
@@ -259,7 +298,7 @@ export default function FillInTheBlankPage() {
 
   if (wordList.length < 1) { 
     return (
-      <div className="space-y-8 max-w-3xl mx-auto">
+      <div className="space-y-8 max-w-3xl mx-auto relative">
         <div className="mb-6">
           <Button asChild variant="outline" className="group">
             <Link href="/ai-games">
@@ -296,7 +335,9 @@ export default function FillInTheBlankPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="space-y-8 max-w-3xl mx-auto relative">
+      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
+      <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
       <div className="mb-6">
         <Button asChild variant="outline" className="group">
           <Link href="/ai-games">
@@ -324,7 +365,7 @@ export default function FillInTheBlankPage() {
         </div>
       </header>
       
-      <Card className="shadow-lg w-full animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
+      <Card className="shadow-lg w-full animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100 relative">
         <CardHeader>
           <CardTitle className="flex items-center text-xl font-semibold text-primary">
             <Edit className="mr-2 h-5 w-5" /> Fill in the Blank
@@ -335,10 +376,11 @@ export default function FillInTheBlankPage() {
           {sessionCompleted ? (
              <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
                <div className="flex flex-col items-center gap-4">
-                 <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+                 <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={40} height={40} />
                  <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">{username ? `Congratulations, ${username}!` : 'Session Complete!'}</AlertTitle>
                  <AlertDescription className="text-base">
                    You've successfully practiced all words in this Fill-in-the-Blank session!
+                   {lastAwardedCoins > 0 && ` You earned ${lastAwardedCoins} bonus Golden Coins!`}
                  </AlertDescription>
                  <div className="flex flex-col sm:flex-row gap-3 mt-3 w-full max-w-xs">
                     <Button onClick={() => loadWordAndSettingsData(true)} variant="outline" className="w-full">
