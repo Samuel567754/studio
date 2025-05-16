@@ -15,7 +15,7 @@ import {
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star } from 'lucide-react';
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star, Trophy as TrophyIcon } from 'lucide-react'; // Added TrophyIcon
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -52,13 +52,12 @@ export interface Achievement {
   name: string;
   description: string;
   pointsRequired: number;
-  imageSrc: string; // Path from public folder
+  imageSrc: string;
   iconAlt: string;
-  color: string; // Tailwind text color class
+  color: string;
   bonusStars: number;
 }
 
-// Define achievements here. Images should be from your provided list.
 export const achievementsList: Achievement[] = [
     { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
     { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
@@ -97,7 +96,7 @@ export default function ProfilePage() {
 
 
   useEffect(() => {
-    loadUserProfileFromStorage(); 
+    loadUserProfileFromStorage();
     const practiceList = getStoredWordList();
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
@@ -270,7 +269,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-             <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
+             <Image src="/assets/images/golden_star_coin.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
             <div>
               <p className="font-semibold text-foreground">{goldenStars}</p>
               <p className="text-sm text-muted-foreground">Golden Stars Earned</p>
@@ -296,7 +295,13 @@ export default function ProfilePage() {
       <Card className="shadow-lg border-yellow-500/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-300">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-yellow-500">
-             <Image src="/assets/images/trophy_cup_illustration.png" alt="Trophies & Badges" width={28} height={28} className="mr-3 drop-shadow-sm" /> My Trophies & Badges
+             <Image
+                src="/assets/images/trophy_cup_illustration.png"
+                alt="Trophies &amp; Badges"
+                width={32} 
+                height={32}
+                className="mr-3 drop-shadow-sm"
+              /> My Trophies &amp; Badges
           </CardTitle>
           <CardDescription>Celebrate your learning milestones by collecting Golden Stars!</CardDescription>
         </CardHeader>
@@ -416,3 +421,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
