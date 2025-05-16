@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'; // Added CardFooter
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2, Target } from 'lucide-react';
@@ -27,7 +27,7 @@ interface WalkthroughGuideProps {
 const getWalkthroughIconComponent = (iconName?: string): React.ElementType => {
   if (!iconName) return Compass;
   const icons: { [key: string]: React.ElementType } = {
-    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon, CheckCircle2, Smile: HelpCircle
+    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon, CheckCircle2, Smile: HelpCircle // Defaulting Smile to HelpCircle as Smile icon might not be consistently available
   };
   return icons[iconName] || Compass;
 };
@@ -253,4 +253,3 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
     </>
   );
 };
-
