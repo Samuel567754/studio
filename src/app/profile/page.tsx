@@ -64,13 +64,11 @@ interface Achievement {
 }
 
 const achievementsList: Achievement[] = [
-  { name: "Star Cadet", description: "Earned your first 20 Golden Stars!", pointsRequired: 20, iconImage: "/assets/images/cute_smiling_star_illustration.png", color: "text-yellow-400" },
-  { name: "Coin Collector", description: "Reached 50 Golden Stars!", pointsRequired: 50, iconImage: "/assets/images/pile_of_gold_coins_image.png", color: "text-amber-500" },
-  { name: "Gem Seeker", description: "Collected 100 Golden Stars!", pointsRequired: 100, iconImage: "/assets/images/multicolored_geometric_crystal_shape.png", color: "text-purple-400" },
-  { name: "Word Luminary", description: "Achieved 150 Golden Stars learning words!", pointsRequired: 150, iconImage: "/assets/images/star_medal_gold_ribbon_icon.png", color: "text-blue-400" },
-  { name: "Math Explorer", description: "Reached 150 Golden Stars in math!", pointsRequired: 150, iconImage: "/assets/images/gold_medal_star_with_red_ribbon.png", color: "text-red-400" },
-  { name: "Treasure Discoverer", description: "Found 250 Golden Stars!", pointsRequired: 250, iconImage: "/assets/images/treasure_chest_with_gold_and_jewels.png", color: "text-orange-500" },
-  { name: "ChillLearn Master", description: "Accumulated 500 Golden Stars overall!", pointsRequired: 500, iconImage: "/assets/images/gold_trophy_with_laurel_wreath.png", color: "text-green-400" },
+    { name: "Star Cadet", description: "Earned your first 25 Golden Stars!", pointsRequired: 25, iconImage: "/assets/images/cute_smiling_star_illustration.png", color: "text-yellow-400" },
+    { name: "Word Collector", description: "Reached 75 Golden Stars from word games!", pointsRequired: 75, iconImage: "/assets/images/star_medal_gold_ribbon_icon.png", color: "text-blue-400" },
+    { name: "Number Cruncher", description: "Reached 75 Golden Stars from math games!", pointsRequired: 75, iconImage: "/assets/images/gold_medal_star_with_red_ribbon.png", color: "text-red-400" },
+    { name: "Treasure Hunter", description: "Found 200 Golden Stars!", pointsRequired: 200, iconImage: "/assets/images/treasure_chest_with_gold_and_jewels.png", color: "text-orange-500" },
+    { name: "Ultimate Champion", description: "Accumulated 400 Golden Stars overall!", pointsRequired: 400, iconImage: "/assets/images/gold_trophy_with_laurel_wreath.png", color: "text-green-400" },
 ];
 
 
@@ -117,6 +115,7 @@ export default function ProfilePage() {
     if (isMounted) {
       setUsernameInput(username || '');
       setSelectedTopics(favoriteTopics ? favoriteTopics.split(',').map(t => t.trim()).filter(t => t) : []);
+      // Update profileData.goldenStars if the store's goldenStars changes
       if (profileData && goldenStars !== profileData.goldenStars) {
         setProfileData(prev => prev ? { ...prev, goldenStars } : null);
       }
