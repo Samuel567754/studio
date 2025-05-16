@@ -16,8 +16,7 @@ import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup';
+// Removed local CoinsEarnedPopup and CoinsLostPopup imports
 
 interface SequenceProblem {
   sequenceDisplay: (number | string)[];
@@ -36,8 +35,8 @@ const generateSequenceProblem = (): SequenceProblem => {
   const start = Math.floor(Math.random() * 20) + 1;
   const diffTypes = [1, 2, 3, 5, 10];
   const difference = diffTypes[Math.floor(Math.random() * diffTypes.length)];
-  const length = 4;
-  const blankIndex = Math.floor(Math.random() * (length -1)) + 1;
+  const length = 4; // Sequence length e.g., 1, 2, __, 4
+  const blankIndex = Math.floor(Math.random() * (length -1)) + 1; // Ensure blank is not first or last for simpler UI
 
   const fullSequence: number[] = [];
   for (let i = 0; i < length; i++) {
@@ -47,6 +46,7 @@ const generateSequenceProblem = (): SequenceProblem => {
   const correctAnswer = fullSequence[blankIndex];
   const sequenceDisplay: (number | string)[] = fullSequence.map((num, idx) => (idx === blankIndex ? "__" : num));
 
+  // Construct question text and speech text
   const questionText = `What number fits the blank: ${sequenceDisplay.join(', ')}?`;
   const speechText = `What number fits the blank in the sequence: ${sequenceDisplay.map(s => s === "__" ? "blank" : s).join(', ')}?`;
 
@@ -69,15 +69,12 @@ export const NumberSequencingUI = () => {
   const [showCorrectAnswerAfterIncorrect, setShowCorrectAnswerAfterIncorrect] = useState(false);
   const [inputAnimation, setInputAnimation] = useState<'success' | 'error' | null>(null);
 
-  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
-  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
-  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
-  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
+  // Removed local popup states
 
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
-  const answerInputRef = useRef<HTMLInputElement | null>(null);
+  const answerInputRef = useRef<HTMLInputElement | null>(null); // Added ref for input
   const { username, addGoldenCoins, deductGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
@@ -110,9 +107,7 @@ export const NumberSequencingUI = () => {
     const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
 
     if (calculatedBonus > 0) {
-      addGoldenCoins(calculatedBonus);
-      setLastAwardedCoins(calculatedBonus);
-      setShowCoinsEarnedPopup(true);
+      addGoldenCoins(calculatedBonus); // This will trigger popup via store/ClientRootFeatures
       if (soundEffectsEnabled) playCoinsEarnedSound();
     }
 
@@ -157,9 +152,7 @@ export const NumberSequencingUI = () => {
     if(correct) {
         newCurrentScore = score + 1;
         setScore(newCurrentScore);
-        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
-        setLastAwardedCoins(POINTS_PER_CORRECT_ANSWER);
-        setShowCoinsEarnedPopup(true);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER); // This will trigger popup
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
@@ -169,8 +162,7 @@ export const NumberSequencingUI = () => {
         });
     } else {
         deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setShowCoinsLostPopup(true);
+        // No local popup for deduction
         if (soundEffectsEnabled) playCoinsDeductedSound();
         toast({
           variant: "destructive",
@@ -195,7 +187,7 @@ export const NumberSequencingUI = () => {
     if (correct) {
       const successMessage = `${username ? username + ", y" : "Y"}ou got it! The number is ${currentProblem.correctAnswer}.`;
       setFeedback({ type: 'success', message: successMessage });
-      if (soundEffectsEnabled) playSuccessSound();
+      // Sound already played
       const speechSuccessMsg = `${username ? username + ", t" : "T"}hat's right! ${currentProblem.correctAnswer} completes the sequence.`;
 
       if (soundEffectsEnabled) {
@@ -208,13 +200,13 @@ export const NumberSequencingUI = () => {
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You answered ${answerNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      if (soundEffectsEnabled) playErrorSound();
+      // Sound already played
       const speechErrorMsg = `Oops! You answered ${answerNum}.`;
 
       const revealCorrectAndProceed = () => {
         setShowCorrectAnswerAfterIncorrect(true);
         setAnswerInBlank(currentProblem.correctAnswer);
-        setInputAnimation('success');
+        setInputAnimation('success'); // Flash the correct answer briefly
         setTimeout(() => setInputAnimation(null), 700);
         if (soundEffectsEnabled) {
             const correctAnswerSpeech = `The correct answer was ${currentProblem.correctAnswer}.`;
@@ -354,14 +346,7 @@ export const NumberSequencingUI = () => {
     if (sessionCompleted) {
         loadNewProblem(true);
     } else {
-      // const newProblemsAttempted = problemsAttemptedInSession + 1;
-      // if (newProblemsAttempted >= PROBLEMS_PER_SESSION) {
-      //      setProblemsAttemptedInSession(newProblemsAttempted);
-      //      handleSessionCompletion(score);
-      // } else {
-      //     setProblemsAttemptedInSession(newProblemsAttempted);
-          loadNewProblem();
-      // }
+        loadNewProblem();
     }
   };
 
@@ -413,8 +398,7 @@ export const NumberSequencingUI = () => {
   if (isLoading && !currentProblem) {
     return (
        <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 relative">
-         <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-         <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+         {/* Popups are now handled by ClientRootFeatures */}
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
             <ChevronsRight className="mr-2 h-6 w-6" /> Number Sequencing
@@ -430,8 +414,7 @@ export const NumberSequencingUI = () => {
 
   return (
     <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-       <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-       <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+       {/* Popups are now handled by ClientRootFeatures */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <ChevronsRight className="mr-2 h-6 w-6" /> Complete the Sequence

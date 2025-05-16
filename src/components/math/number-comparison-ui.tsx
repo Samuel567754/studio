@@ -13,8 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup';
+// Removed local CoinsEarnedPopup and CoinsLostPopup imports
 
 
 interface ComparisonProblem {
@@ -60,11 +59,7 @@ export const NumberComparisonUI = () => {
   const [showCorrectAnswerHighlight, setShowCorrectAnswerHighlight] = useState(false);
   const [buttonAnimation, setButtonAnimation] = useState<{ index: number; type: 'success' | 'error' } | null>(null);
 
-
-  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
-  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
-  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
-  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
+  // Removed local popup states
 
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -101,9 +96,7 @@ export const NumberComparisonUI = () => {
     const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
 
     if (calculatedBonus > 0) {
-      addGoldenCoins(calculatedBonus);
-      setLastAwardedCoins(calculatedBonus);
-      setShowCoinsEarnedPopup(true);
+      addGoldenCoins(calculatedBonus); // This will trigger popup via store/ClientRootFeatures
       if (soundEffectsEnabled) playCoinsEarnedSound();
     }
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
@@ -139,9 +132,7 @@ export const NumberComparisonUI = () => {
     if(correct) {
         newCurrentScore = score + 1;
         setScore(newCurrentScore);
-        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
-        setLastAwardedCoins(POINTS_PER_CORRECT_ANSWER);
-        setShowCoinsEarnedPopup(true);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER); // This will trigger popup
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
@@ -151,8 +142,7 @@ export const NumberComparisonUI = () => {
         });
     } else {
         deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setShowCoinsLostPopup(true);
+        // No local popup for deduction
         if (soundEffectsEnabled) playCoinsDeductedSound();
         toast({
           variant: "destructive",
@@ -177,7 +167,7 @@ export const NumberComparisonUI = () => {
     if (correct) {
       const successMessage = `${username ? username + ", y" : "Y"}ou got it right! ${chosenNum} is indeed the ${currentProblem.questionType} one.`;
       setFeedback({ type: 'success', message: successMessage });
-      if (soundEffectsEnabled) playSuccessSound();
+      // Sound already played
       const speechSuccessMsg = `${username ? username + ", y" : "Y"}ou got it! ${chosenNum} is ${currentProblem.questionType}.`;
 
       if (soundEffectsEnabled) {
@@ -190,14 +180,14 @@ export const NumberComparisonUI = () => {
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You chose ${chosenNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      if (soundEffectsEnabled) playErrorSound();
+      // Sound already played
       const speechErrorMsg = `Oops! You chose ${chosenNum}.`;
 
       const revealCorrectAnswerAndProceed = () => {
         setShowCorrectAnswerHighlight(true);
         setFeedback({type: 'error', message: `The ${currentProblem.questionType} one was ${currentProblem.correctAnswer}.`});
         const correctButtonIndex = currentProblem.num1 === currentProblem.correctAnswer ? 0 : 1;
-        setButtonAnimation({ index: correctButtonIndex, type: 'success' });
+        setButtonAnimation({ index: correctButtonIndex, type: 'success' }); // Highlight correct
         setTimeout(() => setButtonAnimation(null), 700);
 
         if (soundEffectsEnabled) {
@@ -358,8 +348,7 @@ export const NumberComparisonUI = () => {
   if (isLoading && !currentProblem) {
     return (
       <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20 relative">
-         <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-         <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+         {/* Popups are now handled by ClientRootFeatures */}
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
             <Scaling className="mr-2 h-6 w-6" /> Number Comparison
@@ -375,8 +364,7 @@ export const NumberComparisonUI = () => {
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-       <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-       <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+       {/* Popups are now handled by ClientRootFeatures */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
            <Scaling className="mr-2 h-6 w-6" /> {currentProblem ? `Which is ${currentProblem.questionType}?` : "Number Comparison"}

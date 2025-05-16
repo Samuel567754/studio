@@ -17,8 +17,7 @@ import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup';
+// Removed local CoinsEarnedPopup and CoinsLostPopup imports
 
 
 interface TimesTableProblem {
@@ -40,9 +39,9 @@ const generateTimesTableProblem = (table: number, multiplier: number): TimesTabl
 };
 
 const MAX_MULTIPLIER = 12;
-const POINTS_PER_CORRECT_ANSWER = 1;
+const POINTS_PER_CORRECT_ANSWER = 1; // Adjusted
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
-const SESSION_COMPLETION_BONUS = 5;
+const SESSION_COMPLETION_BONUS = 5; // Adjusted
 const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 
@@ -76,11 +75,7 @@ export const TimesTableUI = () => {
   const [showCorrectAnswerAfterIncorrect, setShowCorrectAnswerAfterIncorrect] = useState(false);
   const [inputAnimation, setInputAnimation] = useState<'success' | 'error' | null>(null);
 
-  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
-  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
-  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
-  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
-
+  // Removed local popup states
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -108,9 +103,7 @@ export const TimesTableUI = () => {
     const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
 
     if (calculatedBonus > 0) {
-      addGoldenCoins(calculatedBonus);
-      setLastAwardedCoins(calculatedBonus);
-      setShowCoinsEarnedPopup(true);
+      addGoldenCoins(calculatedBonus); // This will trigger popup via store/ClientRootFeatures
       if (soundEffectsEnabled) playCoinsEarnedSound();
     }
 
@@ -196,9 +189,7 @@ export const TimesTableUI = () => {
     if (correct) {
         newCurrentScore = score + 1;
         setScore(newCurrentScore);
-        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
-        setLastAwardedCoins(POINTS_PER_CORRECT_ANSWER);
-        setShowCoinsEarnedPopup(true);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER); // This will trigger popup
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
@@ -208,8 +199,7 @@ export const TimesTableUI = () => {
         });
     } else {
         deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setShowCoinsLostPopup(true);
+        // No local popup for deduction, it would be handled globally if desired
         if (soundEffectsEnabled) playCoinsDeductedSound();
         toast({
           variant: "destructive",
@@ -228,7 +218,7 @@ export const TimesTableUI = () => {
     if (correct) {
       const successMessage = `${username ? username + ", t" : "T"}hat's right! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
-      if (soundEffectsEnabled) playSuccessSound();
+      // Sound already played
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! The answer is ${currentProblem.answer}.`;
 
       if (soundEffectsEnabled) {
@@ -241,20 +231,20 @@ export const TimesTableUI = () => {
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You answered ${answerNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      if (soundEffectsEnabled) playErrorSound();
+      // Sound already played
       const speechErrorMsg = `Oops! You answered ${answerNum}.`;
 
       const revealCorrectAndProceed = () => {
           setShowCorrectAnswerAfterIncorrect(true);
           setAnswerInBlank(currentProblem.answer);
-          setInputAnimation('success');
+          setInputAnimation('success'); // Flash the correct answer briefly
           setTimeout(() => setInputAnimation(null), 700);
           if (soundEffectsEnabled) {
               const correctAnswerSpeech = `The correct answer was ${currentProblem.answer}.`;
               const utteranceReveal = speakText(correctAnswerSpeech, undefined, () => setTimeout(afterFeedbackAudio, 500));
               if(!utteranceReveal) setTimeout(afterFeedbackAudio, 1800);
           } else {
-              setTimeout(afterFeedbackAudio, 1500);
+             setTimeout(afterFeedbackAudio, 1500);
           }
       };
 
@@ -330,6 +320,7 @@ export const TimesTableUI = () => {
   const handleTableChange = (value: string) => {
     const tableNum = parseInt(value, 10);
     setSelectedTable(tableNum);
+    startNewTablePractice(tableNum); // Restart practice for the new table
   };
 
   const handleSpeakQuestion = () => {
@@ -425,8 +416,7 @@ export const TimesTableUI = () => {
   if (isLoading && !currentProblem) {
     return (
         <Card className="w-full max-w-lg mx-auto shadow-xl border-accent/20 relative">
-             <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-             <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+            {/* Popups are now handled by ClientRootFeatures */}
             <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-accent flex items-center justify-center">
                     <ListOrdered className="mr-2 h-6 w-6" /> Times Table Challenge
@@ -443,8 +433,7 @@ export const TimesTableUI = () => {
 
   return (
     <Card className="w-full max-w-lg mx-auto shadow-xl border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-       <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-       <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+       {/* Popups are now handled by ClientRootFeatures */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-accent flex items-center justify-center">
           <ListOrdered className="mr-2 h-6 w-6" /> Times Table Challenge
@@ -488,7 +477,7 @@ export const TimesTableUI = () => {
           <div className="text-center space-y-4 animate-in fade-in-0 duration-300">
              <div className="flex justify-center items-center gap-4 my-2">
                 {renderEquationWithBlank()}
-                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening || !soundEffectsEnabled || isAttempted}>
+                <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read problem aloud" disabled={isListening || !soundEffectsEnabled || isAttempted || sessionCompleted}>
                     <Volume2 className="h-6 w-6" />
                 </Button>
             </div>
@@ -508,7 +497,7 @@ export const TimesTableUI = () => {
                     inputAnimation === 'error' && "animate-shake-error animate-flash-error"
                   )}
                   aria-label={`Enter your answer for ${currentProblem.questionText.replace('?', '')}`}
-                  disabled={isAttempted || isLoading || isListening}
+                  disabled={isAttempted || isLoading || isListening || sessionCompleted}
                 />
                 <Button
                     type="button"
@@ -517,12 +506,12 @@ export const TimesTableUI = () => {
                     onClick={toggleListening}
                     className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
                     aria-label={isListening ? "Stop listening" : "Speak your answer"}
-                    disabled={isAttempted || isLoading || !recognitionRef.current || !soundEffectsEnabled}
+                    disabled={isAttempted || isLoading || isListening || !recognitionRef.current || !soundEffectsEnabled || sessionCompleted}
                 >
                     {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
                 </Button>
               </div>
-              <Button type="submit" size="lg" className="w-full btn-glow !text-lg bg-accent hover:bg-accent/90" disabled={isAttempted || isLoading || isListening}>
+              <Button type="submit" size="lg" className="w-full btn-glow !text-lg bg-accent hover:bg-accent/90" disabled={isAttempted || isLoading || isListening || sessionCompleted}>
                 Check
               </Button>
             </form>

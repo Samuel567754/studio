@@ -17,8 +17,7 @@ import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup';
+// Removed local CoinsEarnedPopup and CoinsLostPopup imports
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
 type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'random';
@@ -42,10 +41,7 @@ export const AiWordProblemGameUI = () => {
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [inputAnimation, setInputAnimation] = useState<'success' | 'error' | null>(null);
 
-  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
-  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
-  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
-  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
+  // Removed local popup states
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -93,9 +89,7 @@ export const AiWordProblemGameUI = () => {
     const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
 
     if (calculatedBonus > 0) {
-      addGoldenCoins(calculatedBonus);
-      setLastAwardedCoins(calculatedBonus);
-      setShowCoinsEarnedPopup(true);
+      addGoldenCoins(calculatedBonus); // This will trigger popup via store/ClientRootFeatures
       if (soundEffectsEnabled) playCoinsEarnedSound();
     }
 
@@ -137,9 +131,7 @@ export const AiWordProblemGameUI = () => {
     if(isCorrect) {
         newCurrentScore = score + 1;
         setScore(newCurrentScore);
-        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
-        setLastAwardedCoins(POINTS_PER_CORRECT_ANSWER);
-        setShowCoinsEarnedPopup(true);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER); // This will trigger popup
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
@@ -149,8 +141,7 @@ export const AiWordProblemGameUI = () => {
         });
     } else {
         deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setShowCoinsLostPopup(true);
+        // No local popup for deduction
         if (soundEffectsEnabled) playCoinsDeductedSound();
         toast({
           variant: "destructive",
@@ -178,7 +169,7 @@ export const AiWordProblemGameUI = () => {
         successMessage += ` (Operation: ${currentProblem.operationUsed})`;
       }
       setFeedback({ type: 'success', message: successMessage });
-      if (soundEffectsEnabled) playSuccessSound();
+      // Sound already played
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! ${currentProblem.problemText} The answer is ${currentProblem.numericalAnswer}.`;
 
       if (soundEffectsEnabled) {
@@ -198,7 +189,7 @@ export const AiWordProblemGameUI = () => {
         </>
       );
       setFeedback({ type: 'error', message: errorMessage });
-      if (soundEffectsEnabled) playErrorSound();
+      // Sound already played
       const speechErrorMsg = `Oops! The correct answer was ${currentProblem.numericalAnswer}. ${currentProblem.explanation || ''}`;
 
       if (soundEffectsEnabled) {
@@ -322,8 +313,7 @@ export const AiWordProblemGameUI = () => {
 
   return (
     <Card className="w-full max-w-xl mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-      <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+      {/* Popups are now handled by ClientRootFeatures */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <Brain className="mr-2 h-6 w-6" /> AI Word Problem Solver

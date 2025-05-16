@@ -12,9 +12,10 @@ import { BottomNav } from '@/components/bottom-nav';
 import { QuickLinkFAB } from '@/components/quicklink-fab';
 import { Loader2 } from 'lucide-react';
 import { useUserProfileStore, type Achievement } from '@/stores/user-profile-store';
-import { FloatingGoldenCoins } from '@/components/floating-sparkle-points'; // Renamed
+import { FloatingGoldenCoins } from '@/components/floating-sparkle-points';
 import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data';
 import { AchievementUnlockedModal } from '@/components/achievement-unlocked-modal';
+import { CoinsEarnedPopup } from '@/components/points-earned-popup'; // Import for general game coins
 
 export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const {
@@ -26,17 +27,30 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     setCurrentStepIndex,
   } = useWalkthroughStore();
 
-  const { 
-    loadUserProfileFromStorage, 
-    pendingClaimAchievements, 
-    claimNextPendingAchievement 
+  const {
+    loadUserProfileFromStorage,
+    pendingClaimAchievements,
+    claimNextPendingAchievement,
+    lastBonusAwarded, // For achievement bonuses
+    clearLastBonusAwarded,
+    lastGameCoinsAwarded, // For general game coins
+    clearLastGameCoinsAwarded,
   } = useUserProfileStore();
-  
+
   const [isClientMounted, setIsClientMounted] = useState(false);
   const [actualIntroductionSeen, setActualIntroductionSeen] = useState<boolean | null>(null);
   const [actualPersonalizationCompleted, setActualPersonalizationCompleted] = useState<boolean | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+
+  // State for achievement bonus popup
+  const [showAchievementBonusPopup, setShowAchievementBonusPopup] = useState(false);
+  const [currentAchievementBonusAmount, setCurrentAchievementBonusAmount] = useState(0);
+
+  // State for general game coins popup
+  const [showGameCoinsPopup, setShowGameCoinsPopup] = useState(false);
+  const [currentGameCoinsAmount, setCurrentGameCoinsAmount] = useState(0);
+
 
   useEffect(() => {
     setIsClientMounted(true);
@@ -51,21 +65,18 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       if (event.key === 'chilllearn_personalizationCompleted_v1') {
         setActualPersonalizationCompleted(getHasCompletedPersonalization());
       }
-      if (event.key === useUserProfileStore.persist.getOptions().name) { 
+      if (event.key === useUserProfileStore.persist.getOptions().name) {
         loadUserProfileFromStorage();
       }
       if (event.key === useWalkthroughStore.persist.getOptions().name) {
-        const store = useWalkthroughStore.getState();
-        if (store.hasCompletedWalkthrough !== hasCompletedWalkthrough) {
-          // Component will re-render due to hook update
-        }
+        // Zustand handles re-hydration for its own store
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [loadUserProfileFromStorage, hasCompletedWalkthrough]);
+  }, [loadUserProfileFromStorage]);
 
   useEffect(() => {
     if (isClientMounted) {
@@ -85,14 +96,32 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && pathname !== '/introduction' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
-        if (!isWalkthroughOpen && pendingClaimAchievements.length === 0) { 
-          setCurrentStepIndex(0); 
+        if (!isWalkthroughOpen && pendingClaimAchievements.length === 0 && !showAchievementBonusPopup && !showGameCoinsPopup) {
+          setCurrentStepIndex(0);
           openWalkthrough();
         }
-      }, 2500);
+      }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex, pendingClaimAchievements]);
+  }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex, pendingClaimAchievements, showAchievementBonusPopup, showGameCoinsPopup]);
+
+  // Effect for Achievement Bonus Popup
+  useEffect(() => {
+    if (lastBonusAwarded && lastBonusAwarded.amount > 0) {
+      setCurrentAchievementBonusAmount(lastBonusAwarded.amount);
+      setShowAchievementBonusPopup(true);
+      clearLastBonusAwarded();
+    }
+  }, [lastBonusAwarded, clearLastBonusAwarded]);
+
+  // Effect for General Game Coins Popup
+  useEffect(() => {
+    if (lastGameCoinsAwarded && lastGameCoinsAwarded.amount > 0) {
+      setCurrentGameCoinsAmount(lastGameCoinsAwarded.amount);
+      setShowGameCoinsPopup(true);
+      clearLastGameCoinsAwarded();
+    }
+  }, [lastGameCoinsAwarded, clearLastGameCoinsAwarded]);
 
 
   if (!isClientMounted || actualIntroductionSeen === null || (actualIntroductionSeen && actualPersonalizationCompleted === null)) {
@@ -103,11 +132,11 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  if (pathname === '/introduction' || pathname === '/personalize') {
-    return <>{children}</>;
+  if ((pathname === '/introduction' || pathname === '/personalize') && !actualIntroductionSeen && !actualPersonalizationCompleted) {
+     return <>{children}</>;
   }
-
-  if (!actualIntroductionSeen) {
+  
+  if (!actualIntroductionSeen && pathname !== '/introduction') {
      return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -116,7 +145,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  if (!actualPersonalizationCompleted) {
+  if (actualIntroductionSeen && !actualPersonalizationCompleted && pathname !== '/personalize' && pathname !== '/introduction') {
      return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -125,12 +154,12 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
   
-  const currentAchievementToDisplay = pendingClaimAchievements.length > 0 ? pendingClaimAchievements[0] : null;
+  const currentAchievementToClaim = pendingClaimAchievements.length > 0 ? pendingClaimAchievements[0] : null;
 
   return (
     <div className="flex flex-col min-h-screen">
       <MainNav />
-      <FloatingGoldenCoins />  {/* Renamed */}
+      <FloatingGoldenCoins />
       <main
         data-tour-id="main-content-area"
         className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 pt-20 md:pt-24 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out relative"
@@ -148,25 +177,41 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
           isOpen={isWalkthroughOpen}
           onClose={() => { 
             closeWalkthrough();
-            // No longer sets completed here, only on explicit finish
+            // No longer sets completed here, handled by onFinish or skip
           }}
           onFinish={() => { 
             setHasCompletedWalkthrough(true);
             closeWalkthrough();
           }}
+          onSkip={() => { // Ensure skip also marks as complete
+            setHasCompletedWalkthrough(true);
+            closeWalkthrough();
+          }}
         />
       )}
-      {currentAchievementToDisplay && (
+      {currentAchievementToClaim && (
         <AchievementUnlockedModal
-          achievement={currentAchievementToDisplay}
+          achievement={currentAchievementToClaim}
           isOpen={true} 
           onClaim={() => {
             claimNextPendingAchievement(); 
           }}
         />
       )}
+      {showAchievementBonusPopup && currentAchievementBonusAmount > 0 && (
+        <CoinsEarnedPopup
+          coins={currentAchievementBonusAmount}
+          show={showAchievementBonusPopup}
+          onComplete={() => setShowAchievementBonusPopup(false)}
+        />
+      )}
+      {showGameCoinsPopup && currentGameCoinsAmount > 0 && (
+        <CoinsEarnedPopup
+          coins={currentGameCoinsAmount}
+          show={showGameCoinsPopup}
+          onComplete={() => setShowGameCoinsPopup(false)}
+        />
+      )}
     </div>
   );
 };
-
-    
