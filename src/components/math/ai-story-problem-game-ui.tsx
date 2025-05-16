@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathStoryProblem, type GenerateMathStoryProblemInput, type GenerateMathStoryProblemOutput } from '@/ai/flows/generate-math-story-problem';
-import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Trophy, Info, ChevronDown } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Info, ChevronDown } from 'lucide-react';
+import Image from 'next/image'; // Import Image
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
@@ -18,6 +19,7 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { CoinsEarnedPopup } from '@/components/points-earned-popup'; // Import CoinsEarnedPopup
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
 interface QuestionState {
@@ -28,6 +30,8 @@ interface QuestionState {
 }
 
 const STORIES_PER_SESSION = 3; 
+const POINTS_PER_CORRECT_QUESTION = 1;
+const SESSION_COMPLETION_BONUS = 5;
 
 export const AiStoryProblemGameUI = () => {
   const [currentStoryProblem, setCurrentStoryProblem] = useState<GenerateMathStoryProblemOutput | null>(null);
@@ -39,11 +43,14 @@ export const AiStoryProblemGameUI = () => {
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
   const [customTopics, setCustomTopics] = useState<string>('');
   const [sessionCompleted, setSessionCompleted] = useState(false);
+
+  const [showCoinsPopup, setShowCoinsPopup] = useState(false);
+  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const answerInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { username, favoriteTopics } = useUserProfileStore();
+  const { username, favoriteTopics, addGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
   const fetchNewStoryProblem = useCallback(async (isNewSessionStart: boolean = false) => {
@@ -95,11 +102,17 @@ export const AiStoryProblemGameUI = () => {
 
   const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
+    addGoldenCoins(SESSION_COMPLETION_BONUS);
+    setLastAwardedCoins(SESSION_COMPLETION_BONUS);
+    setShowCoinsPopup(true);
     const completionMessage = username ? `Fantastic, ${username}!` : 'Session Complete!';
-    const description = `You've completed ${STORIES_PER_SESSION} stories. Well done!`;
+    const description = `You've completed ${STORIES_PER_SESSION} stories. Well done! You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
     toast({
       variant: "success",
-      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
+      title: <div className="flex items-center gap-2">
+               <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />
+               {completionMessage}
+             </div>,
       description: description,
       duration: 7000,
     });
@@ -107,7 +120,7 @@ export const AiStoryProblemGameUI = () => {
         playCompletionSound();
         speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast]);
+  }, [username, soundEffectsEnabled, toast, addGoldenCoins]);
 
   const handleSubmitAnswer = useCallback((questionIndex: number) => {
     if (sessionCompleted || !currentStoryProblem || !questionStates || questionStates.length <= questionIndex || !questionStates[questionIndex] || questionStates[questionIndex].userAnswer.trim() === '') {
@@ -135,12 +148,22 @@ export const AiStoryProblemGameUI = () => {
     
     let feedbackText: string | JSX.Element;
     let speechTextSegment: string;
+    let newCurrentStoryScore = currentStoryScore;
 
     if (isCorrect) {
       feedbackText = `${username ? username + ", y" : "Y"}ou got it right! The answer is ${question.numericalAnswer}.`;
       speechTextSegment = `Correct! The answer to: ${question.questionText} is ${question.numericalAnswer}.`;
       if(questionStates[questionIndex].isCorrect === null) { 
-         setCurrentStoryScore(prev => prev + 1);
+         newCurrentStoryScore = currentStoryScore + 1;
+         setCurrentStoryScore(newCurrentStoryScore);
+         addGoldenCoins(POINTS_PER_CORRECT_QUESTION);
+         setLastAwardedCoins(POINTS_PER_CORRECT_QUESTION);
+         setShowCoinsPopup(true);
+         toast({
+          variant: "success",
+          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_QUESTION} Golden Coins!</div>,
+          duration: 2000,
+         });
       }
       if (soundEffectsEnabled) playSuccessSound();
     } else {
@@ -197,7 +220,7 @@ export const AiStoryProblemGameUI = () => {
       afterSpeechCallback();
     }
 
-  }, [currentStoryProblem, questionStates, username, toast, soundEffectsEnabled, storiesCompletedInSession, handleSessionCompletion, sessionCompleted, fetchNewStoryProblem]);
+  }, [currentStoryProblem, questionStates, username, toast, soundEffectsEnabled, storiesCompletedInSession, handleSessionCompletion, sessionCompleted, fetchNewStoryProblem, currentStoryScore, addGoldenCoins]);
 
   useEffect(() => {
     startNewSession(); 
@@ -294,7 +317,8 @@ export const AiStoryProblemGameUI = () => {
 
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
+    <Card className="w-full max-w-2xl mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
+      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsPopup} onComplete={() => setShowCoinsPopup(false)} />
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <BookOpen className="mr-2 h-6 w-6" /> AI Math Story Time!
@@ -340,7 +364,7 @@ export const AiStoryProblemGameUI = () => {
         {sessionCompleted ? (
            <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
             <div className="flex flex-col items-center gap-4 py-4">
-              <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+               <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={40} height={40} />
               <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {username ? `Congratulations, ${username}!` : 'Session Complete!'}
               </AlertTitle>
@@ -399,12 +423,11 @@ export const AiStoryProblemGameUI = () => {
                        </span>
                         <div className="flex-1 min-w-0 text-left">
                             <span className="font-semibold">Question {index + 1}: </span>
-                            <span>{q.questionText}</span>
+                            <span className="break-words">{q.questionText}</span>
                         </div>
                     </div>
                     {questionStates[index]?.isCorrect === true && <CheckCircle2 className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />}
                     {questionStates[index]?.isCorrect === false && <XCircle className="h-5 w-5 text-red-500 ml-2 flex-shrink-0" />}
-                    {/* ChevronDown will be added by AccordionTrigger itself if not overridden */}
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4 pt-2 border-t">
                     <form onSubmit={(e) => { e.preventDefault(); handleSubmitAnswer(index); }} className="space-y-3">
@@ -471,10 +494,11 @@ export const AiStoryProblemGameUI = () => {
           disabled={isLoading || (!!isListening && !allQuestionsAnsweredForCurrentStory && !!currentStoryProblem)}
         >
           <RefreshCcw className="mr-2 h-4 w-4" /> 
-          {sessionCompleted ? "Start New Session" : "Skip Story / Next Problem"}
+          {sessionCompleted ? "Start New Session" : "Skip Story / Next Problem Set"}
         </Button>
       </CardFooter>
     </Card>
   );
 };
 
+    

@@ -7,14 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, ChevronsRight, Mic, MicOff, Smile, Info, Trophy } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, ChevronsRight, Mic, MicOff, Smile, Info } from 'lucide-react';
+import Image from 'next/image'; // Import Image
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { CoinsEarnedPopup } from '@/components/points-earned-popup'; // Import CoinsEarnedPopup
 
 interface SequenceProblem {
   sequenceDisplay: (number | string)[]; 
@@ -24,6 +26,8 @@ interface SequenceProblem {
 }
 
 const PROBLEMS_PER_SESSION = 5; 
+const POINTS_PER_CORRECT_ANSWER = 1;
+const SESSION_COMPLETION_BONUS = 5;
 
 const generateSequenceProblem = (): SequenceProblem => {
   const start = Math.floor(Math.random() * 20) + 1; 
@@ -61,10 +65,13 @@ export const NumberSequencingUI = () => {
   const [answerInBlank, setAnswerInBlank] = useState<string | number | null>(null);
   const [showCorrectAnswerAfterIncorrect, setShowCorrectAnswerAfterIncorrect] = useState(false);
 
+  const [showCoinsPopup, setShowCoinsPopup] = useState(false);
+  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
-  const { username } = useUserProfileStore();
+  const { username, addGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
   const loadNewProblem = useCallback((isNewSessionStart: boolean = false) => {
@@ -91,11 +98,17 @@ export const NumberSequencingUI = () => {
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
+    addGoldenCoins(SESSION_COMPLETION_BONUS);
+    setLastAwardedCoins(SESSION_COMPLETION_BONUS);
+    setShowCoinsPopup(true);
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}.`;
+    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
     toast({
       variant: "success",
-      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
+      title: <div className="flex items-center gap-2">
+                <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />
+                {completionMessage}
+             </div>,
       description: description,
       duration: 7000,
     });
@@ -103,7 +116,7 @@ export const NumberSequencingUI = () => {
         playCompletionSound();
         speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast]);
+  }, [username, soundEffectsEnabled, toast, addGoldenCoins]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -127,6 +140,14 @@ export const NumberSequencingUI = () => {
     if(correct) {
         newCurrentScore = score + 1;
         setScore(newCurrentScore);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
+        setLastAwardedCoins(POINTS_PER_CORRECT_ANSWER);
+        setShowCoinsPopup(true);
+        toast({
+          variant: "success",
+          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          duration: 2000,
+        });
     }
     
     const newProblemsAttempted = problemsAttemptedInSession + 1;
@@ -179,7 +200,7 @@ export const NumberSequencingUI = () => {
          setTimeout(revealCorrectAndProceed, 1200);
       }
     }
-  }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled, problemsAttemptedInSession, handleSessionCompletion, sessionCompleted, score]);
+  }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled, problemsAttemptedInSession, handleSessionCompletion, sessionCompleted, score, addGoldenCoins, toast]);
 
 
   useEffect(() => {
@@ -360,7 +381,8 @@ export const NumberSequencingUI = () => {
 
   if (isLoading && !currentProblem) {
     return (
-       <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20">
+       <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 relative">
+         <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsPopup} onComplete={() => setShowCoinsPopup(false)} />
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
             <ChevronsRight className="mr-2 h-6 w-6" /> Number Sequencing
@@ -375,7 +397,8 @@ export const NumberSequencingUI = () => {
   }
 
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
+    <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
+       <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsPopup} onComplete={() => setShowCoinsPopup(false)} />
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <ChevronsRight className="mr-2 h-6 w-6" /> Complete the Sequence
@@ -389,7 +412,7 @@ export const NumberSequencingUI = () => {
         {sessionCompleted ? (
            <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
             <div className="flex flex-col items-center gap-4 py-4">
-              <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+              <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={40} height={40} />
               <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {username ? `Congratulations, ${username}!` : 'Session Complete!'}
               </AlertTitle>
@@ -463,3 +486,5 @@ export const NumberSequencingUI = () => {
     </Card>
   );
 };
+
+    

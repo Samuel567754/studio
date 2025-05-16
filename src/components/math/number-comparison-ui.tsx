@@ -4,14 +4,16 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, Scaling, Mic, MicOff, Smile, Info, Trophy } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, Scaling, Mic, MicOff, Smile, Info } from 'lucide-react';
+import Image from 'next/image'; // Import Image
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { CoinsEarnedPopup } from '@/components/points-earned-popup'; // Import CoinsEarnedPopup
 
 interface ComparisonProblem {
   num1: number;
@@ -23,6 +25,8 @@ interface ComparisonProblem {
 }
 
 const PROBLEMS_PER_SESSION = 5; 
+const POINTS_PER_CORRECT_ANSWER = 1;
+const SESSION_COMPLETION_BONUS = 5;
 
 const generateComparisonProblem = (): ComparisonProblem => {
   let num1 = Math.floor(Math.random() * 100) + 1; 
@@ -51,10 +55,13 @@ export const NumberComparisonUI = () => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showCorrectAnswerHighlight, setShowCorrectAnswerHighlight] = useState(false); 
 
+  const [showCoinsPopup, setShowCoinsPopup] = useState(false);
+  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
+
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
-  const { username } = useUserProfileStore();
+  const { username, addGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
   const loadNewProblem = useCallback((isNewSessionStart: boolean = false) => {
@@ -81,11 +88,17 @@ export const NumberComparisonUI = () => {
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
+    addGoldenCoins(SESSION_COMPLETION_BONUS);
+    setLastAwardedCoins(SESSION_COMPLETION_BONUS);
+    setShowCoinsPopup(true);
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}.`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
     toast({
       variant: "success",
-      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
+      title: <div className="flex items-center gap-2">
+               <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />
+               {completionMessage}
+             </div>,
       description: description,
       duration: 7000,
     });
@@ -93,7 +106,7 @@ export const NumberComparisonUI = () => {
         playCompletionSound();
         speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast]);
+  }, [username, soundEffectsEnabled, toast, addGoldenCoins]);
 
   const handleAnswer = useCallback((chosenNum: number) => {
     if (!currentProblem || isAttempted || sessionCompleted) return; 
@@ -107,6 +120,14 @@ export const NumberComparisonUI = () => {
     if(correct) {
         newCurrentScore = score + 1;
         setScore(newCurrentScore);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
+        setLastAwardedCoins(POINTS_PER_CORRECT_ANSWER);
+        setShowCoinsPopup(true);
+        toast({
+          variant: "success",
+          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          duration: 2000,
+        });
     }
     
     const newProblemsSolvedCount = problemsSolvedInSession + 1;
@@ -159,7 +180,7 @@ export const NumberComparisonUI = () => {
         setTimeout(revealCorrectAnswerAndProceed, 1200);
       }
     }
-  }, [currentProblem, isAttempted, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, score, handleSessionCompletion, sessionCompleted]);
+  }, [currentProblem, isAttempted, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, score, handleSessionCompletion, sessionCompleted, addGoldenCoins, toast]);
 
   useEffect(() => {
     startNewSession();
@@ -300,7 +321,8 @@ export const NumberComparisonUI = () => {
 
   if (isLoading && !currentProblem) {
     return (
-      <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20">
+      <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20 relative">
+         <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsPopup} onComplete={() => setShowCoinsPopup(false)} />
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
             <Scaling className="mr-2 h-6 w-6" /> Number Comparison
@@ -315,7 +337,8 @@ export const NumberComparisonUI = () => {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
+    <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
+       <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsPopup} onComplete={() => setShowCoinsPopup(false)} />
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
            <Scaling className="mr-2 h-6 w-6" /> {currentProblem ? `Which is ${currentProblem.questionType}?` : "Number Comparison"}
@@ -328,7 +351,7 @@ export const NumberComparisonUI = () => {
         {sessionCompleted ? (
              <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
                 <div className="flex flex-col items-center gap-4 py-4">
-                <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+                <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={40} height={40} />
                 <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {username ? `Congratulations, ${username}!` : 'Session Complete!'}
                 </AlertTitle>
@@ -422,3 +445,5 @@ export const NumberComparisonUI = () => {
     </Card>
   );
 };
+
+    

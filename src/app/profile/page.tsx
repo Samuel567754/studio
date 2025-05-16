@@ -16,7 +16,7 @@ import {
 import { useUserProfileStore, type Achievement } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Sigma, Brain, Trophy as TrophyIcon } from 'lucide-react'; // Removed Star as we'll use Image
+import { Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Trash2, ShieldAlert, Award as AwardIconLucide } from 'lucide-react'; // Renamed Award to AwardIconLucide
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -41,12 +41,14 @@ import { cn } from '@/lib/utils';
 // Define achievementsList at the module level as it's static configuration data
 // Using Golden Coins theme and your provided image assets
 export const ACHIEVEMENTS_CONFIG: Achievement[] = [
-  { id: "bronze_coin_collector", name: "Bronze Coin Collector", description: "Collected your first 25 Golden Coins!", pointsRequired: 25, imageSrc: "/assets/images/coin_with_clover_design.png", bonusCoins: 5, iconAlt: "Bronze Coin with Clover" },
-  { id: "silver_pouch", name: "Silver Pouch", description: "Amassed 75 Golden Coins!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", bonusCoins: 10, iconAlt: "Pile of Gold Coins" },
-  { id: "gemstone_novice", name: "Gemstone Novice", description: "Found 150 Golden Coins & started your gem collection!", pointsRequired: 150, imageSrc: "/assets/images/blue_gem_icon.png", bonusCoins: 15, iconAlt: "Blue Gem Icon" },
-  { id: "ruby_seeker", name: "Ruby Seeker", description: "Discovered 225 Golden Coins and a ruby!", pointsRequired: 225, imageSrc: "/assets/images/red_diamond_gem_illustration.png", bonusCoins: 20, iconAlt: "Red Diamond Gem" },
-  { id: "diamond_finder", name: "Diamond Finder", description: "Unearthed 350 Golden Coins and a sparkling diamond!", pointsRequired: 350, imageSrc: "/assets/images/blue_diamond_cartoon_illustration.png", bonusCoins: 25, iconAlt: "Blue Diamond Illustration" },
-  { id: "treasure_chest", name: "Treasure Chest", description: "Filled your chest with 500 Golden Coins!", pointsRequired: 500, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", bonusCoins: 30, iconAlt: "Treasure Chest" },
+  { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Coins!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", bonusCoins: 5, iconAlt: "Cute Smiling Star" },
+  { id: "bronze_coin_collector", name: "Bronze Coin Collector", description: "Collected 50 Golden Coins!", pointsRequired: 50, imageSrc: "/assets/images/coin_with_clover_design.png", bonusCoins: 5, iconAlt: "Bronze Coin with Clover" },
+  { id: "silver_pouch_hoarder", name: "Silver Pouch Hoarder", description: "Amassed 100 Golden Coins!", pointsRequired: 100, imageSrc: "/assets/images/pile_of_gold_coins_image.png", bonusCoins: 10, iconAlt: "Pile of Gold Coins" },
+  { id: "gemstone_novice", name: "Gemstone Novice", description: "Found 175 Golden Coins & started your gem collection!", pointsRequired: 175, imageSrc: "/assets/images/blue_gem_icon.png", bonusCoins: 15, iconAlt: "Blue Gem Icon" },
+  { id: "ruby_seeker", name: "Ruby Seeker", description: "Discovered 250 Golden Coins and a ruby!", pointsRequired: 250, imageSrc: "/assets/images/red_diamond_gem_illustration.png", bonusCoins: 20, iconAlt: "Red Diamond Gem" },
+  { id: "diamond_finder", name: "Diamond Finder", description: "Unearthed 325 Golden Coins and a sparkling diamond!", pointsRequired: 325, imageSrc: "/assets/images/blue_diamond_cartoon_illustration.png", bonusCoins: 25, iconAlt: "Blue Diamond Illustration" },
+  { id: "award_winner", name: "Award Winner", description: "Earned 400 Golden Coins and a special award!", pointsRequired: 400, imageSrc: "/assets/images/yellow_award_ribbon_star_design.png", bonusCoins: 25, iconAlt: "Yellow Award Ribbon with Star" },
+  { id: "treasure_chest_unlocker", name: "Treasure Chest Unlocker", description: "Filled your chest with 500 Golden Coins!", pointsRequired: 500, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", bonusCoins: 30, iconAlt: "Treasure Chest with Gold and Jewels" },
   { id: "chilllearn_tycoon", name: "ChillLearn Tycoon", description: "Achieved 750 Golden Coins! You're a tycoon!", pointsRequired: 750, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", bonusCoins: 50, iconAlt: "Gold Trophy with Laurel Wreath" },
 ];
 
@@ -57,14 +59,12 @@ export default function ProfilePage() {
     masteredWordCount: number;
     readingLevel: string;
     wordLength: number;
-    practiceWords: string[];
-    masteredWords: string[];
   } | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const {
     username,
     favoriteTopics,
-    goldenCoins, // Changed from goldenStars
+    goldenCoins,
     unlockedAchievements,
     isAchievementUnlocked,
     setUsername: setStoreUsername,
@@ -90,8 +90,6 @@ export default function ProfilePage() {
       masteredWordCount: masteredList.length,
       readingLevel: level,
       wordLength: length,
-      practiceWords: practiceList,
-      masteredWords: masteredList,
     });
     setIsMounted(true);
   }, [loadUserProfileFromStorage]);
@@ -140,7 +138,7 @@ export default function ProfilePage() {
             variant: "destructive"
         });
         playErrorSound();
-        window.location.href = '/introduction'; 
+        window.location.href = '/introduction';
     }
     setIsConfirmResetOpen(false);
   };
@@ -181,7 +179,7 @@ export default function ProfilePage() {
                   data-ai-hint="app background settings"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end justify-center p-2">
-                   <User className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+                   <AwardIconLucide className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
               </div>
           </div>
           <h1 className="text-4xl font-bold text-gradient-primary-accent drop-shadow-md">
@@ -252,17 +250,17 @@ export default function ProfilePage() {
       <Card className="shadow-lg border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-primary">
-            <Image src="/assets/images/gold_star_icon.png" alt="Golden Coins" width={32} height={32} className="mr-3 drop-shadow-sm" /> {/* Changed */}
+            <Image src="/assets/images/gold_star_icon.png" alt="Golden Coins" width={32} height={32} className="mr-3 drop-shadow-sm" />
             Progress Overview
           </CardTitle>
           <CardDescription>Key metrics about your learning journey.</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-             <Image src="/assets/images/golden_star_coin.png" alt="Golden Coins Earned" width={40} height={40} className="drop-shadow-sm" /> {/* Changed */}
+             <Image src="/assets/images/golden_star_coin.png" alt="Golden Coins Earned" width={40} height={40} className="drop-shadow-sm" />
             <div>
-              <p className="font-semibold text-foreground">{goldenCoins}</p> {/* Changed */}
-              <p className="text-sm text-muted-foreground">Golden Coins Earned</p> {/* Changed */}
+              <p className="font-semibold text-foreground">{goldenCoins}</p>
+              <p className="text-sm text-muted-foreground">Golden Coins Earned</p>
             </div>
           </div>
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-350">
@@ -287,13 +285,13 @@ export default function ProfilePage() {
           <CardTitle className="flex items-center text-2xl font-semibold text-yellow-500">
              <Image
                 src="/assets/images/trophy_cup_illustration.png"
-                alt="Trophies & Badges"
+                alt="My Coin Collection & Trophies"
                 width={32}
                 height={32}
                 className="mr-3 drop-shadow-sm"
-              /> My Coin Collection & Trophies {/* Changed */}
+              /> My Coin Collection & Trophies
           </CardTitle>
-          <CardDescription>Celebrate your learning milestones by collecting Golden Coins!</CardDescription> {/* Changed */}
+          <CardDescription>Celebrate your learning milestones by collecting Golden Coins and earning badges!</CardDescription>
         </CardHeader>
         <CardContent>
           {earnedAchievementsToDisplay.length > 0 ? (
@@ -318,7 +316,7 @@ export default function ProfilePage() {
                   />
                   <h3 className={cn("text-lg font-semibold mb-1", ach.color || "text-foreground")}>{ach.name}</h3>
                   <p className="text-xs text-muted-foreground">{ach.description}</p>
-                  {ach.bonusCoins && ach.bonusCoins > 0 && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusCoins} Golden Coins Bonus!</p>} {/* Changed */}
+                  {ach.bonusCoins && ach.bonusCoins > 0 && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusCoins} Golden Coins Bonus!</p>}
                 </div>
               ))}
             </div>
@@ -329,7 +327,7 @@ export default function ProfilePage() {
                 Keep Learning!
               </AlertTitle>
               <AlertDescription>
-                You haven't unlocked any trophies or badges yet. Keep practicing and earning Golden Coins to see them here! {/* Changed */}
+                You haven't unlocked any trophies or badges yet. Keep practicing and earning Golden Coins to see them here!
               </AlertDescription>
             </Alert>
           )}
@@ -396,7 +394,7 @@ export default function ProfilePage() {
                   Are you absolutely sure?
                 </AlertDialogTitlePrimitive>
                 <AlertDialogDescriptionPrimitive>
-                  This action cannot be undone. All your learning progress, word lists, mastered words, settings preferences (username, topics, theme, audio), tutorial completion status, and Golden Coins will be permanently deleted. You will be taken back to the app introduction. {/* Changed */}
+                  This action cannot be undone. All your learning progress, word lists, mastered words, settings preferences (username, topics, theme, audio), tutorial completion status, and Golden Coins will be permanently deleted. You will be taken back to the app introduction.
                 </AlertDialogDescriptionPrimitive>
               </AlertDialogHeaderPrimitive>
               <AlertDialogFooter>
@@ -415,5 +413,6 @@ export default function ProfilePage() {
     </div>
   );
 }
+    
 
     

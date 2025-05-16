@@ -8,19 +8,23 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathWordProblem, type GenerateMathWordProblemInput, type GenerateMathWordProblemOutput } from '@/ai/flows/generate-math-word-problem';
-import { CheckCircle2, XCircle, Loader2, Brain, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Info, Trophy } from 'lucide-react';
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
+import { CheckCircle2, XCircle, Loader2, Brain, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Info } from 'lucide-react';
+import Image from 'next/image'; // Import Image
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { CoinsEarnedPopup } from '@/components/points-earned-popup'; // Import CoinsEarnedPopup
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
 type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'random';
 
 const PROBLEMS_PER_SESSION = 5; 
+const POINTS_PER_CORRECT_ANSWER = 1;
+const SESSION_COMPLETION_BONUS = 5;
 
 export const AiWordProblemGameUI = () => {
   const [currentProblem, setCurrentProblem] = useState<GenerateMathWordProblemOutput | null>(null);
@@ -33,11 +37,14 @@ export const AiWordProblemGameUI = () => {
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
   const [operation, setOperation] = useState<Operation>('addition');
   const [sessionCompleted, setSessionCompleted] = useState(false);
+
+  const [showCoinsPopup, setShowCoinsPopup] = useState(false);
+  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
-  const { username } = useUserProfileStore();
+  const { username, addGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
   const fetchNewProblem = useCallback(async (isNewSessionStart: boolean = false) => {
@@ -75,11 +82,17 @@ export const AiWordProblemGameUI = () => {
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
+    addGoldenCoins(SESSION_COMPLETION_BONUS);
+    setLastAwardedCoins(SESSION_COMPLETION_BONUS);
+    setShowCoinsPopup(true);
     const completionMessage = username ? `Awesome, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job! Final score: ${finalScore}.`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job! Final score: ${finalScore}. You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
     toast({
       variant: "success",
-      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
+      title: <div className="flex items-center gap-2">
+               <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />
+               {completionMessage}
+             </div>,
       description: description,
       duration: 7000,
     });
@@ -87,7 +100,7 @@ export const AiWordProblemGameUI = () => {
         playCompletionSound();
         speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast]);
+  }, [username, soundEffectsEnabled, toast, addGoldenCoins]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -107,6 +120,14 @@ export const AiWordProblemGameUI = () => {
     if(isCorrect) {
         newCurrentScore = score + 1;
         setScore(newCurrentScore);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
+        setLastAwardedCoins(POINTS_PER_CORRECT_ANSWER);
+        setShowCoinsPopup(true);
+        toast({
+          variant: "success",
+          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          duration: 2000,
+        });
     }
     
     const afterFeedbackAudio = () => {
@@ -157,7 +178,7 @@ export const AiWordProblemGameUI = () => {
         afterFeedbackAudio();
       }
     }
-  }, [currentProblem, userAnswer, fetchNewProblem, username, operation, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted, score]);
+  }, [currentProblem, userAnswer, fetchNewProblem, username, operation, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted, score, addGoldenCoins, toast]);
 
   useEffect(() => {
     startNewSession(); 
@@ -270,7 +291,8 @@ export const AiWordProblemGameUI = () => {
   };
   
   return (
-    <Card className="w-full max-w-xl mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500">
+    <Card className="w-full max-w-xl mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
+      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsPopup} onComplete={() => setShowCoinsPopup(false)} />
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <Brain className="mr-2 h-6 w-6" /> AI Word Problem Solver
@@ -315,7 +337,7 @@ export const AiWordProblemGameUI = () => {
         {sessionCompleted ? (
           <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
             <div className="flex flex-col items-center gap-4 py-4">
-              <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+               <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={40} height={40} />
               <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {username ? `Congratulations, ${username}!` : 'Session Complete!'}
               </AlertTitle>
@@ -404,3 +426,5 @@ export const AiWordProblemGameUI = () => {
     </Card>
   );
 };
+
+    
