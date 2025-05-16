@@ -6,7 +6,7 @@ import { useEffect, useCallback, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2, Star } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2, Star, Target } from 'lucide-react';
 import { speakText, playNotificationSound, playErrorSound } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -19,21 +19,21 @@ import Image from 'next/image';
 interface WalkthroughGuideProps {
   steps: TutorialStep[];
   isOpen: boolean;
-  onClose: () => void; // This will now just close, not mark complete
-  onFinish: () => void; // This will mark complete and close
+  onClose: () => void; // Only closes the modal
+  onFinish: () => void; // Marks as complete and closes
 }
 
 const getWalkthroughIconComponent = (iconName?: string): React.ElementType => {
   if (!iconName) return Compass;
   const icons: { [key: string]: React.ElementType } = {
-    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon, CheckCircle2, Star, // Added Star
+    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon, CheckCircle2, Star, 
   };
   return icons[iconName] || Compass;
 };
 
 
 export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onClose, onFinish }) => {
-  const { currentStepIndex, setCurrentStepIndex, nextStep, prevStep, closeWalkthrough, setHasCompletedWalkthrough } = useWalkthroughStore(); // Get store actions
+  const { currentStepIndex, nextStep, prevStep, setHasCompletedWalkthrough } = useWalkthroughStore();
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
   
   const { soundEffectsEnabled } = useAppSettingsStore();
@@ -122,7 +122,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
       stopCurrentSpeech();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, currentStepIndex]); // Play audio when step changes
+  }, [isOpen, currentStepIndex]); 
 
 
   const handleNext = () => {
@@ -132,7 +132,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
       nextStep();
     } else {
       setHasCompletedWalkthrough(true); // Mark as complete when "Finish" is clicked
-      onFinish();
+      onFinish(); // This will call closeWalkthrough from ClientRootFeatures
     }
   };
 
@@ -145,7 +145,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
   const handleSkipOrClose = () => {
     stopCurrentSpeech();
     playNotificationSound();
-    onClose(); // This now just closes the modal via ClientRootFeatures logic
+    onClose(); // This now only closes the modal (via ClientRootFeatures logic)
   };
 
   const toggleSpeechPlayback = () => {
@@ -186,7 +186,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
   return (
     <>
       <div className="walkthrough-overlay" onClick={handleSkipOrClose} />
-      <div style={modalStyle} className="animate-in fade-in-0 slide-in-from-bottom-10 duration-500">
+      <div style={modalStyle} className="animate-in fade-in-0 zoom-in-95 duration-300">
         <Card className="w-full shadow-2xl border-accent bg-card">
           <CardHeader className="p-4 border-b">
             <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
