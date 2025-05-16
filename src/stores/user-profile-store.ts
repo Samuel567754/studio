@@ -1,19 +1,39 @@
 
 'use client';
 
-import * as React from 'react'; // Import React for React.createElement
+import * as React from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-// Removed: import Image from 'next/image'; // Not ideal to use next/image in a non-component .ts file for toast construction
 import {
   getStoredUsername, storeUsername as persistUsernameToStorage,
   getStoredFavoriteTopics, storeFavoriteTopics as persistFavoriteTopicsToStorage,
   getStoredGoldenStars, storeGoldenStars as persistGoldenStarsToStorage,
   getStoredUnlockedAchievements, storeUnlockedAchievements as persistUnlockedAchievementsToStorage
 } from '@/lib/storage';
-import { achievementsList, type Achievement } from '@/app/profile/page'; // Assuming Achievement type is exported
+import type { Achievement } from '@/app/profile/page'; // Import Achievement type
 import { toast } from '@/hooks/use-toast';
 import { playAchievementUnlockedSound } from '@/lib/audio';
+
+// Ensure this list is defined or imported if achievementsList is used here.
+// For now, assuming achievementsList is primarily used in profile/page.tsx
+// and _checkAndUnlockAchievements will receive it or a similar structure.
+// We need to get achievementsList definition from profile/page.tsx
+// This is a placeholder, ideally this list is in a shared location.
+const getAchievementsList = (): Achievement[] => {
+  // In a real scenario, this might fetch from a config or be statically imported
+  // For now, this needs to match the structure in profile/page.tsx
+  // This is a simplified version for store logic.
+  // The actual display logic is in profile/page.tsx.
+  // We need the pointsRequired and id for unlocking.
+  return [
+    { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
+    { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
+    { id: "gem_seeker_1", name: "Gem Seeker I", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", color: "text-fuchsia-500", bonusStars: 15 },
+    { id: "treasure_finder", name: "Treasure Discoverer", description: "Unearthed 300 Golden Stars!", pointsRequired: 300, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest", color: "text-orange-500", bonusStars: 20 },
+    { id: "chill_master", name: "ChillLearn Master", description: "Achieved 500 Golden Stars overall!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Laurel Wreath Trophy", color: "text-green-500", bonusStars: 25 },
+  ];
+};
+
 
 interface UserProfileState {
   username: string | null;
@@ -23,9 +43,9 @@ interface UserProfileState {
   setUsername: (name: string | null) => void;
   setFavoriteTopics: (topics: string | null) => void;
   addGoldenStars: (amount: number) => void;
-  deductGoldenStars: (amount: number) => void; // New function
+  deductGoldenStars: (amount: number) => void;
   setGoldenStars: (amount: number) => void;
-  _checkAndUnlockAchievements: () => void; // Renamed to avoid direct call expectation, made internal
+  _checkAndUnlockAchievements: () => void;
   isAchievementUnlocked: (achievementId: string) => boolean;
   loadUserProfileFromStorage: () => void;
   resetUserProfile: () => void;
@@ -58,16 +78,14 @@ export const useUserProfileStore = create<UserProfileState>()(
         const newTotal = currentStars + amount;
         set({ goldenStars: newTotal });
         persistGoldenStarsToStorage(newTotal);
-        get()._checkAndUnlockAchievements(); // Check for new achievements after adding stars
+        get()._checkAndUnlockAchievements();
       },
       deductGoldenStars: (amount) => {
         if (amount <= 0) return;
         const currentStars = get().goldenStars;
-        const newTotal = Math.max(0, currentStars - amount); // Ensure stars don't go below 0
+        const newTotal = Math.max(0, currentStars - amount);
         set({ goldenStars: newTotal });
         persistGoldenStarsToStorage(newTotal);
-        // Optionally, you might want to check if deducting points causes an achievement to be "lost",
-        // though typically achievements are permanent once earned.
       },
       setGoldenStars: (amount) => {
         const newTotal = Math.max(0, amount);
@@ -79,31 +97,31 @@ export const useUserProfileStore = create<UserProfileState>()(
         const currentStars = get().goldenStars;
         const previouslyUnlocked = get().unlockedAchievements;
         let newAchievementsUnlockedThisCheck: string[] = [];
+        const achievementsListLocal = getAchievementsList(); // Get the list
 
-        achievementsList.forEach((achievement: Achievement) => {
+        achievementsListLocal.forEach((achievement: Achievement) => {
           if (currentStars >= achievement.pointsRequired && !previouslyUnlocked.includes(achievement.id)) {
-            if (!get().isAchievementUnlocked(achievement.id)) { // Double check, though previouslyUnlocked should cover it
+            if (!get().isAchievementUnlocked(achievement.id)) {
               newAchievementsUnlockedThisCheck.push(achievement.id);
               
               const toastTitleContent = (
                 React.createElement("div", { className: "flex items-center gap-2" },
-                  React.createElement("img", { src: achievement.imageSrc, alt: achievement.name, width: 24, height: 24, style: { display: 'inline-block', borderRadius: '4px' } }), // Basic img tag
+                  React.createElement("img", { src: achievement.imageSrc, alt: achievement.name, width: 24, height: 24, style: { display: 'inline-block', borderRadius: '4px' } }),
                   "Achievement Unlocked!"
                 )
               );
 
               toast({
-                variant: "success", // Or a custom 'achievement' variant if you style it
+                variant: "success",
                 title: toastTitleContent,
                 description: `${achievement.name} - ${achievement.description} (+${achievement.bonusStars} Golden Stars!)`,
                 duration: 8000,
               });
               playAchievementUnlockedSound();
               
-              // Award bonus stars for unlocking the achievement
               const currentTotalAfterAchievement = get().goldenStars + achievement.bonusStars;
-              set({ goldenStars: currentTotalAfterAchievement }); // This will call persistGoldenStarsToStorage internally
-              persistGoldenStarsToStorage(currentTotalAfterAchievement); // And also trigger _checkAndUnlockAchievements again if needed
+              set({ goldenStars: currentTotalAfterAchievement });
+              persistGoldenStarsToStorage(currentTotalAfterAchievement);
             }
           }
         });
@@ -112,6 +130,9 @@ export const useUserProfileStore = create<UserProfileState>()(
           const updatedUnlockedAchievements = [...previouslyUnlocked, ...newAchievementsUnlockedThisCheck];
           set({ unlockedAchievements: updatedUnlockedAchievements });
           persistUnlockedAchievementsToStorage(updatedUnlockedAchievements);
+          // Recursively check if bonus stars unlocked further achievements
+          // This is important if an achievement bonus pushes stars over the threshold for another
+          setTimeout(() => get()._checkAndUnlockAchievements(), 0);
         }
       },
       isAchievementUnlocked: (achievementId: string) => {
@@ -128,31 +149,26 @@ export const useUserProfileStore = create<UserProfileState>()(
           goldenStars: storedStars,
           unlockedAchievements: storedAchievements
         });
-        // Call _checkAndUnlockAchievements after hydration to ensure any new achievements (if logic changed) are processed
-        // or if points were manually adjusted in localStorage for testing.
-        // This ensures the initial achievement state is correct based on loaded points.
         setTimeout(() => get()._checkAndUnlockAchievements(), 0);
       },
       resetUserProfile: () => {
-        set(initialUserProfileState); // Reset to initial state values
+        set(initialUserProfileState);
         persistUsernameToStorage(null);
         persistFavoriteTopicsToStorage(null);
-        persistGoldenStarsToStorage(0); // Persist the reset value
-        persistUnlockedAchievementsToStorage([]); // Persist the reset value
+        persistGoldenStarsToStorage(0);
+        persistUnlockedAchievementsToStorage([]);
       }
     }),
     {
-      name: 'user-profile-storage-v3', // Incremented version for a fresh start
+      name: 'user-profile-storage-v4', // Incremented version for Golden Stars
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ // Only persist these specific parts of the state
+      partialize: (state) => ({
         username: state.username,
         favoriteTopics: state.favoriteTopics,
         goldenStars: state.goldenStars,
         unlockedAchievements: state.unlockedAchievements,
       }),
       onRehydrateStorage: () => (state) => {
-        // This function is called when the store is rehydrated from localStorage
-        // We can trigger the load function here to ensure defaults or migrations are handled
         if (state) {
           state.loadUserProfileFromStorage();
         }

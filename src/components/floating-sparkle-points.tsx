@@ -28,19 +28,19 @@ export function FloatingGoldenStars() {
   return (
     <div
       className={cn(
-        "fixed top-[calc(var(--main-nav-height,64px)_+_0.75rem)] left-4 z-50 flex items-center gap-2 p-2.5 rounded-full shadow-xl transition-all duration-300 ease-out", // Adjusted top position
+        "fixed top-[calc(var(--main-nav-height,64px)_+_0.75rem)] left-4 z-50 flex items-center gap-2 p-2.5 rounded-full shadow-xl transition-all duration-300 ease-out",
         "bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 text-white",
         "border-2 border-yellow-300/70",
-        "md:left-5" // Consistent left padding for desktop
+        "md:left-5" 
       )}
       aria-live="polite"
       aria-atomic="true"
       data-tour-id="floating-golden-stars"
     >
       <Image
-        src="/assets/images/gold_star_icon.png"
+        src="/assets/images/gold_star_icon.png" // Using gold_star_icon for the floating display
         alt="Golden Stars"
-        width={32}
+        width={32} // Size for floating display
         height={32}
         className="drop-shadow-md"
       />
@@ -48,9 +48,9 @@ export function FloatingGoldenStars() {
         ref={pointsDisplayRef}
         className={cn(
           "text-xl font-bold drop-shadow-md",
-          animatePoints && "golden-stars-update-animation" // Apply animation class
+          animatePoints && "golden-stars-update-animation"
         )}
-        onAnimationEnd={handlePointsAnimationEnd} // Reset animation state
+        onAnimationEnd={handlePointsAnimationEnd}
       >
         {goldenStars}
       </span>

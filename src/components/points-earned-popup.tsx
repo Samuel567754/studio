@@ -20,7 +20,7 @@ export function StarsEarnedPopup({ stars, show, onComplete }: StarsEarnedPopupPr
       const timer = setTimeout(() => {
         setIsVisible(false);
         if (onComplete) onComplete();
-      }, 1800); // Duration of animation
+      }, 1800); // Duration of animation (should match CSS)
       return () => clearTimeout(timer);
     }
   }, [show, onComplete]);
@@ -34,7 +34,7 @@ export function StarsEarnedPopup({ stars, show, onComplete }: StarsEarnedPopupPr
       className={cn(
         "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
         "flex items-center justify-center p-3 rounded-lg shadow-2xl",
-        "bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-400", // Consistent with floating display
+        "bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-400",
         "border-2 border-yellow-200/80",
         "stars-earned-popup-animation" // Animation class from globals.css
       )}
@@ -44,9 +44,9 @@ export function StarsEarnedPopup({ stars, show, onComplete }: StarsEarnedPopupPr
         +{stars}
       </span>
       <Image
-        src="/assets/images/yellow_stars_firework_graphic.png" // Celebratory image
+        src="/assets/images/yellow_stars_firework_graphic.png" // Celebratory image for popup
         alt="Golden Stars Burst"
-        width={64} // Increased size
+        width={64} 
         height={64}
         className="drop-shadow-md"
       />

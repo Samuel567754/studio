@@ -13,6 +13,7 @@
     /* Default base font settings */
     --font-family-base: var(--font-geist-sans);
     --font-size-base: 16px;
+    --main-nav-height: 64px; /* For floating stars positioning */
 
 
     /* Light Mode - Navbar uses Dark Theme Styles */
@@ -43,8 +44,6 @@
     --border: 210 20% 88%;
     --input: 210 30% 97%;
     --ring: 175 70% 50%;
-
-    --radius: 0.5rem;
 
     /* Chart colors - Updated to complement the new theme */
     --chart-1: 175 70% 55%;
@@ -286,27 +285,26 @@
   @keyframes golden-stars-update-animation {
     0% {
       transform: scale(1) rotate(0deg);
-      color: inherit; /* Use text-white from component for base */
+      color: inherit; /* Uses text-white from component base */
       text-shadow: none;
     }
     30% {
-      transform: scale(1.8) rotate(-8deg) translateY(-5px); /* More pop */
-      color: hsl(var(--accent)); /* Flash to accent color */
-      text-shadow: 0 0 10px hsl(var(--accent) / 0.8), 0 0 15px #fff; /* Brighter glow */
+      transform: scale(1.8) rotate(-8deg) translateY(-5px);
+      color: hsl(var(--accent)); 
+      text-shadow: 0 0 10px hsl(var(--accent) / 0.8), 0 0 15px hsl(0 0% 100% / 0.7); /* Brighter white glow */
     }
     60% {
       transform: scale(1.2) rotate(5deg);
       color: hsl(var(--accent));
-      text-shadow: 0 0 8px hsl(var(--accent) / 0.6), 0 0 12px #fff;
+      text-shadow: 0 0 8px hsl(var(--accent) / 0.6), 0 0 12px hsl(0 0% 100% / 0.5);
     }
     100% {
       transform: scale(1) rotate(0deg);
-      color: inherit; /* Return to base color */
+      color: inherit; 
       text-shadow: none;
     }
   }
   .golden-stars-update-animation {
-    /* Use a more energetic cubic-bezier and slightly longer duration */
     animation: golden-stars-update-animation 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
   }
 
@@ -314,25 +312,35 @@
   @keyframes stars-earned-popup-animation {
     0% {
       opacity: 0;
-      transform: translateY(25px) scale(0.3); /* Start smaller and further down */
+      transform: translateY(25px) scale(0.3); 
     }
     20% {
       opacity: 1;
-      transform: translateY(-5px) scale(1.2); /* Overshoot scale and position */
+      transform: translateY(-5px) scale(1.2); 
     }
     40% {
-      transform: translateY(0px) scale(1); /* Settle */
+      transform: translateY(0px) scale(1); 
     }
     80% {
       opacity: 1;
-      transform: translateY(-20px) scale(1); /* Move up more before fade */
+      transform: translateY(-20px) scale(1); 
     }
     100% {
       opacity: 0;
-      transform: translateY(-40px) scale(0.7); /* Fade out while moving up and shrinking */
+      transform: translateY(-40px) scale(0.7); 
     }
   }
   .stars-earned-popup-animation {
     animation: stars-earned-popup-animation 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+  
+  /* Placeholder for achievement unlocked animation - can be enhanced later */
+  @keyframes achievement-unlocked-animation {
+    0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+    50% { opacity: 1; transform: scale(1.1) translateY(-10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .achievement-unlocked-animation {
+     animation: achievement-unlocked-animation 0.6s ease-out forwards;
   }
 }

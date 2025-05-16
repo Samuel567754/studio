@@ -12,7 +12,7 @@ import { BottomNav } from '@/components/bottom-nav';
 import { QuickLinkFAB } from '@/components/quicklink-fab';
 import { Loader2 } from 'lucide-react';
 import { useUserProfileStore } from '@/stores/user-profile-store';
-import { FloatingGoldenStars } from '@/components/floating-sparkle-points'; // New floating display
+import { FloatingGoldenStars } from '@/components/floating-sparkle-points'; 
 import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data';
 
 export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
@@ -50,8 +50,6 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       }
       if (event.key === useWalkthroughStore.persist.getOptions().name) {
         const store = useWalkthroughStore.getState();
-        // This might not be strictly necessary as Zustand's persist rehydrates,
-        // but explicitly updating component state if store state changes externally can be robust.
         if (store.hasCompletedWalkthrough !== hasCompletedWalkthrough) {
           // Component will re-render due to hook update
         }
@@ -81,8 +79,8 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && pathname !== '/introduction' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
-        if (!isWalkthroughOpen) {
-          setCurrentStepIndex(0);
+        if (!isWalkthroughOpen) { 
+          setCurrentStepIndex(0); 
           openWalkthrough();
         }
       }, 2500);
@@ -124,7 +122,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen">
       <MainNav />
-      <FloatingGoldenStars /> {/* Add the floating display here */}
+      <FloatingGoldenStars /> 
       <main
         data-tour-id="main-content-area"
         className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 pt-20 md:pt-24 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out relative"
@@ -140,10 +138,11 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
         <WalkthroughGuide
           steps={walkthroughGuideSteps}
           isOpen={isWalkthroughOpen}
-          onClose={() => { // Only closes the modal, doesn't mark as fully complete
+          onClose={() => { 
             closeWalkthrough();
+            // Do NOT setHasCompletedWalkthrough(true) here if skip/close should not mark as complete
           }}
-          onFinish={() => { // Marks as complete and closes
+          onFinish={() => { 
             setHasCompletedWalkthrough(true);
             closeWalkthrough();
           }}

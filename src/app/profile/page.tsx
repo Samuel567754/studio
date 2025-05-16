@@ -11,12 +11,11 @@ import {
   getStoredReadingLevel,
   getStoredWordLength,
   clearProgressStoredData,
-  // getStoredGoldenStars, // Will be read from store
 } from '@/lib/storage';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star, Brain, Trophy } from 'lucide-react';
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -48,18 +47,18 @@ interface ProfileStats {
   masteredWords: string[];
 }
 
-export interface Achievement { // Exporting for use in store
+export interface Achievement {
   id: string;
   name: string;
   description: string;
   pointsRequired: number;
-  imageSrc: string;
+  imageSrc: string; // Path from public folder
   iconAlt: string;
-  color: string;
+  color: string; // Tailwind text color class
   bonusStars: number;
 }
 
-// Define achievements here or import from a shared config
+// Define achievements here. Images should be from your provided list.
 export const achievementsList: Achievement[] = [
     { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
     { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
@@ -98,7 +97,7 @@ export default function ProfilePage() {
 
 
   useEffect(() => {
-    loadUserProfileFromStorage(); // Load username, topics, stars, achievements from store/localStorage
+    loadUserProfileFromStorage(); 
     const practiceList = getStoredWordList();
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
@@ -179,6 +178,7 @@ export default function ProfilePage() {
           objectFit="cover"
           className="brightness-50"
           priority
+          data-ai-hint="abstract pattern profile"
         />
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
         <div className="relative z-10 text-white">
@@ -189,6 +189,7 @@ export default function ProfilePage() {
                   layout="fill"
                   objectFit="cover"
                   className="rounded-full p-1"
+                  data-ai-hint="app background settings"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end justify-center p-2">
                    <User className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
@@ -269,7 +270,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-            <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
+             <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
             <div>
               <p className="font-semibold text-foreground">{goldenStars}</p>
               <p className="text-sm text-muted-foreground">Golden Stars Earned</p>
@@ -295,7 +296,7 @@ export default function ProfilePage() {
       <Card className="shadow-lg border-yellow-500/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-300">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-yellow-500">
-            <Trophy className="mr-3 h-6 w-6" aria-hidden="true" /> My Trophies & Badges
+             <Image src="/assets/images/trophy_cup_illustration.png" alt="Trophies & Badges" width={28} height={28} className="mr-3 drop-shadow-sm" /> My Trophies & Badges
           </CardTitle>
           <CardDescription>Celebrate your learning milestones by collecting Golden Stars!</CardDescription>
         </CardHeader>
@@ -367,56 +368,6 @@ export default function ProfilePage() {
            </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="shadow-md border-border/30 animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-400">
-            <CardHeader>
-                <CardTitle className="flex items-center text-xl font-semibold" id="practice-words-heading">
-                    <BookOpen className="mr-2 h-5 w-5 text-primary" aria-hidden="true" /> Practice Words
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                {profileStats.practiceWords.length > 0 ? (
-                    <ScrollArea className="h-48 w-full rounded-md border p-3 bg-background/50">
-                        <div className="flex flex-wrap gap-2" role="list" aria-labelledby="practice-words-heading">
-                        {profileStats.practiceWords.map((word, index) => (
-                            <Badge key={`practice-${index}`} variant="secondary" className="text-sm px-2 py-1 animate-in fade-in zoom-in-95 duration-300" style={{ animationDelay: `${index * 20}ms` }} role="listitem">{word}</Badge>
-                        ))}
-                        </div>
-                    </ScrollArea>
-                ) : (
-                    <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300" aria-live="polite">
-                        <AlertTitle>No Practice Words</AlertTitle>
-                        <AlertDescription>Your practice list is currently empty. Go to the <Link href="/learn" className="font-semibold text-primary hover:underline">Learn Words</Link> page to add words!</AlertDescription>
-                    </Alert>
-                )}
-            </CardContent>
-        </Card>
-
-        <Card className="shadow-md border-border/30 animate-in fade-in-0 slide-in-from-right-5 duration-500 ease-out delay-500">
-            <CardHeader>
-                <CardTitle className="flex items-center text-xl font-semibold" id="mastered-words-heading">
-                   <CheckSquare className="mr-2 h-5 w-5 text-green-500" aria-hidden="true" /> Mastered Words
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                 {profileStats.masteredWords.length > 0 ? (
-                    <ScrollArea className="h-48 w-full rounded-md border p-3 bg-background/50">
-                         <div className="flex flex-wrap gap-2" role="list" aria-labelledby="mastered-words-heading">
-                        {profileStats.masteredWords.map((word, index) => (
-                            <Badge key={`mastered-${index}`} variant="success" className="text-sm px-2 py-1 bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400 border-green-500/30 animate-in fade-in zoom-in-95 duration-300" style={{ animationDelay: `${index * 20}ms` }} role="listitem">{word}</Badge>
-                        ))}
-                        </div>
-                    </ScrollArea>
-                ) : (
-                    <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300" aria-live="polite">
-                        <AlertTitle>No Mastered Words Yet</AlertTitle>
-                        <AlertDescription>Keep practicing your spelling to master more words!</AlertDescription>
-                    </Alert>
-                )}
-            </CardContent>
-        </Card>
-      </div>
 
       <Card className="shadow-lg border-destructive/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-600">
         <CardHeader>

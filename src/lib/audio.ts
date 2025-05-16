@@ -95,14 +95,14 @@ export function playNotificationSound(): void {
   }, 80);
 }
 
-export function playStarsEarnedSound(): void {
+export function playStarsEarnedSound(): void { // Renamed from playPointsIncreaseSound
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
   if (!soundEffectsEnabled) return;
-  // Bright, quick, ascending "sparkle"
-  playSoundInternal('triangle', { start: 1200, end: 1800, bendDuration: 0.05 }, 0.045, 0.18);
+  // A bright, "ching" or "sparkle" sound for earning stars/coins
+  playSoundInternal('triangle', { start: 1046.50, end: 1567.98, bendDuration: 0.04 }, 0.04, 0.15); // C6 to G6 quick slide
   setTimeout(() => {
-    playSoundInternal('sine', { start: 1500, end: 2000, bendDuration: 0.03 }, 0.035, 0.12);
-  }, 40);
+    playSoundInternal('sine', 1244.51, 0.03, 0.1); // E6
+  }, 30);
 }
 
 export function playAchievementUnlockedSound(): void {
@@ -135,7 +135,7 @@ export function speakText(
       });
       onError(emptyTextError);
     }
-    if (onEnd) onEnd(); // Ensure onEnd is called even if speech doesn't start
+    if (onEnd) onEnd(); 
     return null;
   }
   const { soundEffectsEnabled, speechRate, speechPitch, selectedVoiceURI } = useAppSettingsStore.getState();
@@ -177,7 +177,6 @@ export function speakText(
              console.error("Unhandled Speech synthesis error in speakText:", event.error, event.utterance?.text.substring(event.charIndex));
            }
         }
-        // Ensure onEnd is called on error too, if speech doesn't naturally end
         if (onEnd) onEnd();
     };
     utterance.onerror = handleError;

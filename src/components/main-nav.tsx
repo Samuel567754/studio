@@ -4,11 +4,11 @@
 import type { FC } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet'; // Added SheetTrigger
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader as AlertDialogHeaderPrimitive,
   AlertDialogTitle as AlertDialogTitlePrimitive,
-  AlertDialogTrigger, // Added AlertDialogTrigger
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
@@ -120,20 +120,16 @@ export const MainNav: FC = () => {
     <div className={cn(
       "flex items-center gap-1.5 p-1.5 rounded-full shadow-md transition-colors duration-300",
       "bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))]",
-      "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 cursor-default" // Subtle hover for desktop
+      "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 cursor-default"
     )}>
       <Image
-        src="/assets/images/gold_star_icon.png"
+        src="/assets/images/gold_star_icon.png" 
         alt="Golden Stars"
         width={32}
         height={32}
         className="drop-shadow-sm"
       />
-      <span
-        className={cn(
-          "text-lg font-semibold"
-        )}
-      >
+      <span className="text-lg font-semibold">
         {goldenStars}
       </span>
     </div>
@@ -148,12 +144,12 @@ export const MainNav: FC = () => {
                 <div className="h-8 w-8 bg-background/50 rounded-full"></div>
                 <div className="h-7 w-28 bg-background/50 rounded-md hidden sm:block"></div>
             </div>
-             <div className="flex items-center gap-2"> {/* Placeholder for stars on desktop */}
+             <div className="flex items-center gap-2">
                 <div className="h-10 w-20 bg-background/50 rounded-full hidden md:flex"></div>
             </div>
             <div className="md:hidden flex items-center gap-2">
-                 <div className="h-10 w-20 bg-background/50 rounded-full"></div> {/* Placeholder for points */}
-                 <div className="h-10 w-10 bg-background/50 rounded-full"></div> {/* Placeholder for hamburger */}
+                 <div className="h-10 w-20 bg-background/50 rounded-full"></div>
+                 <div className="h-10 w-10 bg-background/50 rounded-full"></div>
             </div>
         </div>
       </header>
@@ -175,7 +171,6 @@ export const MainNav: FC = () => {
                     "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-light))] group-hover:text-accent"
                 )}>ChillLearn</h1>
             </Link>
-            {/* CompactGoldenStarsDisplay for desktop */}
             <div className="hidden md:flex">
                 {CompactGoldenStarsDisplay}
             </div>

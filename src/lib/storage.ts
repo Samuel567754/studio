@@ -18,8 +18,8 @@ const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
 const USERNAME_KEY = 'chilllearn_username_v1';
 const PERSONALIZATION_COMPLETED_KEY = 'chilllearn_personalizationCompleted_v1';
 const FAVORITE_TOPICS_KEY = 'chilllearn_favoriteTopics_v1';
-const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v1'; // New Key
-const UNLOCKED_ACHIEVEMENTS_KEY = 'chilllearn_unlockedAchievements_v1'; // New Key
+const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v1'; // Changed from Sparkle Points
+const UNLOCKED_ACHIEVEMENTS_KEY = 'chilllearn_unlockedAchievements_v1';
 
 // --- Golden Stars ---
 export const getStoredGoldenStars = (defaultValue = 0): number => {
@@ -282,8 +282,8 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(USERNAME_KEY);
   localStorage.removeItem(PERSONALIZATION_COMPLETED_KEY);
   localStorage.removeItem(FAVORITE_TOPICS_KEY);
-  localStorage.removeItem(GOLDEN_STARS_KEY); // New
-  localStorage.removeItem(UNLOCKED_ACHIEVEMENTS_KEY); // New
+  localStorage.removeItem(GOLDEN_STARS_KEY);
+  localStorage.removeItem(UNLOCKED_ACHIEVEMENTS_KEY);
 
   Object.keys(localStorage).forEach(key => {
     if (key.startsWith(PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX)) {
@@ -292,10 +292,10 @@ export const clearProgressStoredData = (): void => {
   });
 
   try {
-    useUserProfileStore.getState().resetUserProfile(); // Resets username, topics, stars, achievements
+    useUserProfileStore.getState().resetUserProfile();
     useWalkthroughStore.getState().setHasCompletedWalkthrough(false);
-    useWalkthroughStore.getState().setCurrentStepIndex(0);
-    useWalkthroughStore.getState().closeWalkthrough();
+    useWalkthroughStore.getState().setCurrentStepIndex(0); // Explicitly reset step index
+    useWalkthroughStore.getState().closeWalkthrough(); // Close if open
     useThemeStore.getState().resetThemeSettings();
     useAppSettingsStore.getState().resetAppSettings();
 
