@@ -285,13 +285,13 @@
   @keyframes golden-stars-update-animation {
     0% {
       transform: scale(1) rotate(0deg);
-      color: inherit; /* Uses text-white from component base */
+      color: inherit; 
       text-shadow: none;
     }
     30% {
       transform: scale(1.8) rotate(-8deg) translateY(-5px);
       color: hsl(var(--accent)); 
-      text-shadow: 0 0 10px hsl(var(--accent) / 0.8), 0 0 15px hsl(0 0% 100% / 0.7); /* Brighter white glow */
+      text-shadow: 0 0 10px hsl(var(--accent) / 0.8), 0 0 15px hsl(0 0% 100% / 0.7);
     }
     60% {
       transform: scale(1.2) rotate(5deg);
@@ -334,13 +334,13 @@
     animation: stars-earned-popup-animation 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
   
-  /* Placeholder for achievement unlocked animation - can be enhanced later */
+  /* Animation for achievement unlocked modal */
   @keyframes achievement-unlocked-animation {
-    0% { opacity: 0; transform: scale(0.5) translateY(20px); }
-    50% { opacity: 1; transform: scale(1.1) translateY(-10px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
+    0% { opacity: 0; transform: scale(0.5) translateY(20px) rotate(-15deg); }
+    60% { opacity: 1; transform: scale(1.15) translateY(-10px) rotate(5deg); }
+    100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
   }
   .achievement-unlocked-animation {
-     animation: achievement-unlocked-animation 0.6s ease-out forwards;
+     animation: achievement-unlocked-animation 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   }
 }

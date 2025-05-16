@@ -6,9 +6,9 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert, Star } from 'lucide-react';
+import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
-import { playNotificationSound, playErrorSound, playStarsEarnedSound } from '@/lib/audio';
+import { playNotificationSound, playErrorSound } from '@/lib/audio';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 
@@ -45,8 +45,7 @@ export const MainNav: FC = () => {
   const { toast } = useToast();
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { goldenStars } = useUserProfileStore();
-
+  const { goldenStars } = useUserProfileStore(); // Get goldenStars from the store
 
   useEffect(() => {
     setIsMounted(true);
@@ -119,17 +118,17 @@ export const MainNav: FC = () => {
   const CompactGoldenStarsDisplay = (
     <div className={cn(
       "flex items-center gap-1.5 p-1.5 rounded-full shadow-md transition-colors duration-300",
-      "bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))]",
+      "bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))]", // Using nav colors
       "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 cursor-default"
     )}>
       <Image
         src="/assets/images/gold_star_icon.png" 
         alt="Golden Stars"
-        width={32}
+        width={32} // Standardized size
         height={32}
         className="drop-shadow-sm"
       />
-      <span className="text-lg font-semibold">
+      <span className="text-lg font-semibold"> {/* Increased text size */}
         {goldenStars}
       </span>
     </div>
@@ -171,11 +170,10 @@ export const MainNav: FC = () => {
                     "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-light))] group-hover:text-accent"
                 )}>ChillLearn</h1>
             </Link>
-            <div className="hidden md:flex">
+            <div className="hidden md:flex"> {/* Golden Stars for Desktop */}
                 {CompactGoldenStarsDisplay}
             </div>
         </div>
-
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
@@ -194,7 +192,7 @@ export const MainNav: FC = () => {
 
         {/* Mobile Header: Points + Hamburger Menu */}
         <div className="md:hidden flex items-center gap-2">
-          {CompactGoldenStarsDisplay}
+          {CompactGoldenStarsDisplay} {/* Golden Stars for Mobile Header */}
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
@@ -240,13 +238,13 @@ export const MainNav: FC = () => {
                     <span className="sr-only">Close</span>
                   </SheetClose>
               </SheetHeader>
-              <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
+              {/* Removed SheetDescription here to avoid duplicate or conflicting screen reader announcements if DialogTitle exists */}
               {/* Points display for mobile sheet */}
               <div className={cn("flex items-center justify-center gap-1.5 p-2 m-4 rounded-lg bg-[hsl(var(--nav-active-indicator-light))]/30 shadow-inner text-[hsl(var(--nav-text-light))]")}>
                   <Image
-                    src="/assets/images/gold_star_icon.png"
+                    src="/assets/images/gold_star_icon.png" 
                     alt="Golden Stars"
-                    width={32}
+                    width={32} // Standardized size
                     height={32}
                     className="drop-shadow-sm"
                   />
@@ -268,7 +266,7 @@ export const MainNav: FC = () => {
                   </Link>
                 </Button>
               </nav>
-               <div className={cn("mt-auto p-4 border-t", "border-[hsl(var(--nav-border-light))]")}>
+               <div className={cn("mt-auto p-4 border-t", "border-[hsl(var(--nav-border-light))]")}> 
                 <AlertDialog open={isConfirmResetOpen} onOpenChange={setIsConfirmResetOpen}>
                   <AlertDialogTrigger asChild>
                       <Button
@@ -290,7 +288,7 @@ export const MainNav: FC = () => {
                       <AlertDialogDescriptionPrimitive className={cn("text-[hsl(var(--nav-text-light))]/80")}>
                         This action is irreversible and will clear all your learning progress,
                         including your word lists, mastered words, reading level, word length preferences,
-                        username, favorite topics, golden stars, and tutorial completion status.
+                        username, favorite topics, golden stars, unlocked achievements, and tutorial completion status.
                         You will be taken back to the app introduction.
                         <br/><br/>
                         <strong>Are you absolutely sure you want to reset everything?</strong>

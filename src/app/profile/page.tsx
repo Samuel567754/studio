@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from 'react'; // Ensure React is imported for JSX
 import { useState, useEffect, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -12,15 +13,14 @@ import {
   getStoredWordLength,
   clearProgressStoredData,
 } from '@/lib/storage';
-import { useUserProfileStore } from '@/stores/user-profile-store';
+import { useUserProfileStore, type Achievement } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star, Sigma, Brain, Trophy } from 'lucide-react'; // Added Brain, Trophy
+import { User, BookOpen, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Sigma, Brain, Trophy as TrophyIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from "@/hooks/use-toast";
 import { playSuccessSound, playNotificationSound, playErrorSound } from '@/lib/audio';
@@ -37,20 +37,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 
-// Achievement type definition - ensuring it matches the structure
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  pointsRequired: number;
-  imageSrc: string; // Path to the image in public/assets/images
-  iconAlt?: string;
-  color?: string; // Tailwind text color class
-  bonusStars?: number; // Optional: Bonus stars awarded upon unlocking
-}
-
 // Define achievementsList at the module level as it's static configuration data
-const achievementsList: Achievement[] = [
+// This list is used by the profile page for display and by the store for checking unlocks.
+// Ensure image paths are correct and exist in public/assets/images/
+// Normalize filenames (e.g., single .png extension)
+export const ACHIEVEMENTS_CONFIG: Achievement[] = [
   { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
   { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
   { id: "gem_seeker_1", name: "Gem Seeker I", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", color: "text-fuchsia-500", bonusStars: 15 },
@@ -74,7 +65,7 @@ export default function ProfilePage() {
     favoriteTopics,
     goldenStars,
     unlockedAchievements,
-    isAchievementUnlocked,
+    isAchievementUnlocked, // This function comes from the store
     setUsername: setStoreUsername,
     setFavoriteTopics: setStoreFavoriteTopics,
     loadUserProfileFromStorage,
@@ -87,7 +78,7 @@ export default function ProfilePage() {
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
 
   useEffect(() => {
-    loadUserProfileFromStorage();
+    loadUserProfileFromStorage(); // Load latest from store/localStorage
     const practiceList = getStoredWordList();
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
@@ -141,17 +132,20 @@ export default function ProfilePage() {
 
   const handleConfirmResetProgress = () => {
     if (typeof window !== 'undefined') {
-        clearProgressStoredData();
+        clearProgressStoredData(); // This now also resets Zustand stores
         toast({
             title: <div className="flex items-center gap-2"><Trash2 className="h-5 w-5" />Progress Reset</div>,
             description: "Your learning and app usage data has been cleared. You will see the introduction again.",
             variant: "destructive"
         });
         playErrorSound();
-        window.location.href = '/introduction';
+        // Force a reload to ensure all states are fresh, especially for routing guards
+        window.location.href = '/introduction'; 
     }
     setIsConfirmResetOpen(false);
   };
+
+  const earnedAchievementsToDisplay = isMounted ? ACHIEVEMENTS_CONFIG.filter(ach => isAchievementUnlocked(ach.id)) : [];
 
   if (!isMounted || !profileStats) {
     return (
@@ -162,7 +156,6 @@ export default function ProfilePage() {
     );
   }
 
-  const earnedAchievementsToDisplay = achievementsList.filter(ach => isAchievementUnlocked(ach.id));
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
@@ -259,14 +252,14 @@ export default function ProfilePage() {
       <Card className="shadow-lg border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-primary">
-            <BarChart3 className="mr-3 h-6 w-6" aria-hidden="true" />
+            <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="mr-3 drop-shadow-sm" />
             Progress Overview
           </CardTitle>
           <CardDescription>Key metrics about your learning journey.</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-             <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
+             <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars Earned" width={32} height={32} className="drop-shadow-sm" />
             <div>
               <p className="font-semibold text-foreground">{goldenStars}</p>
               <p className="text-sm text-muted-foreground">Golden Stars Earned</p>
@@ -332,7 +325,8 @@ export default function ProfilePage() {
           ) : (
             <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300">
               <AlertTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-400"/> Keep Learning!
+                <Image src="/assets/images/star_emoji_illustration.png" alt="Star Emoji" width={20} height={20} />
+                Keep Learning!
               </AlertTitle>
               <AlertDescription>
                 You haven't unlocked any trophies or badges yet. Keep practicing and earning Golden Stars to see them here!

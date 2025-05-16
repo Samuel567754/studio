@@ -148,7 +148,7 @@ export function speakText(
   }
 
   try {
-    window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel(); // Cancel any ongoing speech
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = speechRate;
@@ -177,6 +177,7 @@ export function speakText(
              console.error("Unhandled Speech synthesis error in speakText:", event.error, event.utterance?.text.substring(event.charIndex));
            }
         }
+        // Ensure onEnd is called even if there's an error, to prevent hangs in chained audio.
         if (onEnd) onEnd();
     };
     utterance.onerror = handleError;

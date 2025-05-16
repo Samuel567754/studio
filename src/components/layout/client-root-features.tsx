@@ -11,9 +11,10 @@ import { MainNav } from '@/components/main-nav';
 import { BottomNav } from '@/components/bottom-nav';
 import { QuickLinkFAB } from '@/components/quicklink-fab';
 import { Loader2 } from 'lucide-react';
-import { useUserProfileStore } from '@/stores/user-profile-store';
+import { useUserProfileStore, type Achievement } from '@/stores/user-profile-store';
 import { FloatingGoldenStars } from '@/components/floating-sparkle-points'; 
 import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data';
+import { AchievementUnlockedModal } from '@/components/achievement-unlocked-modal';
 
 export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const {
@@ -25,7 +26,12 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     setCurrentStepIndex,
   } = useWalkthroughStore();
 
-  const { loadUserProfileFromStorage } = useUserProfileStore();
+  const { 
+    loadUserProfileFromStorage, 
+    pendingClaimAchievements, 
+    claimNextPendingAchievement 
+  } = useUserProfileStore();
+  
   const [isClientMounted, setIsClientMounted] = useState(false);
   const [actualIntroductionSeen, setActualIntroductionSeen] = useState<boolean | null>(null);
   const [actualPersonalizationCompleted, setActualPersonalizationCompleted] = useState<boolean | null>(null);
@@ -45,7 +51,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       if (event.key === 'chilllearn_personalizationCompleted_v1') {
         setActualPersonalizationCompleted(getHasCompletedPersonalization());
       }
-      if (event.key === useUserProfileStore.persist.getOptions().name) {
+      if (event.key === useUserProfileStore.persist.getOptions().name) { 
         loadUserProfileFromStorage();
       }
       if (event.key === useWalkthroughStore.persist.getOptions().name) {
@@ -79,14 +85,14 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && pathname !== '/introduction' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
-        if (!isWalkthroughOpen) { 
+        if (!isWalkthroughOpen && pendingClaimAchievements.length === 0) { 
           setCurrentStepIndex(0); 
           openWalkthrough();
         }
       }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex]);
+  }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex, pendingClaimAchievements]);
 
 
   if (!isClientMounted || actualIntroductionSeen === null || (actualIntroductionSeen && actualPersonalizationCompleted === null)) {
@@ -118,6 +124,8 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       </div>
     );
   }
+  
+  const currentAchievementToDisplay = pendingClaimAchievements.length > 0 ? pendingClaimAchievements[0] : null;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -140,11 +148,20 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
           isOpen={isWalkthroughOpen}
           onClose={() => { 
             closeWalkthrough();
-            // Do NOT setHasCompletedWalkthrough(true) here if skip/close should not mark as complete
+            setHasCompletedWalkthrough(true); // Mark as complete even if skipped/closed early
           }}
           onFinish={() => { 
             setHasCompletedWalkthrough(true);
             closeWalkthrough();
+          }}
+        />
+      )}
+      {currentAchievementToDisplay && (
+        <AchievementUnlockedModal
+          achievement={currentAchievementToDisplay}
+          isOpen={true} 
+          onClaim={() => {
+            claimNextPendingAchievement(); 
           }}
         />
       )}

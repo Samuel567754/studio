@@ -18,8 +18,8 @@ const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
 const USERNAME_KEY = 'chilllearn_username_v1';
 const PERSONALIZATION_COMPLETED_KEY = 'chilllearn_personalizationCompleted_v1';
 const FAVORITE_TOPICS_KEY = 'chilllearn_favoriteTopics_v1';
-const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v1'; // Changed from Sparkle Points
-const UNLOCKED_ACHIEVEMENTS_KEY = 'chilllearn_unlockedAchievements_v1';
+const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v3'; // Updated version for "from scratch"
+const UNLOCKED_ACHIEVEMENTS_KEY = 'chilllearn_unlockedAchievements_v3'; // Updated version
 
 // --- Golden Stars ---
 export const getStoredGoldenStars = (defaultValue = 0): number => {
@@ -292,13 +292,13 @@ export const clearProgressStoredData = (): void => {
   });
 
   try {
+    // Explicitly reset Zustand stores to their initial states
     useUserProfileStore.getState().resetUserProfile();
     useWalkthroughStore.getState().setHasCompletedWalkthrough(false);
-    useWalkthroughStore.getState().setCurrentStepIndex(0); // Explicitly reset step index
-    useWalkthroughStore.getState().closeWalkthrough(); // Close if open
+    useWalkthroughStore.getState().setCurrentStepIndex(0);
+    useWalkthroughStore.getState().closeWalkthrough();
     useThemeStore.getState().resetThemeSettings();
     useAppSettingsStore.getState().resetAppSettings();
-
     console.log("Cleared all user progress-related stored data and reset Zustand stores to initial states.");
   } catch (error) {
     console.error("Error resetting Zustand stores during clearProgressStoredData:", error);
