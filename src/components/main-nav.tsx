@@ -165,7 +165,7 @@ export const MainNav: FC = () => {
 
         {/* Mobile Header: Points + Hamburger Menu */}
         <div className="md:hidden flex items-center gap-2">
-          {/* Compact Golden Stars Display for Mobile Header */}
+          {/* Compact Golden Stars Display for Mobile Header (next to hamburger) */}
           <div className="flex items-center gap-1 p-1.5 rounded-full bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))] shadow-sm">
             <Image 
               src="/assets/images/gold_star_icon.png" 
@@ -225,18 +225,7 @@ export const MainNav: FC = () => {
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
               
-              {/* Points display for mobile sheet */}
-              <div className={cn("flex items-center justify-center gap-1.5 p-2 my-2 mx-4 rounded-lg bg-[hsl(var(--nav-active-indicator-light))]/30 shadow-inner text-[hsl(var(--nav-text-light))]")}>
-                  <Image 
-                    src="/assets/images/gold_star_icon.png" 
-                    alt="Golden Stars" 
-                    width={32} 
-                    height={32} 
-                    className="drop-shadow-sm"
-                  />
-                  <span className="font-semibold text-lg">{goldenStars}</span>
-                  <span className="text-sm opacity-80 ml-1">Stars</span>
-              </div>
+              {/* Points display for mobile sheet has been removed from here */}
 
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
                 <NavLinkItems isMobileSheet={true} />
@@ -304,3 +293,5 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+
+    
