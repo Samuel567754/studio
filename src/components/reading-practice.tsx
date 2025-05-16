@@ -8,15 +8,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
 import { generateComprehensionQuestions, type GenerateComprehensionQuestionsInput, type GenerateComprehensionQuestionsOutput, type Question } from '@/ai/flows/generate-comprehension-questions';
-import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy, Smile, Edit2, BarChart2, Trophy, ArrowLeft, Volume2 } from 'lucide-react'; 
+import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy, Smile, Edit2, BarChart2, Trophy, ArrowLeft, Volume2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound } from '@/lib/audio';
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CoinsEarnedPopup } from '@/components/points-earned-popup';
+import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 interface ReadingPracticeProps {
   wordsToPractice: string[];
@@ -41,16 +43,18 @@ interface TestResult {
 }
 
 const PASSING_THRESHOLD_PERCENTAGE = 60;
+const POINTS_PER_CORRECT_QUESTION = 3;
+const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 
 export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, readingLevel, masteredWords, onSessionComplete }) => {
   const [passage, setPassage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isPaused, setIsPaused] = useState(false); 
+  const [isPaused, setIsPaused] = useState(false);
   const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
   const [currentSpokenWordInfo, setCurrentSpokenWordInfo] = useState<SpokenWordInfo | null>(null);
-  const { username, favoriteTopics } = useUserProfileStore();
-  
+  const { username, favoriteTopics, addGoldenCoins, deductGoldenCoins } = useUserProfileStore();
+
   const [questionsData, setQuestionsData] = useState<GenerateComprehensionQuestionsOutput | null>(null);
   const [isTestLoading, setIsTestLoading] = useState(false);
   const [isTestActive, setIsTestActive] = useState(false);
@@ -58,8 +62,13 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [overallScore, setOverallScore] = useState<number | null>(null);
   const [gameCompletedThisSession, setGameCompletedThisSession] = useState(false);
-  const [isShowingResults, setIsShowingResults] = useState(false); 
-  const [showRetryOption, setShowRetryOption] = useState(false); 
+  const [isShowingResults, setIsShowingResults] = useState(false);
+  const [showRetryOption, setShowRetryOption] = useState(false);
+
+  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
+  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
+  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
+  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
 
 
   const { toast } = useToast();
@@ -74,8 +83,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel(); 
-      resetSpeechState(); 
+      window.speechSynthesis.cancel();
+      resetSpeechState();
     }
   }, [resetSpeechState]);
 
@@ -97,12 +106,12 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     if (event.name === 'word' && event.charLength > 0) {
       setCurrentSpokenWordInfo({ charIndex: event.charIndex, charLength: event.charLength });
     }
-  }, []); 
+  }, []);
 
   const handleSpeechEnd = useCallback(() => {
     resetSpeechState();
   }, [resetSpeechState]);
-  
+
   const handleSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
       if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
           console.error("Speech synthesis error in ReadingPractice:", event.error, passage?.substring(event.charIndex));
@@ -111,7 +120,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       } else if (event.error) {
         console.warn("Speech synthesis event (interrupted/canceled) in ReadingPractice:", event.error);
       }
-      resetSpeechState(); 
+      resetSpeechState();
   }, [toast, passage, resetSpeechState]);
 
   const fetchPassage = useCallback(async () => {
@@ -120,9 +129,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       setPassage("Please get some word suggestions and select a word first. Then, try generating a passage.");
       return;
     }
-    if (isSpeaking) stopSpeech(); 
+    if (isSpeaking) stopSpeech();
     setIsLoading(true);
-    resetStateForNewPassage(); 
+    resetStateForNewPassage();
 
     try {
       const input: GenerateReadingPassageInput = { words: wordsToPractice, readingLevel, masteredWords, favoriteTopics: favoriteTopics || undefined };
@@ -134,7 +143,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       } else {
         setPassage("Could not generate a passage. Try different words or settings.");
         toast({ variant: "info", title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />No Passage Generated</div>, description: "Try different words or settings." });
-        playNotificationSound(); 
+        playNotificationSound();
       }
     } catch (error) {
       console.error("Error generating passage:", error);
@@ -189,8 +198,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   };
 
   const handleFinishSession = (finalScore: number, totalQuestions: number) => {
-    setGameCompletedThisSession(true); // Mark session as fully completed
-    onSessionComplete(finalScore, totalQuestions); // Notify parent page
+    setGameCompletedThisSession(true);
+    onSessionComplete(finalScore, totalQuestions);
   };
 
   const handleSubmitTest = () => {
@@ -202,8 +211,10 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Incomplete Test</div>,
         description: "Please answer all questions before submitting.",
       });
-      playNotificationSound();
-      if (soundEffectsEnabled) speakText("Please answer all questions before submitting.");
+      if(soundEffectsEnabled) {
+        playNotificationSound();
+        speakText("Please answer all questions before submitting.");
+      }
       return;
     }
 
@@ -211,7 +222,30 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     const results: TestResult[] = questionsData.questions.map((q, index) => {
       const userAnswerText = userAnswers.get(index) || "";
       const isCorrect = userAnswerText.toLowerCase() === q.correctAnswer.toLowerCase();
-      if (isCorrect) correctCount++;
+      if (isCorrect) {
+        correctCount++;
+        addGoldenCoins(POINTS_PER_CORRECT_QUESTION);
+        setLastAwardedCoins(POINTS_PER_CORRECT_QUESTION); // Assuming same points for all questions for popup
+        setShowCoinsEarnedPopup(true);
+        if(soundEffectsEnabled) playCoinsEarnedSound();
+        toast({
+            variant: "success",
+            title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_QUESTION} Golden Coins!</div>,
+            description: `Correct for Q${index+1}!`,
+            duration: 1500,
+        });
+      } else {
+        deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+        setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+        setShowCoinsLostPopup(true);
+        if(soundEffectsEnabled) playCoinsDeductedSound();
+        toast({
+            variant: "destructive",
+            title: <div className="flex items-center gap-1"><XCircle className="h-5 w-5" /> Oops! (-{POINTS_DEDUCTED_PER_WRONG_ANSWER} Coin)</div>,
+            description: `Incorrect for Q${index+1}.`,
+            duration: 1500,
+        });
+      }
       return {
         questionText: q.questionText,
         userAnswer: userAnswerText,
@@ -226,12 +260,39 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setTestResults(results);
     setOverallScore(correctCount);
     setIsTestActive(false);
-    setIsShowingResults(true); 
-    playNotificationSound();
+    setIsShowingResults(true);
+    // playNotificationSound(); // Sound played per question now
 
-    let resultSpeech = `You scored ${correctCount} out of ${questionsData.questions.length}. `;
-    
-    const afterDetailedReviewCallback = () => {
+    const resultSpeech = `You scored ${correctCount} out of ${questionsData.questions.length}. `;
+
+    const speakExplanationsSequentially = async () => {
+      if (soundEffectsEnabled && results && results.length > 0) {
+        for (let i = 0; i < results.length; i++) {
+          const res = results[i];
+          let reviewText = `For question ${i + 1}: ${res.questionText}. `;
+          reviewText += `You answered: ${res.userAnswer || "not answered"}. `;
+          if (res.isCorrect) {
+            reviewText += "That is correct. ";
+          } else {
+            reviewText += `The correct answer was: ${res.correctAnswer}. `;
+          }
+          if (res.explanation) {
+            reviewText += `Explanation: ${res.explanation}. `;
+          }
+
+          await new Promise<void>((resolve) => {
+            const utterance = speakText(reviewText, undefined, () => resolve(), (errEvent) => {
+              console.error("Speech error during detailed review:", errEvent.error);
+              resolve();
+            });
+            if (!utterance) resolve();
+          });
+        }
+      }
+      afterResultAndExplanationSpeechCallback();
+    };
+
+    const afterResultAndExplanationSpeechCallback = () => {
         const passingScore = Math.ceil(questionsData.questions.length * (PASSING_THRESHOLD_PERCENTAGE / 100));
         if (correctCount < passingScore) {
             setShowRetryOption(true);
@@ -247,41 +308,14 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             handleFinishSession(correctCount, questionsData.questions.length);
         }
     };
-    
-    const speakDetailedTestReview = async () => {
-      if (soundEffectsEnabled && results && results.length > 0) {
-        for (let i = 0; i < results.length; i++) {
-          const res = results[i];
-          let reviewText = `Question ${i + 1}: ${res.questionText}. `;
-          reviewText += `You answered: ${res.userAnswer || "not answered"}. `;
-          if (res.isCorrect) {
-            reviewText += "That is correct. ";
-          } else {
-            reviewText += `The correct answer was: ${res.correctAnswer}. `;
-          }
-          if (res.explanation) {
-            reviewText += `Explanation: ${res.explanation}. `;
-          }
-          
-          await new Promise<void>((resolve, reject) => {
-            const utterance = speakText(reviewText, undefined, () => resolve(), (errEvent) => {
-              console.error("Speech error during detailed review:", errEvent.error);
-              resolve(); // Resolve even on error to not block the flow
-            });
-            if (!utterance) resolve(); // If speakText returns null (e.g., audio disabled), resolve immediately
-          });
-        }
-      }
-      afterDetailedReviewCallback();
-    };
 
     if(soundEffectsEnabled) {
-        speakText(resultSpeech, undefined, speakDetailedTestReview, (err) => {
+        speakText(resultSpeech, undefined, speakExplanationsSequentially, (err) => {
             console.error("Speech error announcing score:", err.error);
-            speakDetailedTestReview(); // Proceed even if main score speech fails
+            speakExplanationsSequentially();
         });
     } else {
-        afterDetailedReviewCallback(); // Go directly to showing retry/finish if audio is off
+        afterResultAndExplanationSpeechCallback();
     }
   };
 
@@ -301,7 +335,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
      if (overallScore !== null && questionsData) {
         handleFinishSession(overallScore, questionsData.questions.length);
      }
-     setShowRetryOption(false); 
+     setShowRetryOption(false);
   };
 
   const speakQuestionWithOptions = (question: Question) => {
@@ -319,16 +353,16 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         return;
     }
     const speech = window.speechSynthesis;
-    if (currentUtterance && isSpeaking) { 
-        if (isPaused) { speech.resume(); setIsPaused(false); playNotificationSound(); } 
+    if (currentUtterance && isSpeaking) {
+        if (isPaused) { speech.resume(); setIsPaused(false); playNotificationSound(); }
         else { speech.pause(); setIsPaused(true); playNotificationSound(); }
-    } else { 
+    } else {
       const utterance = speakText(passage, handleSpeechBoundary, handleSpeechEnd, handleSpeechError);
-      if (utterance) { setCurrentUtterance(utterance); setIsSpeaking(true); setIsPaused(false); } 
+      if (utterance) { setCurrentUtterance(utterance); setIsSpeaking(true); setIsPaused(false); }
       else { resetSpeechState(); }
     }
   }, [passage, isSpeaking, isPaused, soundEffectsEnabled, handleSpeechBoundary, handleSpeechEnd, handleSpeechError, resetSpeechState, toast, currentUtterance]);
-  
+
   const handleCopyPassage = useCallback(() => {
     if (passage && navigator.clipboard) {
       navigator.clipboard.writeText(passage)
@@ -339,7 +373,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
   useEffect(() => { return () => { if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel(); resetSpeechState(); }; }, [resetSpeechState]);
 
-  const renderHighlightedPassage = (): ReactNode[] => { 
+  const renderHighlightedPassage = (): ReactNode[] => {
     if (!passage) return [];
     const elements: ReactNode[] = [];
     let keyCounter = 0;
@@ -363,14 +397,14 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       }
     };
 
-    if (isSpeaking && currentSpokenWordInfo && passage) { 
+    if (isSpeaking && currentSpokenWordInfo && passage) {
       const { charIndex, charLength } = currentSpokenWordInfo;
       const validCharIndex = Math.max(0, charIndex);
       const validCharLength = Math.max(0, charLength);
 
       if (validCharIndex < passage.length) {
         processSegment(passage.substring(0, validCharIndex), false);
-        processSegment(passage.substring(validCharIndex, Math.min(passage.length, validCharIndex + validCharLength)), true); 
+        processSegment(passage.substring(validCharIndex, Math.min(passage.length, validCharIndex + validCharLength)), true);
         processSegment(passage.substring(Math.min(passage.length, validCharIndex + validCharLength)), false);
       } else {
         processSegment(passage, false);
@@ -386,7 +420,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
 
   return (
-    <Card className="shadow-xl w-full border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out">
+    <Card className="shadow-xl w-full border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out relative">
+      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
+      <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
       <CardHeader>
         <CardTitle className="flex items-center text-xl font-semibold text-primary">
           <BookMarked className="mr-2 h-5 w-5" aria-hidden="true" /> Practice Reading
@@ -412,9 +448,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             </>
           )}
         </div>
-        
+
         {isLoading && <div className="flex justify-center p-4"><Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="sr-only">Loading passage</span></div>}
-        
+
         {/* Passage Display */}
         {passage && !isLoading && (
           <ScrollArea className="h-60 w-full rounded-md border p-4 bg-background/80 shadow-sm">
@@ -535,4 +571,3 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     </Card>
   );
 };
-

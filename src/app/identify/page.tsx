@@ -12,21 +12,34 @@ import { ChevronLeft, ChevronRight, Info, Target, CheckCircle2, XCircle, Smile, 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { playNavigationSound, speakText, playSuccessSound, playErrorSound, playCompletionSound } from '@/lib/audio';
+import { playNavigationSound, speakText, playSuccessSound, playErrorSound, playCompletionSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { CoinsEarnedPopup } from '@/components/points-earned-popup';
+import { CoinsLostPopup } from '@/components/points-lost-popup';
+
+const POINTS_PER_CORRECT_IDENTIFICATION = 2;
+const SESSION_COMPLETION_BONUS_POINTS = 10;
+const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
+const PENALTY_PER_WRONG_FOR_BONUS = 2;
 
 export default function IdentifyWordPage() {
   const [wordList, setWordList] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentWord, setCurrentWord] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
-  const { username } = useUserProfileStore();
+  const { username, addGoldenCoins, deductGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
   const { toast } = useToast();
 
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
   const [sessionCompleted, setSessionCompleted] = useState<boolean>(false);
+  const [sessionIncorrectAnswersCount, setSessionIncorrectAnswersCount] = useState(0);
+
+  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
+  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
+  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
+  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
 
   const speakWordWithPrompt = useCallback((wordToSpeak: string) => {
     if (wordToSpeak && soundEffectsEnabled) {
@@ -41,13 +54,14 @@ export default function IdentifyWordPage() {
     if (isRestart) {
       setPracticedWordsInSession(new Set());
       setSessionCompleted(false);
+      setSessionIncorrectAnswersCount(0);
     }
-    
+
 
     if (storedList.length > 0) {
       const storedIndex = getStoredCurrentIndex();
       let validIndex = (storedIndex >= 0 && storedIndex < storedList.length) ? storedIndex : 0;
-      
+
       if (isRestart) {
         validIndex = 0;
       }
@@ -55,11 +69,11 @@ export default function IdentifyWordPage() {
       setCurrentIndex(validIndex);
       const newWord = storedList[validIndex];
       setCurrentWord(newWord);
-      
-      if (isRestart && storedList.length > 0) { // Only speak on explicit restart if list is not empty
+
+      if (isRestart && storedList.length > 0) {
         setTimeout(() => speakWordWithPrompt(newWord), 300);
-      } else if (!isRestart && !sessionCompleted && storedList.length > 0) { // Speak on initial load if not completed
-         setTimeout(() => speakWordWithPrompt(newWord), 300); 
+      } else if (!isRestart && !sessionCompleted && storedList.length > 0) {
+         setTimeout(() => speakWordWithPrompt(newWord), 300);
       }
 
       if (storedIndex !== validIndex || isRestart) {
@@ -69,12 +83,12 @@ export default function IdentifyWordPage() {
       setCurrentWord('');
       setCurrentIndex(0);
     }
-  }, [sessionCompleted, speakWordWithPrompt, soundEffectsEnabled]); 
+  }, [sessionCompleted, speakWordWithPrompt]);
 
   useEffect(() => {
     loadWordData();
     setIsMounted(true);
-    
+
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'sightwords_wordList_v1' || event.key === 'sightwords_currentIndex_v1') {
         loadWordData();
@@ -99,78 +113,114 @@ export default function IdentifyWordPage() {
     const newWordToSpeak = wordList[newIndex];
     setCurrentWord(newWordToSpeak);
     storeCurrentIndex(newIndex);
-    setTimeout(() => speakWordWithPrompt(newWordToSpeak), 150); 
+    setTimeout(() => speakWordWithPrompt(newWordToSpeak), 150);
     playNavigationSound();
   };
 
   const handleGameResult = (correct: boolean, selectedWord: string) => {
     const currentWordLowerCase = currentWord.toLowerCase();
-    
+
     const afterCurrentWordAudio = () => {
         let newPracticedSet = practicedWordsInSession;
-        if (correct) { // Only add to practiced set if correct
+        if (correct) {
              newPracticedSet = new Set(practicedWordsInSession).add(currentWordLowerCase);
              setPracticedWordsInSession(newPracticedSet);
         }
 
         if (newPracticedSet.size === wordList.length && wordList.length > 0 && !sessionCompleted) {
             setSessionCompleted(true);
-            const completionMessage = username ? `Superb, ${username}!` : 'Congratulations!';
+            const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_POINTS - (sessionIncorrectAnswersCount * PENALTY_PER_WRONG_FOR_BONUS));
+            let completionMessage = username ? `Superb, ${username}!` : 'Congratulations!';
+            let description = `You've identified all words in this session!`;
+
+            if (calculatedBonus > 0) {
+              addGoldenCoins(calculatedBonus);
+              setLastAwardedCoins(calculatedBonus);
+              setShowCoinsEarnedPopup(true);
+              if (soundEffectsEnabled) playCoinsEarnedSound();
+              description += ` You earned ${calculatedBonus} bonus Golden Coins!`;
+            } else {
+              description += ` Keep practicing to earn a bonus next time!`;
+            }
+
             toast({
                 variant: "success",
-                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{completionMessage}</div>,
-                description: "You've identified all words in this session!",
+                title: <div className="flex items-center gap-2"><Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />{completionMessage}</div>,
+                description: description,
                 duration: 7000,
             });
-            playCompletionSound();
             if (soundEffectsEnabled) {
-                speakText(`${completionMessage} You've identified all words in this session!`);
+                playCompletionSound();
+                speakText(`${completionMessage} ${description}`);
             }
         } else if (wordList.length > 1 && !sessionCompleted) {
             navigateWord('next');
-        } else if (wordList.length === 1 && !sessionCompleted && correct) { 
+        } else if (wordList.length === 1 && !sessionCompleted && correct) {
             setSessionCompleted(true);
             const singleWordMessage = username ? `Awesome, ${username}!` : 'Awesome!';
+             // No session bonus for a single word, points are per word.
             toast({
                 variant: "success",
-                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{singleWordMessage}</div>,
+                title: <div className="flex items-center gap-2"><Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />{singleWordMessage}</div>,
                 description: "You've identified the word! Add more to keep practicing.",
                 duration: 7000,
             });
-            playCompletionSound();
-             if (soundEffectsEnabled) speakText(`${singleWordMessage} You've identified the word!`);
+            if (soundEffectsEnabled) {
+              playCompletionSound();
+              speakText(`${singleWordMessage} You've identified the word!`);
+            }
         } else if (wordList.length === 1 && !sessionCompleted && !correct) {
              if (currentWord && soundEffectsEnabled) {
-                setTimeout(() => speakWordWithPrompt(currentWord), 1000); 
+                setTimeout(() => speakWordWithPrompt(currentWord), 1000);
             }
         }
     };
 
 
     if (correct) {
+      addGoldenCoins(POINTS_PER_CORRECT_IDENTIFICATION);
+      setLastAwardedCoins(POINTS_PER_CORRECT_IDENTIFICATION);
+      setShowCoinsEarnedPopup(true);
+      if (soundEffectsEnabled) playCoinsEarnedSound();
+      toast({
+        variant: "success",
+        title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_IDENTIFICATION} Golden Coins!</div>,
+        description: "Correct!",
+      });
       const spokenFeedback = `Correct! You identified ${currentWord}.`;
       if (soundEffectsEnabled) {
         speakText(spokenFeedback, undefined, () => setTimeout(afterCurrentWordAudio, 500));
       } else {
-        setTimeout(afterCurrentWordAudio, 1200); 
+        setTimeout(afterCurrentWordAudio, 1200);
       }
 
     } else {
+      setSessionIncorrectAnswersCount(prev => prev + 1);
+      deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+      setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+      setShowCoinsLostPopup(true);
+      if(soundEffectsEnabled) playCoinsDeductedSound();
+      toast({
+        variant: "destructive",
+        title: <div className="flex items-center gap-1"><XCircle className="h-5 w-5" /> Oops!</div>,
+        description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> -{POINTS_DEDUCTED_PER_WRONG_ANSWER} Golden Coin.</div>,
+      });
+
       const spokenFeedback = `Oops. You chose ${selectedWord}. The word was ${currentWord}.`;
       if (soundEffectsEnabled) {
         speakText(spokenFeedback, undefined, () => setTimeout(afterCurrentWordAudio, 1500));
       } else {
-        setTimeout(afterCurrentWordAudio, 2200); 
+        setTimeout(afterCurrentWordAudio, 2200);
       }
     }
   };
-  
+
   if (!isMounted) {
     return (
-      <div className="space-y-6 md:space-y-8" aria-live="polite" aria-busy="true">
+      <div className="space-y-6 md:space-y-8 relative" aria-live="polite" aria-busy="true">
         <Card className="shadow-lg animate-pulse">
             <div className="p-6 md:p-10 flex flex-col items-center justify-center gap-6 min-h-[250px] md:min-h-[300px]">
-                <div className="h-20 w-3/4 bg-muted rounded"></div> 
+                <div className="h-20 w-3/4 bg-muted rounded"></div>
                 <div className="h-12 w-1/2 bg-primary/50 rounded"></div>
             </div>
         </Card>
@@ -188,7 +238,9 @@ export default function IdentifyWordPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="space-y-8 max-w-3xl mx-auto relative">
+      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
+      <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
       <div className="mb-6">
         <Button asChild variant="outline" className="group">
           <Link href="/word-practice">
@@ -199,15 +251,15 @@ export default function IdentifyWordPage() {
       </div>
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
-          <Image 
-            src="https://images.unsplash.com/photo-1653276055789-26fdc328680f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTR8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D" 
+          <Image
+            src="https://images.unsplash.com/photo-1653276055789-26fdc328680f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTR8fGxlYXJuJTIwd29yZHN8ZW58MHx8MHx8fDA%3D"
             alt="Child pointing at a word, identifying it"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="word identification game" 
+            data-ai-hint="word identification game"
           />
-          <div className="absolute inset-0 bg-black/60" /> 
+          <div className="absolute inset-0 bg-black/60" />
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
             <Target className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
             <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Identify Words</h1>
@@ -219,15 +271,15 @@ export default function IdentifyWordPage() {
       {wordList.length < 2 && !sessionCompleted ? (
         <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
           <div className="relative h-80 md:h-96 w-full">
-            <Image 
-              src="https://images.unsplash.com/photo-1673515334717-da4d85aaf38b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D"
+            <Image
+              src="/assets/images/cute_smiling_star_illustration.png"
               alt="Child with a magnifying glass looking at words"
               layout="fill"
               objectFit="cover"
               className="absolute inset-0"
               data-ai-hint="child learning words"
             />
-            <div className="absolute inset-0 bg-black/70" /> 
+            <div className="absolute inset-0 bg-black/70" />
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-white">
               <Target className="h-12 w-12 text-primary mb-4" aria-hidden="true" />
               <h2 className="text-2xl md:text-3xl font-bold mb-3">Not Enough Words!</h2>
@@ -241,16 +293,17 @@ export default function IdentifyWordPage() {
           </div>
         </Card>
       ) : sessionCompleted ? (
-        <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
+        <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300 relative">
             <CardContent className="p-6">
                 <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50">
                     <div className="flex flex-col items-center gap-4 py-4">
-                        <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+                        <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={40} height={40} />
                         <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
                             {username ? `Superb, ${username}!` : 'Session Complete!'}
                         </AlertTitle>
                         <AlertDescription className="text-base">
                             You've successfully identified all words in this session!
+                            {lastAwardedCoins > 0 && ` You earned ${lastAwardedCoins} bonus Golden Coins!`}
                         </AlertDescription>
                         <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full max-w-xs">
                             <Button onClick={() => loadWordData(true)} variant="outline" className="w-full">
@@ -268,14 +321,14 @@ export default function IdentifyWordPage() {
         <>
             <WordDisplay word={currentWord} hideWordText={true} />
             <div className="animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
-                <WordIdentificationGame 
+                <WordIdentificationGame
                 wordToIdentify={currentWord}
                 allWords={wordList}
                 onGameResult={handleGameResult}
                 />
             </div>
-            
-            {!sessionCompleted && wordList.length > 1 && ( 
+
+            {!sessionCompleted && wordList.length > 1 && (
                 <Card className="shadow-md border-primary/10 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
                     <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-center gap-2 md:gap-4">
                     <Button variant="outline" size="lg" onClick={() => navigateWord('prev')} aria-label="Previous word" className="w-full sm:flex-1 order-1 sm:order-none">
