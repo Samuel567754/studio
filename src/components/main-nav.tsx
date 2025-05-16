@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
-import { playNotificationSound, playErrorSound } from '@/lib/audio';
+import { playNotificationSound, playErrorSound, playStarsEarnedSound } from '@/lib/audio';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 
@@ -32,7 +32,7 @@ const navLinks = [
   { href: '/', label: 'Home', icon: HomeIcon },
   { href: '/word-practice', label: 'Word Practice', icon: TextSelectIcon },
   { href: '/ai-games', label: 'AI Games', icon: Puzzle },
-  { href: '/math', label: 'Math Zone', icon: Sigma },
+  { href: '/math', label: 'Math', icon: Sigma },
   { href: '/tutorial', label: 'Guide', icon: Map },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
@@ -45,7 +45,7 @@ export const MainNav: FC = () => {
   const { toast } = useToast();
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { goldenStars } = useUserProfileStore(); // Get goldenStars for mobile sheet
+  const { goldenStars } = useUserProfileStore(); 
 
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export const MainNav: FC = () => {
 
   if (!isMounted) {
     return (
-      <header className="sticky top-0 z-50 w-full h-16 bg-muted animate-pulse">
+      <header className="sticky top-0 z-40 w-full h-16 bg-muted animate-pulse">
         <div className="container mx-auto flex h-full items-center justify-between px-4 md:px-6">
             <div className="flex items-center gap-2">
                 <div className="h-8 w-8 bg-background/50 rounded-full"></div>
@@ -128,15 +128,12 @@ export const MainNav: FC = () => {
             <div className="md:hidden">
                  <div className="h-10 w-10 bg-background/50 rounded-full"></div>
             </div>
-            <div className="hidden md:flex items-center gap-1">
-                {/* Removed old points display placeholder */}
-            </div>
         </div>
       </header>
     );
   }
 
-  const navBarBaseClasses = "sticky top-0 z-40 w-full bg-nav-gradient shadow-nav-bottom border-b"; // z-index reduced for floating points
+  const navBarBaseClasses = "sticky top-0 z-40 w-full bg-nav-gradient shadow-nav-bottom border-b"; 
   const navBarBorderColor = "border-[hsl(var(--nav-border-light))]"; 
 
   return (
@@ -151,7 +148,7 @@ export const MainNav: FC = () => {
           )}>ChillLearn</h1>
         </Link>
 
-        {/* Desktop Navigation - Removed direct points display from here */}
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
           <NavLinkItems />
           <Button 
@@ -166,8 +163,21 @@ export const MainNav: FC = () => {
           </Button>
         </nav>
 
-        {/* Mobile Hamburger Menu */}
-        <div className="md:hidden">
+        {/* Mobile Header: Points + Hamburger Menu */}
+        <div className="md:hidden flex items-center gap-2">
+          {/* Compact Golden Stars Display for Mobile Header */}
+          <div className="flex items-center gap-1 p-1.5 rounded-full bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))] shadow-sm">
+            <Image 
+              src="/assets/images/gold_star_icon.png" 
+              alt="Golden Stars" 
+              width={20} 
+              height={20} 
+              className="drop-shadow-sm"
+            />
+            <span className="text-sm font-semibold">{goldenStars}</span>
+          </div>
+
+          {/* Mobile Hamburger Menu Trigger */}
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
@@ -219,7 +229,7 @@ export const MainNav: FC = () => {
               <div className={cn("flex items-center justify-center gap-1.5 p-2 my-2 mx-4 rounded-lg bg-[hsl(var(--nav-active-indicator-light))]/30 shadow-inner text-[hsl(var(--nav-text-light))]")}>
                   <Image 
                     src="/assets/images/gold_star_icon.png" 
-                    alt="Golden Star" 
+                    alt="Golden Stars" 
                     width={20} 
                     height={20} 
                     className="drop-shadow-sm"
@@ -294,3 +304,4 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+
