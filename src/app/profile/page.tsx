@@ -15,7 +15,7 @@ import {
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star, Sigma } from 'lucide-react';
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star, Sigma, Brain, Trophy } from 'lucide-react'; // Added Brain, Trophy
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -37,25 +37,25 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 
-// Moved Achievement type here for self-containment if not already globally available or imported
+// Achievement type definition - ensuring it matches the structure
 export interface Achievement {
   id: string;
   name: string;
   description: string;
   pointsRequired: number;
-  imageSrc: string;
+  imageSrc: string; // Path to the image in public/assets/images
   iconAlt?: string;
-  color?: string;
-  bonusStars?: number;
+  color?: string; // Tailwind text color class
+  bonusStars?: number; // Optional: Bonus stars awarded upon unlocking
 }
 
 // Define achievementsList at the module level as it's static configuration data
 const achievementsList: Achievement[] = [
-  { id: "star_beginner", name: "Star Beginner", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
-  { id: "coin_collector", name: "Coin Collector", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
-  { id: "gem_seeker", name: "Gem Seeker", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", color: "text-fuchsia-500", bonusStars: 15 },
-  { id: "treasure_hunter", name: "Treasure Hunter", description: "Unearthed 300 Golden Stars!", pointsRequired: 300, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest", color: "text-orange-500", bonusStars: 20 },
-  { id: "chill_tycoon", name: "ChillLearn Tycoon", description: "Achieved 500 Golden Stars overall!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Laurel Wreath Trophy", color: "text-green-500", bonusStars: 25 },
+  { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
+  { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
+  { id: "gem_seeker_1", name: "Gem Seeker I", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", color: "text-fuchsia-500", bonusStars: 15 },
+  { id: "treasure_finder", name: "Treasure Discoverer", description: "Unearthed 300 Golden Stars!", pointsRequired: 300, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest", color: "text-orange-500", bonusStars: 20 },
+  { id: "chill_master", name: "ChillLearn Master", description: "Achieved 500 Golden Stars overall!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Laurel Wreath Trophy", color: "text-green-500", bonusStars: 25 },
 ];
 
 
@@ -87,7 +87,7 @@ export default function ProfilePage() {
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
 
   useEffect(() => {
-    loadUserProfileFromStorage(); // This also calls _checkAndUnlockAchievements
+    loadUserProfileFromStorage();
     const practiceList = getStoredWordList();
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
@@ -148,13 +148,10 @@ export default function ProfilePage() {
             variant: "destructive"
         });
         playErrorSound();
-        // Force reload or redirect to ensure store states are fully reset.
-        // Forcing a full page reload to /introduction is often the most robust way.
-        window.location.href = '/introduction'; 
+        window.location.href = '/introduction';
     }
     setIsConfirmResetOpen(false);
   };
-
 
   if (!isMounted || !profileStats) {
     return (
@@ -165,7 +162,6 @@ export default function ProfilePage() {
     );
   }
 
-  // Calculate earnedAchievementsToDisplay only when component is mounted and profileStats are available
   const earnedAchievementsToDisplay = achievementsList.filter(ach => isAchievementUnlocked(ach.id));
 
   return (
@@ -297,7 +293,7 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-yellow-500">
              <Image
-                src="/assets/images/trophy_cup_illustration.png"
+                src="/assets/images/golden_trophy_with_stars_illustration.png"
                 alt="Trophies & Badges"
                 width={32}
                 height={32}
