@@ -7,41 +7,25 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import {
   getStoredUsername, storeUsername as persistUsernameToStorage,
   getStoredFavoriteTopics, storeFavoriteTopics as persistFavoriteTopicsToStorage,
-  getStoredGoldenCoins, storeGoldenCoins as persistGoldenCoinsToStorage, // Updated
+  getStoredGoldenCoins, storeGoldenCoins as persistGoldenCoinsToStorage,
   getStoredUnlockedAchievements, storeUnlockedAchievements as persistUnlockedAchievementsToStorage
 } from '@/lib/storage';
 import { toast } from '@/hooks/use-toast';
-import { playAchievementUnlockedSound, playCoinsEarnedSound } from '@/lib/audio'; // Updated sound
-import Image from 'next/image'; // For use in achievement modal trigger
-
-// Define Achievement structure
-export interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  pointsRequired: number; // Will represent Golden Coins
-  imageSrc: string;
-  bonusCoins?: number; // Changed from bonusStars
-  color?: string; // For potential styling, not directly used in image
-  iconAlt?: string;
-}
-
-// This list will be defined on the Profile Page, but used by reference here for logic.
-// We'll define ACHIEVEMENTS_CONFIG in profile/page.tsx and pass it or use a shared import.
-// For now, the logic will assume such a config exists.
-import { ACHIEVEMENTS_CONFIG } from '@/app/profile/page'; // Assuming it's exported from profile page for now
+import { playAchievementUnlockedSound, playCoinsEarnedSound } from '@/lib/audio';
+import type { Achievement } from '@/app/profile/page'; // Assuming Achievement type is exported from profile
+import { ACHIEVEMENTS_CONFIG } from '@/app/profile/page';
 
 interface UserProfileState {
   username: string | null;
   favoriteTopics: string | null;
-  goldenCoins: number; // Changed from goldenStars
-  unlockedAchievements: string[]; // Stores IDs of *claimed* achievements
-  pendingClaimAchievements: Achievement[]; // Stores *full achievement objects* for the "claim" modal
+  goldenCoins: number;
+  unlockedAchievements: string[];
+  pendingClaimAchievements: Achievement[];
 
   setUsername: (name: string | null) => void;
   setFavoriteTopics: (topics: string | null) => void;
-  addGoldenCoins: (amount: number) => void; // Changed
-  deductGoldenCoins: (amount: number) => void; // New, if needed
+  addGoldenCoins: (amount: number) => void;
+  deductGoldenCoins: (amount: number) => void; // New action
   _triggerAchievementChecks: () => void;
   claimNextPendingAchievement: () => void;
   isAchievementUnlocked: (achievementId: string) => boolean;
@@ -52,7 +36,7 @@ interface UserProfileState {
 const initialUserProfileState: Omit<UserProfileState, 'setUsername' | 'setFavoriteTopics' | 'addGoldenCoins' | 'deductGoldenCoins' | '_triggerAchievementChecks' | 'claimNextPendingAchievement' | 'isAchievementUnlocked' | 'loadUserProfileFromStorage' | 'resetUserProfile'> = {
   username: null,
   favoriteTopics: null,
-  goldenCoins: 0, // Changed
+  goldenCoins: 0,
   unlockedAchievements: [],
   pendingClaimAchievements: [],
 };
@@ -71,13 +55,14 @@ export const useUserProfileStore = create<UserProfileState>()(
         set({ favoriteTopics: newTopics });
         persistFavoriteTopicsToStorage(newTopics);
       },
-      addGoldenCoins: (amount) => { // Changed
+      addGoldenCoins: (amount) => {
         if (amount <= 0) return;
         set((state) => ({ goldenCoins: state.goldenCoins + amount }));
         persistGoldenCoinsToStorage(get().goldenCoins);
+        // Use setTimeout to ensure state update is processed before triggering checks
         setTimeout(() => get()._triggerAchievementChecks(), 0);
       },
-      deductGoldenCoins: (amount) => { // New
+      deductGoldenCoins: (amount) => {
         if (amount <= 0) return;
         set((state) => ({ goldenCoins: Math.max(0, state.goldenCoins - amount) }));
         persistGoldenCoinsToStorage(get().goldenCoins);
@@ -112,8 +97,8 @@ export const useUserProfileStore = create<UserProfileState>()(
 
         const achievementToClaim = pending[0];
         
-        if (achievementToClaim.bonusCoins && achievementToClaim.bonusCoins > 0) { // Changed
-          get().addGoldenCoins(achievementToClaim.bonusCoins); // This will persist & trigger checks
+        if (achievementToClaim.bonusCoins && achievementToClaim.bonusCoins > 0) {
+          get().addGoldenCoins(achievementToClaim.bonusCoins); 
         }
         
         set((state) => ({
@@ -131,32 +116,36 @@ export const useUserProfileStore = create<UserProfileState>()(
         set({
           username: getStoredUsername(),
           favoriteTopics: getStoredFavoriteTopics(),
-          goldenCoins: getStoredGoldenCoins(), // Changed
+          goldenCoins: getStoredGoldenCoins(),
           unlockedAchievements: getStoredUnlockedAchievements(),
           pendingClaimAchievements: [] 
         });
+        // Initial check for achievements based on loaded coins
         setTimeout(() => get()._triggerAchievementChecks(), 100);
       },
       resetUserProfile: () => {
         set(initialUserProfileState);
         persistUsernameToStorage(null);
         persistFavoriteTopicsToStorage(null);
-        persistGoldenCoinsToStorage(0); // Changed
+        persistGoldenCoinsToStorage(0);
         persistUnlockedAchievementsToStorage([]);
-        set({ pendingClaimAchievements: [] });
+        set({ pendingClaimAchievements: [] }); // Clear pending claims on reset
       }
     }),
     {
-      name: 'user-profile-storage-v5-coins', // Incremented version
+      name: 'user-profile-storage-v5-coins', 
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         username: state.username,
         favoriteTopics: state.favoriteTopics,
-        goldenCoins: state.goldenCoins, // Changed
+        goldenCoins: state.goldenCoins,
         unlockedAchievements: state.unlockedAchievements,
+        // pendingClaimAchievements is intentionally not persisted here,
+        // it should be recalculated on load based on goldenCoins and unlockedAchievements
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
+          // Call loadUserProfileFromStorage to ensure all derived states and checks are run
           setTimeout(() => {
             state.loadUserProfileFromStorage();
           }, 0);
@@ -165,5 +154,3 @@ export const useUserProfileStore = create<UserProfileState>()(
     }
   )
 );
-
-    

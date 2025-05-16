@@ -8,15 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle2, XCircle, Loader2, Zap, RefreshCcw, Volume2, Mic, MicOff, Smile, Info } from 'lucide-react';
-import Image from 'next/image'; // Import Image
-import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound } from '@/lib/audio';
+import Image from 'next/image'; 
+import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-import { CoinsEarnedPopup } from '@/components/points-earned-popup'; // Import CoinsEarnedPopup
+import { CoinsEarnedPopup } from '@/components/points-earned-popup';
+import { CoinsLostPopup } from '@/components/points-lost-popup'; // Import CoinsLostPopup
 
 type Operation = '+' | '-' | '*' | '/';
 interface Problem {
@@ -30,6 +31,7 @@ interface Problem {
 
 const PROBLEMS_PER_SESSION = 5; 
 const POINTS_PER_CORRECT_ANSWER = 1;
+const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 const SESSION_COMPLETION_BONUS = 5;
 
 const generateProblem = (): Problem => {
@@ -92,13 +94,17 @@ export const ArithmeticGameUI = () => {
   const [answerInBlank, setAnswerInBlank] = useState<string | number | null>(null);
   const [showCorrectAnswerAfterIncorrect, setShowCorrectAnswerAfterIncorrect] = useState(false);
 
-  const [showCoinsPopup, setShowCoinsPopup] = useState(false);
+  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
+  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
   const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
+  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
+  const [inputAnimation, setInputAnimation] = useState<'success' | 'error' | null>(null);
+
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
-  const { username, addGoldenCoins } = useUserProfileStore();
+  const { username, addGoldenCoins, deductGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
   const loadNewProblem = useCallback((isNewSessionStart: boolean = false) => {
@@ -115,6 +121,7 @@ export const ArithmeticGameUI = () => {
     setIsCorrect(null);
     setAnswerInBlank(null);
     setShowCorrectAnswerAfterIncorrect(false);
+    setInputAnimation(null);
 
     const newProblem = generateProblem();
     setCurrentProblem(newProblem);
@@ -127,7 +134,7 @@ export const ArithmeticGameUI = () => {
     setSessionCompleted(true);
     addGoldenCoins(SESSION_COMPLETION_BONUS);
     setLastAwardedCoins(SESSION_COMPLETION_BONUS);
-    setShowCoinsPopup(true);
+    setShowCoinsEarnedPopup(true);
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
     const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
     toast({
@@ -162,6 +169,8 @@ export const ArithmeticGameUI = () => {
     setAnswerInBlank(answerNum);
     const correct = answerNum === currentProblem.answer;
     setIsCorrect(correct);
+    setInputAnimation(correct ? 'success' : 'error');
+    setTimeout(() => setInputAnimation(null), 700); // Match animation duration
 
     let newCurrentScore = score;
     if(correct) {
@@ -169,14 +178,26 @@ export const ArithmeticGameUI = () => {
         setScore(newCurrentScore);
         addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
         setLastAwardedCoins(POINTS_PER_CORRECT_ANSWER);
-        setShowCoinsPopup(true);
+        setShowCoinsEarnedPopup(true);
+        if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
           description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
           duration: 2000,
         });
+    } else {
+        deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+        setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+        setShowCoinsLostPopup(true);
+        if (soundEffectsEnabled) playCoinsDeductedSound();
+        toast({
+          variant: "destructive",
+          title: <div className="flex items-center gap-1"><XCircle className="h-5 w-5" /> Oops!</div>,
+          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> -{POINTS_DEDUCTED_PER_WRONG_ANSWER} Golden Coin.</div>,
+          duration: 2000,
+        });
     }
-
+    
     const afterFeedbackAudio = () => {
         const newProblemsSolved = problemsSolvedInSession + 1;
         setProblemsSolvedInSession(newProblemsSolved);
@@ -198,7 +219,7 @@ export const ArithmeticGameUI = () => {
         const utterance = speakText(speechSuccessMsg, undefined, afterFeedbackAudio);
         if (!utterance) setTimeout(afterFeedbackAudio, 1500);
       } else {
-        afterFeedbackAudio();
+        setTimeout(afterFeedbackAudio,1200);
       }
 
     } else {
@@ -210,6 +231,8 @@ export const ArithmeticGameUI = () => {
       const revealCorrectAndProceed = () => {
           setShowCorrectAnswerAfterIncorrect(true);
           setAnswerInBlank(currentProblem.answer); 
+          setInputAnimation('success'); // Flash green for correct answer reveal
+          setTimeout(() => setInputAnimation(null), 700);
           if (soundEffectsEnabled) {
               const correctAnswerSpeech = `The correct answer was ${currentProblem.answer}.`;
               const utteranceReveal = speakText(correctAnswerSpeech, undefined, () => setTimeout(afterFeedbackAudio, 500));
@@ -226,7 +249,7 @@ export const ArithmeticGameUI = () => {
          setTimeout(revealCorrectAndProceed, 1200);
       }
     }
-  }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted, score, addGoldenCoins, toast]);
+  }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted, score, addGoldenCoins, deductGoldenCoins, toast]);
 
 
   useEffect(() => {
@@ -398,7 +421,8 @@ export const ArithmeticGameUI = () => {
 
   return (
     <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsPopup} onComplete={() => setShowCoinsPopup(false)} />
+      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
+      <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <Zap className="mr-2 h-6 w-6" /> Quick Maths!
@@ -444,7 +468,11 @@ export const ArithmeticGameUI = () => {
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
                   placeholder="Your answer"
-                  className="text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary flex-grow"
+                  className={cn(
+                    "text-2xl p-3 h-14 text-center shadow-sm focus:ring-2 focus:ring-primary flex-grow",
+                    inputAnimation === 'success' && "animate-flash-success",
+                    inputAnimation === 'error' && "animate-shake-error animate-flash-error"
+                  )}
                   aria-label="Enter your answer for the math problem"
                   disabled={isAttempted || isLoading || isListening || sessionCompleted}
                 />
@@ -491,5 +519,3 @@ export const ArithmeticGameUI = () => {
     </Card>
   );
 };
-
-    

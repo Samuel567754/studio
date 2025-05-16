@@ -95,7 +95,7 @@ export function playNotificationSound(): void {
   }, 80);
 }
 
-export function playCoinsEarnedSound(): void { // Renamed from playStarsEarnedSound
+export function playCoinsEarnedSound(): void {
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
   if (!soundEffectsEnabled) return;
   // Coin sound: a short, metallic "ching"
@@ -104,6 +104,17 @@ export function playCoinsEarnedSound(): void { // Renamed from playStarsEarnedSo
     playSoundInternal('sine', 1500, 0.03, 0.08);
   }, 25);
 }
+
+export function playCoinsDeductedSound(): void {
+  const { soundEffectsEnabled } = useAppSettingsStore.getState();
+  if (!soundEffectsEnabled) return;
+  // Lower pitch, slightly dissonant or "whoosh down"
+  playSoundInternal('sawtooth', { start: 300, end: 150, bendDuration: 0.15 }, 0.06, 0.3);
+  setTimeout(() => {
+    playSoundInternal('square', 140, 0.04, 0.1);
+  }, 50);
+}
+
 
 export function playAchievementUnlockedSound(): void {
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
@@ -203,5 +214,3 @@ export function speakText(
     return null;
   }
 }
-
-    

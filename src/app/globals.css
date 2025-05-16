@@ -282,7 +282,7 @@
   }
 
   /* Animation for the floating Golden Coins counter update */
-  @keyframes golden-coins-update-animation { /* Renamed */
+  @keyframes golden-coins-update-animation {
     0% {
       transform: scale(1) rotate(0deg);
       color: inherit; 
@@ -304,12 +304,12 @@
       text-shadow: none;
     }
   }
-  .golden-coins-update-animation { /* Renamed */
+  .golden-coins-update-animation {
     animation: golden-coins-update-animation 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
   }
 
   /* Animation for the "Coins Earned" popup in games */
-  @keyframes coins-earned-popup-animation { /* Renamed */
+  @keyframes coins-earned-popup-animation {
     0% {
       opacity: 0;
       transform: translateY(25px) scale(0.3); 
@@ -330,8 +330,34 @@
       transform: translateY(-40px) scale(0.7); 
     }
   }
-  .coins-earned-popup-animation { /* Renamed */
+  .coins-earned-popup-animation {
     animation: coins-earned-popup-animation 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  /* Animation for "Coins Lost" popup */
+  @keyframes coins-lost-popup-animation {
+    0% {
+      opacity: 0;
+      transform: translateY(0px) scale(0.5);
+    }
+    20% {
+      opacity: 1;
+      transform: translateY(-10px) scale(1.1);
+    }
+    40% {
+      transform: translateY(-5px) scale(1);
+    }
+    80% {
+      opacity: 1;
+      transform: translateY(-25px) scale(0.9);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-50px) scale(0.6);
+    }
+  }
+  .coins-lost-popup-animation {
+    animation: coins-lost-popup-animation 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
   
   /* Animation for achievement unlocked modal */
@@ -343,6 +369,32 @@
   .achievement-unlocked-animation {
      animation: achievement-unlocked-animation 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   }
-}
 
-    
+  /* Shake animation for incorrect input */
+  @keyframes shake-error {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+    20%, 40%, 60%, 80% { transform: translateX(6px); }
+  }
+  .animate-shake-error {
+    animation: shake-error 0.4s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  /* Flash animations for input fields */
+  @keyframes flash-success-border {
+    0%, 100% { border-color: hsl(var(--input)); }
+    50% { border-color: hsl(var(--alert-success-icon-color-raw)); box-shadow: 0 0 8px hsl(var(--alert-success-icon-color-raw) / 0.7); }
+  }
+  .animate-flash-success {
+    animation: flash-success-border 0.7s ease-out;
+  }
+
+  @keyframes flash-error-border {
+    0%, 100% { border-color: hsl(var(--input)); }
+    50% { border-color: hsl(var(--alert-destructive-icon-color-raw)); box-shadow: 0 0 8px hsl(var(--alert-destructive-icon-color-raw) / 0.7); }
+  }
+  .animate-flash-error {
+    animation: flash-error-border 0.7s ease-out;
+  }
+
+}
