@@ -111,10 +111,10 @@ export const tutorialStepsData: TutorialStep[] = [
     content: "As you play games and learn, you'll earn Golden Stars! Keep an eye on your star count (it floats on screen!).\nCheck your Profile page to see the cool Trophies & Badges you can unlock by collecting more stars. Have fun learning and earning!",
     ariaLabel: "Explanation of Golden Stars and achievements system.",
     icon: "Star", 
-    targetElementSelector: '[data-tour-id="floating-golden-stars"]', // Assuming your floating stars component has this data attribute
-    imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png",
-    imageAlt: "Treasure chest full of gold and jewels",
-    aiHint: "treasure chest gold"
+    targetElementSelector: '[data-tour-id="floating-golden-stars"]',
+    imageSrc: "https://plus.unsplash.com/premium_photo-1729000546925-495988819fdd?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fGdvbGRlbiUyMHN0YXJzJTIwYW5kJTIwcmV3YXJkc3xlbnwwfHwwfHx8MA%3D%3D",
+    imageAlt: "Golden stars and reward elements",
+    aiHint: "golden stars rewards"
   },
   {
     id: 'final-welcome',
@@ -123,9 +123,9 @@ export const tutorialStepsData: TutorialStep[] = [
     ariaLabel: "Final welcoming message for the tutorial.",
     icon: "CheckCircle2",
     targetElementSelector: 'body', 
-    imageSrc: "/assets/images/yellow_stars_firework_graphic.png",
-    imageAlt: "Celebratory stars graphic",
-    aiHint: "celebration stars"
+    imageSrc: "https://plus.unsplash.com/premium_photo-1686865496874-88f234809983?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTN8fGNvbmdyYXR1bGF0aW9uc3xlbnwwfHwwfHx8MA%3D%3D",
+    imageAlt: "Celebratory image with confetti or abstract happy design",
+    aiHint: "celebration congratulations"
   }
 ];
 
@@ -197,3 +197,6 @@ export const walkthroughModalSteps: TutorialStep[] = [
     targetElementSelector: 'body' 
   }
 ];
+
+
+    
