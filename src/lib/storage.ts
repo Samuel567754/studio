@@ -1,19 +1,24 @@
 
 'use client';
 
+import { useWalkthroughStore } from '@/stores/walkthrough-store';
+import { useUserProfileStore } from '@/stores/user-profile-store';
+import { useThemeStore } from '@/stores/theme-store';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
+
 // Keys for localStorage items
 const WORD_LIST_KEY = 'sightwords_wordList_v1';
 const READING_LEVEL_KEY = 'sightwords_readingLevel_v1';
 const WORD_LENGTH_KEY = 'sightwords_wordLength_v1';
 const CURRENT_INDEX_KEY = 'sightwords_currentIndex_v1';
-const MASTERED_WORDS_KEY = 'sightwords_masteredWords_v1'; 
+const MASTERED_WORDS_KEY = 'sightwords_masteredWords_v1';
 const PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX = 'sightwords_progressionSuggestionDismissed_v1_';
-export const WALKTHROUGH_PERSIST_KEY = 'chilllearn_walkthroughState_v1';
+export const WALKTHROUGH_PERSIST_KEY = 'chilllearn_walkthroughState_v1'; // Exported for use in store
 const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
 const USERNAME_KEY = 'chilllearn_username_v1';
 const PERSONALIZATION_COMPLETED_KEY = 'chilllearn_personalizationCompleted_v1';
 const FAVORITE_TOPICS_KEY = 'chilllearn_favoriteTopics_v1';
-const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v1'; // New key for golden stars
+const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v1';
 
 // --- Golden Stars ---
 export const getStoredGoldenStars = (defaultValue = 0): number => {
@@ -214,7 +219,7 @@ export const addMasteredWord = (word: string): void => {
   const masteredWords = getStoredMasteredWords();
   const lowerCaseWord = word.toLowerCase();
   if (!masteredWords.map(w => w.toLowerCase()).includes(lowerCaseWord)) {
-    masteredWords.push(word); // Store with original casing, but check with lowercase
+    masteredWords.push(word);
     storeMasteredWords(masteredWords);
   }
 };
@@ -236,7 +241,7 @@ export const storeProgressionSuggestionDismissed = (level: string, length: numbe
   if (dismissed) {
     localStorage.setItem(key, 'true');
   } else {
-    localStorage.removeItem(key); // Remove if not dismissed, to keep localStorage clean
+    localStorage.removeItem(key);
   }
 };
 
@@ -244,23 +249,43 @@ export const storeProgressionSuggestionDismissed = (level: string, length: numbe
 // --- Utility to clear only progress-related stored data ---
 export const clearProgressStoredData = (): void => {
   if (typeof window === 'undefined') return;
+  // Clear localStorage items
   localStorage.removeItem(WORD_LIST_KEY);
   localStorage.removeItem(READING_LEVEL_KEY);
   localStorage.removeItem(WORD_LENGTH_KEY);
   localStorage.removeItem(CURRENT_INDEX_KEY);
-  localStorage.removeItem(MASTERED_WORDS_KEY); 
+  localStorage.removeItem(MASTERED_WORDS_KEY);
   localStorage.removeItem(WALKTHROUGH_PERSIST_KEY);
   localStorage.removeItem(INTRODUCTION_SEEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
   localStorage.removeItem(PERSONALIZATION_COMPLETED_KEY);
   localStorage.removeItem(FAVORITE_TOPICS_KEY);
-  localStorage.removeItem(GOLDEN_STARS_KEY); // Clear golden stars
-  
-  // Clear all progression dismissal flags
+  localStorage.removeItem(GOLDEN_STARS_KEY);
+
   Object.keys(localStorage).forEach(key => {
     if (key.startsWith(PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX)) {
       localStorage.removeItem(key);
     }
   });
-  console.log("Cleared all user progress-related stored data including golden stars, progression dismissal flags, walkthrough status, introduction seen flag, username, favorite topics, and personalization status.");
+
+  // Explicitly reset Zustand store states to their initial values
+  // This ensures in-memory state is immediately updated, which is important
+  // if the app navigates without a full page reload after reset.
+  try {
+    useUserProfileStore.getState().resetUserProfile();
+    
+    const walkthroughStore = useWalkthroughStore.getState();
+    walkthroughStore.setHasCompletedWalkthrough(false);
+    walkthroughStore.setCurrentStepIndex(0);
+    walkthroughStore.closeWalkthrough();
+    
+    useThemeStore.getState().resetThemeSettings();
+    useAppSettingsStore.getState().resetAppSettings();
+
+    console.log("Cleared all user progress-related stored data and reset Zustand stores to initial states.");
+  } catch (error) {
+    console.error("Error resetting Zustand stores during clearProgressStoredData:", error);
+    // Even if store reset fails, localStorage clearing would have happened.
+    // This could happen if this function is called in a context where Zustand stores are not yet fully initialized or available.
+  }
 };
