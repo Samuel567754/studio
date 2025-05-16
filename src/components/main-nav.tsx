@@ -14,12 +14,12 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
+  AlertDialogDescription as AlertDialogDescriptionPrimitive, // Renamed to avoid conflict with SheetDescription
   AlertDialogFooter,
-  AlertDialogHeader as AlertDialogHeaderPrimitive,
-  AlertDialogTitle as AlertDialogTitlePrimitive,
-  // AlertDialogTrigger // Already imported
-} from "@/components/ui/alert-dialog"
+  AlertDialogHeader as AlertDialogHeaderPrimitive, // Renamed to avoid conflict with SheetHeader
+  AlertDialogTitle as AlertDialogTitlePrimitive, // Renamed to avoid conflict with SheetTitle
+  AlertDialogTrigger, // Added AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
@@ -46,11 +46,25 @@ export const MainNav: FC = () => {
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const isMobile = useIsMobile();
   const { goldenStars } = useUserProfileStore(); 
+  const [animatePoints, setAnimatePoints] = useState(false);
+  const prevGoldenStarsRef = useRef(goldenStars);
 
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (isMounted && goldenStars > prevGoldenStarsRef.current) {
+      setAnimatePoints(true);
+      // Sound is handled by the FloatingSparklePoints component now
+    }
+    prevGoldenStarsRef.current = goldenStars;
+  }, [goldenStars, isMounted]);
+
+  const handlePointsAnimationEnd = () => {
+    setAnimatePoints(false);
+  };
 
 
   const NavLinkItems: FC<{ isMobileSheet?: boolean }> = ({ isMobileSheet = false }) => (
@@ -111,10 +125,31 @@ export const MainNav: FC = () => {
             variant: "destructive"
         });
         playErrorSound();
-        window.location.href = '/introduction';
+        window.location.href = '/introduction'; // Force reload to ensure all states are reset
     }
     setIsConfirmResetOpen(false);
   };
+
+  const CompactGoldenStarsDisplay = (
+    <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))] shadow-sm">
+      <Image 
+        src="/assets/images/gold_star_icon.png" 
+        alt="Golden Stars" 
+        width={32} 
+        height={32} 
+        className="drop-shadow-sm"
+      />
+      <span 
+        className={cn(
+          "text-lg font-semibold",
+          animatePoints && "golden-stars-update-animation"
+        )}
+        onAnimationEnd={handlePointsAnimationEnd}
+      >
+        {goldenStars}
+      </span>
+    </div>
+  );
 
 
   if (!isMounted) {
@@ -125,8 +160,9 @@ export const MainNav: FC = () => {
                 <div className="h-8 w-8 bg-background/50 rounded-full"></div>
                 <div className="h-7 w-28 bg-background/50 rounded-md hidden sm:block"></div>
             </div>
-            <div className="md:hidden">
-                 <div className="h-10 w-10 bg-background/50 rounded-full"></div>
+            <div className="md:hidden flex items-center gap-2">
+                 <div className="h-10 w-20 bg-background/50 rounded-full"></div> {/* Placeholder for points */}
+                 <div className="h-10 w-10 bg-background/50 rounded-full"></div> {/* Placeholder for hamburger */}
             </div>
         </div>
       </header>
@@ -165,19 +201,7 @@ export const MainNav: FC = () => {
 
         {/* Mobile Header: Points + Hamburger Menu */}
         <div className="md:hidden flex items-center gap-2">
-          {/* Compact Golden Stars Display for Mobile Header (next to hamburger) */}
-          <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))] shadow-sm">
-            <Image 
-              src="/assets/images/gold_star_icon.png" 
-              alt="Golden Stars" 
-              width={32} 
-              height={32} 
-              className="drop-shadow-sm"
-            />
-            <span className="text-lg font-semibold">{goldenStars}</span>
-          </div>
-
-          {/* Mobile Hamburger Menu Trigger */}
+          {CompactGoldenStarsDisplay}
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
@@ -224,7 +248,17 @@ export const MainNav: FC = () => {
                   </SheetClose>
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
-              
+              {/* Points display for mobile sheet */}
+              <div className={cn("flex items-center justify-center gap-1.5 p-2 mb-2 rounded-lg bg-[hsl(var(--nav-active-indicator-light))]/30 shadow-inner text-[hsl(var(--nav-text-light))]")}>
+                 <Image 
+                    src="/assets/images/gold_star_icon.png" 
+                    alt="Golden Stars" 
+                    width={32} 
+                    height={32} 
+                    className="drop-shadow-sm"
+                  />
+                <span className="text-lg font-semibold">{goldenStars} Golden Stars</span>
+              </div>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
                 <NavLinkItems isMobileSheet={true} />
                 <Button
@@ -260,14 +294,14 @@ export const MainNav: FC = () => {
                          <ShieldAlert className="h-6 w-6 text-destructive" />
                          Confirm Full Reset
                       </AlertDialogTitlePrimitive>
-                      <AlertDialogDescription className={cn("text-[hsl(var(--nav-text-light))]/80")}>
+                      <AlertDialogDescriptionPrimitive className={cn("text-[hsl(var(--nav-text-light))]/80")}>
                         This action is irreversible and will clear all your learning progress,
                         including your word lists, mastered words, reading level, word length preferences,
                         username, favorite topics, golden stars, and tutorial completion status.
                         You will be taken back to the app introduction.
                         <br/><br/>
                         <strong>Are you absolutely sure you want to reset everything?</strong>
-                      </AlertDialogDescription>
+                      </AlertDialogDescriptionPrimitive>
                     </AlertDialogHeaderPrimitive>
                     <AlertDialogFooter>
                       <AlertDialogCancel className={cn("border-[hsl(var(--nav-border-light))] text-[hsl(var(--nav-text-light))] bg-transparent hover:bg-[hsl(var(--nav-active-indicator-light))]/50")}>Cancel</AlertDialogCancel>
