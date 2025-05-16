@@ -16,11 +16,12 @@ import {
 import { useUserProfileStore, type Achievement } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Sigma, Brain, Trophy as TrophyIcon } from 'lucide-react';
+import { User, BookOpen, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Sigma, Brain, Trophy as TrophyIcon, Star } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label'; // Added Label import
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from "@/hooks/use-toast";
 import { playSuccessSound, playNotificationSound, playErrorSound } from '@/lib/audio';
@@ -38,15 +39,12 @@ import {
 import { cn } from '@/lib/utils';
 
 // Define achievementsList at the module level as it's static configuration data
-// This list is used by the profile page for display and by the store for checking unlocks.
-// Ensure image paths are correct and exist in public/assets/images/
-// Normalize filenames (e.g., single .png extension)
 export const ACHIEVEMENTS_CONFIG: Achievement[] = [
-  { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
-  { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
-  { id: "gem_seeker_1", name: "Gem Seeker I", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", color: "text-fuchsia-500", bonusStars: 15 },
-  { id: "treasure_finder", name: "Treasure Discoverer", description: "Unearthed 300 Golden Stars!", pointsRequired: 300, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest", color: "text-orange-500", bonusStars: 20 },
-  { id: "chill_master", name: "ChillLearn Master", description: "Achieved 500 Golden Stars overall!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Laurel Wreath Trophy", color: "text-green-500", bonusStars: 25 },
+  { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", bonusStars: 5 },
+  { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", bonusStars: 10 },
+  { id: "gem_seeker_1", name: "Gem Seeker I", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", bonusStars: 15 },
+  { id: "treasure_finder", name: "Treasure Discoverer", description: "Unearthed 300 Golden Stars!", pointsRequired: 300, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest", bonusStars: 20 },
+  { id: "chill_master", name: "ChillLearn Master", description: "Achieved 500 Golden Stars overall!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Laurel Wreath Trophy", bonusStars: 25 },
 ];
 
 
@@ -65,7 +63,7 @@ export default function ProfilePage() {
     favoriteTopics,
     goldenStars,
     unlockedAchievements,
-    isAchievementUnlocked, // This function comes from the store
+    isAchievementUnlocked,
     setUsername: setStoreUsername,
     setFavoriteTopics: setStoreFavoriteTopics,
     loadUserProfileFromStorage,
@@ -78,7 +76,7 @@ export default function ProfilePage() {
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
 
   useEffect(() => {
-    loadUserProfileFromStorage(); // Load latest from store/localStorage
+    loadUserProfileFromStorage();
     const practiceList = getStoredWordList();
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
@@ -132,20 +130,19 @@ export default function ProfilePage() {
 
   const handleConfirmResetProgress = () => {
     if (typeof window !== 'undefined') {
-        clearProgressStoredData(); // This now also resets Zustand stores
+        clearProgressStoredData();
         toast({
             title: <div className="flex items-center gap-2"><Trash2 className="h-5 w-5" />Progress Reset</div>,
             description: "Your learning and app usage data has been cleared. You will see the introduction again.",
             variant: "destructive"
         });
         playErrorSound();
-        // Force a reload to ensure all states are fresh, especially for routing guards
         window.location.href = '/introduction'; 
     }
     setIsConfirmResetOpen(false);
   };
 
-  const earnedAchievementsToDisplay = isMounted ? ACHIEVEMENTS_CONFIG.filter(ach => isAchievementUnlocked(ach.id)) : [];
+  const earnedAchievementsToDisplay = isMounted && ACHIEVEMENTS_CONFIG ? ACHIEVEMENTS_CONFIG.filter(ach => isAchievementUnlocked(ach.id)) : [];
 
   if (!isMounted || !profileStats) {
     return (
@@ -173,7 +170,7 @@ export default function ProfilePage() {
         <div className="relative z-10 text-white">
           <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-yellow-400/70 mb-4">
               <Image
-                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D"
+                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D" 
                   alt={username ? `${username}'s profile avatar - abstract colorful lights` : "User profile avatar - abstract colorful lights"}
                   layout="fill"
                   objectFit="cover"
@@ -286,7 +283,7 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-yellow-500">
              <Image
-                src="/assets/images/golden_trophy_with_stars_illustration.png"
+                src="/assets/images/trophy_cup_illustration.png"
                 alt="Trophies & Badges"
                 width={32}
                 height={32}
@@ -316,9 +313,9 @@ export default function ProfilePage() {
                     height={64}
                     className="mb-3 drop-shadow-lg"
                   />
-                  <h3 className={cn("text-lg font-semibold mb-1", ach.color)}>{ach.name}</h3>
+                  <h3 className={cn("text-lg font-semibold mb-1", ach.color || "text-foreground")}>{ach.name}</h3>
                   <p className="text-xs text-muted-foreground">{ach.description}</p>
-                  {ach.bonusStars && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusStars} Golden Stars Bonus!</p>}
+                  {ach.bonusStars && ach.bonusStars > 0 && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusStars} Golden Stars Bonus!</p>}
                 </div>
               ))}
             </div>
@@ -415,3 +412,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
