@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from 'react';
-import Image from 'next/image'; // Ensure Image is imported
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -15,7 +15,7 @@ import {
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star } from 'lucide-react';
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star, Sigma } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,28 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
-import type { Achievement } from '@/stores/user-profile-store'; // Use Achievement type from store
+
+// Moved Achievement type here for self-containment if not already globally available or imported
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  pointsRequired: number;
+  imageSrc: string;
+  iconAlt?: string;
+  color?: string;
+  bonusStars?: number;
+}
+
+// Define achievementsList at the module level as it's static configuration data
+const achievementsList: Achievement[] = [
+  { id: "star_beginner", name: "Star Beginner", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
+  { id: "coin_collector", name: "Coin Collector", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
+  { id: "gem_seeker", name: "Gem Seeker", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", color: "text-fuchsia-500", bonusStars: 15 },
+  { id: "treasure_hunter", name: "Treasure Hunter", description: "Unearthed 300 Golden Stars!", pointsRequired: 300, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest", color: "text-orange-500", bonusStars: 20 },
+  { id: "chill_tycoon", name: "ChillLearn Tycoon", description: "Achieved 500 Golden Stars overall!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Laurel Wreath Trophy", color: "text-green-500", bonusStars: 25 },
+];
+
 
 export default function ProfilePage() {
   const [profileStats, setProfileStats] = useState<{
@@ -51,13 +72,12 @@ export default function ProfilePage() {
   const {
     username,
     favoriteTopics,
-    goldenCoins,
+    goldenStars,
     unlockedAchievements,
     isAchievementUnlocked,
     setUsername: setStoreUsername,
     setFavoriteTopics: setStoreFavoriteTopics,
     loadUserProfileFromStorage,
-    achievementsList
   } = useUserProfileStore();
 
   const [usernameInput, setUsernameInput] = useState<string>('');
@@ -67,7 +87,7 @@ export default function ProfilePage() {
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
 
   useEffect(() => {
-    loadUserProfileFromStorage();
+    loadUserProfileFromStorage(); // This also calls _checkAndUnlockAchievements
     const practiceList = getStoredWordList();
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
@@ -128,7 +148,9 @@ export default function ProfilePage() {
             variant: "destructive"
         });
         playErrorSound();
-        router.push('/introduction');
+        // Force reload or redirect to ensure store states are fully reset.
+        // Forcing a full page reload to /introduction is often the most robust way.
+        window.location.href = '/introduction'; 
     }
     setIsConfirmResetOpen(false);
   };
@@ -137,13 +159,13 @@ export default function ProfilePage() {
   if (!isMounted || !profileStats) {
     return (
       <div className="space-y-6" aria-live="polite" aria-busy="true">
-        {/* Skeleton placeholder */}
         <Card className="shadow-lg animate-pulse"><CardHeader><div className="h-8 w-3/4 bg-muted rounded"></div></CardHeader><CardContent><div className="h-40 bg-muted rounded"></div></CardContent></Card>
         <Card className="shadow-lg animate-pulse"><CardHeader><div className="h-8 w-1/2 bg-muted rounded"></div></CardHeader><CardContent><div className="h-60 bg-muted rounded"></div></CardContent></Card>
       </div>
     );
   }
 
+  // Calculate earnedAchievementsToDisplay only when component is mounted and profileStats are available
   const earnedAchievementsToDisplay = achievementsList.filter(ach => isAchievementUnlocked(ach.id));
 
   return (
@@ -250,7 +272,7 @@ export default function ProfilePage() {
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
              <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
             <div>
-              <p className="font-semibold text-foreground">{goldenCoins}</p>
+              <p className="font-semibold text-foreground">{goldenStars}</p>
               <p className="text-sm text-muted-foreground">Golden Stars Earned</p>
             </div>
           </div>
@@ -276,7 +298,7 @@ export default function ProfilePage() {
           <CardTitle className="flex items-center text-2xl font-semibold text-yellow-500">
              <Image
                 src="/assets/images/trophy_cup_illustration.png"
-                alt="Trophies &amp; Badges"
+                alt="Trophies & Badges"
                 width={32}
                 height={32}
                 className="mr-3 drop-shadow-sm"
@@ -299,14 +321,15 @@ export default function ProfilePage() {
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <Image
-                    src={ach.imageSrc} // This uses the imageSrc from the achievement definition
-                    alt={ach.name}
+                    src={ach.imageSrc}
+                    alt={ach.iconAlt || ach.name}
                     width={64}
                     height={64}
                     className="mb-3 drop-shadow-lg"
                   />
                   <h3 className={cn("text-lg font-semibold mb-1", ach.color)}>{ach.name}</h3>
                   <p className="text-xs text-muted-foreground">{ach.description}</p>
+                  {ach.bonusStars && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusStars} Golden Stars Bonus!</p>}
                 </div>
               ))}
             </div>
@@ -402,5 +425,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
