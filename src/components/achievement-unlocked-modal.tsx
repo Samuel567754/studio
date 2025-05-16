@@ -33,11 +33,11 @@ export function AchievementUnlockedModal({ achievement, isOpen, onClaim }: Achie
         <DialogHeader className="p-6 pb-4 text-center items-center bg-gradient-to-b from-accent/20 to-transparent">
           <div className="relative w-28 h-28 mb-3">
              <Image
-                src="/assets/images/winner_medal_ribbon_illustration.png" // Using a general "award" image for the modal header
+                src="/assets/images/winner_medal_ribbon_illustration.png" 
                 alt="Achievement Unlocked"
                 width={96} 
                 height={96}
-                className="drop-shadow-lg rounded-md object-contain animate-pulse" 
+                className="drop-shadow-lg rounded-md object-contain" 
               />
           </div>
           <DialogTitle className="text-2xl font-bold text-gradient-primary-accent">
@@ -45,13 +45,13 @@ export function AchievementUnlockedModal({ achievement, isOpen, onClaim }: Achie
           </DialogTitle>
         </DialogHeader>
         <div className="p-6 pt-0 text-center">
-          <div className="relative w-24 h-24 mx-auto mb-2">
+          <div className="relative w-24 h-24 mx-auto mb-2 group"> {/* Added group for potential hover effects if needed later */}
              <Image
                 src={achievement.imageSrc} 
                 alt={achievement.iconAlt || achievement.name}
                 width={80} 
                 height={80}
-                className="drop-shadow-lg rounded-md object-contain"
+                className="drop-shadow-lg rounded-md object-contain animate-achievement-image-rotate"
               />
           </div>
           <DialogDescription className="text-lg font-semibold text-foreground mb-1">
@@ -77,5 +77,3 @@ export function AchievementUnlockedModal({ achievement, isOpen, onClaim }: Achie
     </Dialog>
   );
 }
-
-    

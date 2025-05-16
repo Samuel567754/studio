@@ -285,50 +285,50 @@
   /* Animation for the floating Golden Coins counter update */
   @keyframes golden-coins-update-animation {
     0% {
-      transform: scale(1) rotate(0deg);
-      color: inherit; /* Uses the base color of the element */
+      transform: scale(1) rotate(0deg) translateY(0);
+      color: inherit;
       text-shadow: none;
     }
     30% {
-      transform: scale(1.9) rotate(-10deg) translateY(-6px);
-      color: hsl(var(--accent)); /* Flash to accent color */
-      text-shadow: 0 0 12px hsl(45 100% 60% / 0.9), 0 0 18px hsl(0 0% 100% / 0.8); /* Brighter, golden shadow */
+      transform: scale(1.8) rotate(-8deg) translateY(-5px);
+      color: hsl(var(--accent)); 
+      text-shadow: 0 0 10px hsl(45 100% 60% / 0.8), 0 0 15px hsl(0 0% 100% / 0.7);
     }
     60% {
-      transform: scale(1.3) rotate(6deg);
-      color: hsl(var(--accent));
-      text-shadow: 0 0 10px hsl(45 100% 55% / 0.7), 0 0 15px hsl(0 0% 100% / 0.6);
+      transform: scale(1.3) rotate(5deg) translateY(2px);
+      color: hsl(var(--accent) / 0.9);
+      text-shadow: 0 0 8px hsl(45 100% 55% / 0.6), 0 0 12px hsl(0 0% 100% / 0.5);
     }
     100% {
-      transform: scale(1) rotate(0deg);
-      color: inherit; /* Return to base color */
+      transform: scale(1) rotate(0deg) translateY(0);
+      color: inherit; 
       text-shadow: none;
     }
   }
   .golden-coins-update-animation {
-    animation: golden-coins-update-animation 0.8s cubic-bezier(0.68, -0.6, 0.32, 1.6) forwards; /* Bouncier timing */
+    animation: golden-coins-update-animation 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
   }
-
+  
   /* Animation for "Coins Earned" popup */
   @keyframes coins-earned-popup-animation {
     0% {
       opacity: 0;
-      transform: translateY(0px) translateX(0px) scale(0.5); /* Start at counter position, small and transparent */
+      transform: translateY(0px) translateX(0px) scale(0.3);
     }
     20% {
       opacity: 1;
-      transform: translateY(-20px) translateX(20px) scale(1.3); /* Move up and right, scale up (overshoot) */
+      transform: translateY(-25px) translateX(25px) scale(1.2); /* Move up and right, overshoot */
     }
     40% {
-      transform: translateY(-15px) translateX(15px) scale(1); /* Settle slightly */
+      transform: translateY(-20px) translateX(20px) scale(1); /* Settle slightly */
     }
     80% {
       opacity: 1;
-      transform: translateY(-35px) translateX(35px) scale(1); /* Drift further before fade */
+      transform: translateY(-40px) translateX(40px) scale(1); /* Drift further before fade */
     }
     100% {
       opacity: 0;
-      transform: translateY(-50px) translateX(50px) scale(0.7); /* Fade out while moving */
+      transform: translateY(-60px) translateX(60px) scale(0.5); /* Fade out while moving further */
     }
   }
   .coins-earned-popup-animation {
@@ -339,29 +339,29 @@
   @keyframes coins-lost-popup-animation {
     0% {
       opacity: 0;
-      transform: translateY(0px) translateX(0px) scale(0.5); /* Start at counter position */
+      transform: translateY(0px) translateX(0px) scale(0.3); /* Start at counter position */
     }
     20% {
       opacity: 1;
-      transform: translateY(20px) translateX(-10px) scale(1.2); /* Move down and slightly left, scale up */
+      transform: translateY(25px) translateX(-15px) scale(1.1); /* Move down and slightly left, overshoot */
     }
     40% {
-      transform: translateY(15px) translateX(-8px) scale(1); /* Settle */
+      transform: translateY(20px) translateX(-12px) scale(1); /* Settle */
     }
     80% {
       opacity: 1;
-      transform: translateY(35px) translateX(-20px) scale(0.9); /* Drift further down */
+      transform: translateY(40px) translateX(-25px) scale(0.9); /* Drift further down */
     }
     100% {
       opacity: 0;
-      transform: translateY(50px) translateX(-30px) scale(0.6); /* Fade out */
+      transform: translateY(60px) translateX(-35px) scale(0.5); /* Fade out */
     }
   }
   .coins-lost-popup-animation {
     animation: coins-lost-popup-animation 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
   
-  /* Animation for achievement unlocked modal */
+  /* Animation for achievement unlocked modal appearance */
   @keyframes achievement-unlocked-animation {
     0% { opacity: 0; transform: scale(0.5) translateY(20px) rotate(-15deg); }
     60% { opacity: 1; transform: scale(1.15) translateY(-10px) rotate(5deg); }
@@ -370,6 +370,24 @@
   .achievement-unlocked-animation {
      animation: achievement-unlocked-animation 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   }
+
+  /* Gentle 3D rotation for achievement images in modal */
+  @keyframes achievement-gentle-3d-rotate {
+    0% {
+      transform: perspective(800px) rotateY(-5deg) rotateX(2deg) scale(1);
+    }
+    50% {
+      transform: perspective(800px) rotateY(5deg) rotateX(-2deg) scale(1.03);
+    }
+    100% {
+      transform: perspective(800px) rotateY(-5deg) rotateX(2deg) scale(1);
+    }
+  }
+  .animate-achievement-image-rotate {
+    animation: achievement-gentle-3d-rotate 7s ease-in-out infinite;
+    transform-style: preserve-3d; /* Helpful for smoother 3D transforms on some browsers */
+  }
+
 
   /* Shake animation for incorrect input */
   @keyframes shake-error {
@@ -399,5 +417,3 @@
   }
 
 }
-
-    
