@@ -281,8 +281,8 @@
     box-shadow: 0 4px 12px -1px hsl(var(--nav-border-light) / 0.3), 0 2px 8px -2px hsl(var(--nav-border-light) / 0.2);
   }
 
-  /* Animation for the floating Golden Stars counter update */
-  @keyframes golden-stars-update-animation {
+  /* Animation for the floating Golden Coins counter update */
+  @keyframes golden-coins-update-animation { /* Renamed */
     0% {
       transform: scale(1) rotate(0deg);
       color: inherit; 
@@ -291,12 +291,12 @@
     30% {
       transform: scale(1.8) rotate(-8deg) translateY(-5px);
       color: hsl(var(--accent)); 
-      text-shadow: 0 0 10px hsl(var(--accent) / 0.8), 0 0 15px hsl(0 0% 100% / 0.7);
+      text-shadow: 0 0 10px hsl(45 100% 50% / 0.8), 0 0 15px hsl(0 0% 100% / 0.7); /* Golden shadow */
     }
     60% {
       transform: scale(1.2) rotate(5deg);
       color: hsl(var(--accent));
-      text-shadow: 0 0 8px hsl(var(--accent) / 0.6), 0 0 12px hsl(0 0% 100% / 0.5);
+      text-shadow: 0 0 8px hsl(45 100% 50% / 0.6), 0 0 12px hsl(0 0% 100% / 0.5);
     }
     100% {
       transform: scale(1) rotate(0deg);
@@ -304,12 +304,12 @@
       text-shadow: none;
     }
   }
-  .golden-stars-update-animation {
-    animation: golden-stars-update-animation 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  .golden-coins-update-animation { /* Renamed */
+    animation: golden-coins-update-animation 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
   }
 
-  /* Animation for the "Stars Earned" popup in games */
-  @keyframes stars-earned-popup-animation {
+  /* Animation for the "Coins Earned" popup in games */
+  @keyframes coins-earned-popup-animation { /* Renamed */
     0% {
       opacity: 0;
       transform: translateY(25px) scale(0.3); 
@@ -330,8 +330,8 @@
       transform: translateY(-40px) scale(0.7); 
     }
   }
-  .stars-earned-popup-animation {
-    animation: stars-earned-popup-animation 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  .coins-earned-popup-animation { /* Renamed */
+    animation: coins-earned-popup-animation 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
   
   /* Animation for achievement unlocked modal */
@@ -344,3 +344,5 @@
      animation: achievement-unlocked-animation 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   }
 }
+
+    

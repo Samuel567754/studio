@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet'; // Added SheetClose
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
-import { playNotificationSound, playErrorSound } from '@/lib/audio';
+import { playNotificationSound, playErrorSound, playCoinsEarnedSound } from '@/lib/audio'; // Changed
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 
@@ -45,7 +45,7 @@ export const MainNav: FC = () => {
   const { toast } = useToast();
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { goldenStars } = useUserProfileStore(); // Get goldenStars from the store
+  const { goldenCoins } = useUserProfileStore(); // Changed
 
   useEffect(() => {
     setIsMounted(true);
@@ -115,21 +115,21 @@ export const MainNav: FC = () => {
     setIsConfirmResetOpen(false);
   };
 
-  const CompactGoldenStarsDisplay = (
+  const CompactGoldenCoinsDisplay = ( // Renamed
     <div className={cn(
       "flex items-center gap-1.5 p-1.5 rounded-full shadow-md transition-colors duration-300",
-      "bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))]", // Using nav colors
+      "bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))]",
       "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 cursor-default"
     )}>
       <Image
-        src="/assets/images/gold_star_icon.png" 
-        alt="Golden Stars"
-        width={32} // Standardized size
+        src="/assets/images/golden_star_coin.png" // Using the new coin-like star
+        alt="Golden Coins" // Changed
+        width={32}
         height={32}
         className="drop-shadow-sm"
       />
-      <span className="text-lg font-semibold"> {/* Increased text size */}
-        {goldenStars}
+      <span className="text-lg font-semibold">
+        {goldenCoins}
       </span>
     </div>
   );
@@ -144,11 +144,11 @@ export const MainNav: FC = () => {
                 <div className="h-7 w-28 bg-background/50 rounded-md hidden sm:block"></div>
             </div>
              <div className="flex items-center gap-2">
-                <div className="h-10 w-20 bg-background/50 rounded-full hidden md:flex"></div>
+                <div className="h-10 w-20 bg-background/50 rounded-full hidden md:flex"></div> {/* Desktop coins placeholder */}
             </div>
             <div className="md:hidden flex items-center gap-2">
-                 <div className="h-10 w-20 bg-background/50 rounded-full"></div>
-                 <div className="h-10 w-10 bg-background/50 rounded-full"></div>
+                 <div className="h-10 w-20 bg-background/50 rounded-full"></div> {/* Mobile coins placeholder */}
+                 <div className="h-10 w-10 bg-background/50 rounded-full"></div> {/* Hamburger placeholder */}
             </div>
         </div>
       </header>
@@ -170,8 +170,8 @@ export const MainNav: FC = () => {
                     "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-light))] group-hover:text-accent"
                 )}>ChillLearn</h1>
             </Link>
-            <div className="hidden md:flex"> {/* Golden Stars for Desktop */}
-                {CompactGoldenStarsDisplay}
+            <div className="hidden md:flex">
+                {CompactGoldenCoinsDisplay}
             </div>
         </div>
 
@@ -192,7 +192,7 @@ export const MainNav: FC = () => {
 
         {/* Mobile Header: Points + Hamburger Menu */}
         <div className="md:hidden flex items-center gap-2">
-          {CompactGoldenStarsDisplay} {/* Golden Stars for Mobile Header */}
+          {CompactGoldenCoinsDisplay}
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
@@ -238,19 +238,18 @@ export const MainNav: FC = () => {
                     <span className="sr-only">Close</span>
                   </SheetClose>
               </SheetHeader>
-              {/* Removed SheetDescription here to avoid duplicate or conflicting screen reader announcements if DialogTitle exists */}
-              {/* Points display for mobile sheet */}
-              <div className={cn("flex items-center justify-center gap-1.5 p-2 m-4 rounded-lg bg-[hsl(var(--nav-active-indicator-light))]/30 shadow-inner text-[hsl(var(--nav-text-light))]")}>
-                  <Image
-                    src="/assets/images/gold_star_icon.png" 
-                    alt="Golden Stars"
-                    width={32} // Standardized size
-                    height={32}
-                    className="drop-shadow-sm"
-                  />
-                  <span className="text-lg font-semibold">{goldenStars} Golden Stars</span>
-              </div>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
+                {/* Points display for mobile sheet */}
+                <div className={cn("flex items-center justify-center gap-1.5 p-2 mb-2 rounded-lg bg-[hsl(var(--nav-active-indicator-light))]/30 shadow-inner text-[hsl(var(--nav-text-light))]")}>
+                    <Image
+                      src="/assets/images/golden_star_coin.png" // Using the new coin-like star
+                      alt="Golden Coins" // Changed
+                      width={32} 
+                      height={32}
+                      className="drop-shadow-sm"
+                    />
+                    <span className="text-lg font-semibold">{goldenCoins} Golden Coins</span> {/* Changed */}
+                </div>
                 <NavLinkItems isMobileSheet={true} />
                 <Button
                   variant="default"
@@ -288,7 +287,7 @@ export const MainNav: FC = () => {
                       <AlertDialogDescriptionPrimitive className={cn("text-[hsl(var(--nav-text-light))]/80")}>
                         This action is irreversible and will clear all your learning progress,
                         including your word lists, mastered words, reading level, word length preferences,
-                        username, favorite topics, golden stars, unlocked achievements, and tutorial completion status.
+                        username, favorite topics, golden coins, unlocked achievements, and tutorial completion status.
                         You will be taken back to the app introduction.
                         <br/><br/>
                         <strong>Are you absolutely sure you want to reset everything?</strong>
@@ -316,3 +315,5 @@ export const MainNav: FC = () => {
     </header>
   );
 };
+
+    

@@ -18,28 +18,28 @@ const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
 const USERNAME_KEY = 'chilllearn_username_v1';
 const PERSONALIZATION_COMPLETED_KEY = 'chilllearn_personalizationCompleted_v1';
 const FAVORITE_TOPICS_KEY = 'chilllearn_favoriteTopics_v1';
-const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v3'; // Updated version for "from scratch"
-const UNLOCKED_ACHIEVEMENTS_KEY = 'chilllearn_unlockedAchievements_v3'; // Updated version
+const GOLDEN_COINS_KEY = 'chilllearn_goldenCoins_v1'; // Changed from GOLDEN_STARS_KEY
+const UNLOCKED_ACHIEVEMENTS_KEY = 'chilllearn_unlockedAchievements_v1'; // Changed from _v3
 
-// --- Golden Stars ---
-export const getStoredGoldenStars = (defaultValue = 0): number => {
+// --- Golden Coins ---
+export const getStoredGoldenCoins = (defaultValue = 0): number => {
   if (typeof window === 'undefined') return defaultValue;
   try {
-    const stored = localStorage.getItem(GOLDEN_STARS_KEY);
+    const stored = localStorage.getItem(GOLDEN_COINS_KEY);
     const value = stored ? parseInt(stored, 10) : defaultValue;
     return isNaN(value) ? defaultValue : value;
   } catch (error) {
-    console.error("Error reading golden stars from localStorage:", error);
+    console.error("Error reading golden coins from localStorage:", error);
     return defaultValue;
   }
 };
 
-export const storeGoldenStars = (stars: number): void => {
+export const storeGoldenCoins = (coins: number): void => {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(GOLDEN_STARS_KEY, String(stars));
+    localStorage.setItem(GOLDEN_COINS_KEY, String(coins));
   } catch (error) {
-    console.error("Error storing golden stars to localStorage:", error);
+    console.error("Error storing golden coins to localStorage:", error);
   }
 };
 
@@ -282,7 +282,7 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(USERNAME_KEY);
   localStorage.removeItem(PERSONALIZATION_COMPLETED_KEY);
   localStorage.removeItem(FAVORITE_TOPICS_KEY);
-  localStorage.removeItem(GOLDEN_STARS_KEY);
+  localStorage.removeItem(GOLDEN_COINS_KEY); // Updated
   localStorage.removeItem(UNLOCKED_ACHIEVEMENTS_KEY);
 
   Object.keys(localStorage).forEach(key => {
@@ -304,3 +304,5 @@ export const clearProgressStoredData = (): void => {
     console.error("Error resetting Zustand stores during clearProgressStoredData:", error);
   }
 };
+
+    

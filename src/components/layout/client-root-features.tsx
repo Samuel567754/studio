@@ -12,7 +12,7 @@ import { BottomNav } from '@/components/bottom-nav';
 import { QuickLinkFAB } from '@/components/quicklink-fab';
 import { Loader2 } from 'lucide-react';
 import { useUserProfileStore, type Achievement } from '@/stores/user-profile-store';
-import { FloatingGoldenStars } from '@/components/floating-sparkle-points'; 
+import { FloatingGoldenCoins } from '@/components/floating-sparkle-points'; // Renamed
 import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data';
 import { AchievementUnlockedModal } from '@/components/achievement-unlocked-modal';
 
@@ -130,7 +130,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen">
       <MainNav />
-      <FloatingGoldenStars /> 
+      <FloatingGoldenCoins />  {/* Renamed */}
       <main
         data-tour-id="main-content-area"
         className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 pt-20 md:pt-24 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out relative"
@@ -148,7 +148,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
           isOpen={isWalkthroughOpen}
           onClose={() => { 
             closeWalkthrough();
-            setHasCompletedWalkthrough(true); // Mark as complete even if skipped/closed early
+            // No longer sets completed here, only on explicit finish
           }}
           onFinish={() => { 
             setHasCompletedWalkthrough(true);
@@ -168,3 +168,5 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     </div>
   );
 };
+
+    

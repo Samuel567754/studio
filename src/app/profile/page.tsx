@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as React from 'react'; // Ensure React is imported for JSX
+import * as React from 'react';
 import { useState, useEffect, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -16,12 +16,12 @@ import {
 import { useUserProfileStore, type Achievement } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Sigma, Brain, Trophy as TrophyIcon, Star } from 'lucide-react';
+import { User, BookOpen, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Sigma, Brain, Trophy as TrophyIcon } from 'lucide-react'; // Removed Star as we'll use Image
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Added Label import
+import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from "@/hooks/use-toast";
 import { playSuccessSound, playNotificationSound, playErrorSound } from '@/lib/audio';
@@ -39,12 +39,15 @@ import {
 import { cn } from '@/lib/utils';
 
 // Define achievementsList at the module level as it's static configuration data
+// Using Golden Coins theme and your provided image assets
 export const ACHIEVEMENTS_CONFIG: Achievement[] = [
-  { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", bonusStars: 5 },
-  { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", bonusStars: 10 },
-  { id: "gem_seeker_1", name: "Gem Seeker I", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", bonusStars: 15 },
-  { id: "treasure_finder", name: "Treasure Discoverer", description: "Unearthed 300 Golden Stars!", pointsRequired: 300, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest", bonusStars: 20 },
-  { id: "chill_master", name: "ChillLearn Master", description: "Achieved 500 Golden Stars overall!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Laurel Wreath Trophy", bonusStars: 25 },
+  { id: "bronze_coin_collector", name: "Bronze Coin Collector", description: "Collected your first 25 Golden Coins!", pointsRequired: 25, imageSrc: "/assets/images/coin_with_clover_design.png", bonusCoins: 5, iconAlt: "Bronze Coin with Clover" },
+  { id: "silver_pouch", name: "Silver Pouch", description: "Amassed 75 Golden Coins!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", bonusCoins: 10, iconAlt: "Pile of Gold Coins" },
+  { id: "gemstone_novice", name: "Gemstone Novice", description: "Found 150 Golden Coins & started your gem collection!", pointsRequired: 150, imageSrc: "/assets/images/blue_gem_icon.png", bonusCoins: 15, iconAlt: "Blue Gem Icon" },
+  { id: "ruby_seeker", name: "Ruby Seeker", description: "Discovered 225 Golden Coins and a ruby!", pointsRequired: 225, imageSrc: "/assets/images/red_diamond_gem_illustration.png", bonusCoins: 20, iconAlt: "Red Diamond Gem" },
+  { id: "diamond_finder", name: "Diamond Finder", description: "Unearthed 350 Golden Coins and a sparkling diamond!", pointsRequired: 350, imageSrc: "/assets/images/blue_diamond_cartoon_illustration.png", bonusCoins: 25, iconAlt: "Blue Diamond Illustration" },
+  { id: "treasure_chest", name: "Treasure Chest", description: "Filled your chest with 500 Golden Coins!", pointsRequired: 500, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", bonusCoins: 30, iconAlt: "Treasure Chest" },
+  { id: "chilllearn_tycoon", name: "ChillLearn Tycoon", description: "Achieved 750 Golden Coins! You're a tycoon!", pointsRequired: 750, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", bonusCoins: 50, iconAlt: "Gold Trophy with Laurel Wreath" },
 ];
 
 
@@ -61,7 +64,7 @@ export default function ProfilePage() {
   const {
     username,
     favoriteTopics,
-    goldenStars,
+    goldenCoins, // Changed from goldenStars
     unlockedAchievements,
     isAchievementUnlocked,
     setUsername: setStoreUsername,
@@ -170,7 +173,7 @@ export default function ProfilePage() {
         <div className="relative z-10 text-white">
           <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-yellow-400/70 mb-4">
               <Image
-                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D" 
+                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D"
                   alt={username ? `${username}'s profile avatar - abstract colorful lights` : "User profile avatar - abstract colorful lights"}
                   layout="fill"
                   objectFit="cover"
@@ -249,17 +252,17 @@ export default function ProfilePage() {
       <Card className="shadow-lg border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-primary">
-            <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="mr-3 drop-shadow-sm" />
+            <Image src="/assets/images/gold_star_icon.png" alt="Golden Coins" width={32} height={32} className="mr-3 drop-shadow-sm" /> {/* Changed */}
             Progress Overview
           </CardTitle>
           <CardDescription>Key metrics about your learning journey.</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-             <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars Earned" width={32} height={32} className="drop-shadow-sm" />
+             <Image src="/assets/images/golden_star_coin.png" alt="Golden Coins Earned" width={40} height={40} className="drop-shadow-sm" /> {/* Changed */}
             <div>
-              <p className="font-semibold text-foreground">{goldenStars}</p>
-              <p className="text-sm text-muted-foreground">Golden Stars Earned</p>
+              <p className="font-semibold text-foreground">{goldenCoins}</p> {/* Changed */}
+              <p className="text-sm text-muted-foreground">Golden Coins Earned</p> {/* Changed */}
             </div>
           </div>
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-350">
@@ -288,9 +291,9 @@ export default function ProfilePage() {
                 width={32}
                 height={32}
                 className="mr-3 drop-shadow-sm"
-              /> My Trophies &amp; Badges
+              /> My Coin Collection & Trophies {/* Changed */}
           </CardTitle>
-          <CardDescription>Celebrate your learning milestones by collecting Golden Stars!</CardDescription>
+          <CardDescription>Celebrate your learning milestones by collecting Golden Coins!</CardDescription> {/* Changed */}
         </CardHeader>
         <CardContent>
           {earnedAchievementsToDisplay.length > 0 ? (
@@ -315,7 +318,7 @@ export default function ProfilePage() {
                   />
                   <h3 className={cn("text-lg font-semibold mb-1", ach.color || "text-foreground")}>{ach.name}</h3>
                   <p className="text-xs text-muted-foreground">{ach.description}</p>
-                  {ach.bonusStars && ach.bonusStars > 0 && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusStars} Golden Stars Bonus!</p>}
+                  {ach.bonusCoins && ach.bonusCoins > 0 && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusCoins} Golden Coins Bonus!</p>} {/* Changed */}
                 </div>
               ))}
             </div>
@@ -326,7 +329,7 @@ export default function ProfilePage() {
                 Keep Learning!
               </AlertTitle>
               <AlertDescription>
-                You haven't unlocked any trophies or badges yet. Keep practicing and earning Golden Stars to see them here!
+                You haven't unlocked any trophies or badges yet. Keep practicing and earning Golden Coins to see them here! {/* Changed */}
               </AlertDescription>
             </Alert>
           )}
@@ -393,7 +396,7 @@ export default function ProfilePage() {
                   Are you absolutely sure?
                 </AlertDialogTitlePrimitive>
                 <AlertDialogDescriptionPrimitive>
-                  This action cannot be undone. All your learning progress, word lists, mastered words, settings preferences (username, topics, theme, audio), tutorial completion status, and Golden Stars will be permanently deleted. You will be taken back to the app introduction.
+                  This action cannot be undone. All your learning progress, word lists, mastered words, settings preferences (username, topics, theme, audio), tutorial completion status, and Golden Coins will be permanently deleted. You will be taken back to the app introduction. {/* Changed */}
                 </AlertDialogDescriptionPrimitive>
               </AlertDialogHeaderPrimitive>
               <AlertDialogFooter>

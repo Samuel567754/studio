@@ -12,7 +12,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Award, Sparkles, CheckCircle } from 'lucide-react';
+import { Award, CheckCircle } from 'lucide-react'; // Removed Sparkles
 import type { Achievement } from '@/stores/user-profile-store';
 import { cn } from '@/lib/utils';
 
@@ -33,13 +33,13 @@ export function AchievementUnlockedModal({ achievement, isOpen, onClaim }: Achie
         <DialogHeader className="p-6 pb-4 text-center items-center bg-gradient-to-b from-accent/20 to-transparent">
           <div className="relative w-28 h-28 mb-3">
             <Image
-              src={achievement.imageSrc}
+              src={achievement.imageSrc} // Using achievement-specific image
               alt={achievement.name}
-              width={96} // Larger image for the modal
+              width={96} 
               height={96}
-              className="drop-shadow-lg rounded-md object-contain"
+              className="drop-shadow-lg rounded-md object-contain" // Ensure image fits
             />
-            <Sparkles className="absolute -top-2 -right-2 h-8 w-8 text-yellow-400 fill-yellow-300 animate-pulse" />
+            <Award className="absolute -top-2 -right-2 h-8 w-8 text-yellow-400 fill-yellow-300 animate-pulse" /> {/* Generic Award icon */}
           </div>
           <DialogTitle className="text-2xl font-bold text-gradient-primary-accent">
             Achievement Unlocked!
@@ -52,10 +52,10 @@ export function AchievementUnlockedModal({ achievement, isOpen, onClaim }: Achie
           <p className="text-sm text-muted-foreground mb-3">
             {achievement.description}
           </p>
-          {achievement.bonusStars && achievement.bonusStars > 0 && (
+          {achievement.bonusCoins && achievement.bonusCoins > 0 && ( // Changed to bonusCoins
             <p className="text-md font-semibold text-yellow-500 dark:text-yellow-400 flex items-center justify-center gap-1">
-              <Image src="/assets/images/gold_star_icon.png" alt="Bonus Stars" width={20} height={20} />
-              + {achievement.bonusStars} Bonus Golden Stars!
+              <Image src="/assets/images/golden_star_coin.png" alt="Bonus Coins" width={20} height={20} /> {/* Using coin icon */}
+              + {achievement.bonusCoins} Bonus Golden Coins! {/* Changed text */}
             </p>
           )}
         </div>
@@ -69,3 +69,5 @@ export function AchievementUnlockedModal({ achievement, isOpen, onClaim }: Achie
     </Dialog>
   );
 }
+
+    

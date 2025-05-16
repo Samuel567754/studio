@@ -4,23 +4,23 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useUserProfileStore } from '@/stores/user-profile-store';
-import { playStarsEarnedSound } from '@/lib/audio'; 
+import { playCoinsEarnedSound } from '@/lib/audio'; // Changed from playStarsEarnedSound
 import { cn } from '@/lib/utils';
 
-export function FloatingGoldenStars() {
-  const { goldenStars } = useUserProfileStore();
+export function FloatingGoldenCoins() { // Renamed component
+  const { goldenCoins } = useUserProfileStore(); // Changed from goldenStars
   const [animatePoints, setAnimatePoints] = useState(false);
-  const prevGoldenStarsRef = useRef(goldenStars);
+  const prevGoldenCoinsRef = useRef(goldenCoins); // Changed from goldenStars
 
   useEffect(() => {
-    if (goldenStars > prevGoldenStarsRef.current) {
+    if (goldenCoins > prevGoldenCoinsRef.current) {
       setAnimatePoints(true);
-      playStarsEarnedSound();
-    } else if (goldenStars < prevGoldenStarsRef.current && goldenStars === 0 && prevGoldenStarsRef.current > 0) {
+      playCoinsEarnedSound(); // Changed
+    } else if (goldenCoins < prevGoldenCoinsRef.current && goldenCoins === 0 && prevGoldenCoinsRef.current > 0) {
       setAnimatePoints(false);
     }
-    prevGoldenStarsRef.current = goldenStars;
-  }, [goldenStars]);
+    prevGoldenCoinsRef.current = goldenCoins;
+  }, [goldenCoins]);
 
   const handlePointsAnimationEnd = () => {
     setAnimatePoints(false);
@@ -36,25 +36,27 @@ export function FloatingGoldenStars() {
       )}
       aria-live="polite"
       aria-atomic="true"
-      data-tour-id="floating-golden-stars" // For walkthrough
+      data-tour-id="floating-golden-coins" // Updated tour-id
     >
       <Image
-        src="/assets/images/gold_star_icon.png" 
-        alt="Golden Stars"
+        src="/assets/images/golden_star_coin.png" // Using a coin-like star
+        alt="Golden Coins" // Changed alt text
         width={40} 
         height={40}
         className="drop-shadow-md"
       />
       <span
         className={cn(
-          "text-2xl font-bold drop-shadow-md", // Larger text
-          animatePoints && "golden-stars-update-animation" 
+          "text-2xl font-bold drop-shadow-md",
+          animatePoints && "golden-coins-update-animation" // Changed animation class name
         )}
         onAnimationEnd={handlePointsAnimationEnd}
       >
-        {goldenStars}
+        {goldenCoins}
       </span>
-      <span className="sr-only">Golden Stars total</span>
+      <span className="sr-only">Golden Coins total</span>
     </div>
   );
 }
+
+    

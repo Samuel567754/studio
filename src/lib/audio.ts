@@ -95,14 +95,14 @@ export function playNotificationSound(): void {
   }, 80);
 }
 
-export function playStarsEarnedSound(): void { // Renamed from playPointsIncreaseSound
+export function playCoinsEarnedSound(): void { // Renamed from playStarsEarnedSound
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
   if (!soundEffectsEnabled) return;
-  // A bright, "ching" or "sparkle" sound for earning stars/coins
-  playSoundInternal('triangle', { start: 1046.50, end: 1567.98, bendDuration: 0.04 }, 0.04, 0.15); // C6 to G6 quick slide
+  // Coin sound: a short, metallic "ching"
+  playSoundInternal('triangle', { start: 1200, end: 1800, bendDuration: 0.03 }, 0.05, 0.12);
   setTimeout(() => {
-    playSoundInternal('sine', 1244.51, 0.03, 0.1); // E6
-  }, 30);
+    playSoundInternal('sine', 1500, 0.03, 0.08);
+  }, 25);
 }
 
 export function playAchievementUnlockedSound(): void {
@@ -203,3 +203,5 @@ export function speakText(
     return null;
   }
 }
+
+    
