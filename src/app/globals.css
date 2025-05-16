@@ -215,12 +215,14 @@
     background-position: center;
     background-attachment: fixed;
     z-index: -2;
+    /* transition: opacity 0.5s ease-in-out; */
   }
   body::after {
     content: "";
     position: fixed;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.65);
+    /* transition: background-color 0.5s ease-in-out; */
     z-index: -1;
   }
   .dark body::after {
@@ -288,14 +290,14 @@
       text-shadow: none;
     }
     30% {
-      transform: scale(1.6) rotate(-5deg) translateY(-3px);
+      transform: scale(1.8) rotate(-8deg) translateY(-5px); /* More pop */
       color: hsl(var(--accent)); /* Flash to accent color */
-      text-shadow: 0 0 8px hsl(var(--accent) / 0.7), 0 0 12px #fff;
+      text-shadow: 0 0 10px hsl(var(--accent) / 0.8), 0 0 15px #fff; /* Brighter glow */
     }
     60% {
-      transform: scale(1.1) rotate(3deg);
+      transform: scale(1.2) rotate(5deg);
       color: hsl(var(--accent));
-      text-shadow: 0 0 6px hsl(var(--accent) / 0.5), 0 0 10px #fff;
+      text-shadow: 0 0 8px hsl(var(--accent) / 0.6), 0 0 12px #fff;
     }
     100% {
       transform: scale(1) rotate(0deg);
@@ -304,6 +306,7 @@
     }
   }
   .golden-stars-update-animation {
+    /* Use a more energetic cubic-bezier and slightly longer duration */
     animation: golden-stars-update-animation 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
   }
 
@@ -311,22 +314,25 @@
   @keyframes stars-earned-popup-animation {
     0% {
       opacity: 0;
-      transform: translateY(20px) scale(0.5);
+      transform: translateY(25px) scale(0.3); /* Start smaller and further down */
     }
     20% {
       opacity: 1;
-      transform: translateY(0) scale(1.1);
+      transform: translateY(-5px) scale(1.2); /* Overshoot scale and position */
+    }
+    40% {
+      transform: translateY(0px) scale(1); /* Settle */
     }
     80% {
       opacity: 1;
-      transform: translateY(-15px) scale(1);
+      transform: translateY(-20px) scale(1); /* Move up more before fade */
     }
     100% {
       opacity: 0;
-      transform: translateY(-30px) scale(0.8);
+      transform: translateY(-40px) scale(0.7); /* Fade out while moving up and shrinking */
     }
   }
   .stars-earned-popup-animation {
-    animation: stars-earned-popup-animation 1.8s ease-out forwards;
+    animation: stars-earned-popup-animation 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
 }

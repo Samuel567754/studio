@@ -11,6 +11,7 @@ export function FloatingGoldenStars() {
   const { goldenStars } = useUserProfileStore();
   const [animatePoints, setAnimatePoints] = useState(false);
   const prevGoldenStarsRef = useRef(goldenStars);
+  const pointsDisplayRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (goldenStars > prevGoldenStarsRef.current) {
@@ -27,28 +28,29 @@ export function FloatingGoldenStars() {
   return (
     <div
       className={cn(
-        "fixed top-20 left-5 z-50 flex items-center gap-2 p-2.5 rounded-full shadow-xl transition-all duration-300 ease-out",
-        "bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 text-white", // Vibrant background
-        "border-2 border-yellow-300/70", // Border for definition
-        "md:top-24 md:left-6" // Adjusted for potentially taller navbar
+        "fixed top-[calc(var(--main-nav-height,64px)_+_0.75rem)] left-4 z-50 flex items-center gap-2 p-2.5 rounded-full shadow-xl transition-all duration-300 ease-out", // Adjusted top position
+        "bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 text-white",
+        "border-2 border-yellow-300/70",
+        "md:left-5" // Consistent left padding for desktop
       )}
       aria-live="polite"
       aria-atomic="true"
-      data-tour-id="floating-golden-stars" // For walkthrough guide
+      data-tour-id="floating-golden-stars"
     >
       <Image
-        src="/assets/images/gold_star_icon.png" // Primary star icon
+        src="/assets/images/gold_star_icon.png"
         alt="Golden Stars"
-        width={32} // Increased size
+        width={32}
         height={32}
-        className="drop-shadow-md" // Added drop shadow for depth
+        className="drop-shadow-md"
       />
       <span
+        ref={pointsDisplayRef}
         className={cn(
-          "text-xl font-bold drop-shadow-md", // Increased font size and shadow
-          animatePoints && "golden-stars-update-animation"
+          "text-xl font-bold drop-shadow-md",
+          animatePoints && "golden-stars-update-animation" // Apply animation class
         )}
-        onAnimationEnd={handlePointsAnimationEnd}
+        onAnimationEnd={handlePointsAnimationEnd} // Reset animation state
       >
         {goldenStars}
       </span>
