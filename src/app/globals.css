@@ -13,7 +13,7 @@
     /* Default base font settings */
     --font-family-base: var(--font-geist-sans);
     --font-size-base: 16px;
-    --main-nav-height: 64px; /* For floating stars positioning */
+    --main-nav-height: 64px; /* For floating coins positioning */
 
 
     /* Light Mode - Navbar uses Dark Theme Styles */
@@ -94,7 +94,7 @@
     --alert-destructive-fg-raw: 0 70% 25%;
     --alert-destructive-icon-color-raw: 0 75% 55%;
 
-    /* Navbar Gradient & Text Colors - Light Mode (NOW USING DARK MODE STYLES) */
+    /* Navbar Gradient & Text Colors - Nav always uses dark theme styles */
     --nav-gradient-from-light: 210 40% 15%;
     --nav-gradient-to-light: 185 50% 25%;
     --nav-text-light: 30 70% 92%;
@@ -220,12 +220,12 @@
     content: "";
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.65);
+    background-color: rgba(0, 0, 0, 0.75); /* Slightly darker main overlay */
     /* transition: background-color 0.5s ease-in-out; */
     z-index: -1;
   }
   .dark body::after {
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.88); /* Slightly darker for dark mode */
   }
 
 
@@ -245,8 +245,9 @@
     @apply backdrop-blur-lg;
   }
 
+  /* Nav always uses dark theme styles now */
   .bg-nav-gradient {
-    @apply bg-gradient-to-r from-[hsl(var(--nav-gradient-from-light))] to-[hsl(var(--nav-gradient-to-light))];
+    @apply bg-gradient-to-r from-[hsl(var(--nav-gradient-from-dark))] to-[hsl(var(--nav-gradient-to-dark))];
   }
 
   .btn-glow {
@@ -273,61 +274,61 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-
+  /* Nav shadows always use dark-themed border color */
   .shadow-nav-top {
-    box-shadow: 0 -4px 12px -1px hsl(var(--nav-border-light) / 0.3), 0 -2px 8px -2px hsl(var(--nav-border-light) / 0.2);
+    box-shadow: 0 -4px 12px -1px hsl(var(--nav-border-dark) / 0.3), 0 -2px 8px -2px hsl(var(--nav-border-dark) / 0.2);
   }
   .shadow-nav-bottom {
-    box-shadow: 0 4px 12px -1px hsl(var(--nav-border-light) / 0.3), 0 2px 8px -2px hsl(var(--nav-border-light) / 0.2);
+    box-shadow: 0 4px 12px -1px hsl(var(--nav-border-dark) / 0.3), 0 2px 8px -2px hsl(var(--nav-border-dark) / 0.2);
   }
 
   /* Animation for the floating Golden Coins counter update */
   @keyframes golden-coins-update-animation {
     0% {
       transform: scale(1) rotate(0deg);
-      color: inherit; 
+      color: inherit; /* Uses the base color of the element */
       text-shadow: none;
     }
     30% {
-      transform: scale(1.8) rotate(-8deg) translateY(-5px);
-      color: hsl(var(--accent)); 
-      text-shadow: 0 0 10px hsl(45 100% 50% / 0.8), 0 0 15px hsl(0 0% 100% / 0.7); /* Golden shadow */
+      transform: scale(1.9) rotate(-10deg) translateY(-6px);
+      color: hsl(var(--accent)); /* Flash to accent color */
+      text-shadow: 0 0 12px hsl(45 100% 60% / 0.9), 0 0 18px hsl(0 0% 100% / 0.8); /* Brighter, golden shadow */
     }
     60% {
-      transform: scale(1.2) rotate(5deg);
+      transform: scale(1.3) rotate(6deg);
       color: hsl(var(--accent));
-      text-shadow: 0 0 8px hsl(45 100% 50% / 0.6), 0 0 12px hsl(0 0% 100% / 0.5);
+      text-shadow: 0 0 10px hsl(45 100% 55% / 0.7), 0 0 15px hsl(0 0% 100% / 0.6);
     }
     100% {
       transform: scale(1) rotate(0deg);
-      color: inherit; 
+      color: inherit; /* Return to base color */
       text-shadow: none;
     }
   }
   .golden-coins-update-animation {
-    animation: golden-coins-update-animation 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+    animation: golden-coins-update-animation 0.8s cubic-bezier(0.68, -0.6, 0.32, 1.6) forwards; /* Bouncier timing */
   }
 
-  /* Animation for the "Coins Earned" popup in games */
+  /* Animation for "Coins Earned" popup */
   @keyframes coins-earned-popup-animation {
     0% {
       opacity: 0;
-      transform: translateY(25px) scale(0.3); 
+      transform: translateY(0px) translateX(0px) scale(0.5); /* Start at counter position, small and transparent */
     }
     20% {
       opacity: 1;
-      transform: translateY(-5px) scale(1.2); 
+      transform: translateY(-20px) translateX(20px) scale(1.3); /* Move up and right, scale up (overshoot) */
     }
     40% {
-      transform: translateY(0px) scale(1); 
+      transform: translateY(-15px) translateX(15px) scale(1); /* Settle slightly */
     }
     80% {
       opacity: 1;
-      transform: translateY(-20px) scale(1); 
+      transform: translateY(-35px) translateX(35px) scale(1); /* Drift further before fade */
     }
     100% {
       opacity: 0;
-      transform: translateY(-40px) scale(0.7); 
+      transform: translateY(-50px) translateX(50px) scale(0.7); /* Fade out while moving */
     }
   }
   .coins-earned-popup-animation {
@@ -338,22 +339,22 @@
   @keyframes coins-lost-popup-animation {
     0% {
       opacity: 0;
-      transform: translateY(0px) scale(0.5);
+      transform: translateY(0px) translateX(0px) scale(0.5); /* Start at counter position */
     }
     20% {
       opacity: 1;
-      transform: translateY(-10px) scale(1.1);
+      transform: translateY(20px) translateX(-10px) scale(1.2); /* Move down and slightly left, scale up */
     }
     40% {
-      transform: translateY(-5px) scale(1);
+      transform: translateY(15px) translateX(-8px) scale(1); /* Settle */
     }
     80% {
       opacity: 1;
-      transform: translateY(-25px) scale(0.9);
+      transform: translateY(35px) translateX(-20px) scale(0.9); /* Drift further down */
     }
     100% {
       opacity: 0;
-      transform: translateY(-50px) scale(0.6);
+      transform: translateY(50px) translateX(-30px) scale(0.6); /* Fade out */
     }
   }
   .coins-lost-popup-animation {
@@ -382,19 +383,21 @@
 
   /* Flash animations for input fields */
   @keyframes flash-success-border {
-    0%, 100% { border-color: hsl(var(--input)); }
-    50% { border-color: hsl(var(--alert-success-icon-color-raw)); box-shadow: 0 0 8px hsl(var(--alert-success-icon-color-raw) / 0.7); }
+    0%, 100% { border-color: hsl(var(--input)); box-shadow: none; }
+    50% { border-color: hsl(var(--alert-success-icon-color-raw)); box-shadow: 0 0 10px hsl(var(--alert-success-icon-color-raw) / 0.8), 0 0 5px hsl(var(--alert-success-icon-color-raw) / 0.6) inset; }
   }
   .animate-flash-success {
-    animation: flash-success-border 0.7s ease-out;
+    animation: flash-success-border 0.8s ease-out;
   }
 
   @keyframes flash-error-border {
-    0%, 100% { border-color: hsl(var(--input)); }
-    50% { border-color: hsl(var(--alert-destructive-icon-color-raw)); box-shadow: 0 0 8px hsl(var(--alert-destructive-icon-color-raw) / 0.7); }
+    0%, 100% { border-color: hsl(var(--input)); box-shadow: none; }
+    50% { border-color: hsl(var(--alert-destructive-icon-color-raw)); box-shadow: 0 0 10px hsl(var(--alert-destructive-icon-color-raw) / 0.8), 0 0 5px hsl(var(--alert-destructive-icon-color-raw) / 0.6) inset; }
   }
   .animate-flash-error {
-    animation: flash-error-border 0.7s ease-out;
+    animation: flash-error-border 0.8s ease-out;
   }
 
 }
+
+    
