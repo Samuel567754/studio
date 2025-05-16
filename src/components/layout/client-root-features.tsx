@@ -12,7 +12,7 @@ import { BottomNav } from '@/components/bottom-nav';
 import { QuickLinkFAB } from '@/components/quicklink-fab';
 import { Loader2 } from 'lucide-react';
 import { useUserProfileStore } from '@/stores/user-profile-store';
-import { FloatingGoldenStars } from '@/components/floating-sparkle-points';
+import { FloatingGoldenStars } from '@/components/floating-sparkle-points'; // New floating display
 import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data';
 
 export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
@@ -24,7 +24,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     setHasCompletedWalkthrough,
     setCurrentStepIndex,
   } = useWalkthroughStore();
-  
+
   const { loadUserProfileFromStorage } = useUserProfileStore();
   const [isClientMounted, setIsClientMounted] = useState(false);
   const [actualIntroductionSeen, setActualIntroductionSeen] = useState<boolean | null>(null);
@@ -45,16 +45,15 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       if (event.key === 'chilllearn_personalizationCompleted_v1') {
         setActualPersonalizationCompleted(getHasCompletedPersonalization());
       }
-      if (event.key === 'user-profile-storage-v3') { 
+      if (event.key === useUserProfileStore.persist.getOptions().name) {
         loadUserProfileFromStorage();
       }
-      if (event.key === useWalkthroughStore.persist.getOptions().name) { // Listen to walkthrough store changes
-        // Zustand's persist middleware handles rehydration, but we can force a read if needed.
-        // For now, relying on component re-render due to store change.
+      if (event.key === useWalkthroughStore.persist.getOptions().name) {
         const store = useWalkthroughStore.getState();
+        // This might not be strictly necessary as Zustand's persist rehydrates,
+        // but explicitly updating component state if store state changes externally can be robust.
         if (store.hasCompletedWalkthrough !== hasCompletedWalkthrough) {
-          // This line is mostly for debugging; the component should re-render automatically
-          // when hasCompletedWalkthrough from the store hook updates.
+          // Component will re-render due to hook update
         }
       }
     };
@@ -82,11 +81,11 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && pathname !== '/introduction' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
-        if (!isWalkthroughOpen) { 
-          setCurrentStepIndex(0); 
+        if (!isWalkthroughOpen) {
+          setCurrentStepIndex(0);
           openWalkthrough();
         }
-      }, 2000); 
+      }, 2500);
       return () => clearTimeout(timer);
     }
   }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex]);
@@ -105,7 +104,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   }
 
   if (!actualIntroductionSeen) {
-     return ( 
+     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
         <p className="sr-only">Redirecting to introduction...</p>
@@ -114,20 +113,20 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   }
 
   if (!actualPersonalizationCompleted) {
-     return ( 
+     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
         <p className="sr-only">Redirecting to personalization...</p>
       </div>
     );
   }
-  
+
   return (
     <div className="flex flex-col min-h-screen">
       <MainNav />
-      <FloatingGoldenStars />
-      <main 
-        data-tour-id="main-content-area" 
+      <FloatingGoldenStars /> {/* Add the floating display here */}
+      <main
+        data-tour-id="main-content-area"
         className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 pt-20 md:pt-24 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out relative"
       >
         {children}
@@ -137,15 +136,14 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border/30 hidden md:block">
          © {new Date().getFullYear()} ChillLearn AI. An AI-Powered Learning Adventure.
       </footer>
-      {isClientMounted && ( 
+      {isClientMounted && (
         <WalkthroughGuide
-          steps={walkthroughGuideSteps} 
+          steps={walkthroughGuideSteps}
           isOpen={isWalkthroughOpen}
-          onClose={() => { // Called on Skip or 'X'
-            setHasCompletedWalkthrough(true);
+          onClose={() => { // Only closes the modal, doesn't mark as fully complete
             closeWalkthrough();
           }}
-          onFinish={() => { // Called on explicit "Finish" button
+          onFinish={() => { // Marks as complete and closes
             setHasCompletedWalkthrough(true);
             closeWalkthrough();
           }}
@@ -154,4 +152,3 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     </div>
   );
 };
-

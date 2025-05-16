@@ -6,192 +6,192 @@
 @layer base {
   :root {
     /* Font variables */
-    --font-geist-sans: '__GeistSans_0e7795', '__GeistSans_Fallback_0e7795', sans-serif; 
-    --font-geist-mono: '__GeistMono_92b75f', '__GeistMono_Fallback_92b75f', monospace; 
-    --font-serif-custom: Georgia, serif; 
+    --font-geist-sans: '__GeistSans_0e7795', '__GeistSans_Fallback_0e7795', sans-serif;
+    --font-geist-mono: '__GeistMono_92b75f', '__GeistMono_Fallback_92b75f', monospace;
+    --font-serif-custom: Georgia, serif;
 
     /* Default base font settings */
     --font-family-base: var(--font-geist-sans);
-    --font-size-base: 16px; 
+    --font-size-base: 16px;
 
 
-    /* Light Mode - Updated Navbar to use Dark Theme Styles */
-    --background: 40 100% 98%; 
-    --foreground: 210 30% 25%; 
+    /* Light Mode - Navbar uses Dark Theme Styles */
+    --background: 40 100% 98%;
+    --foreground: 210 30% 25%;
 
-    --card: 0 0% 100% / 0.85; 
-    --card-foreground: 210 30% 20%; 
+    --card: 0 0% 100% / 0.85;
+    --card-foreground: 210 30% 20%;
 
-    --popover: 0 0% 100% / 0.85; 
-    --popover-foreground: 210 30% 20%; 
+    --popover: 0 0% 100% / 0.85;
+    --popover-foreground: 210 30% 20%;
 
-    --primary: 175 70% 45%; 
-    --primary-foreground: 40 100% 98%; 
+    --primary: 175 70% 45%;
+    --primary-foreground: 40 100% 98%;
 
-    --secondary: 175 60% 90%; 
-    --secondary-foreground: 175 50% 30%; 
+    --secondary: 175 60% 90%;
+    --secondary-foreground: 175 50% 30%;
 
-    --muted: 210 20% 94%; 
-    --muted-foreground: 210 20% 45%; 
+    --muted: 210 20% 94%;
+    --muted-foreground: 210 20% 45%;
 
-    --accent: 20 90% 60%; 
-    --accent-foreground: 40 100% 98%; 
-    
-    --destructive: 0 75% 60%; 
-    --destructive-foreground: 0 0% 98%; 
-    
-    --border: 210 20% 88%; 
-    --input: 210 30% 97%; 
-    --ring: 175 70% 50%; 
+    --accent: 20 90% 60%;
+    --accent-foreground: 40 100% 98%;
+
+    --destructive: 0 75% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 210 20% 88%;
+    --input: 210 30% 97%;
+    --ring: 175 70% 50%;
 
     --radius: 0.5rem;
 
     /* Chart colors - Updated to complement the new theme */
-    --chart-1: 175 70% 55%; 
-    --chart-2: 20 85% 65%;  
-    --chart-3: 190 65% 50%; 
-    --chart-4: 35 90% 65%;  
-    --chart-5: 160 60% 60%; 
+    --chart-1: 175 70% 55%;
+    --chart-2: 20 85% 65%;
+    --chart-3: 190 65% 50%;
+    --chart-4: 35 90% 65%;
+    --chart-5: 160 60% 60%;
 
     /* Sidebar specific colors (Light) */
-    --sidebar-background: 210 25% 96% / 0.85; 
-    --sidebar-foreground: 210 30% 30%; 
-    --sidebar-primary: var(--primary); 
-    --sidebar-primary-foreground: var(--primary-foreground); 
-    --sidebar-accent: var(--accent); 
-    --sidebar-accent-foreground: var(--accent-foreground); 
-    --sidebar-border: 210 20% 85%; 
-    --sidebar-ring: var(--ring); 
-
-    /* Modern Toast Colors - Light Mode */
-    --toast-success-bg-start-raw: 130 75% 90%; 
-    --toast-success-bg-end-raw: 130 65% 82%;   
-    --toast-success-fg-raw: 130 60% 20%;     
-    --toast-success-border-l-raw: 130 50% 55%;
-
-    --toast-info-bg-start-raw: 200 80% 92%;    
-    --toast-info-bg-end-raw: 200 70% 85%;      
-    --toast-info-fg-raw: 200 70% 22%;        
-    --toast-info-border-l-raw: 200 70% 60%;   
-    
-    --toast-destructive-bg-start-raw: 0 85% 93%; 
-    --toast-destructive-bg-end-raw: 0 75% 88%;   
-    --toast-destructive-fg-raw: 0 70% 28%;     
-    --toast-destructive-border-l-raw: 0 70% 60%; 
-
-    /* Modern Alert Colors - Light Mode */
-    --alert-success-bg-start-raw: 130 75% 94%;    
-    --alert-success-bg-end-raw: 130 65% 88%;      
-    --alert-success-fg-raw: 130 60% 18%;        
-    --alert-success-icon-color-raw: 130 55% 45%;  
-
-    --alert-info-bg-start-raw: 200 85% 95%;     
-    --alert-info-bg-end-raw: 200 75% 89%;       
-    --alert-info-fg-raw: 200 70% 20%;         
-    --alert-info-icon-color-raw: 200 75% 50%;   
-    
-    --alert-destructive-bg-start-raw: 0 90% 95%;  
-    --alert-destructive-bg-end-raw: 0 80% 90%;    
-    --alert-destructive-fg-raw: 0 70% 25%;      
-    --alert-destructive-icon-color-raw: 0 75% 55%;
-
-    /* Navbar Gradient & Text Colors - Light Mode (NOW USING DARK MODE STYLES) */
-    --nav-gradient-from-light: 210 40% 15%;  
-    --nav-gradient-to-light: 185 50% 25%;    
-    --nav-text-light: 30 70% 92%;          
-    --nav-icon-light: 30 60% 88%;          
-    --nav-active-indicator-light: 0 0% 100% / 0.1; 
-    --nav-active-text-light: 30 80% 95%;     
-    --nav-border-light: 200 40% 30% / 0.3;   
-  }
-
-  .dark {
-    /* Dark Mode - Vibrant & Playful Theme */
-    --background: 210 30% 10%; 
-    --foreground: 40 20% 90%; 
-
-    --card: 210 30% 15% / 0.85; 
-    --card-foreground: 40 20% 90%; 
-
-    --popover: 210 30% 12% / 0.85; 
-    --popover-foreground: 40 20% 90%; 
-
-    --primary: 175 70% 55%; 
-    --primary-foreground: 210 30% 10%; 
-
-    --secondary: 175 40% 25%; 
-    --secondary-foreground: 175 60% 75%; 
-
-    --muted: 210 25% 20%; 
-    --muted-foreground: 210 20% 65%; 
-
-    --accent: 20 90% 65%; 
-    --accent-foreground: 210 30% 10%; 
-
-    --destructive: 0 70% 55%; 
-    --destructive-foreground: 0 0% 95%;
-    
-    --border: 210 25% 25%; 
-    --input: 210 30% 18%; 
-    --ring: 175 70% 55%; 
-
-    /* Chart colors for dark mode - Updated */
-    --chart-1: 175 70% 65%; 
-    --chart-2: 20 85% 70%;  
-    --chart-3: 190 65% 60%; 
-    --chart-4: 35 90% 70%;  
-    --chart-5: 160 60% 70%; 
-
-    /* Sidebar specific colors (Dark) */
-    --sidebar-background: 210 30% 12% / 0.85; 
-    --sidebar-foreground: 40 20% 85%;  
+    --sidebar-background: 210 25% 96% / 0.85;
+    --sidebar-foreground: 210 30% 30%;
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
     --sidebar-accent: var(--accent);
     --sidebar-accent-foreground: var(--accent-foreground);
-    --sidebar-border: 210 25% 20%;    
+    --sidebar-border: 210 20% 85%;
+    --sidebar-ring: var(--ring);
+
+    /* Modern Toast Colors - Light Mode */
+    --toast-success-bg-start-raw: 130 75% 90%;
+    --toast-success-bg-end-raw: 130 65% 82%;
+    --toast-success-fg-raw: 130 60% 20%;
+    --toast-success-border-l-raw: 130 50% 55%;
+
+    --toast-info-bg-start-raw: 200 80% 92%;
+    --toast-info-bg-end-raw: 200 70% 85%;
+    --toast-info-fg-raw: 200 70% 22%;
+    --toast-info-border-l-raw: 200 70% 60%;
+
+    --toast-destructive-bg-start-raw: 0 85% 93%;
+    --toast-destructive-bg-end-raw: 0 75% 88%;
+    --toast-destructive-fg-raw: 0 70% 28%;
+    --toast-destructive-border-l-raw: 0 70% 60%;
+
+    /* Modern Alert Colors - Light Mode */
+    --alert-success-bg-start-raw: 130 75% 94%;
+    --alert-success-bg-end-raw: 130 65% 88%;
+    --alert-success-fg-raw: 130 60% 18%;
+    --alert-success-icon-color-raw: 130 55% 45%;
+
+    --alert-info-bg-start-raw: 200 85% 95%;
+    --alert-info-bg-end-raw: 200 75% 89%;
+    --alert-info-fg-raw: 200 70% 20%;
+    --alert-info-icon-color-raw: 200 75% 50%;
+
+    --alert-destructive-bg-start-raw: 0 90% 95%;
+    --alert-destructive-bg-end-raw: 0 80% 90%;
+    --alert-destructive-fg-raw: 0 70% 25%;
+    --alert-destructive-icon-color-raw: 0 75% 55%;
+
+    /* Navbar Gradient & Text Colors - Light Mode (NOW USING DARK MODE STYLES) */
+    --nav-gradient-from-light: 210 40% 15%;
+    --nav-gradient-to-light: 185 50% 25%;
+    --nav-text-light: 30 70% 92%;
+    --nav-icon-light: 30 60% 88%;
+    --nav-active-indicator-light: 0 0% 100% / 0.1;
+    --nav-active-text-light: 30 80% 95%;
+    --nav-border-light: 200 40% 30% / 0.3;
+  }
+
+  .dark {
+    /* Dark Mode - Vibrant & Playful Theme */
+    --background: 210 30% 10%;
+    --foreground: 40 20% 90%;
+
+    --card: 210 30% 15% / 0.85;
+    --card-foreground: 40 20% 90%;
+
+    --popover: 210 30% 12% / 0.85;
+    --popover-foreground: 40 20% 90%;
+
+    --primary: 175 70% 55%;
+    --primary-foreground: 210 30% 10%;
+
+    --secondary: 175 40% 25%;
+    --secondary-foreground: 175 60% 75%;
+
+    --muted: 210 25% 20%;
+    --muted-foreground: 210 20% 65%;
+
+    --accent: 20 90% 65%;
+    --accent-foreground: 210 30% 10%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 95%;
+
+    --border: 210 25% 25%;
+    --input: 210 30% 18%;
+    --ring: 175 70% 55%;
+
+    /* Chart colors for dark mode - Updated */
+    --chart-1: 175 70% 65%;
+    --chart-2: 20 85% 70%;
+    --chart-3: 190 65% 60%;
+    --chart-4: 35 90% 70%;
+    --chart-5: 160 60% 70%;
+
+    /* Sidebar specific colors (Dark) */
+    --sidebar-background: 210 30% 12% / 0.85;
+    --sidebar-foreground: 40 20% 85%;
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: var(--accent-foreground);
+    --sidebar-border: 210 25% 20%;
     --sidebar-ring: var(--ring);
 
     /* Modern Toast Colors - Dark Mode */
-    --toast-success-bg-start-raw: 130 45% 28%;    
-    --toast-success-bg-end-raw: 130 40% 22%;      
-    --toast-success-fg-raw: 130 75% 88%;        
-    --toast-success-border-l-raw: 130 60% 60%;   
+    --toast-success-bg-start-raw: 130 45% 28%;
+    --toast-success-bg-end-raw: 130 40% 22%;
+    --toast-success-fg-raw: 130 75% 88%;
+    --toast-success-border-l-raw: 130 60% 60%;
 
-    --toast-info-bg-start-raw: 200 50% 30%;     
-    --toast-info-bg-end-raw: 200 45% 24%;       
-    --toast-info-fg-raw: 200 80% 90%;         
-    --toast-info-border-l-raw: 200 70% 65%;      
-    
-    --toast-destructive-bg-start-raw: 0 55% 33%;   
-    --toast-destructive-bg-end-raw: 0 50% 26%;     
-    --toast-destructive-fg-raw: 0 75% 92%;       
-    --toast-destructive-border-l-raw: 0 70% 60%;  
+    --toast-info-bg-start-raw: 200 50% 30%;
+    --toast-info-bg-end-raw: 200 45% 24%;
+    --toast-info-fg-raw: 200 80% 90%;
+    --toast-info-border-l-raw: 200 70% 65%;
+
+    --toast-destructive-bg-start-raw: 0 55% 33%;
+    --toast-destructive-bg-end-raw: 0 50% 26%;
+    --toast-destructive-fg-raw: 0 75% 92%;
+    --toast-destructive-border-l-raw: 0 70% 60%;
 
     /* Modern Alert Colors - Dark Mode */
-    --alert-success-bg-start-raw: 130 45% 25%;    
-    --alert-success-bg-end-raw: 130 40% 19%;      
-    --alert-success-fg-raw: 130 75% 85%;        
-    --alert-success-icon-color-raw: 130 60% 65%;  
+    --alert-success-bg-start-raw: 130 45% 25%;
+    --alert-success-bg-end-raw: 130 40% 19%;
+    --alert-success-fg-raw: 130 75% 85%;
+    --alert-success-icon-color-raw: 130 60% 65%;
 
-    --alert-info-bg-start-raw: 200 50% 28%;     
-    --alert-info-bg-end-raw: 200 45% 22%;       
-    --alert-info-fg-raw: 200 80% 88%;         
-    --alert-info-icon-color-raw: 200 70% 68%;   
-    
-    --alert-destructive-bg-start-raw: 0 55% 30%;   
-    --alert-destructive-bg-end-raw: 0 50% 24%;     
-    --alert-destructive-fg-raw: 0 75% 90%;       
-    --alert-destructive-icon-color-raw: 0 70% 62%;  
+    --alert-info-bg-start-raw: 200 50% 28%;
+    --alert-info-bg-end-raw: 200 45% 22%;
+    --alert-info-fg-raw: 200 80% 88%;
+    --alert-info-icon-color-raw: 200 70% 68%;
+
+    --alert-destructive-bg-start-raw: 0 55% 30%;
+    --alert-destructive-bg-end-raw: 0 50% 24%;
+    --alert-destructive-fg-raw: 0 75% 90%;
+    --alert-destructive-icon-color-raw: 0 70% 62%;
 
     /* Navbar Gradient & Text Colors - Dark Mode */
-    --nav-gradient-from-dark: 210 40% 15%;  
-    --nav-gradient-to-dark: 185 50% 25%;    
-    --nav-text-dark: 30 70% 92%;          
-    --nav-icon-dark: 30 60% 88%;          
-    --nav-active-indicator-dark: 0 0% 100% / 0.1; 
-    --nav-active-text-dark: 30 80% 95%;     
-    --nav-border-dark: 200 40% 30% / 0.3;   
+    --nav-gradient-from-dark: 210 40% 15%;
+    --nav-gradient-to-dark: 185 50% 25%;
+    --nav-text-dark: 30 70% 92%;
+    --nav-icon-dark: 30 60% 88%;
+    --nav-active-indicator-dark: 0 0% 100% / 0.1;
+    --nav-active-text-dark: 30 80% 95%;
+    --nav-border-dark: 200 40% 30% / 0.3;
   }
 }
 
@@ -200,13 +200,13 @@
     @apply border-border;
   }
   body {
-    background-color: hsl(var(--background)); 
+    background-color: hsl(var(--background));
     @apply text-foreground;
     min-height: 100vh;
-    font-family: var(--font-family-base); 
-    font-size: var(--font-size-base); 
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
   }
-  body::before { 
+  body::before {
     content: "";
     position: fixed;
     inset: 0;
@@ -214,17 +214,17 @@
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    z-index: -2; 
+    z-index: -2;
   }
-  body::after { 
+  body::after {
     content: "";
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.65); 
-    z-index: -1; 
+    background-color: rgba(0, 0, 0, 0.65);
+    z-index: -1;
   }
   .dark body::after {
-    background-color: rgba(0, 0, 0, 0.85); 
+    background-color: rgba(0, 0, 0, 0.85);
   }
 
 
@@ -241,7 +241,7 @@
 
 @layer components {
   .bg-card, .bg-popover, .bg-sidebar {
-    @apply backdrop-blur-lg; 
+    @apply backdrop-blur-lg;
   }
 
   .bg-nav-gradient {
@@ -257,12 +257,7 @@
     @apply fixed inset-0 bg-black/70 z-[9998] backdrop-blur-sm;
   }
   .walkthrough-highlight-target {
-    @apply relative z-[9999] ring-4 ring-offset-4 ring-offset-transparent ring-accent shadow-2xl rounded-md transition-all duration-300;
-    /* The element being highlighted might need `position: relative` itself for z-index to work as expected against the overlay */
-  }
-  .walkthrough-step-card {
-     @apply fixed bottom-5 left-1/2 -translate-x-1/2 w-[90vw] max-w-md z-[10000] shadow-2xl;
-     /* Or top-5 for top positioning */
+    @apply relative z-[9999] ring-4 ring-offset-4 ring-offset-background ring-accent shadow-2xl rounded-md transition-all duration-300;
   }
 }
 
@@ -274,8 +269,8 @@
     display: none;
   }
   .no-scrollbar {
-    -ms-overflow-style: none;  
-    scrollbar-width: none;  
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   .shadow-nav-top {
@@ -289,7 +284,7 @@
   @keyframes golden-stars-update-animation {
     0% {
       transform: scale(1) rotate(0deg);
-      color: hsl(var(--nav-text-light)); /* Ensure it starts from nav text color if that's the base */
+      color: inherit; /* Use text-white from component for base */
       text-shadow: none;
     }
     30% {
@@ -304,7 +299,7 @@
     }
     100% {
       transform: scale(1) rotate(0deg);
-      color: hsl(var(--nav-text-light)); /* Return to nav text color */
+      color: inherit; /* Return to base color */
       text-shadow: none;
     }
   }
@@ -312,7 +307,7 @@
     animation: golden-stars-update-animation 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
   }
 
-  /* Animation for the "Stars Earned" popup */
+  /* Animation for the "Stars Earned" popup in games */
   @keyframes stars-earned-popup-animation {
     0% {
       opacity: 0;

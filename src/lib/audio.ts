@@ -34,7 +34,7 @@ const playSoundInternal = (
         }
       }
     }
-    
+
     gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
 
@@ -58,7 +58,7 @@ const playSoundWrapper = (
 
 
 export function playClickSound(): void {
-  playSoundWrapper('triangle', 622.25, 0.02, 0.035); 
+  playSoundWrapper('triangle', 622.25, 0.02, 0.035);
 }
 
 export function playSuccessSound(): void {
@@ -69,12 +69,12 @@ export function playCompletionSound(): void {
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
   if (!soundEffectsEnabled) return;
 
-  playSoundInternal('sine', { start: 261.63, end: 392.00, bendDuration: 0.15 }, 0.09, 0.4); 
+  playSoundInternal('sine', { start: 261.63, end: 392.00, bendDuration: 0.15 }, 0.09, 0.4);
   setTimeout(() => {
-    playSoundInternal('sine', { start: 392.00, end: 523.25, bendDuration: 0.12 }, 0.08, 0.3); 
-  }, 120); 
+    playSoundInternal('sine', { start: 392.00, end: 523.25, bendDuration: 0.12 }, 0.08, 0.3);
+  }, 120);
   setTimeout(() => {
-    playSoundInternal('triangle', 1046.50, 0.05, 0.2); 
+    playSoundInternal('triangle', 1046.50, 0.05, 0.2);
   }, 200);
 }
 
@@ -89,25 +89,41 @@ export function playNavigationSound(): void {
 export function playNotificationSound(): void {
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
   if (!soundEffectsEnabled) return;
-  playSoundInternal('triangle', 783.99, 0.05, 0.09); 
+  playSoundInternal('triangle', 783.99, 0.05, 0.09);
   setTimeout(() => {
-    playSoundInternal('triangle', 1046.50, 0.04, 0.11); 
-  }, 80); 
+    playSoundInternal('triangle', 1046.50, 0.04, 0.11);
+  }, 80);
 }
 
 export function playStarsEarnedSound(): void {
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
   if (!soundEffectsEnabled) return;
-  // A quick, bright, slightly ascending "chime" or "sparkle" sound
-  playSoundInternal('triangle', { start: 1200, end: 1600, bendDuration: 0.05 }, 0.04, 0.15);
+  // Bright, quick, ascending "sparkle"
+  playSoundInternal('triangle', { start: 1200, end: 1800, bendDuration: 0.05 }, 0.045, 0.18);
   setTimeout(() => {
-    playSoundInternal('sine', { start: 1800, end: 2200, bendDuration: 0.03 }, 0.03, 0.1);
-  }, 30);
+    playSoundInternal('sine', { start: 1500, end: 2000, bendDuration: 0.03 }, 0.035, 0.12);
+  }, 40);
+}
+
+export function playAchievementUnlockedSound(): void {
+  const { soundEffectsEnabled } = useAppSettingsStore.getState();
+  if (!soundEffectsEnabled) return;
+  // More significant, multi-tone celebratory sound
+  playSoundInternal('sine', { start: 329.63, end: 440.00, bendDuration: 0.1 }, 0.08, 0.3); // E4 to A4
+  setTimeout(() => {
+    playSoundInternal('sine', { start: 440.00, end: 523.25, bendDuration: 0.1 }, 0.07, 0.3); // A4 to C5
+  }, 100);
+  setTimeout(() => {
+    playSoundInternal('triangle', { start: 523.25, end: 659.25, bendDuration: 0.15 }, 0.06, 0.4); // C5 to E5
+  }, 200);
+  setTimeout(() => {
+    playSoundInternal('triangle', 1046.50, 0.05, 0.25); // High C6
+  }, 300);
 }
 
 
 export function speakText(
-  textToSpeak: string, 
+  textToSpeak: string,
   onBoundary?: (event: SpeechSynthesisEvent) => void,
   onEnd?: () => void,
   onError?: (event: SpeechSynthesisErrorEvent) => void
@@ -119,10 +135,11 @@ export function speakText(
       });
       onError(emptyTextError);
     }
+    if (onEnd) onEnd(); // Ensure onEnd is called even if speech doesn't start
     return null;
   }
   const { soundEffectsEnabled, speechRate, speechPitch, selectedVoiceURI } = useAppSettingsStore.getState();
-  
+
   if (!soundEffectsEnabled) {
     if(onEnd) {
       onEnd();
@@ -131,8 +148,8 @@ export function speakText(
   }
 
   try {
-    window.speechSynthesis.cancel(); 
-    
+    window.speechSynthesis.cancel();
+
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = speechRate;
     utterance.pitch = speechPitch;
@@ -144,9 +161,9 @@ export function speakText(
         utterance.voice = voice;
       }
     }
-    
+
     if (onBoundary) utterance.onboundary = onBoundary;
-    
+
     const handleEnd = () => {
         if (onEnd) onEnd();
     };
@@ -160,6 +177,8 @@ export function speakText(
              console.error("Unhandled Speech synthesis error in speakText:", event.error, event.utterance?.text.substring(event.charIndex));
            }
         }
+        // Ensure onEnd is called on error too, if speech doesn't naturally end
+        if (onEnd) onEnd();
     };
     utterance.onerror = handleError;
 
@@ -170,7 +189,7 @@ export function speakText(
     console.error("Error in speakText setup:", error);
     if (onError) {
       const synthErrorEvent = new SpeechSynthesisErrorEvent("error", {
-          utterance: null as any, 
+          utterance: null as any,
           charIndex: 0,
           elapsedTime: 0,
           name: "",

@@ -4,19 +4,19 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
 import {
   getStoredWordList,
   getStoredMasteredWords,
   getStoredReadingLevel,
   getStoredWordLength,
-  clearProgressStoredData, 
-  getStoredGoldenStars,
+  clearProgressStoredData,
+  // getStoredGoldenStars, // Will be read from store
 } from '@/lib/storage';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star, Brain, Trophy } from 'lucide-react'; 
+import { User, BookOpen, BarChart3, Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Award, Trash2, ShieldAlert, Star, Brain, Trophy } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -39,77 +39,78 @@ import {
 import { cn } from '@/lib/utils';
 
 
-interface ProfileData {
+interface ProfileStats {
   practiceWordCount: number;
   masteredWordCount: number;
   readingLevel: string;
   wordLength: number;
   practiceWords: string[];
   masteredWords: string[];
-  goldenStars: number;
 }
 
-const availableTopics = [
-  "Animals", "Space", "Dinosaurs", "Adventures", "Fairy Tales", 
-  "Superheroes", "Sports", "Music", "Nature", "Oceans", 
-  "Cars & Trucks", "Fantasy", "Science", "History", "Art", "Robots", "Mystery"
-];
-
-interface Achievement {
+export interface Achievement { // Exporting for use in store
+  id: string;
   name: string;
   description: string;
   pointsRequired: number;
-  iconImage: string; 
+  imageSrc: string;
   iconAlt: string;
-  color: string; 
+  color: string;
+  bonusStars: number;
 }
 
-const achievementsList: Achievement[] = [
-    { name: "Star Cadet", description: "Earned your first 25 Golden Stars!", pointsRequired: 25, iconImage: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400" },
-    { name: "Word Collector", description: "Reached 75 Golden Stars from word games!", pointsRequired: 75, iconImage: "/assets/images/star_medal_gold_ribbon_icon.png", iconAlt: "Word Collector Medal", color: "text-blue-400" },
-    { name: "Number Cruncher", description: "Reached 75 Golden Stars from math games!", pointsRequired: 75, iconImage: "/assets/images/gold_medal_star_with_red_ribbon.png", iconAlt: "Number Cruncher Medal", color: "text-red-400" },
-    { name: "Vocabulary Virtuoso", description: "Mastered 150 Golden Stars in word activities!", pointsRequired: 150, iconImage: "/assets/images/gold_medal_with_blue_ribbons.png.png", iconAlt: "Vocabulary Virtuoso Medal", color: "text-indigo-400" },
-    { name: "Math Magician", description: "Conquered 150 math points!", pointsRequired: 150, iconImage: "/assets/images/golden_trophy_with_star_illustration.png", iconAlt: "Math Magician Trophy", color: "text-pink-400" },
-    { name: "Treasure Hunter", description: "Found 200 Golden Stars!", pointsRequired: 200, iconImage: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest Badge", color: "text-orange-500" },
-    { name: "Ultimate Champion", description: "Accumulated 400 Golden Stars overall!", pointsRequired: 400, iconImage: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Ultimate Champion Trophy", color: "text-green-400" },
+// Define achievements here or import from a shared config
+export const achievementsList: Achievement[] = [
+    { id: "star_cadet", name: "Star Cadet", description: "Collected your first 25 Golden Stars!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400", bonusStars: 5 },
+    { id: "coin_collector_1", name: "Coin Collector I", description: "Amassed 75 Golden Stars!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", color: "text-amber-500", bonusStars: 10 },
+    { id: "gem_seeker_1", name: "Gem Seeker I", description: "Discovered 150 Golden Stars!", pointsRequired: 150, imageSrc: "/assets/images/multicolored_geometric_crystal_shape.png", iconAlt: "Colorful Crystal Shape", color: "text-fuchsia-500", bonusStars: 15 },
+    { id: "treasure_finder", name: "Treasure Discoverer", description: "Unearthed 300 Golden Stars!", pointsRequired: 300, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest", color: "text-orange-500", bonusStars: 20 },
+    { id: "chill_master", name: "ChillLearn Master", description: "Achieved 500 Golden Stars overall!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Laurel Wreath Trophy", color: "text-green-500", bonusStars: 25 },
+];
+
+
+const availableTopics = [
+  "Animals", "Space", "Dinosaurs", "Adventures", "Fairy Tales",
+  "Superheroes", "Sports", "Music", "Nature", "Oceans",
+  "Cars & Trucks", "Fantasy", "Science", "History", "Art", "Robots", "Mystery"
 ];
 
 
 export default function ProfilePage() {
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const { 
-    username, 
-    favoriteTopics, 
-    goldenStars, 
-    setUsername: setStoreUsername, 
-    setFavoriteTopics: setStoreFavoriteTopics, 
-    loadUserProfileFromStorage 
+  const {
+    username,
+    favoriteTopics,
+    goldenStars,
+    unlockedAchievements,
+    isAchievementUnlocked,
+    setUsername: setStoreUsername,
+    setFavoriteTopics: setStoreFavoriteTopics,
+    loadUserProfileFromStorage
   } = useUserProfileStore();
-  
+
   const [usernameInput, setUsernameInput] = useState<string>('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const { toast } = useToast();
-  const router = useRouter(); 
+  const router = useRouter();
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
 
 
   useEffect(() => {
-    loadUserProfileFromStorage(); 
+    loadUserProfileFromStorage(); // Load username, topics, stars, achievements from store/localStorage
     const practiceList = getStoredWordList();
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
     const length = getStoredWordLength();
-    const stars = getStoredGoldenStars();
 
-    setProfileData({
+    setProfileStats({
       practiceWordCount: practiceList.length,
       masteredWordCount: masteredList.length,
       readingLevel: level,
       wordLength: length,
       practiceWords: practiceList,
       masteredWords: masteredList,
-      goldenStars: stars,
     });
     setIsMounted(true);
   }, [loadUserProfileFromStorage]);
@@ -118,15 +119,11 @@ export default function ProfilePage() {
     if (isMounted) {
       setUsernameInput(username || '');
       setSelectedTopics(favoriteTopics ? favoriteTopics.split(',').map(t => t.trim()).filter(t => t) : []);
-      // Update profileData.goldenStars if the store's goldenStars changes
-      if (profileData && goldenStars !== profileData.goldenStars) {
-        setProfileData(prev => prev ? { ...prev, goldenStars } : null);
-      }
     }
-  }, [username, favoriteTopics, isMounted, goldenStars, profileData]);
+  }, [username, favoriteTopics, isMounted]);
 
   const handleTopicChange = (topic: string) => {
-    setSelectedTopics(prev => 
+    setSelectedTopics(prev =>
       prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic]
     );
   };
@@ -138,7 +135,7 @@ export default function ProfilePage() {
 
     setStoreUsername(trimmedUsername || null);
     setStoreFavoriteTopics(topicsString || null);
-    
+
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />Profile Updated!</div>,
@@ -149,20 +146,20 @@ export default function ProfilePage() {
 
   const handleConfirmResetProgress = () => {
     if (typeof window !== 'undefined') {
-        clearProgressStoredData(); 
+        clearProgressStoredData();
         toast({
             title: <div className="flex items-center gap-2"><Trash2 className="h-5 w-5" />Progress Reset</div>,
             description: "Your learning and app usage data has been cleared. You will see the introduction again.",
             variant: "destructive"
         });
         playErrorSound();
-        router.push('/introduction'); 
+        router.push('/introduction');
     }
     setIsConfirmResetOpen(false);
   };
 
 
-  if (!isMounted || !profileData) {
+  if (!isMounted || !profileStats) {
     return (
       <div className="space-y-6" aria-live="polite" aria-busy="true">
         {/* Skeleton remains the same */}
@@ -170,7 +167,7 @@ export default function ProfilePage() {
     );
   }
 
-  const earnedAchievements = achievementsList.filter(ach => goldenStars >= ach.pointsRequired);
+  const earnedAchievementsToDisplay = achievementsList.filter(ach => isAchievementUnlocked(ach.id));
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
@@ -182,18 +179,16 @@ export default function ProfilePage() {
           objectFit="cover"
           className="brightness-50"
           priority
-          data-ai-hint="abstract pattern profile"
         />
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
         <div className="relative z-10 text-white">
           <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-yellow-400/70 mb-4">
               <Image
-                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D" 
+                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D"
                   alt={username ? `${username}'s profile avatar - abstract colorful lights` : "User profile avatar - abstract colorful lights"}
                   layout="fill"
                   objectFit="cover"
-                  className="rounded-full p-1" 
-                  data-ai-hint="app background settings"
+                  className="rounded-full p-1"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end justify-center p-2">
                    <User className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
@@ -243,7 +238,7 @@ export default function ProfilePage() {
                           onCheckedChange={() => handleTopicChange(topic)}
                           aria-label={topic}
                         />
-                        <Label 
+                        <Label
                           htmlFor={`profile-topic-${topic.toLowerCase().replace(/\s+/g, '-')}`}
                           className="text-base font-normal cursor-pointer hover:text-accent"
                         >
@@ -276,21 +271,21 @@ export default function ProfilePage() {
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
             <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
             <div>
-              <p className="font-semibold text-foreground">{profileData.goldenStars}</p>
+              <p className="font-semibold text-foreground">{goldenStars}</p>
               <p className="text-sm text-muted-foreground">Golden Stars Earned</p>
             </div>
           </div>
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-350">
             <ListChecks className="h-8 w-8 text-accent" aria-hidden="true" />
             <div>
-              <p className="font-semibold text-foreground">{profileData.practiceWordCount}</p>
+              <p className="font-semibold text-foreground">{profileStats.practiceWordCount}</p>
               <p className="text-sm text-muted-foreground">Words in Practice List</p>
             </div>
           </div>
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-right-5 duration-500 ease-out delay-400">
             <CheckSquare className="h-8 w-8 text-green-500" aria-hidden="true" />
             <div>
-              <p className="font-semibold text-foreground">{profileData.masteredWordCount}</p>
+              <p className="font-semibold text-foreground">{profileStats.masteredWordCount}</p>
               <p className="text-sm text-muted-foreground">Words Mastered</p>
             </div>
           </div>
@@ -302,14 +297,14 @@ export default function ProfilePage() {
           <CardTitle className="flex items-center text-2xl font-semibold text-yellow-500">
             <Trophy className="mr-3 h-6 w-6" aria-hidden="true" /> My Trophies & Badges
           </CardTitle>
-          <CardDescription>Celebrate your learning milestones!</CardDescription>
+          <CardDescription>Celebrate your learning milestones by collecting Golden Stars!</CardDescription>
         </CardHeader>
         <CardContent>
-          {earnedAchievements.length > 0 ? (
+          {earnedAchievementsToDisplay.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {earnedAchievements.map((ach, index) => (
-                <div 
-                  key={ach.name} 
+              {earnedAchievementsToDisplay.map((ach, index) => (
+                <div
+                  key={ach.id}
                   className={cn(
                     "p-4 rounded-lg border flex flex-col items-center text-center transition-all duration-300 hover:shadow-xl hover:scale-105",
                     "bg-gradient-to-br from-card via-card/90 to-secondary/10 dark:from-card dark:via-card/90 dark:to-secondary/5",
@@ -318,11 +313,11 @@ export default function ProfilePage() {
                   )}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <Image 
-                    src={ach.iconImage} 
-                    alt={ach.iconAlt} 
-                    width={64} 
-                    height={64} 
+                  <Image
+                    src={ach.imageSrc}
+                    alt={ach.iconAlt}
+                    width={64}
+                    height={64}
                     className="mb-3 drop-shadow-lg"
                   />
                   <h3 className={cn("text-lg font-semibold mb-1", ach.color)}>{ach.name}</h3>
@@ -352,11 +347,11 @@ export default function ProfilePage() {
         <CardContent className="space-y-4 text-lg">
           <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg animate-in fade-in-0 zoom-in-95 duration-300 delay-400">
             <span className="text-foreground font-medium" id="reading-level-label">Reading Level:</span>
-            <Badge variant="outline" className="text-base px-3 py-1 capitalize" aria-labelledby="reading-level-label">{profileData.readingLevel}</Badge>
+            <Badge variant="outline" className="text-base px-3 py-1 capitalize" aria-labelledby="reading-level-label">{profileStats.readingLevel}</Badge>
           </div>
           <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg animate-in fade-in-0 zoom-in-95 duration-300 delay-500">
             <span className="text-foreground font-medium" id="word-length-label">Preferred Word Length:</span>
-            <Badge variant="outline" className="text-base px-3 py-1" aria-labelledby="word-length-label">{profileData.wordLength} letters</Badge>
+            <Badge variant="outline" className="text-base px-3 py-1" aria-labelledby="word-length-label">{profileStats.wordLength} letters</Badge>
           </div>
            <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <Button asChild variant="outline" className="w-full sm:flex-1">
@@ -372,7 +367,7 @@ export default function ProfilePage() {
            </div>
         </CardContent>
       </Card>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-md border-border/30 animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-400">
             <CardHeader>
@@ -381,10 +376,10 @@ export default function ProfilePage() {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                {profileData.practiceWords.length > 0 ? (
+                {profileStats.practiceWords.length > 0 ? (
                     <ScrollArea className="h-48 w-full rounded-md border p-3 bg-background/50">
                         <div className="flex flex-wrap gap-2" role="list" aria-labelledby="practice-words-heading">
-                        {profileData.practiceWords.map((word, index) => (
+                        {profileStats.practiceWords.map((word, index) => (
                             <Badge key={`practice-${index}`} variant="secondary" className="text-sm px-2 py-1 animate-in fade-in zoom-in-95 duration-300" style={{ animationDelay: `${index * 20}ms` }} role="listitem">{word}</Badge>
                         ))}
                         </div>
@@ -405,10 +400,10 @@ export default function ProfilePage() {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                 {profileData.masteredWords.length > 0 ? (
+                 {profileStats.masteredWords.length > 0 ? (
                     <ScrollArea className="h-48 w-full rounded-md border p-3 bg-background/50">
                          <div className="flex flex-wrap gap-2" role="list" aria-labelledby="mastered-words-heading">
-                        {profileData.masteredWords.map((word, index) => (
+                        {profileStats.masteredWords.map((word, index) => (
                             <Badge key={`mastered-${index}`} variant="success" className="text-sm px-2 py-1 bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400 border-green-500/30 animate-in fade-in zoom-in-95 duration-300" style={{ animationDelay: `${index * 20}ms` }} role="listitem">{word}</Badge>
                         ))}
                         </div>
@@ -470,4 +465,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

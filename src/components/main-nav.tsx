@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet'; // Added SheetTrigger
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader as AlertDialogHeaderPrimitive,
   AlertDialogTitle as AlertDialogTitlePrimitive,
-  AlertDialogTrigger,
+  AlertDialogTrigger, // Added AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
@@ -46,32 +46,18 @@ export const MainNav: FC = () => {
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const isMobile = useIsMobile();
   const { goldenStars } = useUserProfileStore();
-  const [animatePoints, setAnimatePoints] = useState(false);
-  const prevGoldenStarsRef = useRef(goldenStars);
 
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (isMounted && goldenStars > prevGoldenStarsRef.current) {
-      setAnimatePoints(true);
-      playStarsEarnedSound(); // Using the specific sound for stars
-    }
-    prevGoldenStarsRef.current = goldenStars;
-  }, [goldenStars, isMounted]);
-
-  const handlePointsAnimationEnd = () => {
-    setAnimatePoints(false);
-  };
-
 
   const NavLinkItems: FC<{ isMobileSheet?: boolean }> = ({ isMobileSheet = false }) => (
     <>
       {navLinks.map((link) => {
         const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/');
-        
+
         let buttonClassName = cn(
           "justify-start w-full text-base md:text-sm md:w-auto group transition-colors duration-200 ease-in-out",
           "text-[hsl(var(--nav-text-light))]",
@@ -90,7 +76,7 @@ export const MainNav: FC = () => {
             "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 hover:text-[hsl(var(--nav-active-text-light))]"
           );
         }
-        
+
         const IconComp = link.icon;
 
         return (
@@ -125,13 +111,17 @@ export const MainNav: FC = () => {
             variant: "destructive"
         });
         playErrorSound();
-        window.location.href = '/introduction'; 
+        window.location.href = '/introduction';
     }
     setIsConfirmResetOpen(false);
   };
 
   const CompactGoldenStarsDisplay = (
-    <div className="flex items-center gap-1 p-1.5 rounded-full bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))] shadow-sm">
+    <div className={cn(
+      "flex items-center gap-1.5 p-1.5 rounded-full shadow-md transition-colors duration-300",
+      "bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))]",
+      "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 cursor-default" // Subtle hover for desktop
+    )}>
       <Image
         src="/assets/images/gold_star_icon.png"
         alt="Golden Stars"
@@ -141,10 +131,8 @@ export const MainNav: FC = () => {
       />
       <span
         className={cn(
-          "text-lg font-semibold", // Increased text size
-          animatePoints && "golden-stars-update-animation"
+          "text-lg font-semibold"
         )}
-        onAnimationEnd={handlePointsAnimationEnd}
       >
         {goldenStars}
       </span>
@@ -159,6 +147,9 @@ export const MainNav: FC = () => {
             <div className="flex items-center gap-2">
                 <div className="h-8 w-8 bg-background/50 rounded-full"></div>
                 <div className="h-7 w-28 bg-background/50 rounded-md hidden sm:block"></div>
+            </div>
+             <div className="flex items-center gap-2"> {/* Placeholder for stars on desktop */}
+                <div className="h-10 w-20 bg-background/50 rounded-full hidden md:flex"></div>
             </div>
             <div className="md:hidden flex items-center gap-2">
                  <div className="h-10 w-20 bg-background/50 rounded-full"></div> {/* Placeholder for points */}
@@ -175,7 +166,7 @@ export const MainNav: FC = () => {
   return (
     <header className={cn(navBarBaseClasses, navBarBorderColor )}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center gap-3"> {/* Added gap-3 here for spacing between logo and stars on desktop */}
+        <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
                 <BookOpenText className={cn(
                     "h-8 w-8 transition-colors duration-300 ease-in-out text-[hsl(var(--nav-icon-light))] group-hover:text-accent"
@@ -184,7 +175,7 @@ export const MainNav: FC = () => {
                     "text-2xl font-bold transition-colors duration-300 ease-in-out hidden sm:block text-[hsl(var(--nav-text-light))] group-hover:text-accent"
                 )}>ChillLearn</h1>
             </Link>
-            {/* CompactGoldenStarsDisplay for desktop, hidden on mobile where it's part of the mobile-specific header items */}
+            {/* CompactGoldenStarsDisplay for desktop */}
             <div className="hidden md:flex">
                 {CompactGoldenStarsDisplay}
             </div>
@@ -208,7 +199,7 @@ export const MainNav: FC = () => {
 
         {/* Mobile Header: Points + Hamburger Menu */}
         <div className="md:hidden flex items-center gap-2">
-          {CompactGoldenStarsDisplay} {/* This one is specifically for mobile header */}
+          {CompactGoldenStarsDisplay}
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
@@ -255,7 +246,17 @@ export const MainNav: FC = () => {
                   </SheetClose>
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
-              
+              {/* Points display for mobile sheet */}
+              <div className={cn("flex items-center justify-center gap-1.5 p-2 m-4 rounded-lg bg-[hsl(var(--nav-active-indicator-light))]/30 shadow-inner text-[hsl(var(--nav-text-light))]")}>
+                  <Image
+                    src="/assets/images/gold_star_icon.png"
+                    alt="Golden Stars"
+                    width={32}
+                    height={32}
+                    className="drop-shadow-sm"
+                  />
+                  <span className="text-lg font-semibold">{goldenStars} Golden Stars</span>
+              </div>
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
                 <NavLinkItems isMobileSheet={true} />
                 <Button
@@ -322,4 +323,3 @@ export const MainNav: FC = () => {
     </header>
   );
 };
-

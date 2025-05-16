@@ -13,12 +13,13 @@ const WORD_LENGTH_KEY = 'sightwords_wordLength_v1';
 const CURRENT_INDEX_KEY = 'sightwords_currentIndex_v1';
 const MASTERED_WORDS_KEY = 'sightwords_masteredWords_v1';
 const PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX = 'sightwords_progressionSuggestionDismissed_v1_';
-export const WALKTHROUGH_PERSIST_KEY = 'chilllearn_walkthroughState_v1'; // Exported for use in store
+export const WALKTHROUGH_PERSIST_KEY = 'chilllearn_walkthroughState_v1';
 const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
 const USERNAME_KEY = 'chilllearn_username_v1';
 const PERSONALIZATION_COMPLETED_KEY = 'chilllearn_personalizationCompleted_v1';
 const FAVORITE_TOPICS_KEY = 'chilllearn_favoriteTopics_v1';
-const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v1';
+const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v1'; // New Key
+const UNLOCKED_ACHIEVEMENTS_KEY = 'chilllearn_unlockedAchievements_v1'; // New Key
 
 // --- Golden Stars ---
 export const getStoredGoldenStars = (defaultValue = 0): number => {
@@ -39,6 +40,27 @@ export const storeGoldenStars = (stars: number): void => {
     localStorage.setItem(GOLDEN_STARS_KEY, String(stars));
   } catch (error) {
     console.error("Error storing golden stars to localStorage:", error);
+  }
+};
+
+// --- Unlocked Achievements ---
+export const getStoredUnlockedAchievements = (): string[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(UNLOCKED_ACHIEVEMENTS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error("Error parsing unlocked achievements from localStorage:", error);
+    return [];
+  }
+};
+
+export const storeUnlockedAchievements = (achievementIds: string[]): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(UNLOCKED_ACHIEVEMENTS_KEY, JSON.stringify(achievementIds));
+  } catch (error) {
+    console.error("Error storing unlocked achievements to localStorage:", error);
   }
 };
 
@@ -260,7 +282,8 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(USERNAME_KEY);
   localStorage.removeItem(PERSONALIZATION_COMPLETED_KEY);
   localStorage.removeItem(FAVORITE_TOPICS_KEY);
-  localStorage.removeItem(GOLDEN_STARS_KEY);
+  localStorage.removeItem(GOLDEN_STARS_KEY); // New
+  localStorage.removeItem(UNLOCKED_ACHIEVEMENTS_KEY); // New
 
   Object.keys(localStorage).forEach(key => {
     if (key.startsWith(PROGRESSION_SUGGESTION_DISMISSED_KEY_PREFIX)) {
@@ -268,24 +291,16 @@ export const clearProgressStoredData = (): void => {
     }
   });
 
-  // Explicitly reset Zustand store states to their initial values
-  // This ensures in-memory state is immediately updated, which is important
-  // if the app navigates without a full page reload after reset.
   try {
-    useUserProfileStore.getState().resetUserProfile();
-    
-    const walkthroughStore = useWalkthroughStore.getState();
-    walkthroughStore.setHasCompletedWalkthrough(false);
-    walkthroughStore.setCurrentStepIndex(0);
-    walkthroughStore.closeWalkthrough();
-    
+    useUserProfileStore.getState().resetUserProfile(); // Resets username, topics, stars, achievements
+    useWalkthroughStore.getState().setHasCompletedWalkthrough(false);
+    useWalkthroughStore.getState().setCurrentStepIndex(0);
+    useWalkthroughStore.getState().closeWalkthrough();
     useThemeStore.getState().resetThemeSettings();
     useAppSettingsStore.getState().resetAppSettings();
 
     console.log("Cleared all user progress-related stored data and reset Zustand stores to initial states.");
   } catch (error) {
     console.error("Error resetting Zustand stores during clearProgressStoredData:", error);
-    // Even if store reset fails, localStorage clearing would have happened.
-    // This could happen if this function is called in a context where Zustand stores are not yet fully initialized or available.
   }
 };
