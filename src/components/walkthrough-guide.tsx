@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { Popover, PopoverContent } from '@/components/ui/popover';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2, Target } from 'lucide-react';
@@ -23,19 +23,20 @@ interface WalkthroughGuideProps {
   onFinish: () => void;
 }
 
+// Helper to map string icon names from data to actual Lucide components
 const getWalkthroughIconComponent = (iconName?: string): React.ElementType => {
   if (!iconName) return Compass;
   const icons: { [key: string]: React.ElementType } = {
-    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon, CheckCircle2, Smile: HelpCircle // Defaulting Smile to HelpCircle as Smile icon might not be consistently available
+    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon, CheckCircle2, Smile: HelpCircle
   };
   return icons[iconName] || Compass;
 };
 
+
 export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onClose, onFinish }) => {
   const { currentStepIndex, setCurrentStepIndex, nextStep, prevStep } = useWalkthroughStore();
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
-  const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
-
+  
   const { soundEffectsEnabled } = useAppSettingsStore();
   const { username } = useUserProfileStore();
   const { toast } = useToast();
@@ -48,7 +49,6 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
     if (highlightedElement) {
       highlightedElement.classList.remove('walkthrough-highlight-target');
       setHighlightedElement(null);
-      setPopoverPosition(null);
     }
     if (isOpen && currentStepData?.targetElementSelector) {
       try {
@@ -56,30 +56,13 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
         if (element) {
           element.classList.add('walkthrough-highlight-target');
           setHighlightedElement(element);
-          const rect = element.getBoundingClientRect();
-          setPopoverPosition({
-            top: rect.bottom + window.scrollY + 10, // Position below the element
-            left: rect.left + window.scrollX + rect.width / 2, // Center horizontally
-            width: rect.width,
-            height: rect.height,
-          });
           element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
         } else {
           console.warn(`Walkthrough target element not found: ${currentStepData.targetElementSelector}`);
-          setPopoverPosition(null); // Fallback to center if element not found
         }
       } catch (e) {
         console.error("Error selecting walkthrough target:", e);
-        setPopoverPosition(null);
       }
-    } else if (isOpen) {
-        // If no target selector, center the popover (or place it at bottom of screen)
-        setPopoverPosition({
-            top: window.innerHeight * 0.75 + window.scrollY, // Default to bottom-ish of viewport
-            left: window.innerWidth / 2,
-            width: 0,
-            height: 0,
-        });
     }
   }, [isOpen, currentStepData, highlightedElement]);
 
@@ -189,22 +172,12 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
   const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
   const IconComponent = getWalkthroughIconComponent(currentStepData.icon as string);
 
-  const popoverStyle: React.CSSProperties = popoverPosition
-  ? {
+  const popoverStyle: React.CSSProperties = {
       position: 'fixed',
-      top: `${popoverPosition.top}px`,
-      left: `${popoverPosition.left}px`,
-      transform: 'translateX(-50%)', // Center the popover horizontally
-      zIndex: 10000,
-      maxWidth: 'calc(100vw - 32px)', // Ensure it fits on screen
-      width: '350px', // Default width
-    }
-  : { // Fallback if position can't be determined (e.g. centered on screen)
-      position: 'fixed',
-      top: '50%',
+      bottom: '20px', // Anchored to bottom
       left: '50%',
-      transform: 'translate(-50%, -50%)',
-      zIndex: 10000,
+      transform: 'translateX(-50%)', // Center horizontally
+      zIndex: 10000, // Should be above overlay (which is 9998)
       maxWidth: 'calc(100vw - 32px)',
       width: '350px',
     };
@@ -213,77 +186,71 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
   return (
     <>
       <div className="walkthrough-overlay" onClick={onClose} />
-      <div style={popoverStyle}>
-        <Popover open={true}> {/* Controlled by parent isOpen */}
-          <PopoverContent
-            className="walkthrough-step-card w-full shadow-2xl border-accent bg-card p-0"
-            side="top"
-            align="center"
-            avoidCollisions={true}
-          >
-            <div className="p-4 border-b">
-              <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
-                {IconComponent && <IconComponent className="h-5 w-5 text-accent" />}
-                {currentStepData.title(username)}
-              </h3>
-            </div>
+      <div style={popoverStyle} className="animate-in fade-in-0 slide-in-from-bottom-10 duration-500">
+        <Card className="w-full shadow-2xl border-accent bg-card">
+          <CardHeader className="p-4 border-b">
+            <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+              {IconComponent && <IconComponent className="h-5 w-5 text-accent" />}
+              {currentStepData.title(username)}
+            </h3>
+          </CardHeader>
 
-            <Progress value={progressPercentage} className="w-full h-1 rounded-none bg-muted" indicatorClassName="bg-primary transition-all duration-300 ease-linear" />
-            
-            <div className="p-4 max-h-[40vh] overflow-y-auto text-sm text-foreground/80">
-              {currentStepData.imageSrc && (
-                <div className="relative w-full h-32 rounded-md overflow-hidden mb-3 shadow-sm">
-                  <Image src={currentStepData.imageSrc} alt={currentStepData.imageAlt || "Walkthrough step image"} layout="fill" objectFit="cover" data-ai-hint={currentStepData.aiHint || "guide"} />
-                </div>
-              )}
-              {currentStepData.content}
-            </div>
-
-            <div className="p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-2">
-              <div className="flex items-center gap-2">
-                {soundEffectsEnabled && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleSpeechPlayback}
-                    className={cn(isSpeaking && !isPaused && "text-accent animate-pulse")}
-                    aria-label={isSpeaking && !isPaused ? "Pause audio" : "Play audio"}
-                  >
-                    {isSpeaking && !isPaused ? <Pause className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                  </Button>
-                )}
-                 <span className="text-xs text-muted-foreground">
-                  Step {currentStepIndex + 1} of {steps.length}
-                </span>
+          <Progress value={progressPercentage} className="w-full h-1 rounded-none bg-muted" indicatorClassName="bg-primary transition-all duration-300 ease-linear" />
+          
+          <CardContent className="p-4 max-h-[40vh] overflow-y-auto text-sm text-foreground/80">
+            {currentStepData.imageSrc && (
+              <div className="relative w-full h-32 rounded-md overflow-hidden mb-3 shadow-sm">
+                <Image src={currentStepData.imageSrc} alt={currentStepData.imageAlt || "Walkthrough step image"} layout="fill" objectFit="cover" data-ai-hint={currentStepData.aiHint || "guide"} />
               </div>
+            )}
+            <p className="whitespace-pre-line leading-relaxed">{currentStepData.content}</p>
+          </CardContent>
 
-              <div className="flex gap-2 w-full sm:w-auto">
+          <CardFooter className="p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div className="flex items-center gap-2">
+              {soundEffectsEnabled && (
                 <Button
-                  variant="outline"
-                  onClick={handlePrev}
-                  disabled={currentStepIndex === 0}
-                  className="flex-1 sm:flex-initial"
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSpeechPlayback}
+                  className={cn("text-muted-foreground", isSpeaking && !isPaused && "text-accent animate-pulse")}
+                  aria-label={isSpeaking && !isPaused ? "Pause audio" : "Play audio"}
                 >
-                  <ArrowLeft className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Prev</span>
+                  {isSpeaking && !isPaused ? <Pause className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </Button>
-                {currentStepIndex < steps.length - 1 ? (
-                  <Button onClick={handleNext} className="flex-1 sm:flex-initial btn-glow">
-                    <span className="hidden sm:inline">Next</span><ArrowRight className="h-4 w-4 sm:ml-2" />
-                  </Button>
-                ) : (
-                  <Button onClick={onFinish} className="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 text-white btn-glow">
-                    Finish
-                  </Button>
-                )}
-              </div>
+              )}
+               <span className="text-xs text-muted-foreground">
+                Step {currentStepIndex + 1} of {steps.length}
+              </span>
             </div>
-             <Button variant="ghost" size="sm" onClick={handleSkip} className="absolute top-2 right-2 p-1 h-auto text-muted-foreground hover:text-destructive">
-                <X className="h-4 w-4"/>
-                <span className="sr-only">Skip tutorial</span>
-            </Button>
-          </PopoverContent>
-        </Popover>
+
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={handlePrev}
+                disabled={currentStepIndex === 0}
+                className="flex-1 sm:flex-initial"
+              >
+                <ArrowLeft className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Prev</span>
+              </Button>
+              {currentStepIndex < steps.length - 1 ? (
+                <Button onClick={handleNext} className="flex-1 sm:flex-initial btn-glow">
+                  <span className="hidden sm:inline">Next</span><ArrowRight className="h-4 w-4 sm:ml-2" />
+                </Button>
+              ) : (
+                <Button onClick={onFinish} className="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 text-white btn-glow">
+                  Finish
+                </Button>
+              )}
+            </div>
+          </CardFooter>
+           <Button variant="ghost" size="sm" onClick={handleSkip} className="absolute top-2 right-2 p-1 h-auto text-muted-foreground hover:text-destructive">
+              <X className="h-4 w-4"/>
+              <span className="sr-only">Skip tutorial</span>
+          </Button>
+        </Card>
       </div>
     </>
   );
 };
+
