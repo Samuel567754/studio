@@ -12,9 +12,8 @@ import {
 } from '@/lib/storage';
 import { toast } from '@/hooks/use-toast';
 import { playAchievementUnlockedSound, playCoinsEarnedSound } from '@/lib/audio';
-import Image from 'next/image'; // Keep for potential future direct JSX in toast
+// Removed Image import as we use React.createElement
 
-// Define Achievement interface and ACHIEVEMENTS_CONFIG here
 export interface Achievement {
   id: string;
   name: string;
@@ -23,17 +22,24 @@ export interface Achievement {
   imageSrc: string;
   iconAlt?: string;
   bonusCoins?: number;
-  color?: string; // Optional color for styling the badge/text
+  color?: string;
 }
 
+// Updated ACHIEVEMENTS_CONFIG with new, lower-tier achievements and adjusted progression
 export const ACHIEVEMENTS_CONFIG: Achievement[] = [
-  { id: "bronze_coin_collector", name: "Bronze Coin Collector", description: "Collected your first 25 Golden Coins!", pointsRequired: 25, imageSrc: "/assets/images/coin_with_clover_design.png", iconAlt: "Bronze Coin with Clover", bonusCoins: 5 },
+  { id: "first_sparkle", name: "First Sparkle", description: "Earned your first 10 Golden Coins!", pointsRequired: 10, imageSrc: "/assets/images/star_emoji_illustration.png", iconAlt: "Star Emoji", bonusCoins: 2 },
+  { id: "star_cadet", name: "Star Cadet", description: "Collected 25 Golden Coins!", pointsRequired: 25, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Cute Smiling Star", bonusCoins: 5 },
+  { id: "coin_pouch", name: "Coin Pouch", description: "Gathered 35 Golden Coins!", pointsRequired: 35, imageSrc: "/assets/images/bag_of_gold_coins.png", iconAlt: "Bag of Gold Coins", bonusCoins: 3 },
+  { id: "bronze_coin_collector", name: "Bronze Coin Collector", description: "Reached 50 Golden Coins!", pointsRequired: 50, imageSrc: "/assets/images/coin_with_clover_design.png", iconAlt: "Bronze Coin with Clover", bonusCoins: 5 },
+  { id: "little_gem", name: "Little Gem", description: "Found a pretty Pink Diamond at 60 Coins!", pointsRequired: 60, imageSrc: "/assets/images/pink_diamond_gemstone.png", iconAlt: "Pink Diamond", bonusCoins: 5 },
   { id: "silver_pouch_hoarder", name: "Silver Pouch Hoarder", description: "Amassed 75 Golden Coins!", pointsRequired: 75, imageSrc: "/assets/images/pile_of_gold_coins_image.png", iconAlt: "Pile of Gold Coins", bonusCoins: 10 },
-  { id: "gemstone_novice", name: "Gemstone Novice", description: "Found 150 Golden Coins & started your gem collection!", pointsRequired: 150, imageSrc: "/assets/images/blue_gem_icon.png", iconAlt: "Blue Gem Icon", bonusCoins: 15 },
-  { id: "ruby_seeker", name: "Ruby Seeker", description: "Discovered 225 Golden Coins and a ruby!", pointsRequired: 225, imageSrc: "/assets/images/red_diamond_gem_illustration.png", iconAlt: "Red Diamond Gem", bonusCoins: 20 },
-  { id: "diamond_finder", name: "Diamond Finder", description: "Unearthed 350 Golden Coins and a sparkling diamond!", pointsRequired: 350, imageSrc: "/assets/images/blue_diamond_cartoon_illustration.png", iconAlt: "Blue Diamond Illustration", bonusCoins: 25 },
-  { id: "treasure_chest_unlocker", name: "Treasure Chest Unlocker", description: "Filled your chest with 500 Golden Coins!", pointsRequired: 500, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest with Gold and Jewels", bonusCoins: 30 },
-  { id: "chilllearn_tycoon", name: "ChillLearn Tycoon", description: "Achieved 750 Golden Coins! You're a tycoon!", pointsRequired: 750, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Gold Trophy with Laurel Wreath", bonusCoins: 50 },
+  { id: "shooting_star_award", name: "Shooting Star", description: "Spotted a Shooting Star at 85 Coins!", pointsRequired: 85, imageSrc: "/assets/images/shooting_star_illustration.png", iconAlt: "Shooting Star", bonusCoins: 5 },
+  { id: "gemstone_novice", name: "Gemstone Novice", description: "Started your gem collection with 125 Golden Coins!", pointsRequired: 125, imageSrc: "/assets/images/blue_gem_icon.png", iconAlt: "Blue Gem Icon", bonusCoins: 10 },
+  { id: "ruby_seeker", name: "Ruby Seeker", description: "Discovered a Ruby Gem with 175 Golden Coins!", pointsRequired: 175, imageSrc: "/assets/images/red_diamond_gem_illustration.png", iconAlt: "Red Diamond Gem", bonusCoins: 15 },
+  { id: "diamond_finder", name: "Diamond Finder", description: "Unearthed a Blue Diamond with 225 Golden Coins!", pointsRequired: 225, imageSrc: "/assets/images/blue_diamond_cartoon_illustration.png", iconAlt: "Blue Diamond Illustration", bonusCoins: 20 },
+  { id: "award_winner", name: "Award Winner", description: "Earned an Award Ribbon at 300 Golden Coins!", pointsRequired: 300, imageSrc: "/assets/images/yellow_award_ribbon_star_design.png", iconAlt: "Yellow Award Ribbon with Star", bonusCoins: 20 },
+  { id: "treasure_chest_unlocker", name: "Treasure Chest Unlocker", description: "Unlocked a Treasure Chest with 400 Golden Coins!", pointsRequired: 400, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest with Gold and Jewels", bonusCoins: 25 },
+  { id: "chilllearn_tycoon", name: "ChillLearn Tycoon", description: "Achieved 500 Golden Coins! You're a tycoon!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Gold Trophy with Laurel Wreath", bonusCoins: 30 },
 ];
 
 
@@ -41,17 +47,17 @@ interface UserProfileState {
   username: string | null;
   favoriteTopics: string | null;
   goldenCoins: number;
-  unlockedAchievements: string[]; // Stores IDs of claimed achievements
-  pendingClaimAchievements: Achievement[]; // Stores full achievement objects to be claimed
-  lastBonusAwarded: { amount: number; key: string } | null; // For achievement bonus coin popup
-  lastGameCoinsAwarded: { amount: number; key: string } | null; // For general game coin popup
+  unlockedAchievements: string[];
+  pendingClaimAchievements: Achievement[];
+  lastBonusAwarded: { amount: number; key: string } | null;
+  lastGameCoinsAwarded: { amount: number; key: string } | null;
   lastCoinsDeducted: { amount: number; key: string } | null;
 
   setUsername: (name: string | null) => void;
   setFavoriteTopics: (topics: string | null) => void;
   addGoldenCoins: (amount: number, isAchievementBonus?: boolean) => void;
   deductGoldenCoins: (amount: number) => void;
-  _triggerAchievementChecks: () => void; // Underscore indicates it's primarily for internal use
+  _triggerAchievementChecks: () => void;
   claimNextPendingAchievement: () => void;
   isAchievementUnlocked: (achievementId: string) => boolean;
   loadUserProfileFromStorage: () => void;
@@ -96,7 +102,6 @@ export const useUserProfileStore = create<UserProfileState>()(
         if (!isAchievementBonus) {
           set({ lastGameCoinsAwarded: { amount, key: Date.now().toString() + Math.random() } });
         }
-        // Always check for achievements after adding coins
         setTimeout(() => get()._triggerAchievementChecks(), 0);
       },
       deductGoldenCoins: (amount) => {
@@ -136,7 +141,7 @@ export const useUserProfileStore = create<UserProfileState>()(
         const achievementToClaim = pending[0];
 
         if (achievementToClaim.bonusCoins && achievementToClaim.bonusCoins > 0) {
-          get().addGoldenCoins(achievementToClaim.bonusCoins, true); // true indicates it's an achievement bonus
+          get().addGoldenCoins(achievementToClaim.bonusCoins, true);
           set({ lastBonusAwarded: { amount: achievementToClaim.bonusCoins, key: Date.now().toString() + Math.random() } });
         }
 
@@ -147,16 +152,15 @@ export const useUserProfileStore = create<UserProfileState>()(
         persistUnlockedAchievementsToStorage(get().unlockedAchievements);
         playAchievementUnlockedSound();
 
-        // Define JSX for toast title using React.createElement
         const toastTitleContent = React.createElement(
           'div',
           { className: 'flex items-center gap-2' },
-          React.createElement('img', { // Using standard img tag here for simplicity within store
-            src: achievementToClaim.imageSrc, // Assuming imageSrc is a path like '/assets/images/...'
+          React.createElement('img', {
+            src: achievementToClaim.imageSrc,
             alt: achievementToClaim.name,
             width: 24,
             height: 24,
-            className: 'rounded-sm' // Add any necessary styling
+            className: 'rounded-sm'
           }),
           'Achievement Unlocked!'
         );
@@ -165,7 +169,7 @@ export const useUserProfileStore = create<UserProfileState>()(
           variant: "success",
           title: toastTitleContent,
           description: `You've unlocked: ${achievementToClaim.name}! ${achievementToClaim.bonusCoins ? `+${achievementToClaim.bonusCoins} bonus coins!` : ''}`,
-          duration: 7000, // Longer duration for achievements
+          duration: 7000,
         });
       },
       isAchievementUnlocked: (achievementId: string) => {
@@ -182,11 +186,10 @@ export const useUserProfileStore = create<UserProfileState>()(
           lastGameCoinsAwarded: null,
           lastCoinsDeducted: null,
         });
-        setTimeout(() => get()._triggerAchievementChecks(), 100); // Check achievements after loading
+        setTimeout(() => get()._triggerAchievementChecks(), 500);
       },
       resetUserProfile: () => {
         set(initialUserProfileState);
-        // Persist the reset state immediately
         persistUsernameToStorage(null);
         persistFavoriteTopicsToStorage(null);
         persistGoldenCoinsToStorage(0);
@@ -197,21 +200,19 @@ export const useUserProfileStore = create<UserProfileState>()(
       clearLastCoinsDeducted: () => set({ lastCoinsDeducted: null }),
     }),
     {
-      name: 'user-profile-storage-v5-coins', // Updated version name
+      name: 'user-profile-storage-v5-coins',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         username: state.username,
         favoriteTopics: state.favoriteTopics,
         goldenCoins: state.goldenCoins,
         unlockedAchievements: state.unlockedAchievements,
-        // pendingClaimAchievements is intentionally not persisted; it rebuilds on load
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Trigger achievement checks after rehydration
           setTimeout(() => {
             state._triggerAchievementChecks();
-          }, 150); // Slightly longer delay to ensure goldenCoins is fully rehydrated
+          }, 500);
         }
       }
     }
