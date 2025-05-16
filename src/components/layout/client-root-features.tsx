@@ -22,7 +22,6 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     isWalkthroughOpen,
     closeWalkthrough,
     setHasCompletedWalkthrough,
-    currentStepIndex,
     setCurrentStepIndex,
   } = useWalkthroughStore();
   
@@ -49,12 +48,21 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       if (event.key === 'user-profile-storage-v3') { 
         loadUserProfileFromStorage();
       }
+      if (event.key === useWalkthroughStore.persist.getOptions().name) { // Listen to walkthrough store changes
+        // Zustand's persist middleware handles rehydration, but we can force a read if needed.
+        // For now, relying on component re-render due to store change.
+        const store = useWalkthroughStore.getState();
+        if (store.hasCompletedWalkthrough !== hasCompletedWalkthrough) {
+          // This line is mostly for debugging; the component should re-render automatically
+          // when hasCompletedWalkthrough from the store hook updates.
+        }
+      }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [loadUserProfileFromStorage]);
+  }, [loadUserProfileFromStorage, hasCompletedWalkthrough]);
 
   useEffect(() => {
     if (isClientMounted) {
@@ -119,8 +127,8 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       <MainNav />
       <FloatingGoldenStars />
       <main 
-        data-tour-id="main-content-area" // For walkthrough targeting
-        className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 pt-20 md:pt-24 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out"
+        data-tour-id="main-content-area" 
+        className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 pt-20 md:pt-24 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out relative"
       >
         {children}
       </main>
@@ -133,11 +141,11 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
         <WalkthroughGuide
           steps={walkthroughGuideSteps} 
           isOpen={isWalkthroughOpen}
-          onClose={() => {
-            // setHasCompletedWalkthrough(true); // Only mark as complete on explicit finish
+          onClose={() => { // Called on Skip or 'X'
+            setHasCompletedWalkthrough(true);
             closeWalkthrough();
           }}
-          onFinish={() => {
+          onFinish={() => { // Called on explicit "Finish" button
             setHasCompletedWalkthrough(true);
             closeWalkthrough();
           }}
@@ -146,3 +154,4 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     </div>
   );
 };
+
