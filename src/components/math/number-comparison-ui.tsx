@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, Scaling, Mic, MicOff, Smile, Info } from 'lucide-react';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
@@ -14,27 +14,28 @@ import { parseSpokenNumber } from '@/lib/speech';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup'; // Import CoinsLostPopup
+import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 
 interface ComparisonProblem {
   num1: number;
   num2: number;
-  questionType: 'bigger' | 'smaller'; 
+  questionType: 'bigger' | 'smaller';
   correctAnswer: number;
   questionText: string;
   speechText: string;
 }
 
-const PROBLEMS_PER_SESSION = 5; 
+const PROBLEMS_PER_SESSION = 5;
 const POINTS_PER_CORRECT_ANSWER = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 const SESSION_COMPLETION_BONUS = 5;
+const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 const generateComparisonProblem = (): ComparisonProblem => {
-  let num1 = Math.floor(Math.random() * 100) + 1; 
+  let num1 = Math.floor(Math.random() * 100) + 1;
   let num2 = Math.floor(Math.random() * 100) + 1;
-  while (num2 === num1) { 
+  while (num2 === num1) {
     num2 = Math.floor(Math.random() * 100) + 1;
   }
 
@@ -53,10 +54,10 @@ export const NumberComparisonUI = () => {
   const [problemsSolvedInSession, setProblemsSolvedInSession] = useState(0);
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedButton, setSelectedButton] = useState<number | null>(null); 
+  const [selectedButton, setSelectedButton] = useState<number | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [showCorrectAnswerHighlight, setShowCorrectAnswerHighlight] = useState(false); 
+  const [showCorrectAnswerHighlight, setShowCorrectAnswerHighlight] = useState(false);
   const [buttonAnimation, setButtonAnimation] = useState<{ index: number; type: 'success' | 'error' } | null>(null);
 
 
@@ -96,11 +97,17 @@ export const NumberComparisonUI = () => {
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
-    addGoldenCoins(SESSION_COMPLETION_BONUS);
-    setLastAwardedCoins(SESSION_COMPLETION_BONUS);
-    setShowCoinsEarnedPopup(true);
+    const wrongAnswersInSession = PROBLEMS_PER_SESSION - finalScore;
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+
+    if (calculatedBonus > 0) {
+      addGoldenCoins(calculatedBonus);
+      setLastAwardedCoins(calculatedBonus);
+      setShowCoinsEarnedPopup(true);
+      if (soundEffectsEnabled) playCoinsEarnedSound();
+    }
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Keep practicing to earn a bonus!'}`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2">
@@ -117,17 +124,17 @@ export const NumberComparisonUI = () => {
   }, [username, soundEffectsEnabled, toast, addGoldenCoins]);
 
   const handleAnswer = useCallback((chosenNum: number) => {
-    if (!currentProblem || isAttempted || sessionCompleted) return; 
+    if (!currentProblem || isAttempted || sessionCompleted) return;
 
     setIsAttempted(true);
     setSelectedButton(chosenNum);
     const correct = chosenNum === currentProblem.correctAnswer;
     setIsCorrect(correct);
-    
+
     const buttonIndex = currentProblem.num1 === chosenNum ? 0 : 1;
     setButtonAnimation({ index: buttonIndex, type: correct ? 'success' : 'error' });
     setTimeout(() => setButtonAnimation(null), 700);
-    
+
     let newCurrentScore = score;
     if(correct) {
         newCurrentScore = score + 1;
@@ -138,7 +145,8 @@ export const NumberComparisonUI = () => {
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
-          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          description: "Correct!",
           duration: 2000,
         });
     } else {
@@ -153,12 +161,12 @@ export const NumberComparisonUI = () => {
           duration: 2000,
         });
     }
-    
+
     const newProblemsSolvedCount = problemsSolvedInSession + 1;
-    
+
 
     const afterFeedbackAudio = () => {
-      setProblemsSolvedInSession(newProblemsSolvedCount); 
+      setProblemsSolvedInSession(newProblemsSolvedCount);
       if (newProblemsSolvedCount >= PROBLEMS_PER_SESSION) {
         handleSessionCompletion(newCurrentScore);
       } else {
@@ -171,10 +179,10 @@ export const NumberComparisonUI = () => {
       setFeedback({ type: 'success', message: successMessage });
       if (soundEffectsEnabled) playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", y" : "Y"}ou got it! ${chosenNum} is ${currentProblem.questionType}.`;
-      
+
       if (soundEffectsEnabled) {
         const utterance = speakText(speechSuccessMsg, undefined, () => setTimeout(afterFeedbackAudio, 500));
-        if (!utterance) setTimeout(afterFeedbackAudio, 1500); 
+        if (!utterance) setTimeout(afterFeedbackAudio, 1500);
       } else {
         setTimeout(afterFeedbackAudio, 1200);
       }
@@ -188,7 +196,6 @@ export const NumberComparisonUI = () => {
       const revealCorrectAnswerAndProceed = () => {
         setShowCorrectAnswerHighlight(true);
         setFeedback({type: 'error', message: `The ${currentProblem.questionType} one was ${currentProblem.correctAnswer}.`});
-        // Highlight the correct button green
         const correctButtonIndex = currentProblem.num1 === currentProblem.correctAnswer ? 0 : 1;
         setButtonAnimation({ index: correctButtonIndex, type: 'success' });
         setTimeout(() => setButtonAnimation(null), 700);
@@ -201,7 +208,7 @@ export const NumberComparisonUI = () => {
             setTimeout(afterFeedbackAudio, 1500);
         }
       };
-      
+
       if (soundEffectsEnabled) {
         const utterance = speakText(speechErrorMsg, undefined, () => setTimeout(revealCorrectAnswerAndProceed, 1200));
         if (!utterance) setTimeout(revealCorrectAnswerAndProceed, 1500);
@@ -238,34 +245,34 @@ export const NumberComparisonUI = () => {
       recognitionRef.current.onresult = (event) => {
         const spokenText = event.results[0][0].transcript;
         const number = parseSpokenNumber(spokenText);
-        
+
         if (number !== null && currentProblem) {
           if (number === currentProblem.num1) {
-            handleAnswerRef.current(currentProblem.num1); 
-            toast({ 
-                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>, 
-                description: `You said: "${spokenText}". Choosing ${currentProblem.num1}.`, 
-                variant: "info" 
+            handleAnswerRef.current(currentProblem.num1);
+            toast({
+                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>,
+                description: `You said: "${spokenText}". Choosing ${currentProblem.num1}.`,
+                variant: "info"
             });
           } else if (number === currentProblem.num2) {
-            handleAnswerRef.current(currentProblem.num2); 
-            toast({ 
-                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>, 
-                description: `You said: "${spokenText}". Choosing ${currentProblem.num2}.`, 
-                variant: "info" 
+            handleAnswerRef.current(currentProblem.num2);
+            toast({
+                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>,
+                description: `You said: "${spokenText}". Choosing ${currentProblem.num2}.`,
+                variant: "info"
             });
           } else {
-            toast({ 
-                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't match</div>, 
-                description: `Heard: "${spokenText}". That's not one of the options. Try again or click.`, 
-                variant: "info" 
+            toast({
+                title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't match</div>,
+                description: `Heard: "${spokenText}". That's not one of the options. Try again or click.`,
+                variant: "info"
             });
           }
         } else {
-          toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>, 
-            description: `Heard: "${spokenText}". Please try again or click an option.`, 
-            variant: "info" 
+          toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>,
+            description: `Heard: "${spokenText}". Please try again or click an option.`,
+            variant: "info"
             });
         }
         setIsListening(false);
@@ -273,10 +280,10 @@ export const NumberComparisonUI = () => {
 
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-        toast({ 
-            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>, 
-            description: `Could not recognize speech: ${event.error}. Try clicking.`, 
-            variant: "destructive" 
+        toast({
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>,
+            description: `Could not recognize speech: ${event.error}. Try clicking.`,
+            variant: "destructive"
         });
         setIsListening(false);
       };
@@ -301,11 +308,11 @@ export const NumberComparisonUI = () => {
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-        toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>, 
-            description: "Your browser doesn't support voice input. Please click an option.", 
-            variant: "info", 
-            duration: 5000 
+        toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>,
+            description: "Your browser doesn't support voice input. Please click an option.",
+            variant: "info",
+            duration: 5000
         });
         return;
     }
@@ -323,23 +330,23 @@ export const NumberComparisonUI = () => {
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null);
-        toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>, 
-            description: "Say one of the numbers.", 
-            variant: "info" 
+        toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>,
+            description: "Say one of the numbers.",
+            variant: "info"
         });
       } catch (error) {
         console.error("Error starting speech recognition:", error);
-        toast({ 
-            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>, 
-            description: "Could not start microphone. Check permissions.", 
-            variant: "destructive" 
+        toast({
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>,
+            description: "Could not start microphone. Check permissions.",
+            variant: "destructive"
         });
         setIsListening(false);
       }
     }
   };
-  
+
   const handleNextProblemOrNewSession = () => {
     if (sessionCompleted) {
         startNewSession();
@@ -397,9 +404,9 @@ export const NumberComparisonUI = () => {
                 <Button variant="outline" size="icon" onClick={handleSpeakQuestion} aria-label="Read question aloud" disabled={isListening || !soundEffectsEnabled || sessionCompleted || isAttempted}>
                     <Volume2 className="h-5 w-5" />
                 </Button>
-                <Button 
-                    variant="outline" 
-                    size="icon" 
+                <Button
+                    variant="outline"
+                    size="icon"
                     onClick={toggleListening}
                     className={cn("h-10 w-10", isListening && "bg-destructive/20 text-destructive animate-pulse")}
                     aria-label={isListening ? "Stop listening" : "Speak your answer"}
@@ -415,19 +422,19 @@ export const NumberComparisonUI = () => {
                     let buttonSpecificClasses = "";
 
                     if (isAttempted) {
-                        if (isSelected) { 
+                        if (isSelected) {
                             if (isCorrect) {
                                 buttonSpecificClasses = "bg-green-500/20 border-green-500 text-green-700 dark:text-green-400 hover:bg-green-500/30 ring-2 ring-green-500";
-                            } else { 
+                            } else {
                                 buttonSpecificClasses = "bg-red-500/20 border-red-500 text-red-700 dark:text-red-400 hover:bg-red-500/30 ring-2 ring-red-500";
                             }
-                        } else { 
-                            if (showCorrectAnswerHighlight && isActualCorrect) { 
+                        } else {
+                            if (showCorrectAnswerHighlight && isActualCorrect) {
                                 buttonSpecificClasses = "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-500";
                             }
                         }
                     }
-                    
+
                     if (buttonAnimation && buttonAnimation.index === index) {
                         buttonSpecificClasses = cn(buttonSpecificClasses, buttonAnimation.type === 'success' ? 'animate-flash-success' : 'animate-flash-error');
                     }
@@ -464,13 +471,13 @@ export const NumberComparisonUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button 
-            variant="outline" 
-            onClick={handleNextProblemOrNewSession} 
-            className="w-full" 
+        <Button
+            variant="outline"
+            onClick={handleNextProblemOrNewSession}
+            className="w-full"
             disabled={isLoading || isListening || (!isAttempted && currentProblem !== null && !sessionCompleted)}
         >
-          <RefreshCcw className="mr-2 h-4 w-4" /> 
+          <RefreshCcw className="mr-2 h-4 w-4" />
           {sessionCompleted ? "Play New Session" : "Skip / Next Problem"}
         </Button>
       </CardFooter>

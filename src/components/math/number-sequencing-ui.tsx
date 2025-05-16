@@ -1,14 +1,14 @@
 
 "use client";
 
-import * as React from 'react'; 
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle2, XCircle, Loader2, Volume2, RefreshCcw, ChevronsRight, Mic, MicOff, Smile, Info } from 'lucide-react';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
@@ -17,26 +17,27 @@ import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup'; // Import CoinsLostPopup
+import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 interface SequenceProblem {
-  sequenceDisplay: (number | string)[]; 
+  sequenceDisplay: (number | string)[];
   correctAnswer: number;
-  questionText: string; 
-  speechText: string;   
+  questionText: string;
+  speechText: string;
 }
 
-const PROBLEMS_PER_SESSION = 5; 
+const PROBLEMS_PER_SESSION = 5;
 const POINTS_PER_CORRECT_ANSWER = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 const SESSION_COMPLETION_BONUS = 5;
+const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 const generateSequenceProblem = (): SequenceProblem => {
-  const start = Math.floor(Math.random() * 20) + 1; 
-  const diffTypes = [1, 2, 3, 5, 10]; 
+  const start = Math.floor(Math.random() * 20) + 1;
+  const diffTypes = [1, 2, 3, 5, 10];
   const difference = diffTypes[Math.floor(Math.random() * diffTypes.length)];
-  const length = 4; 
-  const blankIndex = Math.floor(Math.random() * (length -1)) + 1; 
+  const length = 4;
+  const blankIndex = Math.floor(Math.random() * (length -1)) + 1;
 
   const fullSequence: number[] = [];
   for (let i = 0; i < length; i++) {
@@ -45,7 +46,7 @@ const generateSequenceProblem = (): SequenceProblem => {
 
   const correctAnswer = fullSequence[blankIndex];
   const sequenceDisplay: (number | string)[] = fullSequence.map((num, idx) => (idx === blankIndex ? "__" : num));
-  
+
   const questionText = `What number fits the blank: ${sequenceDisplay.join(', ')}?`;
   const speechText = `What number fits the blank in the sequence: ${sequenceDisplay.map(s => s === "__" ? "blank" : s).join(', ')}?`;
 
@@ -61,7 +62,7 @@ export const NumberSequencingUI = () => {
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isListening, setIsListening] = useState(false);
-  
+
   const [isAttempted, setIsAttempted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [answerInBlank, setAnswerInBlank] = useState<string | number | null>(null);
@@ -76,7 +77,7 @@ export const NumberSequencingUI = () => {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
-  const answerInputRef = useRef<HTMLInputElement>(null);
+  const answerInputRef = useRef<HTMLInputElement | null>(null);
   const { username, addGoldenCoins, deductGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
@@ -105,11 +106,18 @@ export const NumberSequencingUI = () => {
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
-    addGoldenCoins(SESSION_COMPLETION_BONUS);
-    setLastAwardedCoins(SESSION_COMPLETION_BONUS);
-    setShowCoinsEarnedPopup(true);
+    const wrongAnswersInSession = PROBLEMS_PER_SESSION - finalScore;
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+
+    if (calculatedBonus > 0) {
+      addGoldenCoins(calculatedBonus);
+      setLastAwardedCoins(calculatedBonus);
+      setShowCoinsEarnedPopup(true);
+      if (soundEffectsEnabled) playCoinsEarnedSound();
+    }
+
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
+    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Keep practicing for a bonus!'}`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2">
@@ -137,14 +145,14 @@ export const NumberSequencingUI = () => {
       setFeedback({ type: 'info', message: 'Please enter a valid number.' });
       return;
     }
-    
+
     setIsAttempted(true);
     setAnswerInBlank(answerNum);
     const correct = answerNum === currentProblem.correctAnswer;
     setIsCorrect(correct);
     setInputAnimation(correct ? 'success' : 'error');
     setTimeout(() => setInputAnimation(null), 700);
-    
+
     let newCurrentScore = score;
     if(correct) {
         newCurrentScore = score + 1;
@@ -155,7 +163,8 @@ export const NumberSequencingUI = () => {
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
-          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          description: "Correct!",
           duration: 2000,
         });
     } else {
@@ -170,7 +179,7 @@ export const NumberSequencingUI = () => {
           duration: 2000,
         });
     }
-    
+
     const newProblemsAttempted = problemsAttemptedInSession + 1;
 
     const afterFeedbackAudio = () => {
@@ -188,7 +197,7 @@ export const NumberSequencingUI = () => {
       setFeedback({ type: 'success', message: successMessage });
       if (soundEffectsEnabled) playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", t" : "T"}hat's right! ${currentProblem.correctAnswer} completes the sequence.`;
-      
+
       if (soundEffectsEnabled) {
         const utterance = speakText(speechSuccessMsg, undefined, afterFeedbackAudio);
         if (!utterance) setTimeout(afterFeedbackAudio, 1500);
@@ -204,8 +213,8 @@ export const NumberSequencingUI = () => {
 
       const revealCorrectAndProceed = () => {
         setShowCorrectAnswerAfterIncorrect(true);
-        setAnswerInBlank(currentProblem.correctAnswer); 
-        setInputAnimation('success'); // Flash green for correct answer reveal
+        setAnswerInBlank(currentProblem.correctAnswer);
+        setInputAnimation('success');
         setTimeout(() => setInputAnimation(null), 700);
         if (soundEffectsEnabled) {
             const correctAnswerSpeech = `The correct answer was ${currentProblem.correctAnswer}.`;
@@ -218,7 +227,7 @@ export const NumberSequencingUI = () => {
 
       if (soundEffectsEnabled) {
         const utterance = speakText(speechErrorMsg, undefined, () => setTimeout(revealCorrectAndProceed, 1200));
-        if (!utterance) setTimeout(revealCorrectAndProceed, 1500); 
+        if (!utterance) setTimeout(revealCorrectAndProceed, 1500);
       } else {
          setTimeout(revealCorrectAndProceed, 1200);
       }
@@ -227,10 +236,10 @@ export const NumberSequencingUI = () => {
 
 
   useEffect(() => {
-    loadNewProblem(true); 
+    loadNewProblem(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
+
   useEffect(() => {
     if (currentProblem && !isLoading && !sessionCompleted && currentProblem.speechText && soundEffectsEnabled && !isAttempted) {
       speakText(currentProblem.speechText);
@@ -256,17 +265,17 @@ export const NumberSequencingUI = () => {
         const number = parseSpokenNumber(spokenText);
         if (number !== null) {
           setUserAnswer(String(number));
-          toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>, 
-            description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, 
-            variant: "info" 
+          toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>,
+            description: `You said: "${spokenText}". We interpreted: "${String(number)}".`,
+            variant: "info"
           });
-          setTimeout(() => handleSubmitRef.current(), 50); 
+          setTimeout(() => handleSubmitRef.current(), 50);
         } else {
-          toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>, 
-            description: `Heard: "${spokenText}". Please try again or type the number.`, 
-            variant: "info" 
+          toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>,
+            description: `Heard: "${spokenText}". Please try again or type the number.`,
+            variant: "info"
           });
         }
         setIsListening(false);
@@ -274,10 +283,10 @@ export const NumberSequencingUI = () => {
 
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-        toast({ 
-            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>, 
-            description: `Could not recognize speech: ${event.error}. Try typing.`, 
-            variant: "destructive" 
+        toast({
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>,
+            description: `Could not recognize speech: ${event.error}. Try typing.`,
+            variant: "destructive"
         });
         setIsListening(false);
       };
@@ -302,11 +311,11 @@ export const NumberSequencingUI = () => {
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-        toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>, 
-            description: "Your browser doesn't support voice input. Please type your answer.", 
-            variant: "info", 
-            duration: 5000 
+        toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>,
+            description: "Your browser doesn't support voice input. Please type your answer.",
+            variant: "info",
+            duration: 5000
         });
         return;
     }
@@ -324,43 +333,42 @@ export const NumberSequencingUI = () => {
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null);
-        toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>, 
-            description: "Speak the missing number.", 
-            variant: "info" 
+        toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>,
+            description: "Speak the missing number.",
+            variant: "info"
         });
       } catch (error) {
         console.error("Error starting speech recognition:", error);
-        toast({ 
-            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>, 
-            description: "Could not start microphone. Check permissions.", 
-            variant: "destructive" 
+        toast({
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>,
+            description: "Could not start microphone. Check permissions.",
+            variant: "destructive"
         });
         setIsListening(false);
       }
     }
   };
-  
+
   const handleSkipOrNextProblem = () => {
     if (sessionCompleted) {
-        loadNewProblem(true); 
+        loadNewProblem(true);
     } else {
-        const newProblemsAttempted = problemsAttemptedInSession + 1; 
-        
-        if (newProblemsAttempted >= PROBLEMS_PER_SESSION) {
-             setProblemsAttemptedInSession(newProblemsAttempted); 
-             handleSessionCompletion(score); 
-        } else {
-            setProblemsAttemptedInSession(newProblemsAttempted);
-            loadNewProblem();
-        }
+      // const newProblemsAttempted = problemsAttemptedInSession + 1;
+      // if (newProblemsAttempted >= PROBLEMS_PER_SESSION) {
+      //      setProblemsAttemptedInSession(newProblemsAttempted);
+      //      handleSessionCompletion(score);
+      // } else {
+      //     setProblemsAttemptedInSession(newProblemsAttempted);
+          loadNewProblem();
+      // }
     }
   };
 
   const renderEquationWithBlank = () => {
     if (!currentProblem) return null;
     const { sequenceDisplay } = currentProblem;
-    
+
     let blankStyleClass = "";
     if (isAttempted) {
         if (isCorrect) {
@@ -373,8 +381,8 @@ export const NumberSequencingUI = () => {
     }
 
     return (
-      <p 
-        className="text-3xl md:text-4xl font-bold select-none flex-grow text-center flex items-center justify-center flex-wrap gap-x-1" 
+      <p
+        className="text-3xl md:text-4xl font-bold select-none flex-grow text-center flex items-center justify-center flex-wrap gap-x-1"
         aria-live="polite"
       >
         {sequenceDisplay.map((item, index) => (
@@ -429,7 +437,7 @@ export const NumberSequencingUI = () => {
           <ChevronsRight className="mr-2 h-6 w-6" /> Complete the Sequence
         </CardTitle>
         <CardDescription>
-          Score: <span className="font-bold text-accent">{score}</span> | 
+          Score: <span className="font-bold text-accent">{score}</span> |
           Problem: <span className="font-bold text-accent">{Math.min(problemsAttemptedInSession + (!isAttempted && currentProblem ? 1:0), PROBLEMS_PER_SESSION)} / {PROBLEMS_PER_SESSION}</span>
         </CardDescription>
       </CardHeader>
@@ -472,11 +480,11 @@ export const NumberSequencingUI = () => {
                   aria-label="Enter the missing number in the sequence"
                   disabled={isAttempted || isLoading || isListening || sessionCompleted}
                 />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={toggleListening} 
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={toggleListening}
                   className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
                   aria-label={isListening ? "Stop listening" : "Speak your answer"}
                   disabled={isAttempted || isLoading || isListening || !recognitionRef.current || !soundEffectsEnabled || sessionCompleted}
@@ -502,13 +510,13 @@ export const NumberSequencingUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button 
-            variant="outline" 
-            onClick={handleSkipOrNextProblem} 
-            className="w-full" 
+        <Button
+            variant="outline"
+            onClick={handleSkipOrNextProblem}
+            className="w-full"
             disabled={isLoading || isListening || (!isAttempted && currentProblem !== null && !sessionCompleted)}
         >
-          <RefreshCcw className="mr-2 h-4 w-4" /> 
+          <RefreshCcw className="mr-2 h-4 w-4" />
           {sessionCompleted ? "Start New Session" : "Skip / Next Problem"}
         </Button>
       </CardFooter>

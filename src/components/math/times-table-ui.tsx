@@ -1,15 +1,15 @@
 
 "use client";
 
-import * as React from 'react'; 
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Loader2, Repeat, ListOrdered, Volume2, Mic, MicOff, Smile, Info, RefreshCcw } from 'lucide-react';
-import Image from 'next/image'; 
+import { CheckCircle2, XCircle, Loader2, ListOrdered, Volume2, Mic, MicOff, Smile, Info, RefreshCcw } from 'lucide-react';
+import Image from 'next/image';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
@@ -18,15 +18,15 @@ import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup'; // Import CoinsLostPopup
+import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 
 interface TimesTableProblem {
-  factor1: number; 
-  factor2: number; 
+  factor1: number;
+  factor2: number;
   answer: number;
-  questionText: string; 
-  speechText: string;   
+  questionText: string;
+  speechText: string;
 }
 
 const generateTimesTableProblem = (table: number, multiplier: number): TimesTableProblem => {
@@ -39,10 +39,11 @@ const generateTimesTableProblem = (table: number, multiplier: number): TimesTabl
   };
 };
 
-const MAX_MULTIPLIER = 12; 
+const MAX_MULTIPLIER = 12;
 const POINTS_PER_CORRECT_ANSWER = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 const SESSION_COMPLETION_BONUS = 5;
+const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -55,20 +56,20 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 export const TimesTableUI = () => {
-  const [selectedTable, setSelectedTable] = useState<number>(2); 
+  const [selectedTable, setSelectedTable] = useState<number>(2);
   const [shuffledMultipliers, setShuffledMultipliers] = useState<number[]>([]);
   const [currentProblemIndex, setCurrentProblemIndex] = useState<number>(0);
   const [currentProblem, setCurrentProblem] = useState<TimesTableProblem | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-  
-  const [score, setScore] = useState(0); 
-  const [problemsAttemptedInSession, setProblemsAttemptedInSession] = useState(0); 
+
+  const [score, setScore] = useState(0);
+  const [problemsAttemptedInSession, setProblemsAttemptedInSession] = useState(0);
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isListening, setIsListening] = useState(false);
-  
+
   const [isAttempted, setIsAttempted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [answerInBlank, setAnswerInBlank] = useState<string | number | null>(null);
@@ -87,7 +88,7 @@ export const TimesTableUI = () => {
   const { username, addGoldenCoins, deductGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
-  const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []); 
+  const tableOptions = useMemo(() => Array.from({ length: 11 }, (_, i) => i + 2), []);
 
   const resetProblemState = useCallback(() => {
     setUserAnswer('');
@@ -103,10 +104,17 @@ export const TimesTableUI = () => {
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
-    addGoldenCoins(SESSION_COMPLETION_BONUS);
-    setLastAwardedCoins(SESSION_COMPLETION_BONUS);
-    setShowCoinsEarnedPopup(true);
-    const completionMsg = `${username ? `Amazing job, ${username}!` : 'Table Complete!'} You scored ${finalScore} out of ${MAX_MULTIPLIER} for the ${selectedTable} times table. You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
+    const wrongAnswersInSession = MAX_MULTIPLIER - finalScore;
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+
+    if (calculatedBonus > 0) {
+      addGoldenCoins(calculatedBonus);
+      setLastAwardedCoins(calculatedBonus);
+      setShowCoinsEarnedPopup(true);
+      if (soundEffectsEnabled) playCoinsEarnedSound();
+    }
+
+    const completionMsg = `${username ? `Amazing job, ${username}!` : 'Table Complete!'} You scored ${finalScore} out of ${MAX_MULTIPLIER} for the ${selectedTable} times table. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Practice more to earn a bonus!'}`;
     if (soundEffectsEnabled) {
         playCompletionSound();
         speakText(completionMsg);
@@ -144,13 +152,13 @@ export const TimesTableUI = () => {
     setSessionCompleted(false);
     resetProblemState();
     if (!isInitialLoad && soundEffectsEnabled) playNotificationSound();
-    setIsLoading(false); 
+    setIsLoading(false);
   }, [soundEffectsEnabled, resetProblemState]);
-  
+
   useEffect(() => {
     startNewTablePractice(selectedTable, true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTable]); 
+  }, [selectedTable]);
 
   useEffect(() => {
     if (shuffledMultipliers.length > 0 && currentProblemIndex < shuffledMultipliers.length && !sessionCompleted) {
@@ -158,7 +166,7 @@ export const TimesTableUI = () => {
       const currentFactor2 = shuffledMultipliers[currentProblemIndex];
       const newProblem = generateTimesTableProblem(selectedTable, currentFactor2);
       setCurrentProblem(newProblem);
-      resetProblemState(); 
+      resetProblemState();
       setIsLoading(false);
     }
   }, [selectedTable, shuffledMultipliers, currentProblemIndex, sessionCompleted, resetProblemState]);
@@ -176,14 +184,14 @@ export const TimesTableUI = () => {
       setFeedback({ type: 'info', message: 'Please enter a valid number.' });
       return;
     }
-    
+
     setIsAttempted(true);
     setAnswerInBlank(answerNum);
     const correct = answerNum === currentProblem.answer;
     setIsCorrect(correct);
     setInputAnimation(correct ? 'success' : 'error');
     setTimeout(() => setInputAnimation(null), 700);
-    
+
     let newCurrentScore = score;
     if (correct) {
         newCurrentScore = score + 1;
@@ -194,7 +202,8 @@ export const TimesTableUI = () => {
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
-          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          description: "Well done!",
           duration: 2000,
         });
     } else {
@@ -221,7 +230,7 @@ export const TimesTableUI = () => {
       setFeedback({ type: 'success', message: successMessage });
       if (soundEffectsEnabled) playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! The answer is ${currentProblem.answer}.`;
-      
+
       if (soundEffectsEnabled) {
         const utterance = speakText(speechSuccessMsg, undefined, afterFeedbackAudio);
         if (!utterance) setTimeout(afterFeedbackAudio, 1500);
@@ -237,8 +246,8 @@ export const TimesTableUI = () => {
 
       const revealCorrectAndProceed = () => {
           setShowCorrectAnswerAfterIncorrect(true);
-          setAnswerInBlank(currentProblem.answer); 
-          setInputAnimation('success'); // Flash green for correct answer reveal
+          setAnswerInBlank(currentProblem.answer);
+          setInputAnimation('success');
           setTimeout(() => setInputAnimation(null), 700);
           if (soundEffectsEnabled) {
               const correctAnswerSpeech = `The correct answer was ${currentProblem.answer}.`;
@@ -251,7 +260,7 @@ export const TimesTableUI = () => {
 
       if (soundEffectsEnabled) {
         const utterance = speakText(speechErrorMsg, undefined, () => setTimeout(revealCorrectAndProceed, 1200));
-        if (!utterance) setTimeout(revealCorrectAndProceed, 1500); 
+        if (!utterance) setTimeout(revealCorrectAndProceed, 1500);
       } else {
          setTimeout(revealCorrectAndProceed, 1200);
       }
@@ -284,17 +293,17 @@ export const TimesTableUI = () => {
         const number = parseSpokenNumber(spokenText);
         if (number !== null) {
           setUserAnswer(String(number));
-          toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>, 
-            description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, 
-            variant: "info" 
+          toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>,
+            description: `You said: "${spokenText}". We interpreted: "${String(number)}".`,
+            variant: "info"
           });
            setTimeout(() => handleSubmitRef.current(), 0);
         } else {
-          toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>, 
-            description: `Heard: "${spokenText}". Please try again or type the number.`, 
-            variant: "info" 
+          toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>,
+            description: `Heard: "${spokenText}". Please try again or type the number.`,
+            variant: "info"
           });
         }
         setIsListening(false);
@@ -302,10 +311,10 @@ export const TimesTableUI = () => {
 
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-        toast({ 
-            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>, 
-            description: `Could not recognize speech: ${event.error}. Try typing.`, 
-            variant: "destructive" 
+        toast({
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>,
+            description: `Could not recognize speech: ${event.error}. Try typing.`,
+            variant: "destructive"
         });
         setIsListening(false);
       };
@@ -320,7 +329,7 @@ export const TimesTableUI = () => {
 
   const handleTableChange = (value: string) => {
     const tableNum = parseInt(value, 10);
-    setSelectedTable(tableNum); 
+    setSelectedTable(tableNum);
   };
 
   const handleSpeakQuestion = () => {
@@ -333,11 +342,11 @@ export const TimesTableUI = () => {
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-        toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>, 
-            description: "Your browser doesn't support voice input. Please type your answer.", 
-            variant: "info", 
-            duration: 5000 
+        toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>,
+            description: "Your browser doesn't support voice input. Please type your answer.",
+            variant: "info",
+            duration: 5000
         });
         return;
     }
@@ -349,23 +358,23 @@ export const TimesTableUI = () => {
       recognitionRef.current.stop();
       setIsListening(false);
     } else {
-      if (sessionCompleted || isAttempted ) return; 
+      if (sessionCompleted || isAttempted ) return;
       try {
         if (soundEffectsEnabled) playNotificationSound();
         recognitionRef.current.start();
         setIsListening(true);
         setFeedback(null);
-        toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>, 
-            description: "Speak your answer.", 
-            variant: "info" 
+        toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>,
+            description: "Speak your answer.",
+            variant: "info"
         });
       } catch (error) {
         console.error("Error starting speech recognition:", error);
-        toast({ 
-            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>, 
-            description: "Could not start microphone. Check permissions.", 
-            variant: "destructive" 
+        toast({
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>,
+            description: "Could not start microphone. Check permissions.",
+            variant: "destructive"
         });
         setIsListening(false);
       }
@@ -376,14 +385,14 @@ export const TimesTableUI = () => {
     if (sessionCompleted) {
         startNewTablePractice(selectedTable);
     } else {
-        loadNextProblem(score); 
+        loadNextProblem(score);
     }
   };
-  
+
   const renderEquationWithBlank = () => {
     if (!currentProblem) return null;
     const { factor1, factor2 } = currentProblem;
-    
+
     let blankStyleClass = "";
     if (isAttempted) {
         if (isCorrect) {
@@ -396,12 +405,12 @@ export const TimesTableUI = () => {
     }
 
     return (
-      <p 
-        className="text-5xl md:text-6xl font-bold text-gradient-primary-accent bg-clip-text text-transparent drop-shadow-sm py-2 select-none flex-grow text-center flex items-center justify-center" 
+      <p
+        className="text-5xl md:text-6xl font-bold text-gradient-primary-accent bg-clip-text text-transparent drop-shadow-sm py-2 select-none flex-grow text-center flex items-center justify-center"
         aria-live="polite"
         data-ai-hint="multiplication problem"
       >
-        {factor1} <span className="mx-2 text-foreground/80">×</span> {factor2} <span className="mx-2 text-foreground/80">=</span> 
+        {factor1} <span className="mx-2 text-foreground/80">×</span> {factor2} <span className="mx-2 text-foreground/80">=</span>
         {isAttempted && answerInBlank !== null ? (
           <span className={cn("inline-block px-2 py-0.5 rounded-md transition-colors duration-300 ease-in-out min-w-[60px] text-center", blankStyleClass)}>
             {answerInBlank}
@@ -412,8 +421,8 @@ export const TimesTableUI = () => {
       </p>
     );
   };
-  
-  if (isLoading && !currentProblem) { 
+
+  if (isLoading && !currentProblem) {
     return (
         <Card className="w-full max-w-lg mx-auto shadow-xl border-accent/20 relative">
              <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
@@ -441,7 +450,7 @@ export const TimesTableUI = () => {
           <ListOrdered className="mr-2 h-6 w-6" /> Times Table Challenge
         </CardTitle>
         <CardDescription>
-          Practice Table: <span className="font-bold text-primary">{selectedTable}</span> | 
+          Practice Table: <span className="font-bold text-primary">{selectedTable}</span> |
           Score: <span className="font-bold text-primary">{score} / {problemsAttemptedInSession}</span> |
           Problem: <span className="font-bold text-primary">{Math.min(currentProblemIndex + 1, MAX_MULTIPLIER)} / {MAX_MULTIPLIER}</span>
         </CardDescription>
@@ -501,11 +510,11 @@ export const TimesTableUI = () => {
                   aria-label={`Enter your answer for ${currentProblem.questionText.replace('?', '')}`}
                   disabled={isAttempted || isLoading || isListening}
                 />
-                <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={toggleListening} 
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={toggleListening}
                     className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
                     aria-label={isListening ? "Stop listening" : "Speak your answer"}
                     disabled={isAttempted || isLoading || !recognitionRef.current || !soundEffectsEnabled}
@@ -524,7 +533,7 @@ export const TimesTableUI = () => {
           <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
             {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
             <AlertTitle>
-                {feedback.type === 'success' ? (username ? `Excellent, ${username}!` : 'Excellent!') : 
+                {feedback.type === 'success' ? (username ? `Excellent, ${username}!` : 'Excellent!') :
                  feedback.type === 'error' ? 'Keep Trying!' : 'Info'}
             </AlertTitle>
             <AlertDescription>{feedback.message}</AlertDescription>
@@ -532,13 +541,13 @@ export const TimesTableUI = () => {
         )}
       </CardContent>
       <CardFooter>
-         <Button 
-            variant="outline" 
-            onClick={handleRestartOrNext} 
-            className="w-full" 
+         <Button
+            variant="outline"
+            onClick={handleRestartOrNext}
+            className="w-full"
             disabled={isLoading || isListening || (!isAttempted && currentProblem !== null && !sessionCompleted)}
         >
-          <RefreshCcw className="mr-2 h-4 w-4" /> 
+          <RefreshCcw className="mr-2 h-4 w-4" />
           {sessionCompleted ? "Practice New Table" : "Skip / Next"}
         </Button>
       </CardFooter>

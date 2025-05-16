@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathStoryProblem, type GenerateMathStoryProblemInput, type GenerateMathStoryProblemOutput } from '@/ai/flows/generate-math-story-problem';
 import { CheckCircle2, XCircle, Loader2, BookOpen, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Info, ChevronDown } from 'lucide-react';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup'; // Import CoinsLostPopup
+import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
@@ -28,19 +28,20 @@ interface QuestionState {
   userAnswer: string;
   feedback: { type: 'success' | 'error' | 'info'; message: string | JSX.Element } | null;
   isCorrect: boolean | null;
-  isSubmitted: boolean; 
+  isSubmitted: boolean;
   inputAnimation: 'success' | 'error' | null;
 }
 
-const STORIES_PER_SESSION = 3; 
+const STORIES_PER_SESSION = 3;
 const POINTS_PER_CORRECT_QUESTION = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
-const SESSION_COMPLETION_BONUS = 5;
+const SESSION_COMPLETION_BONUS = 5; // For completing the set of stories
+const PENALTY_PER_WRONG_FOR_BONUS = 1; // Penalty for overall session bonus calculation
 
 export const AiStoryProblemGameUI = () => {
   const [currentStoryProblem, setCurrentStoryProblem] = useState<GenerateMathStoryProblemOutput | null>(null);
   const [questionStates, setQuestionStates] = useState<QuestionState[]>([]);
-  const [currentStoryScore, setCurrentStoryScore] = useState(0); 
+  const [currentStoryScore, setCurrentStoryScore] = useState(0);
   const [storiesCompletedInSession, setStoriesCompletedInSession] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState<number | null>(null);
@@ -48,11 +49,15 @@ export const AiStoryProblemGameUI = () => {
   const [customTopics, setCustomTopics] = useState<string>('');
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
+  // For dynamic bonus calculation
+  const [sessionOverallCorrectAnswers, setSessionOverallCorrectAnswers] = useState(0);
+  const [sessionOverallAttemptedQuestions, setSessionOverallAttemptedQuestions] = useState(0);
+
   const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
   const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
   const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
   const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
-  
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const answerInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -60,19 +65,19 @@ export const AiStoryProblemGameUI = () => {
   const { soundEffectsEnabled } = useAppSettingsStore();
 
   const fetchNewStoryProblem = useCallback(async (isNewSessionStart: boolean = false) => {
-    if (sessionCompleted && !isNewSessionStart) return; 
+    if (sessionCompleted && !isNewSessionStart) return;
     setIsLoading(true);
     setQuestionStates([]);
     setCurrentStoryProblem(null);
-    setCurrentStoryScore(0); 
+    setCurrentStoryScore(0);
     if (!isNewSessionStart && soundEffectsEnabled) playNotificationSound();
 
     try {
       const topicsToUse = customTopics.trim() !== '' ? customTopics.trim() : favoriteTopics || undefined;
-      const input: GenerateMathStoryProblemInput = { 
-        difficultyLevel: difficulty, 
+      const input: GenerateMathStoryProblemInput = {
+        difficultyLevel: difficulty,
         topics: topicsToUse,
-        username: username || undefined 
+        username: username || undefined
       };
       const storyData = await generateMathStoryProblem(input);
       setCurrentStoryProblem(storyData);
@@ -87,10 +92,10 @@ export const AiStoryProblemGameUI = () => {
       }
     } catch (error) {
       console.error("Error generating math story problem:", error);
-      toast({ 
-        variant: "destructive", 
-        title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>, 
-        description: "Could not generate a story problem. Please try again." 
+      toast({
+        variant: "destructive",
+        title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>,
+        description: "Could not generate a story problem. Please try again."
       });
       if (soundEffectsEnabled) playErrorSound();
     } finally {
@@ -101,6 +106,8 @@ export const AiStoryProblemGameUI = () => {
   const startNewSession = useCallback(() => {
     setCurrentStoryScore(0);
     setStoriesCompletedInSession(0);
+    setSessionOverallCorrectAnswers(0);
+    setSessionOverallAttemptedQuestions(0);
     setSessionCompleted(false);
     fetchNewStoryProblem(true);
   }, [fetchNewStoryProblem]);
@@ -108,11 +115,18 @@ export const AiStoryProblemGameUI = () => {
 
   const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
-    addGoldenCoins(SESSION_COMPLETION_BONUS);
-    setLastAwardedCoins(SESSION_COMPLETION_BONUS);
-    setShowCoinsEarnedPopup(true);
+    const totalWrongAnswersInSession = sessionOverallAttemptedQuestions - sessionOverallCorrectAnswers;
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (totalWrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+
+    if (calculatedBonus > 0) {
+      addGoldenCoins(calculatedBonus);
+      setLastAwardedCoins(calculatedBonus);
+      setShowCoinsEarnedPopup(true);
+      if (soundEffectsEnabled) playCoinsEarnedSound();
+    }
+
     const completionMessage = username ? `Fantastic, ${username}!` : 'Session Complete!';
-    const description = `You've completed ${STORIES_PER_SESSION} stories. Well done! You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
+    const description = `You've completed ${STORIES_PER_SESSION} stories. Overall you got ${sessionOverallCorrectAnswers} out of ${sessionOverallAttemptedQuestions} questions correct. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Well done!'}`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2">
@@ -126,7 +140,7 @@ export const AiStoryProblemGameUI = () => {
         playCompletionSound();
         speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast, addGoldenCoins]);
+  }, [username, soundEffectsEnabled, toast, addGoldenCoins, sessionOverallCorrectAnswers, sessionOverallAttemptedQuestions]);
 
   const handleSubmitAnswer = useCallback((questionIndex: number) => {
     if (sessionCompleted || !currentStoryProblem || !questionStates || questionStates.length <= questionIndex || !questionStates[questionIndex] || questionStates[questionIndex].userAnswer.trim() === '') {
@@ -134,10 +148,10 @@ export const AiStoryProblemGameUI = () => {
          setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: 'info', message: 'Please enter an answer.' } } : qs));
       } else {
         console.error("Attempted to submit answer for an invalid question index or uninitialized state.");
-        toast({ 
-            variant: "destructive", 
-            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>, 
-            description: "Something went wrong. Please try generating a new story." 
+        toast({
+            variant: "destructive",
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>,
+            description: "Something went wrong. Please try generating a new story."
         });
       }
       return;
@@ -148,10 +162,10 @@ export const AiStoryProblemGameUI = () => {
       setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: 'info', message: 'Please enter a valid number.' } } : qs));
       return;
     }
-    
+
     const question = currentStoryProblem.questions[questionIndex];
     const isCorrect = answerNum === question.numericalAnswer;
-    
+
     let feedbackText: string | JSX.Element;
     let speechTextSegment: string;
     let newCurrentStoryScore = currentStoryScore;
@@ -166,7 +180,7 @@ export const AiStoryProblemGameUI = () => {
     if (isCorrect) {
       feedbackText = `${username ? username + ", y" : "Y"}ou got it right! The answer is ${question.numericalAnswer}.`;
       speechTextSegment = `Correct! The answer to: ${question.questionText} is ${question.numericalAnswer}.`;
-      if(questionStates[questionIndex].isCorrect === null) { 
+      if(questionStates[questionIndex].isCorrect === null) {
          newCurrentStoryScore = currentStoryScore + 1;
          setCurrentStoryScore(newCurrentStoryScore);
          addGoldenCoins(POINTS_PER_CORRECT_QUESTION);
@@ -175,7 +189,8 @@ export const AiStoryProblemGameUI = () => {
          if (soundEffectsEnabled) playCoinsEarnedSound();
          toast({
           variant: "success",
-          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_QUESTION} Golden Coins!</div>,
+          title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_QUESTION} Golden Coins!</div>,
+          description: "Well done!",
           duration: 2000,
          });
       }
@@ -190,28 +205,33 @@ export const AiStoryProblemGameUI = () => {
       );
       speechTextSegment = `Oops! The correct answer for "${question.questionText}" was ${question.numericalAnswer}.`;
       if (soundEffectsEnabled) playErrorSound();
-      deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-      setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-      setShowCoinsLostPopup(true);
-      if (soundEffectsEnabled) playCoinsDeductedSound();
-      toast({
-        variant: "destructive",
-        title: <div className="flex items-center gap-1"><XCircle className="h-5 w-5" /> Oops!</div>,
-        description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> -{POINTS_DEDUCTED_PER_WRONG_ANSWER} Golden Coin.</div>,
-        duration: 2000,
-      });
+      if(questionStates[questionIndex].isCorrect === null) { // Only deduct if not already marked incorrect
+        deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+        setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+        setShowCoinsLostPopup(true);
+        if (soundEffectsEnabled) playCoinsDeductedSound();
+        toast({
+          variant: "destructive",
+          title: <div className="flex items-center gap-1"><XCircle className="h-5 w-5" /> Oops!</div>,
+          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> -{POINTS_DEDUCTED_PER_WRONG_ANSWER} Golden Coin.</div>,
+          duration: 2000,
+        });
+      }
       animateInput('error');
     }
 
     const updatedQuestionStates = questionStates.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: isCorrect ? 'success' : 'error', message: feedbackText }, isCorrect: isCorrect, isSubmitted: true } : qs);
     setQuestionStates(updatedQuestionStates);
-    
+
     const allCurrentStoryQuestionsAnswered = updatedQuestionStates.every(qs => qs.isSubmitted);
-    
+
     const afterSpeechCallback = () => {
-      if (allCurrentStoryQuestionsAnswered && !sessionCompleted) { 
+      if (allCurrentStoryQuestionsAnswered && !sessionCompleted) {
+        setSessionOverallCorrectAnswers(prev => prev + newCurrentStoryScore);
+        setSessionOverallAttemptedQuestions(prev => prev + currentStoryProblem.questions.length);
+
         const newStoriesCompletedCount = storiesCompletedInSession + 1;
-        setStoriesCompletedInSession(newStoriesCompletedCount); 
+        setStoriesCompletedInSession(newStoriesCompletedCount);
 
         if (newStoriesCompletedCount >= STORIES_PER_SESSION) {
           handleSessionCompletion();
@@ -219,7 +239,7 @@ export const AiStoryProblemGameUI = () => {
            toast({
              variant: "info",
              title: "Story Complete!",
-             description: `Loading the next story...`,
+             description: `Loading the next story... (${newStoriesCompletedCount + 1}/${STORIES_PER_SESSION})`,
              duration: 2000,
            });
            if(soundEffectsEnabled) {
@@ -231,7 +251,7 @@ export const AiStoryProblemGameUI = () => {
            } else {
              setTimeout(() => {
                 fetchNewStoryProblem();
-             }, 800); 
+             }, 800);
            }
         }
       } else if (!allCurrentStoryQuestionsAnswered && soundEffectsEnabled && questionIndex + 1 < currentStoryProblem.questions.length) {
@@ -249,9 +269,9 @@ export const AiStoryProblemGameUI = () => {
   }, [currentStoryProblem, questionStates, username, toast, soundEffectsEnabled, storiesCompletedInSession, handleSessionCompletion, sessionCompleted, fetchNewStoryProblem, currentStoryScore, addGoldenCoins, deductGoldenCoins]);
 
   useEffect(() => {
-    startNewSession(); 
+    startNewSession();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  }, []);
 
   const handleSubmitAnswerRef = useRef(handleSubmitAnswer);
   useEffect(() => {
@@ -273,7 +293,7 @@ export const AiStoryProblemGameUI = () => {
           const qIndex = isListening;
           setQuestionStates(prev => prev.map((qs, i) => i === qIndex ? {...qs, userAnswer: String(number)} : qs ));
           toast({ title: "Heard you!", description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, variant: "info" });
-          setTimeout(() => handleSubmitAnswerRef.current(qIndex), 50); 
+          setTimeout(() => handleSubmitAnswerRef.current(qIndex), 50);
         } else {
           toast({ title: "Couldn't understand", description: `Heard: "${spokenText}". Please try again or type the number.`, variant: "info" });
         }
@@ -281,9 +301,9 @@ export const AiStoryProblemGameUI = () => {
       };
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-        toast({ 
-            title: "Voice Input Error", 
-            description: `Could not recognize speech: ${event.error}. Try typing.`, 
+        toast({
+            title: "Voice Input Error",
+            description: `Could not recognize speech: ${event.error}. Try typing.`,
             variant: "destructive",
         });
         setIsListening(null);
@@ -324,16 +344,16 @@ export const AiStoryProblemGameUI = () => {
         toast({ title: "Listening...", description: `Speak your answer for question ${questionIndex + 1}.`, variant: "info" });
       } catch (error) {
         console.error("Error starting speech recognition:", error);
-        toast({ 
-            title: "Mic Error", 
-            description: "Could not start microphone. Check permissions.", 
+        toast({
+            title: "Mic Error",
+            description: "Could not start microphone. Check permissions.",
             variant: "destructive",
         });
         setIsListening(null);
       }
     }
   };
-  
+
   const handleNewProblemSet = () => {
     startNewSession();
   }
@@ -373,7 +393,7 @@ export const AiStoryProblemGameUI = () => {
           </div>
           <div>
             <Label htmlFor="story-topics">Custom Topics (optional)</Label>
-            <Input 
+            <Input
               id="story-topics"
               placeholder="e.g., animals, space"
               value={customTopics}
@@ -387,7 +407,7 @@ export const AiStoryProblemGameUI = () => {
          <Button onClick={handleNewProblemSet} variant="outline" className="w-full" disabled={isLoading && !sessionCompleted}>
             <RefreshCcw className="mr-2 h-4 w-4" /> Generate New Story Set with Current Settings
         </Button>
-        
+
         {sessionCompleted ? (
            <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
             <div className="flex flex-col items-center gap-4 py-4">
@@ -403,7 +423,7 @@ export const AiStoryProblemGameUI = () => {
               </Button>
             </div>
           </Alert>
-        ) :isLoading ? ( 
+        ) :isLoading ? (
           <div className="flex flex-col justify-center items-center min-h-[200px] space-y-2">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="text-muted-foreground">Crafting an adventurous story for you...</p>
@@ -414,9 +434,16 @@ export const AiStoryProblemGameUI = () => {
               <CardTitle className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-accent"/>
                 Story: {currentStoryProblem.overallTheme && <span className="text-sm text-muted-foreground">({currentStoryProblem.overallTheme})</span>}
-                <Button variant="ghost" size="icon" onClick={() => handleSpeak(`Story time! ${currentStoryProblem.overallTheme ? `The theme is ${currentStoryProblem.overallTheme}.` : ''} ${currentStoryProblem.storyProblemText}`)} aria-label="Read story aloud" className="ml-auto" disabled={!!isListening || !soundEffectsEnabled}>
+                <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); handleSpeak(`Story time! ${currentStoryProblem.overallTheme ? `The theme is ${currentStoryProblem.overallTheme}.` : ''} ${currentStoryProblem.storyProblemText}`); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleSpeak(`Story time! ${currentStoryProblem.overallTheme ? `The theme is ${currentStoryProblem.overallTheme}.` : ''} ${currentStoryProblem.storyProblemText}`); }}}
+                    aria-label="Read story aloud"
+                    className={cn("ml-auto p-1.5 rounded-full hover:bg-primary/10 focus:outline-none focus:ring-1 focus:ring-primary", (!!isListening || !soundEffectsEnabled) && "opacity-50 cursor-not-allowed")}
+                >
                     <Volume2 className="h-5 w-5" />
-                </Button>
+                </span>
               </CardTitle>
               <ScrollArea className="h-32">
                 <CardDescription className="text-base text-foreground/90 leading-relaxed whitespace-pre-line" aria-live="polite">
@@ -424,13 +451,13 @@ export const AiStoryProblemGameUI = () => {
                 </CardDescription>
               </ScrollArea>
             </Card>
-            
+
             <Accordion type="multiple" className="w-full space-y-2">
               {currentStoryProblem.questions.map((q, index) => (
                 <AccordionItem value={`item-${index}`} key={index} className="border bg-card p-0 rounded-lg shadow-sm">
-                  <AccordionTrigger 
+                  <AccordionTrigger
                     className={cn(
-                      "text-left px-4 py-3 hover:no-underline hover:bg-secondary/50 rounded-t-lg transition-colors items-start sm:items-center", 
+                      "text-left px-4 py-3 hover:no-underline hover:bg-secondary/50 rounded-t-lg transition-colors items-start sm:items-center",
                       questionStates[index]?.isCorrect === true && "bg-green-500/10 hover:bg-green-500/15 text-green-700 dark:text-green-400",
                       questionStates[index]?.isCorrect === false && "bg-red-500/10 hover:bg-red-500/15 text-red-700 dark:text-red-500",
                   )}>
@@ -463,8 +490,8 @@ export const AiStoryProblemGameUI = () => {
                         <Input
                           id={`story-q-${index}-answer`}
                           ref={el => answerInputRefs.current[index] = el}
-                          type="text" 
-                          inputMode="decimal" 
+                          type="text"
+                          inputMode="decimal"
                           value={questionStates[index]?.userAnswer || ''}
                           onChange={(e) => setQuestionStates(prev => prev.map((qs, i) => i === index ? {...qs, userAnswer: e.target.value, feedback: null} : qs))}
                           placeholder="Your answer"
@@ -475,11 +502,11 @@ export const AiStoryProblemGameUI = () => {
                            )}
                           disabled={questionStates[index]?.isSubmitted || isLoading || isListening === index}
                         />
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="icon" 
-                            onClick={() => toggleListening(index)} 
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => toggleListening(index)}
                             className={cn("h-12 w-12 flex-shrink-0", isListening === index && "bg-destructive/20 text-destructive animate-pulse")}
                             aria-label={isListening === index ? `Stop listening for question ${index + 1}` : `Speak answer for question ${index + 1}`}
                             disabled={questionStates[index]?.isSubmitted || isLoading || !recognitionRef.current || !soundEffectsEnabled}
@@ -511,20 +538,20 @@ export const AiStoryProblemGameUI = () => {
         )}
       </CardContent>
       <CardFooter>
-        <Button 
-          variant="default" 
+        <Button
+          variant="default"
           onClick={() => {
             if (soundEffectsEnabled) playNotificationSound();
             if (sessionCompleted) {
               startNewSession();
             } else {
-              fetchNewStoryProblem(); 
+              fetchNewStoryProblem();
             }
           }}
-          className="w-full btn-glow" 
+          className="w-full btn-glow"
           disabled={isLoading || (!!isListening && !allQuestionsAnsweredForCurrentStory && !!currentStoryProblem)}
         >
-          <RefreshCcw className="mr-2 h-4 w-4" /> 
+          <RefreshCcw className="mr-2 h-4 w-4" />
           {sessionCompleted ? "Start New Session" : "Skip Story / Next Problem Set"}
         </Button>
       </CardFooter>

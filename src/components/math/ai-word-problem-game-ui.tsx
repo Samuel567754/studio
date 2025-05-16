@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateMathWordProblem, type GenerateMathWordProblemInput, type GenerateMathWordProblemOutput } from '@/ai/flows/generate-math-word-problem';
 import { CheckCircle2, XCircle, Loader2, Brain, RefreshCcw, Volume2, Mic, MicOff, Smile, Lightbulb, Info } from 'lucide-react';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText, playCompletionSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
@@ -18,15 +18,16 @@ import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup'; // Import CoinsLostPopup
+import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
 type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'random';
 
-const PROBLEMS_PER_SESSION = 5; 
+const PROBLEMS_PER_SESSION = 5;
 const POINTS_PER_CORRECT_ANSWER = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 const SESSION_COMPLETION_BONUS = 5;
+const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 export const AiWordProblemGameUI = () => {
   const [currentProblem, setCurrentProblem] = useState<GenerateMathWordProblemOutput | null>(null);
@@ -45,7 +46,7 @@ export const AiWordProblemGameUI = () => {
   const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
   const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
   const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
-  
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
   const answerInputRef = useRef<HTMLInputElement>(null);
@@ -82,17 +83,24 @@ export const AiWordProblemGameUI = () => {
     setScore(0);
     setProblemsSolvedInSession(0);
     setSessionCompleted(false);
-    fetchNewProblem(true); 
+    fetchNewProblem(true);
   }, [fetchNewProblem]);
 
 
   const handleSessionCompletion = useCallback((finalScore: number) => {
     setSessionCompleted(true);
-    addGoldenCoins(SESSION_COMPLETION_BONUS);
-    setLastAwardedCoins(SESSION_COMPLETION_BONUS);
-    setShowCoinsEarnedPopup(true);
+    const wrongAnswersInSession = PROBLEMS_PER_SESSION - finalScore;
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+
+    if (calculatedBonus > 0) {
+      addGoldenCoins(calculatedBonus);
+      setLastAwardedCoins(calculatedBonus);
+      setShowCoinsEarnedPopup(true);
+      if (soundEffectsEnabled) playCoinsEarnedSound();
+    }
+
     const completionMessage = username ? `Awesome, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job! Final score: ${finalScore}. You earned ${SESSION_COMPLETION_BONUS} bonus Golden Coins!`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems. Great job! Final score: ${finalScore}. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Keep practicing for a bonus!'}`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2">
@@ -135,7 +143,8 @@ export const AiWordProblemGameUI = () => {
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
-          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_ANSWER} Golden Coins!</div>,
+          description: "Excellent!",
           duration: 2000,
         });
     } else {
@@ -150,13 +159,13 @@ export const AiWordProblemGameUI = () => {
           duration: 2000,
         });
     }
-    
+
     const afterFeedbackAudio = () => {
-      const newProblemsSolved = problemsSolvedInSession + 1; 
+      const newProblemsSolved = problemsSolvedInSession + 1;
       setProblemsSolvedInSession(newProblemsSolved);
 
       if (newProblemsSolved >= PROBLEMS_PER_SESSION) {
-        handleSessionCompletion(newCurrentScore); 
+        handleSessionCompletion(newCurrentScore);
       } else {
         fetchNewProblem();
       }
@@ -171,10 +180,10 @@ export const AiWordProblemGameUI = () => {
       setFeedback({ type: 'success', message: successMessage });
       if (soundEffectsEnabled) playSuccessSound();
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! ${currentProblem.problemText} The answer is ${currentProblem.numericalAnswer}.`;
-      
+
       if (soundEffectsEnabled) {
         const utterance = speakText(speechSuccessMsg, undefined, afterFeedbackAudio);
-        if (!utterance) setTimeout(afterFeedbackAudio, 1500); 
+        if (!utterance) setTimeout(afterFeedbackAudio, 1500);
       } else {
         setTimeout(afterFeedbackAudio, 1200);
       }
@@ -191,10 +200,10 @@ export const AiWordProblemGameUI = () => {
       setFeedback({ type: 'error', message: errorMessage });
       if (soundEffectsEnabled) playErrorSound();
       const speechErrorMsg = `Oops! The correct answer was ${currentProblem.numericalAnswer}. ${currentProblem.explanation || ''}`;
-      
+
       if (soundEffectsEnabled) {
         const utterance = speakText(speechErrorMsg, undefined, afterFeedbackAudio);
-        if (!utterance) setTimeout(afterFeedbackAudio, 2500); 
+        if (!utterance) setTimeout(afterFeedbackAudio, 2500);
       } else {
         setTimeout(afterFeedbackAudio, 2000);
       }
@@ -202,10 +211,10 @@ export const AiWordProblemGameUI = () => {
   }, [currentProblem, userAnswer, fetchNewProblem, username, operation, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted, score, addGoldenCoins, deductGoldenCoins, toast]);
 
   useEffect(() => {
-    startNewSession(); 
+    startNewSession();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [difficulty, operation]); 
-  
+  }, [difficulty, operation]);
+
   const handleSubmitRef = useRef(handleSubmit);
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
@@ -213,8 +222,8 @@ export const AiWordProblemGameUI = () => {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'en-US';
@@ -224,17 +233,17 @@ export const AiWordProblemGameUI = () => {
         const number = parseSpokenNumber(spokenText);
         if (number !== null) {
           setUserAnswer(String(number));
-           toast({ 
-             title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>, 
-             description: `You said: "${spokenText}". We interpreted: "${String(number)}".`, 
-             variant: "info" 
+           toast({
+             title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Heard you!</div>,
+             description: `You said: "${spokenText}". We interpreted: "${String(number)}".`,
+             variant: "info"
             });
-           setTimeout(() => handleSubmitRef.current(), 50); 
+           setTimeout(() => handleSubmitRef.current(), 50);
         } else {
-          toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>, 
-            description: `Heard: "${spokenText}". Please try again or type the number.`, 
-            variant: "info" 
+          toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Couldn't understand</div>,
+            description: `Heard: "${spokenText}". Please try again or type the number.`,
+            variant: "info"
           });
         }
         setIsListening(false);
@@ -242,19 +251,19 @@ export const AiWordProblemGameUI = () => {
 
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-        toast({ 
-            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>, 
-            description: `Could not recognize speech: ${event.error}. Try typing.`, 
-            variant: "destructive" 
+        toast({
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Voice Input Error</div>,
+            description: `Could not recognize speech: ${event.error}. Try typing.`,
+            variant: "destructive"
         });
         setIsListening(false);
       };
-      
+
       recognitionRef.current.onend = () => {
         setIsListening(false);
       };
     }
-    
+
     return () => {
         if (recognitionRef.current) {
            recognitionRef.current.stop();
@@ -272,11 +281,11 @@ export const AiWordProblemGameUI = () => {
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
-        toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>, 
-            description: "Your browser doesn't support voice input. Please type your answer.", 
-            variant: "info", 
-            duration: 5000 
+        toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Voice Input Not Supported</div>,
+            description: "Your browser doesn't support voice input. Please type your answer.",
+            variant: "info",
+            duration: 5000
         });
         return;
     }
@@ -290,27 +299,27 @@ export const AiWordProblemGameUI = () => {
       setIsListening(false);
     } else {
       try {
-        if (soundEffectsEnabled) playNotificationSound(); 
+        if (soundEffectsEnabled) playNotificationSound();
         recognitionRef.current.start();
         setIsListening(true);
-        setFeedback(null); 
-        toast({ 
-            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>, 
-            description: "Speak your answer.", 
-            variant: "info" 
+        setFeedback(null);
+        toast({
+            title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Listening...</div>,
+            description: "Speak your answer.",
+            variant: "info"
         });
       } catch (error) {
         console.error("Error starting speech recognition:", error);
-        toast({ 
-            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>, 
-            description: "Could not start microphone. Check permissions.", 
-            variant: "destructive" 
+        toast({
+            title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Mic Error</div>,
+            description: "Could not start microphone. Check permissions.",
+            variant: "destructive"
         });
         setIsListening(false);
       }
     }
   };
-  
+
   return (
     <Card className="w-full max-w-xl mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
       <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
@@ -320,7 +329,7 @@ export const AiWordProblemGameUI = () => {
           <Brain className="mr-2 h-6 w-6" /> AI Word Problem Solver
         </CardTitle>
         <CardDescription>
-          Score: <span className="font-bold text-accent">{score}</span> | 
+          Score: <span className="font-bold text-accent">{score}</span> |
           Problems Solved: <span className="font-bold text-accent">{problemsSolvedInSession} / {PROBLEMS_PER_SESSION}</span>
         </CardDescription>
       </CardHeader>
@@ -355,7 +364,7 @@ export const AiWordProblemGameUI = () => {
             </Select>
           </div>
         </div>
-        
+
         {sessionCompleted ? (
           <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50 animate-in fade-in-0 zoom-in-95 duration-500">
             <div className="flex flex-col items-center gap-4 py-4">
@@ -371,7 +380,7 @@ export const AiWordProblemGameUI = () => {
               </Button>
             </div>
           </Alert>
-        ) : isLoading ? ( 
+        ) : isLoading ? (
           <div className="flex flex-col justify-center items-center min-h-[150px] space-y-2">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="text-muted-foreground">Generating an AI-mazing problem for you...</p>
@@ -391,7 +400,7 @@ export const AiWordProblemGameUI = () => {
                 {currentProblem.problemText}
               </CardDescription>
             </Card>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex items-center gap-2">
                 <Label htmlFor="math-answer" className="sr-only">Your Answer</Label>
@@ -410,11 +419,11 @@ export const AiWordProblemGameUI = () => {
                   aria-label="Enter your answer for the math problem"
                   disabled={!!feedback || isLoading || isListening}
                 />
-                <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={toggleListening} 
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={toggleListening}
                     className={cn("h-14 w-14", isListening && "bg-destructive/20 text-destructive animate-pulse")}
                     aria-label={isListening ? "Stop listening" : "Speak your answer"}
                     disabled={!!feedback || isLoading || !recognitionRef.current || !soundEffectsEnabled}
@@ -433,11 +442,11 @@ export const AiWordProblemGameUI = () => {
                 <p className="text-muted-foreground">Ready to start? Settings are above.</p>
             </div>
         )}
-        {feedback && !sessionCompleted && ( 
+        {feedback && !sessionCompleted && (
           <Alert variant={feedback.type === 'error' ? 'destructive' : feedback.type} className="mt-4 animate-in fade-in-0 zoom-in-95 duration-300">
             {feedback.type === 'success' ? <Smile className="h-5 w-5" /> : feedback.type === 'error' ? <XCircle className="h-5 w-5" /> : null}
             <AlertTitle>
-              {feedback.type === 'success' ? (username ? `Well done, ${username}!` : 'Correct!') : 
+              {feedback.type === 'success' ? (username ? `Well done, ${username}!` : 'Correct!') :
                feedback.type === 'error' ? 'Try Again!' : 'Info'}
             </AlertTitle>
             <AlertDescription>{feedback.message}</AlertDescription>
