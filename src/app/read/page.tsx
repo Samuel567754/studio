@@ -10,10 +10,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Info, Loader2, ArrowLeft, Trophy, RefreshCcw } from 'lucide-react'; 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { playCompletionSound, speakText } from '@/lib/audio';
+import { playCompletionSound, speakText, playCoinsEarnedSound } from '@/lib/audio';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+// CoinsEarnedPopup is handled globally by ClientRootFeatures
+
+// Standardized points
+const SESSION_COMPLETION_BONUS_POINTS_BASE = 5;
+const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 export default function ReadingPage() {
   const [wordList, setWordList] = useState<string[]>([]);
@@ -23,7 +28,7 @@ export default function ReadingPage() {
   const [sessionCompleted, setSessionCompleted] = useState<boolean>(false); 
   const [lastScore, setLastScore] = useState<{ score: number; total: number } | null>(null);
 
-  const { username } = useUserProfileStore();
+  const { username, addGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
   const { toast } = useToast();
 
@@ -54,27 +59,37 @@ export default function ReadingPage() {
     };
   }, [loadReadingData]);
 
-  const handleSessionCompletion = (score: number, totalQuestions: number) => {
+  // Updated to receive incorrectAttempts for bonus calculation
+  const handleSessionCompletion = (score: number, totalQuestions: number, incorrectAttemptsInThisTest: number) => {
     setSessionCompleted(true); 
     setLastScore({ score, total: totalQuestions });
 
-    const greeting = username ? `Well done, ${username}!` : 'Session Complete!';
-    const scoreAnnouncement = `You scored ${score} out of ${totalQuestions}.`;
-    const encouragement = score > (totalQuestions / 2) ? "Keep up the great reading!" : "That was a good effort, keep practicing!";
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_POINTS_BASE - (incorrectAttemptsInThisTest * PENALTY_PER_WRONG_FOR_BONUS));
     
-    const fullToastMessage = `${greeting} ${scoreAnnouncement}`;
+    let greeting = username ? `Well done, ${username}!` : 'Session Complete!';
+    let scoreAnnouncement = `You scored ${score} out of ${totalQuestions}.`;
+    let encouragement = score > (totalQuestions / 2) ? "Keep up the great reading!" : "That was a good effort, keep practicing!";
+    let bonusMessage = "";
 
+    if (calculatedBonus > 0) {
+        addGoldenCoins(calculatedBonus); // Triggers global popup
+        bonusMessage = ` You earned ${calculatedBonus} bonus Golden Coins!`;
+    } else if (totalQuestions > 0) { // Only show "no bonus" message if a test was actually taken
+        bonusMessage = " Keep practicing to earn a bonus next time!";
+    }
+    
     toast({
       variant: "success",
-      title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{greeting}</div>,
-      description: scoreAnnouncement,
+      title: <div className="flex items-center gap-2"><Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />{greeting}</div>,
+      description: `${scoreAnnouncement}${bonusMessage}`,
       duration: 7000,
     });
 
+    // Delay audio slightly to allow ReadingPractice component to unmount and its cleanup to run
     setTimeout(() => {
       if (soundEffectsEnabled) {
         playCompletionSound();
-        speakText(`${greeting} ${scoreAnnouncement} ${encouragement}`);
+        speakText(`${greeting} ${scoreAnnouncement} ${bonusMessage} ${encouragement}`);
       }
     }, 150); 
   };
@@ -104,7 +119,8 @@ export default function ReadingPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="space-y-8 max-w-3xl mx-auto relative">
+      {/* Popups handled globally by ClientRootFeatures */}
       <div className="mb-6">
         <Button asChild variant="outline" className="group">
           <Link href="/word-practice">
@@ -136,7 +152,7 @@ export default function ReadingPage() {
         <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
           <div className="relative h-80 md:h-96 w-full">
             <Image 
-              src="https://plus.unsplash.com/premium_photo-1684743539425-5f726aa89394?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
+              src="/assets/images/plus.unsplash.com_premium_photo-1684743539425-5f726aa89394_w_600&auto_format&fit_crop&q_60&ixlib_rb-4.1.0&ixid_M3wxMjA3fDB8MHxzZWFyY2h8MXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D.png" 
               alt="An empty storybook with a curious child peeking"
               layout="fill"
               objectFit="cover"
@@ -159,7 +175,7 @@ export default function ReadingPage() {
       ) : sessionCompleted ? (
          <Card className="shadow-lg w-full animate-in fade-in-0 zoom-in-95 duration-300">
             <CardHeader className="text-center">
-                <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-2" />
+                <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={40} height={40} className="mx-auto mb-2" />
                 <CardTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
                     Session Complete!
                 </CardTitle>
@@ -196,4 +212,3 @@ export default function ReadingPage() {
     </div>
   );
 }
-

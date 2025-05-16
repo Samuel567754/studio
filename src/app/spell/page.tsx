@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-// import { WordDisplay } from '@/components/word-display'; // Removed WordDisplay
 import { SpellingPractice } from '@/components/spelling-practice';
 import { useToast } from "@/hooks/use-toast";
 import { getStoredWordList, getStoredCurrentIndex, storeCurrentIndex } from '@/lib/storage';
@@ -12,22 +11,26 @@ import { ChevronLeft, ChevronRight, Info, Pencil, ArrowLeft, Trophy, RefreshCcw 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { playNavigationSound, playCompletionSound, speakText } from '@/lib/audio';
+import { playNavigationSound, playCompletionSound, speakText, playCoinsEarnedSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+
+// Standardized points
+const SESSION_COMPLETION_BONUS_POINTS_BASE = 5;
+const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 export default function SpellingPage() {
   const [wordList, setWordList] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentWord, setCurrentWord] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
-  const { username } = useUserProfileStore();
+  const { username, addGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
   const { toast } = useToast();
 
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
   const [sessionCompleted, setSessionCompleted] = useState<boolean>(false);
-
+  const [sessionIncorrectAnswersCount, setSessionIncorrectAnswersCount] = useState(0); // Track incorrect first attempts for bonus
 
   const loadWordData = useCallback((isRestart: boolean = false) => {
     const storedList = getStoredWordList();
@@ -36,9 +39,9 @@ export default function SpellingPage() {
     if (isRestart) {
       setPracticedWordsInSession(new Set());
       setSessionCompleted(false);
+      setSessionIncorrectAnswersCount(0);
     }
     
-
     if (storedList.length > 0) {
       const storedIndex = getStoredCurrentIndex();
       let validIndex = (storedIndex >= 0 && storedIndex < storedList.length) ? storedIndex : 0;
@@ -73,7 +76,6 @@ export default function SpellingPage() {
     };
   }, [loadWordData]);
 
-
   const navigateWord = (direction: 'next' | 'prev') => {
     if (wordList.length === 0 || sessionCompleted) return;
     let newIndex = currentIndex;
@@ -85,39 +87,60 @@ export default function SpellingPage() {
     setCurrentIndex(newIndex);
     setCurrentWord(wordList[newIndex]);
     storeCurrentIndex(newIndex);
-    playNavigationSound();
+    if(soundEffectsEnabled) playNavigationSound();
   };
 
-  const handleCorrectSpell = () => {
+  // Updated to receive info about whether the first attempt was correct
+  const handleWordSpelled = (wasFirstAttemptCorrect: boolean) => {
     const currentWordLowerCase = currentWord.toLowerCase();
     const newPracticedWords = new Set(practicedWordsInSession).add(currentWordLowerCase);
     setPracticedWordsInSession(newPracticedWords);
 
+    let newSessionIncorrectCount = sessionIncorrectAnswersCount;
+    if (!wasFirstAttemptCorrect) {
+      newSessionIncorrectCount++;
+      setSessionIncorrectAnswersCount(newSessionIncorrectCount);
+    }
+
     const afterCurrentWordAudio = () => {
         if (newPracticedWords.size === wordList.length && wordList.length > 0 && !sessionCompleted) {
             setSessionCompleted(true);
+            const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_POINTS_BASE - (newSessionIncorrectCount * PENALTY_PER_WRONG_FOR_BONUS));
+            let completionMessage = username ? `Amazing, ${username}!` : 'Congratulations!';
+            let description = "You've spelled all words in this session!";
+
+            if (calculatedBonus > 0) {
+                addGoldenCoins(calculatedBonus); // Triggers popup via store
+                description += ` You earned ${calculatedBonus} bonus Golden Coins!`;
+            } else {
+                description += " Keep practicing for a bonus next time!";
+            }
+            
             toast({
                 variant: "success",
-                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Amazing, ${username}!` : 'Congratulations!'}</div>,
-                description: "You've spelled all words in this session!",
+                title: <div className="flex items-center gap-2"><Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />{completionMessage}</div>,
+                description: description,
                 duration: 7000,
             });
-            playCompletionSound();
             if (soundEffectsEnabled) {
-                speakText(username ? `Amazing, ${username}! You've spelled all words in this session!` : "Congratulations! You've spelled all words in this session!");
+                playCompletionSound();
+                speakText(`${completionMessage} ${description}`);
             }
         } else if (wordList.length > 1 && !sessionCompleted) {
             navigateWord('next');
         } else if (wordList.length === 1 && !sessionCompleted) { 
              setSessionCompleted(true); 
+             const singleWordMessage = username ? `Fantastic, ${username}!` : 'Fantastic!';
              toast({
                 variant: "success",
-                title: <div className="flex items-center gap-2"><Trophy className="h-6 w-6 text-yellow-400" />{username ? `Fantastic, ${username}!` : 'Fantastic!'}</div>,
+                title: <div className="flex items-center gap-2"><Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={24} height={24} />{singleWordMessage}</div>,
                 description: "You've spelled the word! Add more to keep practicing.",
                 duration: 7000,
             });
-            playCompletionSound();
-            if (soundEffectsEnabled) speakText(username ? `Fantastic, ${username}! You've spelled the word!` : "Fantastic! You've spelled the word!");
+            if (soundEffectsEnabled) {
+                playCompletionSound();
+                speakText(`${singleWordMessage} You've spelled the word!`);
+            }
         }
     };
     
@@ -164,7 +187,7 @@ export default function SpellingPage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
-            src="https://images.unsplash.com/photo-1740479049022-5bc6d96cfc73?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHNwZWxsJTIwd29yZHN8ZW58MHx8MHx8fDA%3D" 
+            src="/assets/images/yellow_star_shape_graphic-.png" 
             alt="Keyboard letters for spelling practice"
             layout="fill"
             objectFit="cover"
@@ -184,7 +207,7 @@ export default function SpellingPage() {
         <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
           <div className="relative h-80 md:h-96 w-full">
             <Image 
-              src="https://plus.unsplash.com/premium_photo-1725400811474-0a8720cb0227?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
+              src="/assets/images/plus.unsplash.com_premium_photo-1725400811474-0a8720cb0227_w_600&auto_format&fit_crop&q_60&ixlib_rb-4.1.0&ixid_M3wxMjA3fDB8MHxzZWFyY2h8OXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D.png" 
               alt="Pencil and paper ready for spelling"
               layout="fill"
               objectFit="cover"
@@ -212,7 +235,7 @@ export default function SpellingPage() {
                     <CardContent className="p-6">
                         <Alert variant="success" className="max-w-xl mx-auto text-center bg-card shadow-md border-green-500/50">
                             <div className="flex flex-col items-center gap-4 py-4">
-                                <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
+                                <Image src="/assets/images/golden_trophy_with_stars_illustration.png" alt="Trophy" width={40} height={40} />
                                 <AlertTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
                                     {username ? `Great Work, ${username}!` : 'Session Complete!'}
                                 </AlertTitle>
@@ -232,7 +255,7 @@ export default function SpellingPage() {
                     </CardContent>
                  </Card>
               ) : (
-                <SpellingPractice wordToSpell={currentWord} onCorrectSpell={handleCorrectSpell} />
+                <SpellingPractice wordToSpell={currentWord} onWordSpelled={handleWordSpelled} />
               )}
             </div>
             
@@ -256,4 +279,3 @@ export default function SpellingPage() {
     </div>
   );
 }
-

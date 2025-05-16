@@ -17,14 +17,13 @@ import { cn } from '@/lib/utils';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup';
+// CoinsEarnedPopup and CoinsLostPopup are handled globally by ClientRootFeatures
 
 interface ReadingPracticeProps {
   wordsToPractice: string[];
   readingLevel: string;
   masteredWords: string[];
-  onSessionComplete: (score: number, totalQuestions: number) => void;
+  onSessionComplete: (score: number, totalQuestions: number, incorrectAttemptsInThisTest: number) => void; // Added incorrectAttempts
 }
 
 interface SpokenWordInfo {
@@ -43,8 +42,8 @@ interface TestResult {
 }
 
 const PASSING_THRESHOLD_PERCENTAGE = 60;
-const POINTS_PER_CORRECT_QUESTION = 3;
-const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
+const POINTS_PER_CORRECT_QUESTION = 1; // Updated
+const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1; // Consistent
 
 export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, readingLevel, masteredWords, onSessionComplete }) => {
   const [passage, setPassage] = useState<string | null>(null);
@@ -61,15 +60,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const [userAnswers, setUserAnswers] = useState<Map<number, string>>(new Map());
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [overallScore, setOverallScore] = useState<number | null>(null);
-  const [gameCompletedThisSession, setGameCompletedThisSession] = useState(false);
+  // gameCompletedThisSession might not be needed if onSessionComplete signals parent
   const [isShowingResults, setIsShowingResults] = useState(false);
   const [showRetryOption, setShowRetryOption] = useState(false);
-
-  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
-  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
-  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
-  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
-
 
   const { toast } = useToast();
   const soundEffectsEnabled = useAppSettingsStore(state => state.soundEffectsEnabled);
@@ -97,7 +90,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setUserAnswers(new Map());
     setTestResults(null);
     setOverallScore(null);
-    setGameCompletedThisSession(false);
     setIsShowingResults(false);
     setShowRetryOption(false);
   }, [resetSpeechState]);
@@ -116,12 +108,12 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
           console.error("Speech synthesis error in ReadingPractice:", event.error, passage?.substring(event.charIndex));
           toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, description: `Could not play audio: ${event.error}.` });
-          playErrorSound();
+          if(soundEffectsEnabled) playErrorSound();
       } else if (event.error) {
         console.warn("Speech synthesis event (interrupted/canceled) in ReadingPractice:", event.error);
       }
       resetSpeechState();
-  }, [toast, passage, resetSpeechState]);
+  }, [toast, passage, resetSpeechState, soundEffectsEnabled]);
 
   const fetchPassage = useCallback(async () => {
     if (wordsToPractice.length === 0) {
@@ -139,26 +131,26 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
       if (result.passage) {
         setPassage(result.passage);
         toast({ variant: "success", title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />{username ? `Passage for ${username}!` : 'Passage Generated!'}</div>, description: "Happy reading!" });
-        playSuccessSound();
+        if(soundEffectsEnabled) playSuccessSound();
       } else {
         setPassage("Could not generate a passage. Try different words or settings.");
         toast({ variant: "info", title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />No Passage Generated</div>, description: "Try different words or settings." });
-        playNotificationSound();
+        if(soundEffectsEnabled) playNotificationSound();
       }
     } catch (error) {
       console.error("Error generating passage:", error);
       setPassage("An error occurred. Please try again.");
       toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>, description: "Failed to generate passage." });
-      playErrorSound();
+      if(soundEffectsEnabled) playErrorSound();
     } finally {
       setIsLoading(false);
     }
-  }, [wordsToPractice, readingLevel, masteredWords, favoriteTopics, toast, stopSpeech, isSpeaking, username, resetStateForNewPassage]);
+  }, [wordsToPractice, readingLevel, masteredWords, favoriteTopics, toast, stopSpeech, isSpeaking, username, resetStateForNewPassage, soundEffectsEnabled]);
 
   useEffect(() => {
     fetchPassage();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Fetch passage on initial mount and when key props change
+  }, []); 
 
   const handleGenerateTest = async () => {
     if (!passage) {
@@ -172,7 +164,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setOverallScore(null);
     setIsShowingResults(false);
     setShowRetryOption(false);
-    playNotificationSound();
+    if(soundEffectsEnabled) playNotificationSound();
     try {
       const input: GenerateComprehensionQuestionsInput = {
         passageText: passage,
@@ -187,7 +179,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     } catch (error) {
       console.error("Error generating comprehension test:", error);
       toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Test Error</div>, description: "Could not generate comprehension test."});
-      playErrorSound();
+      if(soundEffectsEnabled) playErrorSound();
     } finally {
       setIsTestLoading(false);
     }
@@ -197,9 +189,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setUserAnswers(prev => new Map(prev).set(questionIndex, answer));
   };
 
-  const handleFinishSession = (finalScore: number, totalQuestions: number) => {
-    setGameCompletedThisSession(true);
-    onSessionComplete(finalScore, totalQuestions);
+  const handleFinishSession = (finalScore: number, totalQuestions: number, incorrectAttemptsForBonus: number) => {
+    // gameCompletedThisSession might not be needed in this component
+    onSessionComplete(finalScore, totalQuestions, incorrectAttemptsForBonus);
   };
 
   const handleSubmitTest = () => {
@@ -219,15 +211,14 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     }
 
     let correctCount = 0;
+    let incorrectAttemptsInThisTest = 0; // For bonus calculation
     const results: TestResult[] = questionsData.questions.map((q, index) => {
       const userAnswerText = userAnswers.get(index) || "";
       const isCorrect = userAnswerText.toLowerCase() === q.correctAnswer.toLowerCase();
       if (isCorrect) {
         correctCount++;
-        addGoldenCoins(POINTS_PER_CORRECT_QUESTION);
-        setLastAwardedCoins(POINTS_PER_CORRECT_QUESTION); // Assuming same points for all questions for popup
-        setShowCoinsEarnedPopup(true);
-        if(soundEffectsEnabled) playCoinsEarnedSound();
+        addGoldenCoins(POINTS_PER_CORRECT_QUESTION); // Triggers global popup
+        // playCoinsEarnedSound(); // Handled by store
         toast({
             variant: "success",
             title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_QUESTION} Golden Coins!</div>,
@@ -235,10 +226,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             duration: 1500,
         });
       } else {
-        deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        setShowCoinsLostPopup(true);
-        if(soundEffectsEnabled) playCoinsDeductedSound();
+        incorrectAttemptsInThisTest++;
+        deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER); // Triggers global popup
+        // playCoinsDeductedSound(); // Handled by store
         toast({
             variant: "destructive",
             title: <div className="flex items-center gap-1"><XCircle className="h-5 w-5" /> Oops! (-{POINTS_DEDUCTED_PER_WRONG_ANSWER} Coin)</div>,
@@ -261,8 +251,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setOverallScore(correctCount);
     setIsTestActive(false);
     setIsShowingResults(true);
-    // playNotificationSound(); // Sound played per question now
-
+    
     const resultSpeech = `You scored ${correctCount} out of ${questionsData.questions.length}. `;
 
     const speakExplanationsSequentially = async () => {
@@ -289,10 +278,10 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
           });
         }
       }
-      afterResultAndExplanationSpeechCallback();
+      afterResultAndExplanationSpeechCallback(incorrectAttemptsInThisTest); // Pass incorrect attempts
     };
-
-    const afterResultAndExplanationSpeechCallback = () => {
+    
+    const afterResultAndExplanationSpeechCallback = (incorrectAttempts: number) => { // Accept incorrect attempts
         const passingScore = Math.ceil(questionsData.questions.length * (PASSING_THRESHOLD_PERCENTAGE / 100));
         if (correctCount < passingScore) {
             setShowRetryOption(true);
@@ -305,20 +294,19 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             if (soundEffectsEnabled) speakText("You can review your answers or try again.");
         } else {
             setShowRetryOption(false);
-            handleFinishSession(correctCount, questionsData.questions.length);
+            handleFinishSession(correctCount, questionsData.questions.length, incorrectAttempts); // Pass incorrect attempts
         }
     };
 
     if(soundEffectsEnabled) {
         speakText(resultSpeech, undefined, speakExplanationsSequentially, (err) => {
             console.error("Speech error announcing score:", err.error);
-            speakExplanationsSequentially();
+            speakExplanationsSequentially(); 
         });
     } else {
-        afterResultAndExplanationSpeechCallback();
+        afterResultAndExplanationSpeechCallback(incorrectAttemptsInThisTest); // Pass incorrect attempts
     }
   };
-
 
   const handleRetryTest = () => {
     setIsTestActive(true);
@@ -327,13 +315,17 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     setOverallScore(null);
     setIsShowingResults(false);
     setShowRetryOption(false);
-    playNotificationSound();
-    if(soundEffectsEnabled) speakText("Okay, let's try the test again!");
+    if(soundEffectsEnabled) {
+        playNotificationSound();
+        speakText("Okay, let's try the test again!");
+    }
   };
 
   const handleFinishSessionWithLowScore = () => {
-     if (overallScore !== null && questionsData) {
-        handleFinishSession(overallScore, questionsData.questions.length);
+     if (overallScore !== null && questionsData && testResults) {
+        // Calculate incorrect attempts for bonus based on the *first* time testResults were set
+        const incorrectAttempts = testResults.filter(r => !r.isCorrect).length;
+        handleFinishSession(overallScore, questionsData.questions.length, incorrectAttempts);
      }
      setShowRetryOption(false);
   };
@@ -354,8 +346,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
     }
     const speech = window.speechSynthesis;
     if (currentUtterance && isSpeaking) {
-        if (isPaused) { speech.resume(); setIsPaused(false); playNotificationSound(); }
-        else { speech.pause(); setIsPaused(true); playNotificationSound(); }
+        if (isPaused) { speech.resume(); setIsPaused(false); if(soundEffectsEnabled) playNotificationSound(); }
+        else { speech.pause(); setIsPaused(true); if(soundEffectsEnabled) playNotificationSound(); }
     } else {
       const utterance = speakText(passage, handleSpeechBoundary, handleSpeechEnd, handleSpeechError);
       if (utterance) { setCurrentUtterance(utterance); setIsSpeaking(true); setIsPaused(false); }
@@ -366,10 +358,10 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const handleCopyPassage = useCallback(() => {
     if (passage && navigator.clipboard) {
       navigator.clipboard.writeText(passage)
-        .then(() => { toast({ variant: "success", title: <div className="flex items-center gap-2"><ClipboardCopy className="h-5 w-5" />Copied!</div>, description: "Passage copied to clipboard." }); playSuccessSound(); })
-        .catch(err => { console.error("Failed to copy passage: ", err); toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Copy Failed</div>, description: "Could not copy passage." }); playErrorSound(); });
+        .then(() => { toast({ variant: "success", title: <div className="flex items-center gap-2"><ClipboardCopy className="h-5 w-5" />Copied!</div>, description: "Passage copied to clipboard." }); if(soundEffectsEnabled) playSuccessSound(); })
+        .catch(err => { console.error("Failed to copy passage: ", err); toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Copy Failed</div>, description: "Could not copy passage." }); if(soundEffectsEnabled) playErrorSound(); });
     } else if (!navigator.clipboard) toast({ variant: "info", title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Not Supported</div>, description: "Clipboard API not available." });
-  }, [passage, toast]);
+  }, [passage, toast, soundEffectsEnabled]);
 
   useEffect(() => { return () => { if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel(); resetSpeechState(); }; }, [resetSpeechState]);
 
@@ -418,11 +410,9 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
   const getPlayPauseAriaLabel = () => isSpeaking && !isPaused ? "Pause reading" : "Read passage aloud";
   const playPauseButtonText = () => isSpeaking && !isPaused ? 'Pause' : (isSpeaking && isPaused ? 'Resume' : 'Read Aloud');
 
-
   return (
     <Card className="shadow-xl w-full border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out relative">
-      <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />
-      <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />
+      {/* Popups handled globally */}
       <CardHeader>
         <CardTitle className="flex items-center text-xl font-semibold text-primary">
           <BookMarked className="mr-2 h-5 w-5" aria-hidden="true" /> Practice Reading
@@ -432,7 +422,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Passage Generation and Controls */}
         <div className="flex flex-col sm:flex-row gap-2">
           <Button onClick={fetchPassage} disabled={isLoading || wordsToPractice.length === 0} className="w-full sm:flex-1 btn-glow" size="lg" aria-label={isLoading ? "Generating..." : "Generate New Passage"}>
             {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><RefreshCcw className="mr-2 h-4 w-4" />New Passage</>}
@@ -451,7 +440,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
         {isLoading && <div className="flex justify-center p-4"><Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="sr-only">Loading passage</span></div>}
 
-        {/* Passage Display */}
         {passage && !isLoading && (
           <ScrollArea className="h-60 w-full rounded-md border p-4 bg-background/80 shadow-sm">
             <p className="text-lg leading-relaxed text-foreground/90 whitespace-pre-line">
@@ -466,7 +454,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
            <Alert variant="info"><Info className="h-5 w-5" /><AlertTitle>Generate a Passage</AlertTitle><AlertDescription>Click "New Passage" to start.</AlertDescription></Alert>
         )}
 
-        {/* Comprehension Test Section */}
         {passage && !isLoading && !isTestActive && !isShowingResults && (
           <Button onClick={handleGenerateTest} disabled={isTestLoading} className="w-full mt-4" size="lg">
             {isTestLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Generating Test...</> : <><Edit2 className="mr-2 h-5 w-5" />Take Comprehension Test</>}
@@ -475,7 +462,6 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
 
         {isTestLoading && <div className="flex justify-center p-4"><Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="sr-only">Loading test</span></div>}
 
-        {/* Test Active UI */}
         {isTestActive && questionsData && (
           <Card className="mt-6 bg-card/80 border-accent/30">
             <CardHeader><CardTitle className="text-lg text-accent">Comprehension Check</CardTitle></CardHeader>
@@ -504,9 +490,8 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
             </CardContent>
           </Card>
         )}
-
-        {/* Test Results UI (when isShowingResults is true and not yet completed or retrying) */}
-        {isShowingResults && testResults && !gameCompletedThisSession && (
+        
+        {isShowingResults && testResults && ( // This block remains for displaying results
           <Card className="mt-6 bg-card/80 border-blue-500/30">
             <CardHeader>
                 <CardTitle className="text-lg text-blue-600 dark:text-blue-400">Test Results</CardTitle>
@@ -560,7 +545,7 @@ export const ReadingPractice: FC<ReadingPracticeProps> = ({ wordsToPractice, rea
         )}
 
       </CardContent>
-      {passage && !isLoading && !gameCompletedThisSession && !isShowingResults && (
+      {passage && !isLoading && !isTestActive && !isShowingResults && ( // Only show this footer if no test is active/shown
         <CardFooter className="border-t pt-4 flex-wrap gap-2 justify-between items-center">
             <p className="text-xs text-muted-foreground basis-full sm:basis-auto">Practice words are <strong className="text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2">highlighted</strong>. Spoken words get background.</p>
             <Button onClick={handleCopyPassage} variant="ghost" size="sm" className="text-muted-foreground hover:text-primary basis-full sm:basis-auto">
