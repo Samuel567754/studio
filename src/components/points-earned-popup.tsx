@@ -53,3 +53,4 @@ export function StarsEarnedPopup({ stars, show, onComplete }: StarsEarnedPopupPr
     </div>
   );
 }
+

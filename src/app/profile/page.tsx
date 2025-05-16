@@ -60,15 +60,18 @@ interface Achievement {
   description: string;
   pointsRequired: number;
   iconImage: string; 
+  iconAlt: string;
   color: string; 
 }
 
 const achievementsList: Achievement[] = [
-    { name: "Star Cadet", description: "Earned your first 25 Golden Stars!", pointsRequired: 25, iconImage: "/assets/images/cute_smiling_star_illustration.png", color: "text-yellow-400" },
-    { name: "Word Collector", description: "Reached 75 Golden Stars from word games!", pointsRequired: 75, iconImage: "/assets/images/star_medal_gold_ribbon_icon.png", color: "text-blue-400" },
-    { name: "Number Cruncher", description: "Reached 75 Golden Stars from math games!", pointsRequired: 75, iconImage: "/assets/images/gold_medal_star_with_red_ribbon.png", color: "text-red-400" },
-    { name: "Treasure Hunter", description: "Found 200 Golden Stars!", pointsRequired: 200, iconImage: "/assets/images/treasure_chest_with_gold_and_jewels.png", color: "text-orange-500" },
-    { name: "Ultimate Champion", description: "Accumulated 400 Golden Stars overall!", pointsRequired: 400, iconImage: "/assets/images/gold_trophy_with_laurel_wreath.png", color: "text-green-400" },
+    { name: "Star Cadet", description: "Earned your first 25 Golden Stars!", pointsRequired: 25, iconImage: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Smiling Star Badge", color: "text-yellow-400" },
+    { name: "Word Collector", description: "Reached 75 Golden Stars from word games!", pointsRequired: 75, iconImage: "/assets/images/star_medal_gold_ribbon_icon.png", iconAlt: "Word Collector Medal", color: "text-blue-400" },
+    { name: "Number Cruncher", description: "Reached 75 Golden Stars from math games!", pointsRequired: 75, iconImage: "/assets/images/gold_medal_star_with_red_ribbon.png", iconAlt: "Number Cruncher Medal", color: "text-red-400" },
+    { name: "Vocabulary Virtuoso", description: "Mastered 150 Golden Stars in word activities!", pointsRequired: 150, iconImage: "/assets/images/gold_medal_with_blue_ribbons.png.png", iconAlt: "Vocabulary Virtuoso Medal", color: "text-indigo-400" },
+    { name: "Math Magician", description: "Conquered 150 math points!", pointsRequired: 150, iconImage: "/assets/images/golden_trophy_with_star_illustration.png", iconAlt: "Math Magician Trophy", color: "text-pink-400" },
+    { name: "Treasure Hunter", description: "Found 200 Golden Stars!", pointsRequired: 200, iconImage: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest Badge", color: "text-orange-500" },
+    { name: "Ultimate Champion", description: "Accumulated 400 Golden Stars overall!", pointsRequired: 400, iconImage: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Ultimate Champion Trophy", color: "text-green-400" },
 ];
 
 
@@ -190,7 +193,7 @@ export default function ProfilePage() {
                   layout="fill"
                   objectFit="cover"
                   className="rounded-full p-1" 
-                  data-ai-hint="abstract lights"
+                  data-ai-hint="app background settings"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end justify-center p-2">
                    <User className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
@@ -271,7 +274,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-            <Image src="/assets/images/golden_star_coin.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
+            <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
             <div>
               <p className="font-semibold text-foreground">{profileData.goldenStars}</p>
               <p className="text-sm text-muted-foreground">Golden Stars Earned</p>
@@ -317,7 +320,7 @@ export default function ProfilePage() {
                 >
                   <Image 
                     src={ach.iconImage} 
-                    alt={ach.name} 
+                    alt={ach.iconAlt} 
                     width={64} 
                     height={64} 
                     className="mb-3 drop-shadow-lg"
