@@ -6,7 +6,7 @@ import { useEffect, useCallback, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2, Target } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2, Star } from 'lucide-react';
 import { speakText, playNotificationSound, playErrorSound } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -19,22 +19,21 @@ import Image from 'next/image';
 interface WalkthroughGuideProps {
   steps: TutorialStep[];
   isOpen: boolean;
-  onClose: () => void;
-  onFinish: () => void;
+  onClose: () => void; // This will now just close, not mark complete
+  onFinish: () => void; // This will mark complete and close
 }
 
-// Helper to map string icon names from data to actual Lucide components
 const getWalkthroughIconComponent = (iconName?: string): React.ElementType => {
   if (!iconName) return Compass;
   const icons: { [key: string]: React.ElementType } = {
-    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon, CheckCircle2, Smile: HelpCircle // Defaulting Smile to HelpCircle as Smile icon might not be consistently available
+    Puzzle, BookOpenCheck, Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Map, Compass, FileType2: TextSelectIcon, CheckCircle2, Star, // Added Star
   };
   return icons[iconName] || Compass;
 };
 
 
 export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onClose, onFinish }) => {
-  const { currentStepIndex, setCurrentStepIndex, nextStep, prevStep } = useWalkthroughStore();
+  const { currentStepIndex, setCurrentStepIndex, nextStep, prevStep, closeWalkthrough, setHasCompletedWalkthrough } = useWalkthroughStore(); // Get store actions
   const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
   
   const { soundEffectsEnabled } = useAppSettingsStore();
@@ -123,7 +122,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
       stopCurrentSpeech();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, currentStepIndex]); 
+  }, [isOpen, currentStepIndex]); // Play audio when step changes
 
 
   const handleNext = () => {
@@ -132,6 +131,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
     if (currentStepIndex < steps.length - 1) {
       nextStep();
     } else {
+      setHasCompletedWalkthrough(true); // Mark as complete when "Finish" is clicked
       onFinish();
     }
   };
@@ -142,10 +142,10 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
     prevStep();
   };
 
-  const handleSkip = () => {
+  const handleSkipOrClose = () => {
     stopCurrentSpeech();
     playNotificationSound();
-    onClose(); // onClose marks walkthrough as completed
+    onClose(); // This now just closes the modal via ClientRootFeatures logic
   };
 
   const toggleSpeechPlayback = () => {
@@ -185,7 +185,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
 
   return (
     <>
-      <div className="walkthrough-overlay" onClick={handleSkip} />
+      <div className="walkthrough-overlay" onClick={handleSkipOrClose} />
       <div style={modalStyle} className="animate-in fade-in-0 slide-in-from-bottom-10 duration-500">
         <Card className="w-full shadow-2xl border-accent bg-card">
           <CardHeader className="p-4 border-b">
@@ -200,7 +200,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
           <CardContent className="p-4 max-h-[40vh] sm:max-h-[50vh] overflow-y-auto text-sm text-foreground/80">
             {currentStepData.imageSrc && (
               <div className="relative w-full h-32 rounded-md overflow-hidden mb-3 shadow-sm">
-                <Image src={currentStepData.imageSrc} alt={currentStepData.imageAlt || "Walkthrough step image"} layout="fill" objectFit="cover" data-ai-hint={currentStepData.aiHint || "guide"} />
+                <Image src={currentStepData.imageSrc} alt={currentStepData.imageAlt || "Walkthrough step image"} fill style={{objectFit:"cover"}} data-ai-hint={currentStepData.aiHint || "guide"} />
               </div>
             )}
             <p className="whitespace-pre-line leading-relaxed">{currentStepData.content}</p>
@@ -238,16 +238,16 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
                     <span className="hidden sm:inline">Next</span><ArrowRight className="h-4 w-4 sm:ml-2" />
                     </Button>
                 ) : (
-                    <Button onClick={onFinish} className="w-full sm:flex-1 bg-green-600 hover:bg-green-700 text-white btn-glow">
-                    Finish
+                    <Button onClick={handleNext} className="w-full sm:flex-1 bg-green-600 hover:bg-green-700 text-white btn-glow">
+                       <CheckCircle2 className="h-4 w-4 sm:mr-2" /> Finish
                     </Button>
                 )}
             </div>
-             <Button variant="ghost" size="sm" onClick={handleSkip} className="w-full text-muted-foreground hover:text-destructive">
+             <Button variant="ghost" size="sm" onClick={handleSkipOrClose} className="w-full text-muted-foreground hover:text-destructive">
                 Skip Tutorial
             </Button>
           </CardFooter>
-           <Button variant="ghost" size="icon" onClick={handleSkip} className="absolute top-2 right-2 p-1 h-8 w-8 text-muted-foreground hover:text-destructive rounded-full">
+           <Button variant="ghost" size="icon" onClick={handleSkipOrClose} className="absolute top-2 right-2 p-1 h-8 w-8 text-muted-foreground hover:text-destructive rounded-full">
               <X className="h-4 w-4"/>
               <span className="sr-only">Close tutorial</span>
           </Button>

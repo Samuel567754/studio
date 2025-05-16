@@ -13,7 +13,7 @@ import { QuickLinkFAB } from '@/components/quicklink-fab';
 import { Loader2 } from 'lucide-react';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { FloatingGoldenStars } from '@/components/floating-sparkle-points';
-import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data'; // Use the actual data
+import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data';
 
 export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const {
@@ -22,8 +22,8 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     isWalkthroughOpen,
     closeWalkthrough,
     setHasCompletedWalkthrough,
-    currentStepIndex, // Get currentStepIndex
-    setCurrentStepIndex, // Get setCurrentStepIndex
+    currentStepIndex,
+    setCurrentStepIndex,
   } = useWalkthroughStore();
   
   const { loadUserProfileFromStorage } = useUserProfileStore();
@@ -74,11 +74,11 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && pathname !== '/introduction' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
-        if (!isWalkthroughOpen) { // Only open if not already open
-          setCurrentStepIndex(0); // Reset to first step when opening
+        if (!isWalkthroughOpen) { 
+          setCurrentStepIndex(0); 
           openWalkthrough();
         }
-      }, 2500);
+      }, 2000); 
       return () => clearTimeout(timer);
     }
   }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex]);
@@ -118,7 +118,10 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     <div className="flex flex-col min-h-screen">
       <MainNav />
       <FloatingGoldenStars />
-      <main className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 pt-20 md:pt-24 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out">
+      <main 
+        data-tour-id="main-content-area" // For walkthrough targeting
+        className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 pt-20 md:pt-24 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out"
+      >
         {children}
       </main>
       <BottomNav />
@@ -131,7 +134,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
           steps={walkthroughGuideSteps} 
           isOpen={isWalkthroughOpen}
           onClose={() => {
-            setHasCompletedWalkthrough(true); // Mark as completed when closed by skip/X
+            // setHasCompletedWalkthrough(true); // Only mark as complete on explicit finish
             closeWalkthrough();
           }}
           onFinish={() => {

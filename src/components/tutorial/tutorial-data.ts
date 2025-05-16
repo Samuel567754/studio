@@ -1,13 +1,13 @@
 
-import type { Puzzle, BookOpenCheck, TextSelect, Map, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Compass, FileType2 as TextSelectIconLucide } from 'lucide-react'; // Example, adjust as needed
+import type { Puzzle, BookOpenCheck, TextSelect, Map, Sigma, User, SettingsIcon, HomeIcon, HelpCircle, Compass, FileType2 as TextSelectIconLucide, Star, CheckCircle2 } from 'lucide-react'; // Added Star, CheckCircle2
 
 export interface TutorialStep {
   id: string;
   title: (username?: string | null) => string;
   content: string;
   ariaLabel: string;
-  icon?: React.ElementType | string; // Allow string for data, map to component later
-  targetElementSelector?: string; // For interactive walkthrough targeting
+  icon?: React.ElementType | string; 
+  targetElementSelector?: string; 
   imageSrc?: string;
   imageAlt?: string;
   aiHint?: string;
@@ -22,7 +22,7 @@ export const tutorialStepsData: TutorialStep[] = [
     content: "This guide will walk you through the main features of the ChillLearn application, helping you make the most of your learning experience. Let's get started! You can also launch an interactive walkthrough using the button above.",
     ariaLabel: 'Welcome section introduction',
     icon: "HelpCircle", 
-    targetElementSelector: '#main-header',
+    targetElementSelector: '#main-header', // Example, adjust if your header has a different ID or no ID
     imageSrc: "https://images.unsplash.com/photo-1662967221311-1153979919a6?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTY0fHxsZWFybmluZyUyMGFwcHxlbnwwfHwwfHx8MA%3D%3D",
     imageAlt: "Children interacting with colorful learning tools",
     aiHint: "learning app children",
@@ -69,7 +69,7 @@ export const tutorialStepsData: TutorialStep[] = [
   {
     id: 'profile',
     title: () => 'Profile Page (Track Your Progress)',
-    content: "Visit your 'Profile' page for a snapshot of your learning journey.\nHere you'll find:\n- Your name and favorite topics (editable!).\n- Statistics on practice words and mastered words.\n- Your current learning preferences.",
+    content: "Visit your 'Profile' page for a snapshot of your learning journey.\nHere you'll find:\n- Your name and favorite topics (editable!).\n- Statistics on practice words and mastered words.\n- Your current learning preferences and earned Golden Stars and Badges.",
     ariaLabel: "Overview of the Profile page.",
     icon: "User",
     targetElementSelector: '[href="/profile"]',
@@ -98,13 +98,35 @@ export const tutorialStepsData: TutorialStep[] = [
     content: "Getting around is easy:\n- Main Homepage ('/'): Your dashboard for quick access to all learning areas (Word Practice, AI Games, Math Zone).\n- Desktop/Tablet: Use the navigation links at the top.\n- Mobile: A bottom navigation bar and a Quick Link FAB (Floating Action Button) provide fast access.\n- Quick Learn Button: Takes you directly to the 'Learn New Words' section within 'Word Practice'.",
     ariaLabel: "How to navigate the application on different devices.",
     icon: "Compass",
-    targetElementSelector: '[data-tour-id="main-navigation"]',
+    targetElementSelector: '[data-tour-id="main-navigation"]', 
     imageSrc: "https://plus.unsplash.com/premium_photo-1722156533662-f58d3e13c07c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NjV8fGFwcCUyMHdhbGslMjB0aHJvdWdofGVufDB8fDB8fHww",
     imageAlt: "Abstract representation of app navigation",
     aiHint: "app walkthrough guide",
     linkHref: "/",
     linkText: "Go to Homepage"
   },
+  {
+    id: 'golden-stars',
+    title: () => 'Golden Stars & Rewards!',
+    content: "As you play games and learn, you'll earn Golden Stars! Keep an eye on your star count (it floats on screen!).\nCheck your Profile page to see the cool Trophies & Badges you can unlock by collecting more stars. Have fun learning and earning!",
+    ariaLabel: "Explanation of Golden Stars and achievements system.",
+    icon: "Star", 
+    targetElementSelector: '[data-tour-id="floating-golden-stars"]', // Assuming your floating stars component has this data attribute
+    imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png",
+    imageAlt: "Treasure chest full of gold and jewels",
+    aiHint: "treasure chest gold"
+  },
+  {
+    id: 'final-welcome',
+    title: (username) => `You're All Set, ${username || 'Learner'}!`,
+    content: "You've now seen the main features of ChillLearn AI. We hope you have a fantastic time learning and exploring. Remember, you can always revisit this full guide from the 'Guide' page. Happy learning!",
+    ariaLabel: "Final welcoming message for the tutorial.",
+    icon: "CheckCircle2",
+    targetElementSelector: 'body', 
+    imageSrc: "/assets/images/yellow_stars_firework_graphic.png",
+    imageAlt: "Celebratory stars graphic",
+    aiHint: "celebration stars"
+  }
 ];
 
 // walkthroughModalSteps can also be updated similarly if needed for consistency,
@@ -115,7 +137,7 @@ export const walkthroughModalSteps: TutorialStep[] = [
     title: (username) => username ? `Hi ${username}, Welcome!` : 'Welcome to ChillLearn!', 
     content: "Let's quickly see where everything is. This tour will highlight key sections.", 
     ariaLabel: 'Modal: Introduction', 
-    icon: "Smile", 
+    icon: "Star", 
     targetElementSelector: 'body' 
   },
   { 
@@ -135,13 +157,29 @@ export const walkthroughModalSteps: TutorialStep[] = [
     targetElementSelector: '[href="/word-practice"]' 
   },
   { 
-    id: 'ai-math-modal', 
-    title: () => "AI Games & Math Zone", 
-    content: "Explore 'AI Games' for fun vocabulary challenges and the 'Math Zone' for various numerical activities. These use words from your practice list where applicable.", 
-    ariaLabel: 'Modal: AI Games and Math Zone', 
+    id: 'ai-games-modal', 
+    title: () => "AI Word Games", 
+    content: "Explore 'AI Games' for fun vocabulary challenges like Fill-in-the-Blank and Definition Match.", 
+    ariaLabel: 'Modal: AI Word Games', 
     icon: "Puzzle", 
     targetElementSelector: '[href="/ai-games"]' 
+  },
+  { 
+    id: 'math-zone-modal', 
+    title: () => "Math Zone", 
+    content: "Visit the 'Math Zone' for number games, AI problem solving, and arithmetic practice.", 
+    ariaLabel: 'Modal: Math Zone', 
+    icon: "Sigma", 
+    targetElementSelector: '[href="/math"]' 
   }, 
+  { 
+    id: 'golden-stars-modal',
+    title: () => 'Golden Stars!',
+    content: "As you play, you'll earn Golden Stars! Watch your total grow (it floats on screen!). Check your Profile for cool Trophies & Badges.",
+    ariaLabel: "Modal: Explanation of Golden Stars.",
+    icon: "Star",
+    targetElementSelector: '[data-tour-id="floating-golden-stars"]'
+  },
   { 
     id: 'profile-settings-modal', 
     title: () => "Profile & Settings", 
@@ -152,7 +190,7 @@ export const walkthroughModalSteps: TutorialStep[] = [
   },
   { 
     id: 'finish-modal', 
-    title: () => "You're Ready!", 
+    title: (username) => username ? `You're Ready, ${username}!` : "You're Ready!", 
     content: "That's the basics! Explore and have fun learning. You can find this full guide on the 'Guide' page if you need a refresher.", 
     ariaLabel: 'Modal: End of tour', 
     icon: "CheckCircle2", 
