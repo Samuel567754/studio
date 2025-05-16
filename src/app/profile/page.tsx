@@ -11,7 +11,7 @@ import {
   getStoredReadingLevel,
   getStoredWordLength,
   clearProgressStoredData, 
-  getStoredGoldenStars, // Import getter for golden stars
+  getStoredGoldenStars,
 } from '@/lib/storage';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -46,7 +46,7 @@ interface ProfileData {
   wordLength: number;
   practiceWords: string[];
   masteredWords: string[];
-  goldenStars: number; // Add goldenStars to ProfileData
+  goldenStars: number;
 }
 
 const availableTopics = [
@@ -59,8 +59,8 @@ interface Achievement {
   name: string;
   description: string;
   pointsRequired: number;
-  iconImage: string; // Path to image in public/assets/images
-  color: string; // Tailwind text color class
+  iconImage: string; 
+  color: string; 
 }
 
 const achievementsList: Achievement[] = [
@@ -80,7 +80,7 @@ export default function ProfilePage() {
   const { 
     username, 
     favoriteTopics, 
-    goldenStars, // Get goldenStars from store
+    goldenStars, 
     setUsername: setStoreUsername, 
     setFavoriteTopics: setStoreFavoriteTopics, 
     loadUserProfileFromStorage 
@@ -99,7 +99,7 @@ export default function ProfilePage() {
     const masteredList = getStoredMasteredWords();
     const level = getStoredReadingLevel();
     const length = getStoredWordLength();
-    const stars = getStoredGoldenStars(); // Get stars from storage
+    const stars = getStoredGoldenStars();
 
     setProfileData({
       practiceWordCount: practiceList.length,
@@ -108,7 +108,7 @@ export default function ProfilePage() {
       wordLength: length,
       practiceWords: practiceList,
       masteredWords: masteredList,
-      goldenStars: stars, // Set stars in profileData
+      goldenStars: stars,
     });
     setIsMounted(true);
   }, [loadUserProfileFromStorage]);
@@ -117,7 +117,6 @@ export default function ProfilePage() {
     if (isMounted) {
       setUsernameInput(username || '');
       setSelectedTopics(favoriteTopics ? favoriteTopics.split(',').map(t => t.trim()).filter(t => t) : []);
-      // Update profileData if goldenStars from store changes (e.g., from another tab)
       if (profileData && goldenStars !== profileData.goldenStars) {
         setProfileData(prev => prev ? { ...prev, goldenStars } : null);
       }
@@ -148,7 +147,7 @@ export default function ProfilePage() {
 
   const handleConfirmResetProgress = () => {
     if (typeof window !== 'undefined') {
-        clearProgressStoredData(); // This will also reset goldenStars to 0 via the store's resetUserProfile
+        clearProgressStoredData(); 
         toast({
             title: <div className="flex items-center gap-2"><Trash2 className="h-5 w-5" />Progress Reset</div>,
             description: "Your learning and app usage data has been cleared. You will see the introduction again.",
@@ -175,14 +174,15 @@ export default function ProfilePage() {
     <div className="space-y-8 max-w-3xl mx-auto">
       <header className="relative text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out rounded-xl overflow-hidden shadow-2xl p-8 md:p-12 min-h-[300px] flex flex-col justify-center items-center">
         <Image
-          src="/assets/images/geometric_crystal_design.png"
+          src="https://images.unsplash.com/photo-1731877818770-820faabe2d4c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTIyfHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D"
           alt={username ? `${username}'s profile header background with abstract pattern` : "User profile header background with abstract pattern"}
           layout="fill"
           objectFit="cover"
           className="brightness-50"
           priority
+          data-ai-hint="abstract pattern profile"
         />
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
         <div className="relative z-10 text-white">
           <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-yellow-400/70 mb-4">
               <Image
@@ -190,7 +190,7 @@ export default function ProfilePage() {
                   alt={username ? `${username}'s profile avatar` : "User profile avatar"}
                   layout="fill"
                   objectFit="cover"
-                  className="rounded-full p-3" // Added padding for icon effect
+                  className="rounded-full p-3" 
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end justify-center p-2">
                    <User className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
@@ -203,7 +203,6 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      {/* Edit Profile Information Card - remains largely the same */}
       <Card className="shadow-xl border-accent/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-100">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-accent">
@@ -262,7 +261,6 @@ export default function ProfilePage() {
         </form>
       </Card>
 
-      {/* Progress Overview Card - Updated to show Golden Stars */}
       <Card className="shadow-lg border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-primary">
@@ -296,7 +294,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* My Trophies & Badges Card - New Achievements */}
       <Card className="shadow-lg border-yellow-500/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-300">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-yellow-500">
@@ -341,7 +338,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Current Preferences Card - remains largely the same */}
       <Card className="shadow-lg border-accent/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-300">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-accent">
@@ -374,7 +370,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       
-      {/* Practice & Mastered Words Cards - remain largely the same */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-md border-border/30 animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-400">
             <CardHeader>
@@ -425,7 +420,6 @@ export default function ProfilePage() {
         </Card>
       </div>
 
-      {/* Reset Progress Section - remains the same */}
       <Card className="shadow-lg border-destructive/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-600">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-destructive">
@@ -473,3 +467,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
