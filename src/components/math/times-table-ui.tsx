@@ -17,8 +17,6 @@ import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-// Removed local CoinsEarnedPopup and CoinsLostPopup imports
-
 
 interface TimesTableProblem {
   factor1: number;
@@ -39,11 +37,10 @@ const generateTimesTableProblem = (table: number, multiplier: number): TimesTabl
 };
 
 const MAX_MULTIPLIER = 12;
-const POINTS_PER_CORRECT_ANSWER = 1; // Adjusted
+const POINTS_PER_CORRECT_ANSWER = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
-const SESSION_COMPLETION_BONUS = 5; // Adjusted
+const SESSION_COMPLETION_BONUS_BASE = 5;
 const PENALTY_PER_WRONG_FOR_BONUS = 1;
-
 
 const shuffleArray = <T,>(array: T[]): T[] => {
   const newArray = [...array];
@@ -65,6 +62,7 @@ export const TimesTableUI = () => {
   const [score, setScore] = useState(0);
   const [problemsAttemptedInSession, setProblemsAttemptedInSession] = useState(0);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [sessionIncorrectAnswersCount, setSessionIncorrectAnswersCount] = useState(0);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isListening, setIsListening] = useState(false);
@@ -74,8 +72,6 @@ export const TimesTableUI = () => {
   const [answerInBlank, setAnswerInBlank] = useState<string | number | null>(null);
   const [showCorrectAnswerAfterIncorrect, setShowCorrectAnswerAfterIncorrect] = useState(false);
   const [inputAnimation, setInputAnimation] = useState<'success' | 'error' | null>(null);
-
-  // Removed local popup states
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -96,18 +92,15 @@ export const TimesTableUI = () => {
     answerInputRef.current?.focus();
   }, []);
 
-
-  const handleSessionCompletion = useCallback((finalScore: number) => {
+  const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
-    const wrongAnswersInSession = MAX_MULTIPLIER - finalScore;
-    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_BASE - (sessionIncorrectAnswersCount * PENALTY_PER_WRONG_FOR_BONUS));
 
     if (calculatedBonus > 0) {
-      addGoldenCoins(calculatedBonus); // This will trigger popup via store/ClientRootFeatures
+      addGoldenCoins(calculatedBonus);
       if (soundEffectsEnabled) playCoinsEarnedSound();
     }
-
-    const completionMsg = `${username ? `Amazing job, ${username}!` : 'Table Complete!'} You scored ${finalScore} out of ${MAX_MULTIPLIER} for the ${selectedTable} times table. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Practice more to earn a bonus!'}`;
+    const completionMsg = `${username ? `Amazing job, ${username}!` : 'Table Complete!'} You scored ${score} out of ${MAX_MULTIPLIER} for the ${selectedTable} times table. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Practice more to earn a bonus!'}`;
     if (soundEffectsEnabled) {
         playCompletionSound();
         speakText(completionMsg);
@@ -121,19 +114,17 @@ export const TimesTableUI = () => {
         description: completionMsg,
         duration: 7000,
     });
-  }, [selectedTable, username, soundEffectsEnabled, toast, addGoldenCoins]);
+  }, [selectedTable, username, soundEffectsEnabled, toast, addGoldenCoins, score, sessionIncorrectAnswersCount]);
 
-
-  const loadNextProblem = useCallback((currentSessionScore: number) => {
+  const loadNextProblem = useCallback(() => {
     resetProblemState();
     if (currentProblemIndex < MAX_MULTIPLIER -1) {
       setCurrentProblemIndex(prev => prev + 1);
        if (soundEffectsEnabled) playNotificationSound();
     } else {
-      handleSessionCompletion(currentSessionScore);
+      handleSessionCompletion();
     }
   }, [currentProblemIndex, soundEffectsEnabled, resetProblemState, handleSessionCompletion]);
-
 
   const startNewTablePractice = useCallback((table: number, isInitialLoad: boolean = false) => {
     setIsLoading(true);
@@ -142,6 +133,7 @@ export const TimesTableUI = () => {
     setCurrentProblemIndex(0);
     setScore(0);
     setProblemsAttemptedInSession(0);
+    setSessionIncorrectAnswersCount(0);
     setSessionCompleted(false);
     resetProblemState();
     if (!isInitialLoad && soundEffectsEnabled) playNotificationSound();
@@ -164,7 +156,6 @@ export const TimesTableUI = () => {
     }
   }, [selectedTable, shuffledMultipliers, currentProblemIndex, sessionCompleted, resetProblemState]);
 
-
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (sessionCompleted || !currentProblem || userAnswer.trim() === '') {
@@ -185,11 +176,9 @@ export const TimesTableUI = () => {
     setInputAnimation(correct ? 'success' : 'error');
     setTimeout(() => setInputAnimation(null), 700);
 
-    let newCurrentScore = score;
     if (correct) {
-        newCurrentScore = score + 1;
-        setScore(newCurrentScore);
-        addGoldenCoins(POINTS_PER_CORRECT_ANSWER); // This will trigger popup
+        setScore(prev => prev + 1);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
@@ -199,7 +188,7 @@ export const TimesTableUI = () => {
         });
     } else {
         deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        // No local popup for deduction, it would be handled globally if desired
+        setSessionIncorrectAnswersCount(prev => prev + 1);
         if (soundEffectsEnabled) playCoinsDeductedSound();
         toast({
           variant: "destructive",
@@ -210,15 +199,13 @@ export const TimesTableUI = () => {
     }
     setProblemsAttemptedInSession(prev => prev + 1);
 
-
     const afterFeedbackAudio = () => {
-      loadNextProblem(newCurrentScore);
+      loadNextProblem();
     };
 
     if (correct) {
       const successMessage = `${username ? username + ", t" : "T"}hat's right! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
-      // Sound already played
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! The answer is ${currentProblem.answer}.`;
 
       if (soundEffectsEnabled) {
@@ -227,17 +214,15 @@ export const TimesTableUI = () => {
       } else {
         setTimeout(afterFeedbackAudio, 1200);
       }
-
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You answered ${answerNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      // Sound already played
       const speechErrorMsg = `Oops! You answered ${answerNum}.`;
 
       const revealCorrectAndProceed = () => {
           setShowCorrectAnswerAfterIncorrect(true);
           setAnswerInBlank(currentProblem.answer);
-          setInputAnimation('success'); // Flash the correct answer briefly
+          setInputAnimation('success');
           setTimeout(() => setInputAnimation(null), 700);
           if (soundEffectsEnabled) {
               const correctAnswerSpeech = `The correct answer was ${currentProblem.answer}.`;
@@ -255,8 +240,7 @@ export const TimesTableUI = () => {
          setTimeout(revealCorrectAndProceed, 1200);
       }
     }
-  }, [currentProblem, userAnswer, loadNextProblem, username, soundEffectsEnabled, sessionCompleted, score, addGoldenCoins, deductGoldenCoins, toast]);
-
+  }, [currentProblem, userAnswer, loadNextProblem, username, soundEffectsEnabled, sessionCompleted, score, addGoldenCoins, deductGoldenCoins, toast, sessionIncorrectAnswersCount]);
 
   useEffect(() => {
     if (currentProblem && !isLoading && !sessionCompleted && currentProblem.speechText && soundEffectsEnabled && !isAttempted) {
@@ -268,7 +252,6 @@ export const TimesTableUI = () => {
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
   }, [handleSubmit]);
-
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
@@ -320,7 +303,7 @@ export const TimesTableUI = () => {
   const handleTableChange = (value: string) => {
     const tableNum = parseInt(value, 10);
     setSelectedTable(tableNum);
-    startNewTablePractice(tableNum); // Restart practice for the new table
+    startNewTablePractice(tableNum);
   };
 
   const handleSpeakQuestion = () => {
@@ -376,7 +359,7 @@ export const TimesTableUI = () => {
     if (sessionCompleted) {
         startNewTablePractice(selectedTable);
     } else {
-        loadNextProblem(score);
+        loadNextProblem();
     }
   };
 
@@ -416,7 +399,6 @@ export const TimesTableUI = () => {
   if (isLoading && !currentProblem) {
     return (
         <Card className="w-full max-w-lg mx-auto shadow-xl border-accent/20 relative">
-            {/* Popups are now handled by ClientRootFeatures */}
             <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-accent flex items-center justify-center">
                     <ListOrdered className="mr-2 h-6 w-6" /> Times Table Challenge
@@ -430,10 +412,8 @@ export const TimesTableUI = () => {
     );
   }
 
-
   return (
     <Card className="w-full max-w-lg mx-auto shadow-xl border-accent/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-       {/* Popups are now handled by ClientRootFeatures */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-accent flex items-center justify-center">
           <ListOrdered className="mr-2 h-6 w-6" /> Times Table Challenge

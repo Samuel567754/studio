@@ -16,7 +16,6 @@ import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-// Removed local CoinsEarnedPopup and CoinsLostPopup imports
 
 type Operation = '+' | '-' | '*' | '/';
 interface Problem {
@@ -31,8 +30,8 @@ interface Problem {
 const PROBLEMS_PER_SESSION = 5;
 const POINTS_PER_CORRECT_ANSWER = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
-const SESSION_COMPLETION_BONUS = 5;
-const PENALTY_PER_WRONG_FOR_BONUS = 1; // Penalty for calculating session bonus
+const SESSION_COMPLETION_BONUS_BASE = 5;
+const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 const generateProblem = (): Problem => {
   const operation = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)] as Operation;
@@ -63,14 +62,14 @@ const generateProblem = (): Problem => {
       break;
     case '/':
       answer = Math.floor(Math.random() * 10) + 1;
-      num2 = Math.floor(Math.random() * ( Math.min(10, (answer > 0 ? Math.floor(50 / answer) : 10 ) ) ) ) + 1; // Ensure num2 is not too large
+      num2 = Math.floor(Math.random() * ( Math.min(10, (answer > 0 ? Math.floor(50 / answer) : 10 ) ) ) ) + 1; 
       num1 = answer * num2;
-       if (num1 === 0 && num2 === 0) { // Avoid 0/0
-          num2 = 1; // or some other default to prevent division by zero
+       if (num1 === 0 && num2 === 0) { 
+          num2 = 1; 
           num1 = answer * num2;
-      } else if (num2 === 0) { // Prevent division by zero if num1 is not 0
-          num2 = 1; // or some other default
-          num1 = answer * num2; // Recalculate num1 based on a valid num2
+      } else if (num2 === 0) { 
+          num2 = 1; 
+          num1 = answer * num2; 
       }
       questionText = `${num1} ÷ ${num2} = ?`;
       speechText = `${num1} divided by ${num2} equals what?`;
@@ -94,13 +93,7 @@ export const ArithmeticGameUI = () => {
   const [answerInBlank, setAnswerInBlank] = useState<string | number | null>(null);
   const [showCorrectAnswerAfterIncorrect, setShowCorrectAnswerAfterIncorrect] = useState(false);
   const [inputAnimation, setInputAnimation] = useState<'success' | 'error' | null>(null);
-
-  // Removed local popup states
-  // const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
-  // const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
-  // const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
-  // const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
-
+  const [sessionIncorrectAnswersCount, setSessionIncorrectAnswersCount] = useState(0);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -113,6 +106,7 @@ export const ArithmeticGameUI = () => {
     if (isNewSessionStart) {
         setScore(0);
         setProblemsSolvedInSession(0);
+        setSessionIncorrectAnswersCount(0);
         setSessionCompleted(false);
     }
     setIsLoading(true);
@@ -131,18 +125,17 @@ export const ArithmeticGameUI = () => {
     answerInputRef.current?.focus();
   },[soundEffectsEnabled, sessionCompleted]);
 
-  const handleSessionCompletion = useCallback((finalScore: number) => {
+  const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
-    const wrongAnswersInSession = PROBLEMS_PER_SESSION - finalScore;
-    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_BASE - (sessionIncorrectAnswersCount * PENALTY_PER_WRONG_FOR_BONUS));
 
     if (calculatedBonus > 0) {
-      addGoldenCoins(calculatedBonus); // This will trigger popup via store/ClientRootFeatures
+      addGoldenCoins(calculatedBonus);
       if (soundEffectsEnabled) playCoinsEarnedSound();
     }
 
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Keep practicing to earn more bonus coins!'}`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${score}. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Keep practicing to earn a bonus!'}`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2">
@@ -156,7 +149,7 @@ export const ArithmeticGameUI = () => {
         playCompletionSound();
         speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast, addGoldenCoins]);
+  }, [username, soundEffectsEnabled, toast, addGoldenCoins, score, sessionIncorrectAnswersCount]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -182,7 +175,7 @@ export const ArithmeticGameUI = () => {
     if(correct) {
         newCurrentScore = score + 1;
         setScore(newCurrentScore);
-        addGoldenCoins(POINTS_PER_CORRECT_ANSWER); // This will trigger popup
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
@@ -192,7 +185,7 @@ export const ArithmeticGameUI = () => {
         });
     } else {
         deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        // No local popup for deduction, it would be handled globally if desired
+        setSessionIncorrectAnswersCount(prev => prev + 1);
         if (soundEffectsEnabled) playCoinsDeductedSound();
         toast({
           variant: "destructive",
@@ -207,7 +200,7 @@ export const ArithmeticGameUI = () => {
         setProblemsSolvedInSession(newProblemsSolved);
 
         if (newProblemsSolved >= PROBLEMS_PER_SESSION) {
-            handleSessionCompletion(newCurrentScore);
+            handleSessionCompletion();
         } else {
             loadNewProblem();
         }
@@ -216,7 +209,6 @@ export const ArithmeticGameUI = () => {
     if (correct) {
       const successMessage = `${username ? username + ", that's c" : 'C'}orrect! ${currentProblem.questionText.replace('?', currentProblem.answer.toString())}`;
       setFeedback({ type: 'success', message: successMessage });
-      // Sound already played by addGoldenCoins trigger
       const speechSuccessMsg = `${username ? username + ", " : ""}Correct! The answer is ${currentProblem.answer}.`;
 
       if (soundEffectsEnabled) {
@@ -225,17 +217,15 @@ export const ArithmeticGameUI = () => {
       } else {
         setTimeout(afterFeedbackAudio,1200);
       }
-
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You answered ${answerNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      // Sound already played by deductGoldenCoins trigger (if implemented with sound)
       const speechErrorMsg = `Oops! You answered ${answerNum}.`;
 
       const revealCorrectAndProceed = () => {
           setShowCorrectAnswerAfterIncorrect(true);
           setAnswerInBlank(currentProblem.answer);
-          setInputAnimation('success'); // Flash the correct answer briefly
+          setInputAnimation('success');
           setTimeout(() => setInputAnimation(null), 700);
           if (soundEffectsEnabled) {
               const correctAnswerSpeech = `The correct answer was ${currentProblem.answer}.`;
@@ -253,8 +243,7 @@ export const ArithmeticGameUI = () => {
          setTimeout(revealCorrectAndProceed, 1200);
       }
     }
-  }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted, score, addGoldenCoins, deductGoldenCoins, toast]);
-
+  }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, handleSessionCompletion, sessionCompleted, score, addGoldenCoins, deductGoldenCoins, toast, sessionIncorrectAnswersCount]);
 
   useEffect(() => {
     loadNewProblem(true);
@@ -271,7 +260,6 @@ export const ArithmeticGameUI = () => {
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
   }, [handleSubmit]);
-
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
@@ -311,19 +299,16 @@ export const ArithmeticGameUI = () => {
         });
         setIsListening(false);
       };
-
       recognitionRef.current.onend = () => {
         setIsListening(false);
       };
     }
-
     return () => {
         if (recognitionRef.current) {
            recognitionRef.current.stop();
         }
     };
   }, [toast]);
-
 
   const handleSpeakQuestion = () => {
     if (currentProblem?.speechText && soundEffectsEnabled && !sessionCompleted && !isAttempted) {
@@ -422,10 +407,8 @@ export const ArithmeticGameUI = () => {
     );
   };
 
-
   return (
     <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-      {/* Popups are now handled by ClientRootFeatures */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <Zap className="mr-2 h-6 w-6" /> Quick Maths!

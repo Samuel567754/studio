@@ -15,7 +15,8 @@ import { useUserProfileStore, type Achievement } from '@/stores/user-profile-sto
 import { FloatingGoldenCoins } from '@/components/floating-sparkle-points';
 import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data';
 import { AchievementUnlockedModal } from '@/components/achievement-unlocked-modal';
-import { CoinsEarnedPopup } from '@/components/points-earned-popup'; // Import for general game coins
+import { CoinsEarnedPopup } from '@/components/points-earned-popup';
+import { CoinsLostPopup } from '@/components/points-lost-popup'; // Import CoinsLostPopup
 
 export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const {
@@ -31,10 +32,12 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     loadUserProfileFromStorage,
     pendingClaimAchievements,
     claimNextPendingAchievement,
-    lastBonusAwarded, // For achievement bonuses
+    lastBonusAwarded,
     clearLastBonusAwarded,
-    lastGameCoinsAwarded, // For general game coins
+    lastGameCoinsAwarded,
     clearLastGameCoinsAwarded,
+    lastCoinsDeducted, // Get new state
+    clearLastCoinsDeducted, // Get new action
   } = useUserProfileStore();
 
   const [isClientMounted, setIsClientMounted] = useState(false);
@@ -43,14 +46,14 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // State for achievement bonus popup
   const [showAchievementBonusPopup, setShowAchievementBonusPopup] = useState(false);
   const [currentAchievementBonusAmount, setCurrentAchievementBonusAmount] = useState(0);
 
-  // State for general game coins popup
   const [showGameCoinsPopup, setShowGameCoinsPopup] = useState(false);
   const [currentGameCoinsAmount, setCurrentGameCoinsAmount] = useState(0);
 
+  const [showCoinsLostPopupDisplay, setShowCoinsLostPopupDisplay] = useState(false); // New state for CoinsLostPopup
+  const [currentCoinsLostAmount, setCurrentCoinsLostAmount] = useState(0); // New state for CoinsLostPopup
 
   useEffect(() => {
     setIsClientMounted(true);
@@ -69,7 +72,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
         loadUserProfileFromStorage();
       }
       if (event.key === useWalkthroughStore.persist.getOptions().name) {
-        // Zustand handles re-hydration for its own store
+        // Zustand handles re-hydration
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -96,16 +99,15 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && pathname !== '/introduction' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
-        if (!isWalkthroughOpen && pendingClaimAchievements.length === 0 && !showAchievementBonusPopup && !showGameCoinsPopup) {
+        if (!isWalkthroughOpen && pendingClaimAchievements.length === 0 && !showAchievementBonusPopup && !showGameCoinsPopup && !showCoinsLostPopupDisplay) {
           setCurrentStepIndex(0);
           openWalkthrough();
         }
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex, pendingClaimAchievements, showAchievementBonusPopup, showGameCoinsPopup]);
+  }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex, pendingClaimAchievements, showAchievementBonusPopup, showGameCoinsPopup, showCoinsLostPopupDisplay]);
 
-  // Effect for Achievement Bonus Popup
   useEffect(() => {
     if (lastBonusAwarded && lastBonusAwarded.amount > 0) {
       setCurrentAchievementBonusAmount(lastBonusAwarded.amount);
@@ -114,7 +116,6 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     }
   }, [lastBonusAwarded, clearLastBonusAwarded]);
 
-  // Effect for General Game Coins Popup
   useEffect(() => {
     if (lastGameCoinsAwarded && lastGameCoinsAwarded.amount > 0) {
       setCurrentGameCoinsAmount(lastGameCoinsAwarded.amount);
@@ -122,6 +123,15 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       clearLastGameCoinsAwarded();
     }
   }, [lastGameCoinsAwarded, clearLastGameCoinsAwarded]);
+
+  // Effect for CoinsLostPopup
+  useEffect(() => {
+    if (lastCoinsDeducted && lastCoinsDeducted.amount > 0) {
+      setCurrentCoinsLostAmount(lastCoinsDeducted.amount);
+      setShowCoinsLostPopupDisplay(true);
+      clearLastCoinsDeducted();
+    }
+  }, [lastCoinsDeducted, clearLastCoinsDeducted]);
 
 
   if (!isClientMounted || actualIntroductionSeen === null || (actualIntroductionSeen && actualPersonalizationCompleted === null)) {
@@ -177,13 +187,9 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
           isOpen={isWalkthroughOpen}
           onClose={() => { 
             closeWalkthrough();
-            // No longer sets completed here, handled by onFinish or skip
+            setHasCompletedWalkthrough(true); // Mark as complete if user closes it manually
           }}
           onFinish={() => { 
-            setHasCompletedWalkthrough(true);
-            closeWalkthrough();
-          }}
-          onSkip={() => { // Ensure skip also marks as complete
             setHasCompletedWalkthrough(true);
             closeWalkthrough();
           }}
@@ -210,6 +216,13 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
           coins={currentGameCoinsAmount}
           show={showGameCoinsPopup}
           onComplete={() => setShowGameCoinsPopup(false)}
+        />
+      )}
+      {showCoinsLostPopupDisplay && currentCoinsLostAmount > 0 && ( // Render CoinsLostPopup
+        <CoinsLostPopup
+          coins={currentCoinsLostAmount}
+          show={showCoinsLostPopupDisplay}
+          onComplete={() => setShowCoinsLostPopupDisplay(false)}
         />
       )}
     </div>

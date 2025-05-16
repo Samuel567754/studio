@@ -16,7 +16,6 @@ import { parseSpokenNumber } from '@/lib/speech';
 import { cn } from '@/lib/utils';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-// Removed local CoinsEarnedPopup and CoinsLostPopup imports
 
 interface SequenceProblem {
   sequenceDisplay: (number | string)[];
@@ -28,15 +27,15 @@ interface SequenceProblem {
 const PROBLEMS_PER_SESSION = 5;
 const POINTS_PER_CORRECT_ANSWER = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
-const SESSION_COMPLETION_BONUS = 5;
+const SESSION_COMPLETION_BONUS_BASE = 5;
 const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 const generateSequenceProblem = (): SequenceProblem => {
   const start = Math.floor(Math.random() * 20) + 1;
   const diffTypes = [1, 2, 3, 5, 10];
   const difference = diffTypes[Math.floor(Math.random() * diffTypes.length)];
-  const length = 4; // Sequence length e.g., 1, 2, __, 4
-  const blankIndex = Math.floor(Math.random() * (length -1)) + 1; // Ensure blank is not first or last for simpler UI
+  const length = 4;
+  const blankIndex = Math.floor(Math.random() * (length -1)) + 1;
 
   const fullSequence: number[] = [];
   for (let i = 0; i < length; i++) {
@@ -46,7 +45,6 @@ const generateSequenceProblem = (): SequenceProblem => {
   const correctAnswer = fullSequence[blankIndex];
   const sequenceDisplay: (number | string)[] = fullSequence.map((num, idx) => (idx === blankIndex ? "__" : num));
 
-  // Construct question text and speech text
   const questionText = `What number fits the blank: ${sequenceDisplay.join(', ')}?`;
   const speechText = `What number fits the blank in the sequence: ${sequenceDisplay.map(s => s === "__" ? "blank" : s).join(', ')}?`;
 
@@ -60,6 +58,7 @@ export const NumberSequencingUI = () => {
   const [score, setScore] = useState(0);
   const [problemsAttemptedInSession, setProblemsAttemptedInSession] = useState(0);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [sessionIncorrectAnswersCount, setSessionIncorrectAnswersCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isListening, setIsListening] = useState(false);
 
@@ -69,12 +68,9 @@ export const NumberSequencingUI = () => {
   const [showCorrectAnswerAfterIncorrect, setShowCorrectAnswerAfterIncorrect] = useState(false);
   const [inputAnimation, setInputAnimation] = useState<'success' | 'error' | null>(null);
 
-  // Removed local popup states
-
-
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
-  const answerInputRef = useRef<HTMLInputElement | null>(null); // Added ref for input
+  const answerInputRef = useRef<HTMLInputElement | null>(null);
   const { username, addGoldenCoins, deductGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
@@ -83,6 +79,7 @@ export const NumberSequencingUI = () => {
     if (isNewSessionStart) {
         setScore(0);
         setProblemsAttemptedInSession(0);
+        setSessionIncorrectAnswersCount(0);
         setSessionCompleted(false);
     }
     setIsLoading(true);
@@ -101,18 +98,17 @@ export const NumberSequencingUI = () => {
     answerInputRef.current?.focus();
   },[soundEffectsEnabled, sessionCompleted]);
 
-  const handleSessionCompletion = useCallback((finalScore: number) => {
+  const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
-    const wrongAnswersInSession = PROBLEMS_PER_SESSION - finalScore;
-    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_BASE - (sessionIncorrectAnswersCount * PENALTY_PER_WRONG_FOR_BONUS));
 
     if (calculatedBonus > 0) {
-      addGoldenCoins(calculatedBonus); // This will trigger popup via store/ClientRootFeatures
+      addGoldenCoins(calculatedBonus);
       if (soundEffectsEnabled) playCoinsEarnedSound();
     }
 
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Keep practicing for a bonus!'}`;
+    const description = `You completed ${PROBLEMS_PER_SESSION} problems and scored ${score}. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Keep practicing for a bonus!'}`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2">
@@ -126,7 +122,7 @@ export const NumberSequencingUI = () => {
         playCompletionSound();
         speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast, addGoldenCoins]);
+  }, [username, soundEffectsEnabled, toast, addGoldenCoins, score, sessionIncorrectAnswersCount]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -148,11 +144,9 @@ export const NumberSequencingUI = () => {
     setInputAnimation(correct ? 'success' : 'error');
     setTimeout(() => setInputAnimation(null), 700);
 
-    let newCurrentScore = score;
     if(correct) {
-        newCurrentScore = score + 1;
-        setScore(newCurrentScore);
-        addGoldenCoins(POINTS_PER_CORRECT_ANSWER); // This will trigger popup
+        setScore(prev => prev + 1);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
@@ -162,7 +156,7 @@ export const NumberSequencingUI = () => {
         });
     } else {
         deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        // No local popup for deduction
+        setSessionIncorrectAnswersCount(prev => prev + 1);
         if (soundEffectsEnabled) playCoinsDeductedSound();
         toast({
           variant: "destructive",
@@ -171,14 +165,12 @@ export const NumberSequencingUI = () => {
           duration: 2000,
         });
     }
-
     const newProblemsAttempted = problemsAttemptedInSession + 1;
 
     const afterFeedbackAudio = () => {
         setProblemsAttemptedInSession(newProblemsAttempted);
-
         if (newProblemsAttempted >= PROBLEMS_PER_SESSION) {
-            handleSessionCompletion(newCurrentScore);
+            handleSessionCompletion();
         } else {
             loadNewProblem();
         }
@@ -187,7 +179,6 @@ export const NumberSequencingUI = () => {
     if (correct) {
       const successMessage = `${username ? username + ", y" : "Y"}ou got it! The number is ${currentProblem.correctAnswer}.`;
       setFeedback({ type: 'success', message: successMessage });
-      // Sound already played
       const speechSuccessMsg = `${username ? username + ", t" : "T"}hat's right! ${currentProblem.correctAnswer} completes the sequence.`;
 
       if (soundEffectsEnabled) {
@@ -196,17 +187,15 @@ export const NumberSequencingUI = () => {
       } else {
         setTimeout(afterFeedbackAudio,1200);
       }
-
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You answered ${answerNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      // Sound already played
       const speechErrorMsg = `Oops! You answered ${answerNum}.`;
 
       const revealCorrectAndProceed = () => {
         setShowCorrectAnswerAfterIncorrect(true);
         setAnswerInBlank(currentProblem.correctAnswer);
-        setInputAnimation('success'); // Flash the correct answer briefly
+        setInputAnimation('success');
         setTimeout(() => setInputAnimation(null), 700);
         if (soundEffectsEnabled) {
             const correctAnswerSpeech = `The correct answer was ${currentProblem.correctAnswer}.`;
@@ -224,8 +213,7 @@ export const NumberSequencingUI = () => {
          setTimeout(revealCorrectAndProceed, 1200);
       }
     }
-  }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled, problemsAttemptedInSession, handleSessionCompletion, sessionCompleted, score, addGoldenCoins, deductGoldenCoins, toast]);
-
+  }, [currentProblem, userAnswer, loadNewProblem, username, soundEffectsEnabled, problemsAttemptedInSession, handleSessionCompletion, sessionCompleted, score, addGoldenCoins, deductGoldenCoins, toast, sessionIncorrectAnswersCount]);
 
   useEffect(() => {
     loadNewProblem(true);
@@ -242,7 +230,6 @@ export const NumberSequencingUI = () => {
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
   }, [handleSubmit]);
-
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
@@ -394,11 +381,9 @@ export const NumberSequencingUI = () => {
     );
   };
 
-
   if (isLoading && !currentProblem) {
     return (
        <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 relative">
-         {/* Popups are now handled by ClientRootFeatures */}
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
             <ChevronsRight className="mr-2 h-6 w-6" /> Number Sequencing
@@ -414,7 +399,6 @@ export const NumberSequencingUI = () => {
 
   return (
     <Card className="w-full max-w-lg mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-       {/* Popups are now handled by ClientRootFeatures */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <ChevronsRight className="mr-2 h-6 w-6" /> Complete the Sequence

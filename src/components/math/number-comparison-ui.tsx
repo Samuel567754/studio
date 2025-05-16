@@ -13,8 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { parseSpokenNumber } from '@/lib/speech';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-// Removed local CoinsEarnedPopup and CoinsLostPopup imports
-
 
 interface ComparisonProblem {
   num1: number;
@@ -28,7 +26,7 @@ interface ComparisonProblem {
 const PROBLEMS_PER_SESSION = 5;
 const POINTS_PER_CORRECT_ANSWER = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
-const SESSION_COMPLETION_BONUS = 5;
+const SESSION_COMPLETION_BONUS_BASE = 5;
 const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 const generateComparisonProblem = (): ComparisonProblem => {
@@ -52,14 +50,13 @@ export const NumberComparisonUI = () => {
   const [score, setScore] = useState(0);
   const [problemsSolvedInSession, setProblemsSolvedInSession] = useState(0);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [sessionIncorrectAnswersCount, setSessionIncorrectAnswersCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedButton, setSelectedButton] = useState<number | null>(null);
   const [isAttempted, setIsAttempted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showCorrectAnswerHighlight, setShowCorrectAnswerHighlight] = useState(false);
   const [buttonAnimation, setButtonAnimation] = useState<{ index: number; type: 'success' | 'error' } | null>(null);
-
-  // Removed local popup states
 
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -86,21 +83,21 @@ export const NumberComparisonUI = () => {
   const startNewSession = useCallback(() => {
     setScore(0);
     setProblemsSolvedInSession(0);
+    setSessionIncorrectAnswersCount(0);
     setSessionCompleted(false);
     loadNewProblem(true);
   }, [loadNewProblem]);
 
-  const handleSessionCompletion = useCallback((finalScore: number) => {
+  const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
-    const wrongAnswersInSession = PROBLEMS_PER_SESSION - finalScore;
-    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (wrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_BASE - (sessionIncorrectAnswersCount * PENALTY_PER_WRONG_FOR_BONUS));
 
     if (calculatedBonus > 0) {
-      addGoldenCoins(calculatedBonus); // This will trigger popup via store/ClientRootFeatures
+      addGoldenCoins(calculatedBonus);
       if (soundEffectsEnabled) playCoinsEarnedSound();
     }
     const completionMessage = username ? `Congratulations, ${username}!` : 'Session Complete!';
-    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${finalScore}. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Keep practicing to earn a bonus!'}`;
+    const description = `You solved ${PROBLEMS_PER_SESSION} problems and scored ${score}. ${calculatedBonus > 0 ? `You earned ${calculatedBonus} bonus Golden Coins!` : 'Keep practicing for a bonus!'}`;
     toast({
       variant: "success",
       title: <div className="flex items-center gap-2">
@@ -114,7 +111,7 @@ export const NumberComparisonUI = () => {
         playCompletionSound();
         speakText(`${completionMessage} ${description}`);
     }
-  }, [username, soundEffectsEnabled, toast, addGoldenCoins]);
+  }, [username, soundEffectsEnabled, toast, addGoldenCoins, score, sessionIncorrectAnswersCount]);
 
   const handleAnswer = useCallback((chosenNum: number) => {
     if (!currentProblem || isAttempted || sessionCompleted) return;
@@ -128,11 +125,9 @@ export const NumberComparisonUI = () => {
     setButtonAnimation({ index: buttonIndex, type: correct ? 'success' : 'error' });
     setTimeout(() => setButtonAnimation(null), 700);
 
-    let newCurrentScore = score;
     if(correct) {
-        newCurrentScore = score + 1;
-        setScore(newCurrentScore);
-        addGoldenCoins(POINTS_PER_CORRECT_ANSWER); // This will trigger popup
+        setScore(prev => prev + 1);
+        addGoldenCoins(POINTS_PER_CORRECT_ANSWER);
         if (soundEffectsEnabled) playCoinsEarnedSound();
         toast({
           variant: "success",
@@ -142,7 +137,7 @@ export const NumberComparisonUI = () => {
         });
     } else {
         deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        // No local popup for deduction
+        setSessionIncorrectAnswersCount(prev => prev + 1);
         if (soundEffectsEnabled) playCoinsDeductedSound();
         toast({
           variant: "destructive",
@@ -154,11 +149,10 @@ export const NumberComparisonUI = () => {
 
     const newProblemsSolvedCount = problemsSolvedInSession + 1;
 
-
     const afterFeedbackAudio = () => {
       setProblemsSolvedInSession(newProblemsSolvedCount);
       if (newProblemsSolvedCount >= PROBLEMS_PER_SESSION) {
-        handleSessionCompletion(newCurrentScore);
+        handleSessionCompletion();
       } else {
         loadNewProblem();
       }
@@ -167,7 +161,6 @@ export const NumberComparisonUI = () => {
     if (correct) {
       const successMessage = `${username ? username + ", y" : "Y"}ou got it right! ${chosenNum} is indeed the ${currentProblem.questionType} one.`;
       setFeedback({ type: 'success', message: successMessage });
-      // Sound already played
       const speechSuccessMsg = `${username ? username + ", y" : "Y"}ou got it! ${chosenNum} is ${currentProblem.questionType}.`;
 
       if (soundEffectsEnabled) {
@@ -176,18 +169,16 @@ export const NumberComparisonUI = () => {
       } else {
         setTimeout(afterFeedbackAudio, 1200);
       }
-
     } else {
       const errorMessage = `Not quite${username ? `, ${username}` : ''}. You chose ${chosenNum}.`;
       setFeedback({ type: 'error', message: errorMessage });
-      // Sound already played
       const speechErrorMsg = `Oops! You chose ${chosenNum}.`;
 
       const revealCorrectAnswerAndProceed = () => {
         setShowCorrectAnswerHighlight(true);
         setFeedback({type: 'error', message: `The ${currentProblem.questionType} one was ${currentProblem.correctAnswer}.`});
         const correctButtonIndex = currentProblem.num1 === currentProblem.correctAnswer ? 0 : 1;
-        setButtonAnimation({ index: correctButtonIndex, type: 'success' }); // Highlight correct
+        setButtonAnimation({ index: correctButtonIndex, type: 'success' });
         setTimeout(() => setButtonAnimation(null), 700);
 
         if (soundEffectsEnabled) {
@@ -206,7 +197,7 @@ export const NumberComparisonUI = () => {
         setTimeout(revealCorrectAnswerAndProceed, 1200);
       }
     }
-  }, [currentProblem, isAttempted, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, score, handleSessionCompletion, sessionCompleted, addGoldenCoins, deductGoldenCoins, toast]);
+  }, [currentProblem, isAttempted, loadNewProblem, username, soundEffectsEnabled, problemsSolvedInSession, score, handleSessionCompletion, sessionCompleted, addGoldenCoins, deductGoldenCoins, toast, sessionIncorrectAnswersCount]);
 
   useEffect(() => {
     startNewSession();
@@ -348,7 +339,6 @@ export const NumberComparisonUI = () => {
   if (isLoading && !currentProblem) {
     return (
       <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20 relative">
-         {/* Popups are now handled by ClientRootFeatures */}
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
             <Scaling className="mr-2 h-6 w-6" /> Number Comparison
@@ -364,7 +354,6 @@ export const NumberComparisonUI = () => {
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-       {/* Popups are now handled by ClientRootFeatures */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
            <Scaling className="mr-2 h-6 w-6" /> {currentProblem ? `Which is ${currentProblem.questionType}?` : "Number Comparison"}
@@ -426,7 +415,6 @@ export const NumberComparisonUI = () => {
                     if (buttonAnimation && buttonAnimation.index === index) {
                         buttonSpecificClasses = cn(buttonSpecificClasses, buttonAnimation.type === 'success' ? 'animate-flash-success' : 'animate-flash-error');
                     }
-
 
                     return (
                         <Button
