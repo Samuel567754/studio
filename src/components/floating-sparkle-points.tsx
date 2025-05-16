@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useUserProfileStore } from '@/stores/user-profile-store';
-import { playStarsEarnedSound } from '@/lib/audio';
+import { playStarsEarnedSound } from '@/lib/audio'; 
 import { cn } from '@/lib/utils';
 
 export function FloatingGoldenStars() {
@@ -30,17 +30,17 @@ export function FloatingGoldenStars() {
         "fixed top-20 left-5 z-50 flex items-center gap-1.5 p-2 rounded-full shadow-xl transition-all duration-300 ease-out", // Reduced gap and padding
         "bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 text-white",
         "border-2 border-yellow-300/70",
-        "md:top-24 md:left-6"
+        "md:top-24 md:left-6" // Adjusted desktop positioning slightly lower
       )}
       aria-live="polite"
       aria-atomic="true"
       data-tour-id="floating-golden-stars" 
     >
       <Image
-        src="/assets/images/gold_star_icon.png" // Corrected path if it was different
+        src="/assets/images/gold_star_icon.png" 
         alt="Golden Stars"
-        width={28} // Reduced size
-        height={28} // Reduced size
+        width={26} 
+        height={26} 
         className="drop-shadow-sm"
       />
       <span
