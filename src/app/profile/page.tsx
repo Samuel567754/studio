@@ -13,15 +13,15 @@ import {
   getStoredWordLength,
   clearProgressStoredData,
 } from '@/lib/storage';
-import { useUserProfileStore, type Achievement, ACHIEVEMENTS_CONFIG } from '@/stores/user-profile-store'; // Import ACHIEVEMENTS_CONFIG and Achievement type
+import { useUserProfileStore, ACHIEVEMENTS_CONFIG, type Achievement } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Trash2, ShieldAlert, Award as AwardIconLucide } from 'lucide-react';
+import { Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Trash2, ShieldAlert, Award as AwardIconLucide, Eye } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Added Label import
+import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from "@/hooks/use-toast";
 import { playSuccessSound, playNotificationSound, playErrorSound } from '@/lib/audio';
@@ -37,8 +37,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
-
-// ACHIEVEMENTS_CONFIG is now imported from the store
+import { AchievementUnlockedModal } from '@/components/achievement-unlocked-modal';
 
 export default function ProfilePage() {
   const [profileStats, setProfileStats] = useState<{
@@ -64,6 +63,9 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
+
+  const [viewingAchievement, setViewingAchievement] = useState<Achievement | null>(null);
+  const [isViewingModalOpen, setIsViewingModalOpen] = useState(false);
 
   useEffect(() => {
     loadUserProfileFromStorage();
@@ -125,11 +127,16 @@ export default function ProfilePage() {
             variant: "destructive"
         });
         playErrorSound();
-        window.location.href = '/introduction'; // Redirect to introduction after reset
+        window.location.href = '/introduction'; 
     }
     setIsConfirmResetOpen(false);
   };
 
+  const handleViewAchievement = (achievement: Achievement) => {
+    setViewingAchievement(achievement);
+    setIsViewingModalOpen(true);
+    playNotificationSound();
+  };
 
   if (!isMounted || !profileStats) {
     return (
@@ -144,7 +151,7 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
-      <header className="relative text-center space-y-4 mb-10 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out rounded-xl overflow-hidden shadow-2xl p-8 md:p-12 min-h-[300px] flex flex-col justify-center items-center">
+      <header className="relative text-center rounded-xl overflow-hidden shadow-2xl p-8 md:p-12 min-h-[300px] flex flex-col justify-center items-center">
         <Image
           src="https://images.unsplash.com/photo-1731877818770-820faabe2d4c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTIyfHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D"
           alt={username ? `${username}'s profile header background with abstract pattern` : "User profile header background with abstract pattern"}
@@ -244,7 +251,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-             <Image src="/assets/images/gold_star_icon.png" alt="Golden Coins Earned" width={40} height={40} className="drop-shadow-sm" />
+             <Image src="/assets/images/gold_star_icon.png" alt="Golden Coins Earned" width={32} height={32} className="drop-shadow-sm" />
             <div>
               <p className="font-semibold text-foreground">{goldenCoins}</p>
               <p className="text-sm text-muted-foreground">Golden Coins Earned</p>
@@ -278,21 +285,24 @@ export default function ProfilePage() {
                 className="mr-3 drop-shadow-sm"
               /> My Coin Collection & Trophies
           </CardTitle>
-          <CardDescription>Celebrate your learning milestones by collecting Golden Coins and earning badges!</CardDescription>
+          <CardDescription>Celebrate your learning milestones by collecting Golden Coins and earning badges! Tap a badge to see details.</CardDescription>
         </CardHeader>
         <CardContent>
           {earnedAchievementsToDisplay.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {earnedAchievementsToDisplay.map((ach, index) => (
-                <div
+                <Button
                   key={ach.id}
+                  variant="outline"
                   className={cn(
-                    "p-4 rounded-lg border flex flex-col items-center text-center transition-all duration-300 hover:shadow-xl hover:scale-105",
+                    "h-auto p-4 rounded-lg border flex flex-col items-center text-center transition-all duration-300 hover:shadow-xl hover:scale-105 focus:scale-105 focus:ring-2 focus:ring-offset-2",
                     "bg-gradient-to-br from-card via-card/90 to-secondary/10 dark:from-card dark:via-card/90 dark:to-secondary/5",
-                    "border-yellow-500/50",
+                    ach.color ? `border-${ach.color.split('-')[1]}-500/50 focus:ring-${ach.color.split('-')[1]}-500` : "border-yellow-500/50 focus:ring-yellow-500",
                     "animate-in fade-in-0 zoom-in-90"
                   )}
                   style={{ animationDelay: `${index * 100}ms` }}
+                  onClick={() => handleViewAchievement(ach)}
+                  aria-label={`View details for ${ach.name} achievement`}
                 >
                   <Image
                     src={ach.imageSrc}
@@ -304,7 +314,7 @@ export default function ProfilePage() {
                   <h3 className={cn("text-lg font-semibold mb-1", ach.color || "text-foreground")}>{ach.name}</h3>
                   <p className="text-xs text-muted-foreground">{ach.description}</p>
                   {ach.bonusCoins && ach.bonusCoins > 0 && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusCoins} Golden Coins Bonus!</p>}
-                </div>
+                </Button>
               ))}
             </div>
           ) : (
@@ -397,6 +407,14 @@ export default function ProfilePage() {
           </AlertDialog>
         </CardFooter>
       </Card>
+
+      {viewingAchievement && (
+        <AchievementUnlockedModal
+          achievement={viewingAchievement}
+          isOpen={isViewingModalOpen}
+          onClaim={() => setIsViewingModalOpen(false)} 
+        />
+      )}
     </div>
   );
 }
