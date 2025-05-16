@@ -32,23 +32,23 @@ export function CoinsLostPopup({ coins, show, onComplete }: CoinsLostPopupProps)
   return (
     <div
       className={cn(
-        "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60]",
-        "flex items-center justify-center p-3 rounded-lg shadow-2xl",
-        "bg-gradient-to-br from-red-400 via-red-500 to-rose-600", // Red gradient for loss
+        "fixed top-24 left-5 sm:left-6 z-[60]", // Adjusted positioning, same as earned popup
+        "flex items-center justify-center rounded-full px-6 py-3 shadow-2xl", // Oval shape with padding
+        "bg-gradient-to-br from-red-400/90 via-red-500/90 to-rose-600/90", // Reduced opacity
         "border-2 border-red-300/70",
-        "coins-lost-popup-animation" // Use a specific animation for losing points
+        "coins-lost-popup-animation"
       )}
       aria-live="assertive"
     >
-      <span className="text-2xl md:text-3xl font-bold text-white drop-shadow-sm mr-2">
-        -{coins} 
+      <span className="text-xl md:text-2xl font-bold text-white drop-shadow-sm mr-2">
+        -{coins}
       </span>
       <Image
-        src="/assets/images/red_crystal_cluster_illustration.png" // Example: a "broken" or "faded" coin/star, or a distinct "loss" icon
+        src="/assets/images/red_crystal_cluster_illustration.png"
         alt="Coins Lost!"
-        width={64} 
-        height={64}
-        className="drop-shadow-md opacity-80" // Slightly faded
+        width={48} // Slightly smaller image for a more compact oval
+        height={48}
+        className="drop-shadow-md opacity-90"
       />
     </div>
   );
