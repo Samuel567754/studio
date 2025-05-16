@@ -11,9 +11,10 @@ import {
   getStoredUnlockedAchievements, storeUnlockedAchievements as persistUnlockedAchievementsToStorage
 } from '@/lib/storage';
 import { toast } from '@/hooks/use-toast';
-import { playAchievementUnlockedSound, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
-import Image from 'next/image';
+import { playAchievementUnlockedSound, playCoinsEarnedSound } from '@/lib/audio';
+import Image from 'next/image'; // Keep for potential future direct JSX in toast
 
+// Define Achievement interface and ACHIEVEMENTS_CONFIG here
 export interface Achievement {
   id: string;
   name: string;
@@ -22,7 +23,7 @@ export interface Achievement {
   imageSrc: string;
   iconAlt?: string;
   bonusCoins?: number;
-  color?: string;
+  color?: string; // Optional color for styling the badge/text
 }
 
 export const ACHIEVEMENTS_CONFIG: Achievement[] = [
@@ -35,28 +36,29 @@ export const ACHIEVEMENTS_CONFIG: Achievement[] = [
   { id: "chilllearn_tycoon", name: "ChillLearn Tycoon", description: "Achieved 750 Golden Coins! You're a tycoon!", pointsRequired: 750, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Gold Trophy with Laurel Wreath", bonusCoins: 50 },
 ];
 
+
 interface UserProfileState {
   username: string | null;
   favoriteTopics: string | null;
   goldenCoins: number;
-  unlockedAchievements: string[];
-  pendingClaimAchievements: Achievement[];
-  lastBonusAwarded: { amount: number; key: string } | null;
-  lastGameCoinsAwarded: { amount: number; key: string } | null;
-  lastCoinsDeducted: { amount: number; key: string } | null; // New state for deductions
+  unlockedAchievements: string[]; // Stores IDs of claimed achievements
+  pendingClaimAchievements: Achievement[]; // Stores full achievement objects to be claimed
+  lastBonusAwarded: { amount: number; key: string } | null; // For achievement bonus coin popup
+  lastGameCoinsAwarded: { amount: number; key: string } | null; // For general game coin popup
+  lastCoinsDeducted: { amount: number; key: string } | null;
 
   setUsername: (name: string | null) => void;
   setFavoriteTopics: (topics: string | null) => void;
   addGoldenCoins: (amount: number, isAchievementBonus?: boolean) => void;
-  deductGoldenCoins: (amount: number) => void; // Updated
-  _triggerAchievementChecks: () => void;
+  deductGoldenCoins: (amount: number) => void;
+  _triggerAchievementChecks: () => void; // Underscore indicates it's primarily for internal use
   claimNextPendingAchievement: () => void;
   isAchievementUnlocked: (achievementId: string) => boolean;
   loadUserProfileFromStorage: () => void;
   resetUserProfile: () => void;
   clearLastBonusAwarded: () => void;
   clearLastGameCoinsAwarded: () => void;
-  clearLastCoinsDeducted: () => void; // New action
+  clearLastCoinsDeducted: () => void;
 }
 
 const initialUserProfileState: Omit<UserProfileState, 'setUsername' | 'setFavoriteTopics' | 'addGoldenCoins' | 'deductGoldenCoins' | '_triggerAchievementChecks' | 'claimNextPendingAchievement' | 'isAchievementUnlocked' | 'loadUserProfileFromStorage' | 'resetUserProfile' | 'clearLastBonusAwarded' | 'clearLastGameCoinsAwarded' | 'clearLastCoinsDeducted'> = {
@@ -67,7 +69,7 @@ const initialUserProfileState: Omit<UserProfileState, 'setUsername' | 'setFavori
   pendingClaimAchievements: [],
   lastBonusAwarded: null,
   lastGameCoinsAwarded: null,
-  lastCoinsDeducted: null, // Initialize new state
+  lastCoinsDeducted: null,
 };
 
 export const useUserProfileStore = create<UserProfileState>()(
@@ -87,12 +89,14 @@ export const useUserProfileStore = create<UserProfileState>()(
       addGoldenCoins: (amount, isAchievementBonus = false) => {
         if (amount <= 0) return;
         const currentTotal = get().goldenCoins;
-        set({ goldenCoins: currentTotal + amount });
-        persistGoldenCoinsToStorage(get().goldenCoins);
+        const newTotal = currentTotal + amount;
+        set({ goldenCoins: newTotal });
+        persistGoldenCoinsToStorage(newTotal);
 
         if (!isAchievementBonus) {
           set({ lastGameCoinsAwarded: { amount, key: Date.now().toString() + Math.random() } });
         }
+        // Always check for achievements after adding coins
         setTimeout(() => get()._triggerAchievementChecks(), 0);
       },
       deductGoldenCoins: (amount) => {
@@ -101,14 +105,12 @@ export const useUserProfileStore = create<UserProfileState>()(
         const newTotal = Math.max(0, currentTotal - amount);
         set({ goldenCoins: newTotal });
         persistGoldenCoinsToStorage(newTotal);
-        // Signal for the CoinsLostPopup
         set({ lastCoinsDeducted: { amount, key: Date.now().toString() + Math.random() } });
       },
       _triggerAchievementChecks: () => {
         const currentCoins = get().goldenCoins;
         const alreadyUnlockedIds = get().unlockedAchievements;
         const currentlyPendingIds = get().pendingClaimAchievements.map(ach => ach.id);
-
         let newAchievementsToQueue: Achievement[] = [];
 
         ACHIEVEMENTS_CONFIG.forEach((achievement) => {
@@ -134,7 +136,7 @@ export const useUserProfileStore = create<UserProfileState>()(
         const achievementToClaim = pending[0];
 
         if (achievementToClaim.bonusCoins && achievementToClaim.bonusCoins > 0) {
-          get().addGoldenCoins(achievementToClaim.bonusCoins, true);
+          get().addGoldenCoins(achievementToClaim.bonusCoins, true); // true indicates it's an achievement bonus
           set({ lastBonusAwarded: { amount: achievementToClaim.bonusCoins, key: Date.now().toString() + Math.random() } });
         }
 
@@ -142,19 +144,19 @@ export const useUserProfileStore = create<UserProfileState>()(
           unlockedAchievements: [...state.unlockedAchievements, achievementToClaim.id],
           pendingClaimAchievements: state.pendingClaimAchievements.slice(1),
         }));
-
         persistUnlockedAchievementsToStorage(get().unlockedAchievements);
         playAchievementUnlockedSound();
 
+        // Define JSX for toast title using React.createElement
         const toastTitleContent = React.createElement(
           'div',
           { className: 'flex items-center gap-2' },
-          React.createElement(Image, {
-            src: achievementToClaim.imageSrc,
+          React.createElement('img', { // Using standard img tag here for simplicity within store
+            src: achievementToClaim.imageSrc, // Assuming imageSrc is a path like '/assets/images/...'
             alt: achievementToClaim.name,
             width: 24,
             height: 24,
-            className: 'rounded-sm'
+            className: 'rounded-sm' // Add any necessary styling
           }),
           'Achievement Unlocked!'
         );
@@ -163,7 +165,7 @@ export const useUserProfileStore = create<UserProfileState>()(
           variant: "success",
           title: toastTitleContent,
           description: `You've unlocked: ${achievementToClaim.name}! ${achievementToClaim.bonusCoins ? `+${achievementToClaim.bonusCoins} bonus coins!` : ''}`,
-          duration: 5000,
+          duration: 7000, // Longer duration for achievements
         });
       },
       isAchievementUnlocked: (achievementId: string) => {
@@ -178,31 +180,38 @@ export const useUserProfileStore = create<UserProfileState>()(
           pendingClaimAchievements: [],
           lastBonusAwarded: null,
           lastGameCoinsAwarded: null,
-          lastCoinsDeducted: null, // Initialize new state
+          lastCoinsDeducted: null,
         });
-        setTimeout(() => get()._triggerAchievementChecks(), 100);
+        setTimeout(() => get()._triggerAchievementChecks(), 100); // Check achievements after loading
       },
       resetUserProfile: () => {
         set(initialUserProfileState);
+        // Persist the reset state immediately
+        persistUsernameToStorage(null);
+        persistFavoriteTopicsToStorage(null);
+        persistGoldenCoinsToStorage(0);
+        persistUnlockedAchievementsToStorage([]);
       },
       clearLastBonusAwarded: () => set({ lastBonusAwarded: null }),
       clearLastGameCoinsAwarded: () => set({ lastGameCoinsAwarded: null }),
-      clearLastCoinsDeducted: () => set({ lastCoinsDeducted: null }), // New action
+      clearLastCoinsDeducted: () => set({ lastCoinsDeducted: null }),
     }),
     {
-      name: 'user-profile-storage-v5-coins',
+      name: 'user-profile-storage-v5-coins', // Updated version name
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         username: state.username,
         favoriteTopics: state.favoriteTopics,
         goldenCoins: state.goldenCoins,
         unlockedAchievements: state.unlockedAchievements,
+        // pendingClaimAchievements is intentionally not persisted; it rebuilds on load
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
+          // Trigger achievement checks after rehydration
           setTimeout(() => {
-            state.loadUserProfileFromStorage();
-          }, 0);
+            state._triggerAchievementChecks();
+          }, 150); // Slightly longer delay to ensure goldenCoins is fully rehydrated
         }
       }
     }
