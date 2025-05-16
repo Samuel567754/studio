@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
@@ -14,11 +14,11 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription as AlertDialogDescriptionPrimitive, // Renamed to avoid conflict with SheetDescription
+  AlertDialogDescription as AlertDialogDescriptionPrimitive,
   AlertDialogFooter,
-  AlertDialogHeader as AlertDialogHeaderPrimitive, // Renamed to avoid conflict with SheetHeader
-  AlertDialogTitle as AlertDialogTitlePrimitive, // Renamed to avoid conflict with SheetTitle
-  AlertDialogTrigger, // Added AlertDialogTrigger
+  AlertDialogHeader as AlertDialogHeaderPrimitive,
+  AlertDialogTitle as AlertDialogTitlePrimitive,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
@@ -45,7 +45,7 @@ export const MainNav: FC = () => {
   const { toast } = useToast();
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { goldenStars } = useUserProfileStore(); 
+  const { goldenStars } = useUserProfileStore();
   const [animatePoints, setAnimatePoints] = useState(false);
   const prevGoldenStarsRef = useRef(goldenStars);
 
@@ -57,7 +57,7 @@ export const MainNav: FC = () => {
   useEffect(() => {
     if (isMounted && goldenStars > prevGoldenStarsRef.current) {
       setAnimatePoints(true);
-      // Sound is handled by the FloatingSparklePoints component now
+      playStarsEarnedSound();
     }
     prevGoldenStarsRef.current = goldenStars;
   }, [goldenStars, isMounted]);
@@ -74,7 +74,7 @@ export const MainNav: FC = () => {
         
         let buttonClassName = cn(
           "justify-start w-full text-base md:text-sm md:w-auto group transition-colors duration-200 ease-in-out",
-          "text-[hsl(var(--nav-text-light))]", 
+          "text-[hsl(var(--nav-text-light))]",
           isMobileSheet ? "py-3 px-4 rounded-lg" : "py-2 px-3 rounded-md md:h-10"
         );
 
@@ -82,12 +82,12 @@ export const MainNav: FC = () => {
           buttonClassName = cn(
             buttonClassName,
             "font-semibold",
-            "bg-[hsl(var(--nav-active-indicator-light))] text-[hsl(var(--nav-active-text-light))]" 
+            "bg-[hsl(var(--nav-active-indicator-light))] text-[hsl(var(--nav-active-text-light))]"
           );
         } else {
            buttonClassName = cn(
             buttonClassName,
-            "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 hover:text-[hsl(var(--nav-active-text-light))]" 
+            "hover:bg-[hsl(var(--nav-active-indicator-light))]/50 hover:text-[hsl(var(--nav-active-text-light))]"
           );
         }
         
@@ -96,15 +96,15 @@ export const MainNav: FC = () => {
         return (
           <Button
             key={link.href}
-            variant="ghost" 
+            variant="ghost"
             asChild
             className={buttonClassName}
             onClick={() => isMobileSheet && setIsMobileMenuOpen(false)}
           >
             <Link href={link.href} className="flex items-center gap-2" aria-current={isActive ? "page" : undefined}>
-              <IconComp className={cn("h-5 w-5", 
-                isActive 
-                  ? "text-[hsl(var(--nav-active-text-light))]" 
+              <IconComp className={cn("h-5 w-5",
+                isActive
+                  ? "text-[hsl(var(--nav-active-text-light))]"
                   : "text-[hsl(var(--nav-icon-light))] group-hover:text-[hsl(var(--nav-active-text-light))]"
               )} aria-hidden="true" />
               {link.label}
@@ -125,21 +125,21 @@ export const MainNav: FC = () => {
             variant: "destructive"
         });
         playErrorSound();
-        window.location.href = '/introduction'; // Force reload to ensure all states are reset
+        window.location.href = '/introduction'; 
     }
     setIsConfirmResetOpen(false);
   };
 
   const CompactGoldenStarsDisplay = (
-    <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))] shadow-sm">
-      <Image 
-        src="/assets/images/gold_star_icon.png" 
-        alt="Golden Stars" 
-        width={32} 
-        height={32} 
+    <div className="flex items-center gap-1 p-1.5 rounded-full bg-[hsl(var(--nav-active-indicator-light))]/30 text-[hsl(var(--nav-text-light))] shadow-sm">
+      <Image
+        src="/assets/images/gold_star_icon.png"
+        alt="Golden Stars"
+        width={32}
+        height={32}
         className="drop-shadow-sm"
       />
-      <span 
+      <span
         className={cn(
           "text-lg font-semibold",
           animatePoints && "golden-stars-update-animation"
@@ -169,8 +169,8 @@ export const MainNav: FC = () => {
     );
   }
 
-  const navBarBaseClasses = "sticky top-0 z-40 w-full bg-nav-gradient shadow-nav-bottom border-b"; 
-  const navBarBorderColor = "border-[hsl(var(--nav-border-light))]"; 
+  const navBarBaseClasses = "sticky top-0 z-40 w-full bg-nav-gradient shadow-nav-bottom border-b";
+  const navBarBorderColor = "border-[hsl(var(--nav-border-light))]";
 
   return (
     <header className={cn(navBarBaseClasses, navBarBorderColor )}>
@@ -187,10 +187,10 @@ export const MainNav: FC = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
           <NavLinkItems />
-          <Button 
-            variant="default" 
-            size="sm" 
-            className="ml-2 btn-glow md:h-10 md:px-4 md:py-2 bg-primary text-primary-foreground hover:bg-primary/90" 
+          <Button
+            variant="default"
+            size="sm"
+            className="ml-2 btn-glow md:h-10 md:px-4 md:py-2 bg-primary text-primary-foreground hover:bg-primary/90"
             asChild
           >
             <Link href="/learn">
@@ -208,8 +208,8 @@ export const MainNav: FC = () => {
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "rounded-full aspect-square h-12 w-12 transition-colors duration-200 focus-visible:ring-0 focus-visible:ring-offset-0", 
-                  "text-[hsl(var(--nav-icon-light))]", 
+                  "rounded-full aspect-square h-12 w-12 transition-colors duration-200 focus-visible:ring-0 focus-visible:ring-offset-0",
+                  "text-[hsl(var(--nav-icon-light))]",
                   "hover:bg-[hsl(var(--nav-active-indicator-light))]/50",
                   isMobileMenuOpen && "bg-[hsl(var(--nav-active-indicator-light))]"
                 )}
@@ -227,11 +227,11 @@ export const MainNav: FC = () => {
             <SheetContent
               side="right"
               className={cn(
-                "w-full max-w-xs p-0 flex flex-col bg-nav-gradient border-l border-[hsl(var(--nav-border-light))]" 
+                "w-full max-w-xs p-0 flex flex-col bg-nav-gradient border-l border-[hsl(var(--nav-border-light))]"
               )}
             >
               <SheetHeader className={cn(
-                "flex flex-row items-center justify-between p-4 border-b border-[hsl(var(--nav-border-light))]" 
+                "flex flex-row items-center justify-between p-4 border-b border-[hsl(var(--nav-border-light))]"
               )}>
                 <SheetTitle asChild>
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
@@ -248,17 +248,7 @@ export const MainNav: FC = () => {
                   </SheetClose>
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
-              {/* Points display for mobile sheet */}
-              <div className={cn("flex items-center justify-center gap-1.5 p-2 mb-2 rounded-lg bg-[hsl(var(--nav-active-indicator-light))]/30 shadow-inner text-[hsl(var(--nav-text-light))]")}>
-                 <Image 
-                    src="/assets/images/gold_star_icon.png" 
-                    alt="Golden Stars" 
-                    width={32} 
-                    height={32} 
-                    className="drop-shadow-sm"
-                  />
-                <span className="text-lg font-semibold">{goldenStars} Golden Stars</span>
-              </div>
+              
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
                 <NavLinkItems isMobileSheet={true} />
                 <Button
@@ -266,7 +256,7 @@ export const MainNav: FC = () => {
                   size="lg"
                   asChild
                   className={cn(
-                    "mt-4 w-full btn-glow bg-primary text-primary-foreground hover:bg-primary/90" 
+                    "mt-4 w-full btn-glow bg-primary text-primary-foreground hover:bg-primary/90"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -275,7 +265,7 @@ export const MainNav: FC = () => {
                   </Link>
                 </Button>
               </nav>
-               <div className={cn("mt-auto p-4 border-t", "border-[hsl(var(--nav-border-light))]")}> 
+               <div className={cn("mt-auto p-4 border-t", "border-[hsl(var(--nav-border-light))]")}>
                 <AlertDialog open={isConfirmResetOpen} onOpenChange={setIsConfirmResetOpen}>
                   <AlertDialogTrigger asChild>
                       <Button
@@ -288,7 +278,7 @@ export const MainNav: FC = () => {
                           Reset All Progress
                       </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className={cn("bg-[hsl(var(--nav-gradient-from-light))] border-[hsl(var(--nav-border-light))] text-[hsl(var(--nav-text-light))]")}> 
+                  <AlertDialogContent className={cn("bg-[hsl(var(--nav-gradient-from-light))] border-[hsl(var(--nav-border-light))] text-[hsl(var(--nav-text-light))]")}>
                     <AlertDialogHeaderPrimitive>
                       <AlertDialogTitlePrimitive className={cn("flex items-center gap-2 text-destructive")}>
                          <ShieldAlert className="h-6 w-6 text-destructive" />
@@ -325,5 +315,3 @@ export const MainNav: FC = () => {
     </header>
   );
 };
-
-    
