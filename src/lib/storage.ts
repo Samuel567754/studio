@@ -13,6 +13,29 @@ const INTRODUCTION_SEEN_KEY = 'chilllearn_introductionSeen_v1';
 const USERNAME_KEY = 'chilllearn_username_v1';
 const PERSONALIZATION_COMPLETED_KEY = 'chilllearn_personalizationCompleted_v1';
 const FAVORITE_TOPICS_KEY = 'chilllearn_favoriteTopics_v1';
+const GOLDEN_STARS_KEY = 'chilllearn_goldenStars_v1'; // New key for golden stars
+
+// --- Golden Stars ---
+export const getStoredGoldenStars = (defaultValue = 0): number => {
+  if (typeof window === 'undefined') return defaultValue;
+  try {
+    const stored = localStorage.getItem(GOLDEN_STARS_KEY);
+    const value = stored ? parseInt(stored, 10) : defaultValue;
+    return isNaN(value) ? defaultValue : value;
+  } catch (error) {
+    console.error("Error reading golden stars from localStorage:", error);
+    return defaultValue;
+  }
+};
+
+export const storeGoldenStars = (stars: number): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(GOLDEN_STARS_KEY, String(stars));
+  } catch (error) {
+    console.error("Error storing golden stars to localStorage:", error);
+  }
+};
 
 
 // --- Username ---
@@ -231,6 +254,7 @@ export const clearProgressStoredData = (): void => {
   localStorage.removeItem(USERNAME_KEY);
   localStorage.removeItem(PERSONALIZATION_COMPLETED_KEY);
   localStorage.removeItem(FAVORITE_TOPICS_KEY);
+  localStorage.removeItem(GOLDEN_STARS_KEY); // Clear golden stars
   
   // Clear all progression dismissal flags
   Object.keys(localStorage).forEach(key => {
@@ -238,6 +262,5 @@ export const clearProgressStoredData = (): void => {
       localStorage.removeItem(key);
     }
   });
-  console.log("Cleared all user progress-related stored data including mastered words, progression dismissal flags, walkthrough status, introduction seen flag, username, favorite topics, and personalization status.");
+  console.log("Cleared all user progress-related stored data including golden stars, progression dismissal flags, walkthrough status, introduction seen flag, username, favorite topics, and personalization status.");
 };
-

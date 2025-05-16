@@ -58,42 +58,35 @@ const playSoundWrapper = (
 
 
 export function playClickSound(): void {
-  // Sweet, soft, higher-pitched 'triangle' pluck (D#5)
   playSoundWrapper('triangle', 622.25, 0.02, 0.035); 
 }
 
 export function playSuccessSound(): void {
-  // Slightly shorter, simpler ascending 'sine' sweep (C4 to E4)
   playSoundWrapper('sine', { start: 261.63, end: 329.63, bendDuration: 0.08 }, 0.07, 0.22);
 }
 
 export function playCompletionSound(): void {
-  // More pronounced, celebratory melodic ascending 'sine' sweep (C4 to G4 to C5)
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
   if (!soundEffectsEnabled) return;
 
-  playSoundInternal('sine', { start: 261.63, end: 392.00, bendDuration: 0.15 }, 0.09, 0.4); // C4 to G4
+  playSoundInternal('sine', { start: 261.63, end: 392.00, bendDuration: 0.15 }, 0.09, 0.4); 
   setTimeout(() => {
-    playSoundInternal('sine', { start: 392.00, end: 523.25, bendDuration: 0.12 }, 0.08, 0.3); // G4 to C5
+    playSoundInternal('sine', { start: 392.00, end: 523.25, bendDuration: 0.12 }, 0.08, 0.3); 
   }, 120); 
-  // Add a bright shimmer at the end
   setTimeout(() => {
-    playSoundInternal('triangle', 1046.50, 0.05, 0.2); // C6
+    playSoundInternal('triangle', 1046.50, 0.05, 0.2); 
   }, 200);
 }
 
 export function playErrorSound(): void {
-  // Less harsh descending 'square' wave buzz (A3 to F3)
   playSoundWrapper('square', { start: 220.00, end: 174.61, bendDuration: 0.12 }, 0.07, 0.35);
 }
 
 export function playNavigationSound(): void {
-  // Gentle, short 'sine' wave pluck (A4)
   playSoundWrapper('sine', 440.00, 0.03, 0.08);
 }
 
 export function playNotificationSound(): void {
-  // Brighter, two-tone 'triangle' ping for toasts, settings changes (G5 then C6)
   const { soundEffectsEnabled } = useAppSettingsStore.getState();
   if (!soundEffectsEnabled) return;
   playSoundInternal('triangle', 783.99, 0.05, 0.09); 
@@ -101,6 +94,17 @@ export function playNotificationSound(): void {
     playSoundInternal('triangle', 1046.50, 0.04, 0.11); 
   }, 80); 
 }
+
+export function playStarsEarnedSound(): void {
+  const { soundEffectsEnabled } = useAppSettingsStore.getState();
+  if (!soundEffectsEnabled) return;
+  // A quick, bright, slightly ascending "chime" or "sparkle" sound
+  playSoundInternal('triangle', { start: 1200, end: 1600, bendDuration: 0.05 }, 0.04, 0.15);
+  setTimeout(() => {
+    playSoundInternal('sine', { start: 1800, end: 2200, bendDuration: 0.03 }, 0.03, 0.1);
+  }, 30);
+}
+
 
 export function speakText(
   textToSpeak: string, 

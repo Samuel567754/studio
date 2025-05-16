@@ -5,13 +5,15 @@ import type { FC, PropsWithChildren } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useWalkthroughStore } from '@/stores/walkthrough-store';
-import { WalkthroughModal } from '@/components/walkthrough-modal';
+import { WalkthroughGuide } from '@/components/walkthrough-guide';
 import { getHasSeenIntroduction, getHasCompletedPersonalization } from '@/lib/storage';
 import { MainNav } from '@/components/main-nav';
 import { BottomNav } from '@/components/bottom-nav';
 import { QuickLinkFAB } from '@/components/quicklink-fab';
 import { Loader2 } from 'lucide-react';
 import { useUserProfileStore } from '@/stores/user-profile-store';
+import { FloatingGoldenStars } from '@/components/floating-sparkle-points';
+import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data'; // Use the actual data
 
 export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const {
@@ -20,6 +22,8 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     isWalkthroughOpen,
     closeWalkthrough,
     setHasCompletedWalkthrough,
+    currentStepIndex, // Get currentStepIndex
+    setCurrentStepIndex, // Get setCurrentStepIndex
   } = useWalkthroughStore();
   
   const { loadUserProfileFromStorage } = useUserProfileStore();
@@ -42,7 +46,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       if (event.key === 'chilllearn_personalizationCompleted_v1') {
         setActualPersonalizationCompleted(getHasCompletedPersonalization());
       }
-      if (event.key === useUserProfileStore.persist.getOptions().name) {
+      if (event.key === 'user-profile-storage-v3') { 
         loadUserProfileFromStorage();
       }
     };
@@ -70,14 +74,16 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && pathname !== '/introduction' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
-        openWalkthrough();
+        if (!isWalkthroughOpen) { // Only open if not already open
+          setCurrentStepIndex(0); // Reset to first step when opening
+          openWalkthrough();
+        }
       }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname]);
+  }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex]);
 
 
-  // Enhanced loading condition
   if (!isClientMounted || actualIntroductionSeen === null || (actualIntroductionSeen && actualPersonalizationCompleted === null)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -86,14 +92,12 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  // Specific page passthrough for intro and personalize
   if (pathname === '/introduction' || pathname === '/personalize') {
     return <>{children}</>;
   }
 
-  // Check again after passthrough for users landing directly on intro/personalize but already completed those steps
   if (!actualIntroductionSeen) {
-     return ( // Should have been caught by useEffect, but as a safeguard
+     return ( 
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
         <p className="sr-only">Redirecting to introduction...</p>
@@ -102,7 +106,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   }
 
   if (!actualPersonalizationCompleted) {
-     return ( // Should have been caught by useEffect, but as a safeguard
+     return ( 
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
         <p className="sr-only">Redirecting to personalization...</p>
@@ -110,11 +114,11 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
   
-
   return (
     <div className="flex flex-col min-h-screen">
       <MainNav />
-      <main className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out">
+      <FloatingGoldenStars />
+      <main className="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 pb-24 md:pb-10 pt-20 md:pt-24 animate-in fade-in-0 slide-in-from-bottom-4 duration-500 ease-out">
         {children}
       </main>
       <BottomNav />
@@ -123,9 +127,13 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
          © {new Date().getFullYear()} ChillLearn AI. An AI-Powered Learning Adventure.
       </footer>
       {isClientMounted && ( 
-        <WalkthroughModal
+        <WalkthroughGuide
+          steps={walkthroughGuideSteps} 
           isOpen={isWalkthroughOpen}
-          onClose={closeWalkthrough}
+          onClose={() => {
+            setHasCompletedWalkthrough(true); // Mark as completed when closed by skip/X
+            closeWalkthrough();
+          }}
           onFinish={() => {
             setHasCompletedWalkthrough(true);
             closeWalkthrough();

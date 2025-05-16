@@ -2,10 +2,11 @@
 "use client";
 
 import type { FC } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert } from 'lucide-react';
+import Image from 'next/image'; // Import Image component
+import { BookOpenText, Menu, X, SettingsIcon, User, Map, Sigma, HomeIcon, Puzzle, FileType2 as TextSelectIcon, Trash2, GraduationCap, ShieldAlert, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import {
@@ -17,13 +18,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader as AlertDialogHeaderPrimitive,
   AlertDialogTitle as AlertDialogTitlePrimitive,
-  AlertDialogTrigger, // Added AlertDialogTrigger import
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
 import { clearProgressStoredData } from '@/lib/storage';
 import { useToast } from "@/hooks/use-toast";
 import { playNotificationSound, playErrorSound } from '@/lib/audio';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useUserProfileStore } from '@/stores/user-profile-store';
 
 
 const navLinks = [
@@ -31,7 +33,7 @@ const navLinks = [
   { href: '/word-practice', label: 'Word Practice', icon: TextSelectIcon },
   { href: '/ai-games', label: 'AI Games', icon: Puzzle },
   { href: '/math', label: 'Math Zone', icon: Sigma },
-  { href: '/tutorial', label: 'Tutorial', icon: Map },
+  { href: '/tutorial', label: 'Guide', icon: Map },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -43,6 +45,7 @@ export const MainNav: FC = () => {
   const { toast } = useToast();
   const [isConfirmResetOpen, setIsConfirmResetOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { goldenStars } = useUserProfileStore(); // Get goldenStars for mobile sheet
 
 
   useEffect(() => {
@@ -79,7 +82,7 @@ export const MainNav: FC = () => {
         return (
           <Button
             key={link.href}
-            variant="ghost" // Always ghost as bg is handled by active/hover logic
+            variant="ghost" 
             asChild
             className={buttonClassName}
             onClick={() => isMobileSheet && setIsMobileMenuOpen(false)}
@@ -126,17 +129,14 @@ export const MainNav: FC = () => {
                  <div className="h-10 w-10 bg-background/50 rounded-full"></div>
             </div>
             <div className="hidden md:flex items-center gap-1">
-                {navLinks.map((_, i) => (
-                   <div key={i} className="h-8 w-24 bg-background/50 rounded-md"></div>
-                ))}
-                <div className="h-9 w-28 bg-primary/20 rounded-md ml-2"></div>
+                {/* Removed old points display placeholder */}
             </div>
         </div>
       </header>
     );
   }
 
-  const navBarBaseClasses = "sticky top-0 z-50 w-full bg-nav-gradient shadow-nav-bottom border-b";
+  const navBarBaseClasses = "sticky top-0 z-40 w-full bg-nav-gradient shadow-nav-bottom border-b"; // z-index reduced for floating points
   const navBarBorderColor = "border-[hsl(var(--nav-border-light))]"; 
 
   return (
@@ -151,6 +151,7 @@ export const MainNav: FC = () => {
           )}>ChillLearn</h1>
         </Link>
 
+        {/* Desktop Navigation - Removed direct points display from here */}
         <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main navigation">
           <NavLinkItems />
           <Button 
@@ -165,6 +166,7 @@ export const MainNav: FC = () => {
           </Button>
         </nav>
 
+        {/* Mobile Hamburger Menu */}
         <div className="md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -193,7 +195,6 @@ export const MainNav: FC = () => {
               className={cn(
                 "w-full max-w-xs p-0 flex flex-col bg-nav-gradient border-l border-[hsl(var(--nav-border-light))]" 
               )}
-              // Remove the explicit SheetClose from here as it's handled by SheetHeader's SheetClose
             >
               <SheetHeader className={cn(
                 "flex flex-row items-center justify-between p-4 border-b border-[hsl(var(--nav-border-light))]" 
@@ -213,6 +214,20 @@ export const MainNav: FC = () => {
                   </SheetClose>
               </SheetHeader>
               <SheetDescription className="sr-only">Main navigation menu for ChillLearn application.</SheetDescription>
+              
+              {/* Points display for mobile sheet */}
+              <div className={cn("flex items-center justify-center gap-1.5 p-2 my-2 mx-4 rounded-lg bg-[hsl(var(--nav-active-indicator-light))]/30 shadow-inner text-[hsl(var(--nav-text-light))]")}>
+                  <Image 
+                    src="/assets/images/gold_star_icon.png" 
+                    alt="Golden Star" 
+                    width={20} 
+                    height={20} 
+                    className="drop-shadow-sm"
+                  />
+                  <span className="font-semibold text-sm">{goldenStars}</span>
+                  <span className="text-xs opacity-80">Stars</span>
+              </div>
+
               <nav className="flex flex-col gap-2 p-4" aria-label="Mobile navigation">
                 <NavLinkItems isMobileSheet={true} />
                 <Button
@@ -248,10 +263,10 @@ export const MainNav: FC = () => {
                          <ShieldAlert className="h-6 w-6 text-destructive" />
                          Confirm Full Reset
                       </AlertDialogTitlePrimitive>
-                      <AlertDialogDescription className={cn("text-[hsl(var(--nav-text-light))]/80")}> {/* Use nav text light with opacity */}
+                      <AlertDialogDescription className={cn("text-[hsl(var(--nav-text-light))]/80")}>
                         This action is irreversible and will clear all your learning progress,
                         including your word lists, mastered words, reading level, word length preferences,
-                        username, favorite topics, and tutorial completion status.
+                        username, favorite topics, golden stars, and tutorial completion status.
                         You will be taken back to the app introduction.
                         <br/><br/>
                         <strong>Are you absolutely sure you want to reset everything?</strong>
@@ -279,4 +294,3 @@ export const MainNav: FC = () => {
     </header>
   );
 };
-
