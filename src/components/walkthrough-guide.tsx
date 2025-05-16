@@ -3,10 +3,10 @@
 
 import type { FC } from 'react';
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Volume2, Play, Pause, X, HelpCircle, Compass, HomeIcon, FileType2 as TextSelectIcon, Puzzle, User, SettingsIcon, Map, Sigma, Edit3, BookMarked, Lightbulb, BookOpenCheck, CheckCircle2, Target } from 'lucide-react';
 import { speakText, playNotificationSound, playErrorSound } from '@/lib/audio';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
 import { useToast } from '@/hooks/use-toast';
@@ -179,14 +179,14 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
       transform: 'translate(-50%, -50%)',
       zIndex: 10000, 
       width: '90vw',
-      maxWidth: '500px', // Increased max width
+      maxWidth: '500px',
     };
 
 
   return (
     <>
-      <div className="walkthrough-overlay" onClick={onClose} />
-      <div style={modalStyle} className="animate-in fade-in-0 zoom-in-95 duration-300">
+      <div className="walkthrough-overlay" onClick={handleSkip} />
+      <div style={modalStyle} className="animate-in fade-in-0 slide-in-from-bottom-10 duration-500">
         <Card className="w-full shadow-2xl border-accent bg-card">
           <CardHeader className="p-4 border-b">
             <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
@@ -195,7 +195,7 @@ export const WalkthroughGuide: FC<WalkthroughGuideProps> = ({ steps, isOpen, onC
             </h3>
           </CardHeader>
 
-          <Progress value={progressPercentage} className="w-full h-1 rounded-none bg-muted" indicatorClassName="bg-primary transition-all duration-300 ease-linear" />
+          <Progress value={progressPercentage} className="w-full h-1.5 rounded-none bg-muted" indicatorClassName="bg-primary transition-all duration-300 ease-linear" />
           
           <CardContent className="p-4 max-h-[40vh] sm:max-h-[50vh] overflow-y-auto text-sm text-foreground/80">
             {currentStepData.imageSrc && (
