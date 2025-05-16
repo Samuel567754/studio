@@ -185,11 +185,12 @@ export default function ProfilePage() {
         <div className="relative z-10 text-white">
           <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-yellow-400/70 mb-4">
               <Image
-                  src="/assets/images/yellow_diamond_icon.png" 
-                  alt={username ? `${username}'s profile avatar` : "User profile avatar"}
+                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D" 
+                  alt={username ? `${username}'s profile avatar - abstract colorful lights` : "User profile avatar - abstract colorful lights"}
                   layout="fill"
                   objectFit="cover"
-                  className="rounded-full p-3" 
+                  className="rounded-full p-1" 
+                  data-ai-hint="abstract lights"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end justify-center p-2">
                    <User className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
@@ -221,7 +222,7 @@ export default function ProfilePage() {
                     value={usernameInput}
                     onChange={(e) => setUsernameInput(e.target.value)}
                     placeholder="Enter your name"
-                    className="text-lg p-3 h-12 shadow-sm focus:ring-2 focus:ring-accent"
+                    className="text-lg p-3 h-12 shadow-sm focus:ring-2 focus:ring-accent border-border/50"
                     aria-label="Enter your name"
                 />
               </div>
@@ -270,7 +271,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-            <Image src="/assets/images/gold_star_icon.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
+            <Image src="/assets/images/golden_star_coin.png" alt="Golden Stars" width={32} height={32} className="drop-shadow-sm" />
             <div>
               <p className="font-semibold text-foreground">{profileData.goldenStars}</p>
               <p className="text-sm text-muted-foreground">Golden Stars Earned</p>
