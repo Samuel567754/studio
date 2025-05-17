@@ -45,22 +45,22 @@
     --input: 210 30% 97%;
     --ring: 175 70% 50%;
 
-    /* Chart colors - Updated to complement the new theme */
-    --chart-1: 175 70% 55%;
-    --chart-2: 20 85% 65%;
-    --chart-3: 190 65% 50%;
-    --chart-4: 35 90% 65%;
-    --chart-5: 160 60% 60%;
+    /* Chart colors for dark mode - Updated */
+    --chart-1: 175 70% 65%;
+    --chart-2: 20 85% 70%;
+    --chart-3: 190 65% 60%;
+    --chart-4: 35 90% 70%;
+    --chart-5: 160 60% 70%;
 
-    /* Sidebar specific colors (Light) */
-    --sidebar-background: 210 25% 96% / 0.85;
-    --sidebar-foreground: 210 30% 30%;
-    --sidebar-primary: var(--primary);
-    --sidebar-primary-foreground: var(--primary-foreground);
-    --sidebar-accent: var(--accent);
-    --sidebar-accent-foreground: var(--accent-foreground);
-    --sidebar-border: 210 20% 85%;
-    --sidebar-ring: var(--ring);
+     /* Sidebar specific colors (Dark) */
+     --sidebar-background: 210 30% 12% / 0.85;
+     --sidebar-foreground: 40 20% 85%;
+     --sidebar-primary: var(--primary);
+     --sidebar-primary-foreground: var(--primary-foreground);
+     --sidebar-accent: var(--accent);
+     --sidebar-accent-foreground: var(--accent-foreground);
+     --sidebar-border: 210 25% 20%;
+     --sidebar-ring: var(--ring);
 
     /* Modern Toast Colors - Light Mode */
     --toast-success-bg-start-raw: 130 75% 90%;
@@ -94,14 +94,14 @@
     --alert-destructive-fg-raw: 0 70% 25%;
     --alert-destructive-icon-color-raw: 0 75% 55%;
 
-    /* Navbar Gradient & Text Colors - Nav always uses dark theme styles */
-    --nav-gradient-from-light: 210 40% 15%;
-    --nav-gradient-to-light: 185 50% 25%;
-    --nav-text-light: 30 70% 92%;
-    --nav-icon-light: 30 60% 88%;
-    --nav-active-indicator-light: 0 0% 100% / 0.1;
-    --nav-active-text-light: 30 80% 95%;
-    --nav-border-light: 200 40% 30% / 0.3;
+      /* Navbar Gradient & Text Colors - Dark Mode */
+      --nav-gradient-from-dark: 210 40% 15%;
+      --nav-gradient-to-dark: 185 50% 25%;
+      --nav-text-dark: 30 70% 92%;
+      --nav-icon-dark: 30 60% 88%;
+      --nav-active-indicator-dark: 0 0% 100% / 0.1;
+      --nav-active-text-dark: 30 80% 95%;
+      --nav-border-dark: 200 40% 30% / 0.3;
   }
 
   .dark {
@@ -282,6 +282,18 @@
     box-shadow: 0 4px 12px -1px hsl(var(--nav-border-dark) / 0.3), 0 2px 8px -2px hsl(var(--nav-border-dark) / 0.2);
   }
 
+   /* Wrapper gives perspective only to the coin */
+   .coin-3d-wrapper {
+    perspective: 500px;
+    display: inline-block;
+  }
+
+  /* Keep coin children in 3D space */
+  .coin-3d-wrapper img,
+  .coin-3d-wrapper .coin-rotate-3d {
+    transform-style: preserve-3d;
+  }
+
   /* Animation for the floating Golden Coins counter update */
   @keyframes golden-coins-update-animation {
     0% {
@@ -361,32 +373,129 @@
     animation: coins-lost-popup-animation 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
   
-  /* Animation for achievement unlocked modal appearance */
-  @keyframes achievement-unlocked-animation {
-    0% { opacity: 0; transform: scale(0.5) translateY(20px) rotate(-15deg); }
-    60% { opacity: 1; transform: scale(1.15) translateY(-10px) rotate(5deg); }
-    100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
-  }
-  .achievement-unlocked-animation {
-     animation: achievement-unlocked-animation 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-  }
 
-  /* Gentle 3D rotation for achievement images in modal */
-  @keyframes achievement-gentle-3d-rotate {
-    0% {
-      transform: perspective(800px) rotateY(-5deg) rotateX(2deg) scale(1);
-    }
-    50% {
-      transform: perspective(800px) rotateY(5deg) rotateX(-2deg) scale(1.03);
-    }
-    100% {
-      transform: perspective(800px) rotateY(-5deg) rotateX(2deg) scale(1);
-    }
+/* --- Modal entrance: Smooth, elastic pop with depth --- */
+@keyframes achievement-unlocked-animation {
+  0% {
+    opacity: 0;
+    transform: perspective(1000px) scale(0.5) translateY(60px) rotate(-10deg);
+    filter: blur(4px);
   }
-  .animate-achievement-image-rotate {
-    animation: achievement-gentle-3d-rotate 7s ease-in-out infinite;
-    transform-style: preserve-3d; /* Helpful for smoother 3D transforms on some browsers */
+  40% {
+    opacity: 1;
+    transform: perspective(1000px) scale(1.05) translateY(-8px) rotate(5deg);
+    filter: blur(1px);
   }
+  65% {
+    transform: perspective(1000px) scale(0.98) translateY(4px) rotate(-2deg);
+  }
+  80% {
+    transform: perspective(1000px) scale(1.02) translateY(0) rotate(1deg);
+  }
+  100% {
+    transform: perspective(1000px) scale(1) translateY(0) rotate(0deg);
+    filter: blur(0);
+  }
+}
+.achievement-unlocked-animation {
+  animation: achievement-unlocked-animation 1s cubic-bezier(0.22, 1.61, 0.36, 1) forwards;
+  will-change: transform, opacity, filter;
+}
+
+/* --- Hero medal entrance: flip + pop + shine --- */
+@keyframes medal-entrance {
+  0% {
+    opacity: 0;
+    transform: perspective(600px) rotateY(90deg) scale(0.4) translateY(50px);
+  }
+  50% {
+    opacity: 1;
+    transform: perspective(600px) rotateY(-15deg) scale(1.1) translateY(-10px);
+    filter: brightness(1.2);
+  }
+  70% {
+    transform: perspective(600px) rotateY(10deg) scale(0.95) translateY(3px);
+    filter: brightness(1);
+  }
+  100% {
+    transform: perspective(600px) rotateY(0deg) scale(1) translateY(0);
+    filter: brightness(1);
+  }
+}
+.medal-entrance {
+  animation: medal-entrance 0.9s ease-out forwards;
+  will-change: transform, opacity, filter;
+}
+
+/* --- Hero medal idle: slow spin + glow pulse --- */
+@keyframes medal-idle {
+  0% {
+    transform: perspective(800px) rotateY(0deg) rotateZ(0deg) scale(1);
+    box-shadow: 0 0 0 rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    transform: perspective(800px) rotateY(360deg) rotateZ(2deg) scale(1.02);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+  }
+  100% {
+    transform: perspective(800px) rotateY(720deg) rotateZ(0deg) scale(1);
+    box-shadow: 0 0 0 rgba(255, 215, 0, 0.3);
+  }
+}
+.medal-idle {
+  animation: medal-idle 12s linear infinite;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+  will-change: transform, box-shadow;
+}
+
+
+/* --- Achievement icon wobble + glow (with back face visible) --- */
+@keyframes achievement-3d-wobble {
+  0% {
+    transform: perspective(800px) rotateY(-5deg) rotateX(2deg) translateZ(0) scale(1);
+  }
+  25% {
+    transform: perspective(800px) rotateY(3deg) rotateX(-2deg) translateZ(5px) scale(1.03);
+  }
+  50% {
+    transform: perspective(800px) rotateY(-4deg) rotateX(2deg) translateZ(-3px) scale(1.02);
+  }
+  75% {
+    transform: perspective(800px) rotateY(2deg) rotateX(-1.5deg) translateZ(4px) scale(1.04);
+  }
+  100% {
+    transform: perspective(800px) rotateY(-5deg) rotateX(2deg) translateZ(0) scale(1);
+  }
+}
+
+.animate-achievement-image-rotate {
+  /* keep children in 3D space */
+  transform-style: preserve-3d;         
+  /* allow back face to be seen when the element flips */
+  backface-visibility: visible;         
+  -webkit-backface-visibility: visible; /* vendor-prefixed for older WebKit browsers */
+  /* animate the wobble */
+  animation: achievement-3d-wobble 8s ease-in-out infinite;
+  will-change: transform;
+}
+
+
+/* --- Glow pulse add‑on --- */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255,215,0,0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(255,215,0,0.6);
+  }
+}
+.glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+
+
 
 
   /* Shake animation for incorrect input */
@@ -416,4 +525,18 @@
     animation: flash-error-border 0.8s ease-out;
   }
 
+   /* 3D spin around diagonal axis (X+Y) */
+   @keyframes coin-rotate-3d {
+    from {
+      transform: rotate3d(1, 1, 0, 0deg);
+    }
+    to {
+      transform: rotate3d(1, 1, 0, 360deg);
+    }
+  }
+  .coin-rotate-3d {
+    animation: coin-rotate-3d 3s linear infinite;
+  }
+
+  
 }

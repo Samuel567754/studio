@@ -11,12 +11,15 @@ import { ChevronLeft, ChevronRight, Info, Pencil, ArrowLeft, Trophy, RefreshCcw 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { playNavigationSound, playCompletionSound, speakText, playCoinsEarnedSound } from '@/lib/audio';
+import { playNavigationSound, playCompletionSound, speakText, playCoinsEarnedSound, playCoinsDeductedSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { CoinsEarnedPopup } from '@/components/points-earned-popup';
+import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 // Standardized points
-const SESSION_COMPLETION_BONUS_POINTS_BASE = 5;
+const POINTS_PER_CORRECT_ANSWER = 1;
+const SESSION_COMPLETION_BONUS_BASE = 5;
 const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
 export default function SpellingPage() {
@@ -24,13 +27,19 @@ export default function SpellingPage() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentWord, setCurrentWord] = useState<string>('');
   const [isMounted, setIsMounted] = useState(false);
-  const { username, addGoldenCoins } = useUserProfileStore();
+  const { username, addGoldenCoins, deductGoldenCoins } = useUserProfileStore();
   const { soundEffectsEnabled } = useAppSettingsStore();
   const { toast } = useToast();
 
   const [practicedWordsInSession, setPracticedWordsInSession] = useState<Set<string>>(new Set());
   const [sessionCompleted, setSessionCompleted] = useState<boolean>(false);
   const [sessionIncorrectAnswersCount, setSessionIncorrectAnswersCount] = useState(0); // Track incorrect first attempts for bonus
+
+  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
+  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
+  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
+  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
+
 
   const loadWordData = useCallback((isRestart: boolean = false) => {
     const storedList = getStoredWordList();
@@ -97,7 +106,7 @@ export default function SpellingPage() {
     setPracticedWordsInSession(newPracticedWords);
 
     let newSessionIncorrectCount = sessionIncorrectAnswersCount;
-    if (!wasFirstAttemptCorrect) {
+    if (!wasFirstAttemptCorrect) { // Only increment if it was NOT correct on first attempt
       newSessionIncorrectCount++;
       setSessionIncorrectAnswersCount(newSessionIncorrectCount);
     }
@@ -105,12 +114,14 @@ export default function SpellingPage() {
     const afterCurrentWordAudio = () => {
         if (newPracticedWords.size === wordList.length && wordList.length > 0 && !sessionCompleted) {
             setSessionCompleted(true);
-            const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_POINTS_BASE - (newSessionIncorrectCount * PENALTY_PER_WRONG_FOR_BONUS));
+            const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_BASE - (newSessionIncorrectCount * PENALTY_PER_WRONG_FOR_BONUS));
             let completionMessage = username ? `Amazing, ${username}!` : 'Congratulations!';
             let description = "You've spelled all words in this session!";
 
             if (calculatedBonus > 0) {
-                addGoldenCoins(calculatedBonus); // Triggers popup via store
+                addGoldenCoins(calculatedBonus);
+                setLastAwardedCoins(calculatedBonus);
+                setShowCoinsEarnedPopup(true);
                 description += ` You earned ${calculatedBonus} bonus Golden Coins!`;
             } else {
                 description += " Keep practicing for a bonus next time!";
@@ -145,6 +156,7 @@ export default function SpellingPage() {
     };
     
     if (soundEffectsEnabled) {
+        // Short delay for individual word feedback sounds to complete
         setTimeout(afterCurrentWordAudio, 500); 
     } else {
        setTimeout(afterCurrentWordAudio, 1200); 
@@ -175,7 +187,9 @@ export default function SpellingPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="space-y-8 max-w-3xl mx-auto relative">
+      {showCoinsEarnedPopup && lastAwardedCoins > 0 && <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />}
+      {showCoinsLostPopup && lastDeductedCoins > 0 && <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />}
       <div className="mb-6">
         <Button asChild variant="outline" className="group">
           <Link href="/word-practice">
@@ -207,12 +221,12 @@ export default function SpellingPage() {
         <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
           <div className="relative h-80 md:h-96 w-full">
             <Image 
-              src="/assets/images/plus.unsplash.com_premium_photo-1725400811474-0a8720cb0227_w_600&auto_format&fit_crop&q_60&ixlib_rb-4.1.0&ixid_M3wxMjA3fDB8MHxzZWFyY2h8OXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D.png" 
-              alt="Pencil and paper ready for spelling"
+              src="https://plus.unsplash.com/premium_photo-1666739032149-5baca96d6d41?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8c3BlbGxpbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D" 
+              alt="Person spelling words with letter blocks"
               layout="fill"
               objectFit="cover"
               className="absolute inset-0"
-              data-ai-hint="pencil paper spelling"
+              data-ai-hint="spelling words blocks"
             />
             <div className="absolute inset-0 bg-black/70" />
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-white">
@@ -255,7 +269,10 @@ export default function SpellingPage() {
                     </CardContent>
                  </Card>
               ) : (
-                <SpellingPractice wordToSpell={currentWord} onWordSpelled={handleWordSpelled} />
+                <SpellingPractice 
+                  wordToSpell={currentWord} 
+                  onWordSpelled={handleWordSpelled} 
+                />
               )}
             </div>
             

@@ -67,7 +67,7 @@ export const QuickLinkFAB: FC = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 p-2 md:hidden rounded-xl shadow-2xl bg-nav-gradient backdrop-blur-md border border-[hsl(var(--nav-border-light))]" // Uses nav-gradient, nav-border-light (which are now dark-styled)
+        className="w-72 p-2 md:hidden rounded-xl shadow-2xl bg-nav-gradient backdrop-blur-md border border-[hsl(var(--nav-border-dark))]" // Uses nav-gradient, nav-border-light (which are now dark-styled)
         side="top"
         align="end"
         sideOffset={12}
@@ -82,9 +82,9 @@ export const QuickLinkFAB: FC = () => {
                 "justify-start w-full text-md py-3 px-4 rounded-lg transition-all duration-150 ease-in-out group focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-popover animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
                 // Popover content uses nav styles, which are now dark-styled for light theme too
                 isActivePath(pathname, link.href)
-                  ? "font-semibold bg-[hsl(var(--nav-active-indicator-light))] text-[hsl(var(--nav-active-text-light))]"
-                  : "text-[hsl(var(--nav-text-light))] hover:bg-[hsl(var(--nav-active-indicator-light))]/50 hover:text-[hsl(var(--nav-active-text-light))]",
-                "focus-visible:ring-[hsl(var(--nav-text-light))]"
+                  ? "font-semibold bg-[hsl(var(--nav-active-indicator-dark))] text-[hsl(var(--nav-active-text-dark))]"
+                  : "text-[hsl(var(--nav-text-dark))] hover:bg-[hsl(var(--nav-active-indicator-dark))]/50 hover:text-[hsl(var(--nav-active-text-dark))]",
+                "focus-visible:ring-[hsl(var(--nav-text-dark))]"
               )}
               style={{ animationDelay: `${index * 40}ms` }} 
               onClick={() => setIsOpen(false)}
@@ -92,11 +92,11 @@ export const QuickLinkFAB: FC = () => {
               <Link href={link.href} className="flex items-center gap-3">
                 <link.icon className={cn(
                     "h-5 w-5 transition-colors",
-                    isActivePath(pathname, link.href) ? "text-[hsl(var(--nav-active-text-light))]" : "text-[hsl(var(--nav-icon-light))] group-hover:text-[hsl(var(--nav-active-text-light))]"
+                    isActivePath(pathname, link.href) ? "text-[hsl(var(--nav-active-text-dark))]" : "text-[hsl(var(--nav-icon-dark))] group-hover:text-[hsl(var(--nav-active-text-dark))]"
                 )} aria-hidden="true" />
                 <span className={cn(
                     "transition-colors",
-                     isActivePath(pathname, link.href) ? "text-[hsl(var(--nav-active-text-light))]" : "text-[hsl(var(--nav-text-light))] group-hover:text-[hsl(var(--nav-active-text-light))]"
+                     isActivePath(pathname, link.href) ? "text-[hsl(var(--nav-active-text-dark))]" : "text-[hsl(var(--nav-text-dark))] group-hover:text-[hsl(var(--nav-active-text-dark))]"
                 )}>{link.label}</span>
               </Link>
             </Button>

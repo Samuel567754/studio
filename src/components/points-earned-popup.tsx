@@ -34,13 +34,13 @@ export function CoinsEarnedPopup({ coins, show, onComplete }: CoinsEarnedPopupPr
       className={cn(
         "fixed top-24 left-5 sm:left-6 z-[60]", // Adjusted positioning to be below FloatingGoldenCoins
         "flex items-center justify-center rounded-full px-6 py-3 shadow-2xl", // Oval shape with padding
-        "bg-gradient-to-br from-yellow-300/90 via-amber-400/90 to-orange-400/90", // Reduced opacity
-        "border-2 border-yellow-200/70",
+        "bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-400", // Reduced opacity
+        "border-2 border-yellow-200",
         "coins-earned-popup-animation"
       )}
       aria-live="assertive"
     >
-      <span className="text-xl md:text-2xl font-bold text-yellow-900 drop-shadow-sm mr-2">
+      <span className="text-xl md:text-2xl font-bold text-white drop-shadow-sm mr-2">
         +{coins}
       </span>
       <Image
