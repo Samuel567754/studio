@@ -19,6 +19,7 @@ import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 // Standardized points
 const POINTS_PER_CORRECT_ANSWER = 1;
+const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
 const SESSION_COMPLETION_BONUS_BASE = 5;
 const PENALTY_PER_WRONG_FOR_BONUS = 1;
 
@@ -106,7 +107,7 @@ export default function SpellingPage() {
     setPracticedWordsInSession(newPracticedWords);
 
     let newSessionIncorrectCount = sessionIncorrectAnswersCount;
-    if (!wasFirstAttemptCorrect) { // Only increment if it was NOT correct on first attempt
+    if (!wasFirstAttemptCorrect) { 
       newSessionIncorrectCount++;
       setSessionIncorrectAnswersCount(newSessionIncorrectCount);
     }
@@ -120,8 +121,8 @@ export default function SpellingPage() {
 
             if (calculatedBonus > 0) {
                 addGoldenCoins(calculatedBonus);
-                setLastAwardedCoins(calculatedBonus);
-                setShowCoinsEarnedPopup(true);
+                setLastAwardedCoins(calculatedBonus); 
+                // setShowCoinsEarnedPopup(true); // Handled by ClientRootFeatures
                 description += ` You earned ${calculatedBonus} bonus Golden Coins!`;
             } else {
                 description += " Keep practicing for a bonus next time!";
@@ -155,11 +156,11 @@ export default function SpellingPage() {
         }
     };
     
+     const audioDelay = wasFirstAttemptCorrect ? 500 : 1200; 
     if (soundEffectsEnabled) {
-        // Short delay for individual word feedback sounds to complete
-        setTimeout(afterCurrentWordAudio, 500); 
+        setTimeout(afterCurrentWordAudio, audioDelay); 
     } else {
-       setTimeout(afterCurrentWordAudio, 1200); 
+       setTimeout(afterCurrentWordAudio, audioDelay + 700); 
     }
   };
   
@@ -188,8 +189,7 @@ export default function SpellingPage() {
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto relative">
-      {showCoinsEarnedPopup && lastAwardedCoins > 0 && <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />}
-      {showCoinsLostPopup && lastDeductedCoins > 0 && <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />}
+      {/* Popups handled globally */}
       <div className="mb-6">
         <Button asChild variant="outline" className="group">
           <Link href="/word-practice">
@@ -201,12 +201,12 @@ export default function SpellingPage() {
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
           <Image 
-            src="/assets/images/yellow_star_shape_graphic-.png" 
-            alt="Keyboard letters for spelling practice"
+            src="https://plus.unsplash.com/premium_photo-1666739031994-147a1cc3894e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fHNwZWxsaW5nfGVufDB8fDB8fHww" 
+            alt="Child focused on spelling with letter blocks"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="spell words keyboard" 
+            data-ai-hint="spelling learning child" 
           />
           <div className="absolute inset-0 bg-black/60" /> 
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
