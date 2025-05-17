@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent, useCallback } from 'react'; // Added useCallback
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,7 @@ import {
 import { useUserProfileStore, ACHIEVEMENTS_CONFIG, type Achievement } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Trash2, ShieldAlert, Award as AwardIconLucide, Eye } from 'lucide-react';
+import { Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Trash2, ShieldAlert, Award as AwardIconLucide, Eye, Trophy } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { AchievementUnlockedModal } from '@/components/achievement-unlocked-modal';
+
+const ITEMS_PER_LOAD = 6; // Number of achievements to load at a time
 
 export default function ProfilePage() {
   const [profileStats, setProfileStats] = useState<{
@@ -66,6 +68,13 @@ export default function ProfilePage() {
 
   const [viewingAchievement, setViewingAchievement] = useState<Achievement | null>(null);
   const [isViewingModalOpen, setIsViewingModalOpen] = useState(false);
+
+  const [displayedAchievementsCount, setDisplayedAchievementsCount] = useState(ITEMS_PER_LOAD);
+
+  const earnedAchievementsToDisplay = React.useMemo(() => {
+    return ACHIEVEMENTS_CONFIG.filter(ach => isAchievementUnlocked(ach.id));
+  }, [unlockedAchievements, isAchievementUnlocked]);
+
 
   useEffect(() => {
     loadUserProfileFromStorage();
@@ -138,6 +147,12 @@ export default function ProfilePage() {
     playNotificationSound();
   };
 
+  const handleLoadMoreAchievements = useCallback(() => {
+    setDisplayedAchievementsCount(prev => prev + ITEMS_PER_LOAD);
+    playNotificationSound();
+  }, []);
+
+
   if (!isMounted || !profileStats) {
     return (
       <div className="space-y-6" aria-live="polite" aria-busy="true">
@@ -147,7 +162,6 @@ export default function ProfilePage() {
     );
   }
 
-  const earnedAchievementsToDisplay = ACHIEVEMENTS_CONFIG.filter(ach => isAchievementUnlocked(ach.id));
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
@@ -289,34 +303,45 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent>
           {earnedAchievementsToDisplay.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {earnedAchievementsToDisplay.map((ach, index) => (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {earnedAchievementsToDisplay.slice(0, displayedAchievementsCount).map((ach, index) => (
+                  <Button
+                    key={ach.id}
+                    variant="outline"
+                    className={cn(
+                      "h-auto p-4 rounded-lg border flex flex-col items-center text-center transition-all duration-300 hover:shadow-xl hover:scale-105 focus:scale-105 focus:ring-2 focus:ring-offset-2",
+                      "bg-gradient-to-br from-card via-card/90 to-secondary/10 dark:from-card dark:via-card/90 dark:to-secondary/5",
+                      ach.color ? `border-${ach.color.split('-')[1]}-500/50 focus:ring-${ach.color.split('-')[1]}-500` : "border-yellow-500/50 focus:ring-yellow-500",
+                      "animate-in fade-in-0 zoom-in-90"
+                    )}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                    onClick={() => handleViewAchievement(ach)}
+                    aria-label={`View details for ${ach.name} achievement`}
+                  >
+                    <Image
+                      src={ach.imageSrc}
+                      alt={ach.iconAlt || ach.name}
+                      width={64}
+                      height={64}
+                      className="mb-3 drop-shadow-lg animate-achievement-image-rotate" // Keep existing rotation for badge images
+                    />
+                    <h3 className={cn("text-lg font-semibold mb-1", ach.color || "text-foreground")}>{ach.name}</h3>
+                    <p className="text-xs text-muted-foreground">{ach.description}</p>
+                    {ach.bonusCoins && ach.bonusCoins > 0 && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusCoins} Golden Coins Bonus!</p>}
+                  </Button>
+                ))}
+              </div>
+              {displayedAchievementsCount < earnedAchievementsToDisplay.length && (
                 <Button
-                  key={ach.id}
+                  onClick={handleLoadMoreAchievements}
                   variant="outline"
-                  className={cn(
-                    "h-auto p-4 rounded-lg border flex flex-col items-center text-center transition-all duration-300 hover:shadow-xl hover:scale-105 focus:scale-105 focus:ring-2 focus:ring-offset-2",
-                    "bg-gradient-to-br from-card via-card/90 to-secondary/10 dark:from-card dark:via-card/90 dark:to-secondary/5",
-                    ach.color ? `border-${ach.color.split('-')[1]}-500/50 focus:ring-${ach.color.split('-')[1]}-500` : "border-yellow-500/50 focus:ring-yellow-500",
-                    "animate-in fade-in-0 zoom-in-90"
-                  )}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                  onClick={() => handleViewAchievement(ach)}
-                  aria-label={`View details for ${ach.name} achievement`}
+                  className="w-full mt-6 md:col-span-2 lg:col-span-3 text-base py-3"
                 >
-                  <Image
-                    src={ach.imageSrc}
-                    alt={ach.iconAlt || ach.name}
-                    width={64}
-                    height={64}
-                    className="mb-3 drop-shadow-lg"
-                  />
-                  <h3 className={cn("text-lg font-semibold mb-1", ach.color || "text-foreground")}>{ach.name}</h3>
-                  <p className="text-xs text-muted-foreground">{ach.description}</p>
-                  {ach.bonusCoins && ach.bonusCoins > 0 && <p className="text-xs text-amber-500 font-semibold mt-1">+ {ach.bonusCoins} Golden Coins Bonus!</p>}
+                  Load More Achievements
                 </Button>
-              ))}
-            </div>
+              )}
+            </>
           ) : (
             <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300">
               <AlertTitle className="flex items-center gap-2">

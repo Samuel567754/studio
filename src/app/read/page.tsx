@@ -152,7 +152,7 @@ export default function ReadingPage() {
         <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
           <div className="relative h-80 md:h-96 w-full">
             <Image 
-              src="/assets/images/plus.unsplash.com_premium_photo-1684743539425-5f726aa89394_w_600&auto_format&fit_crop&q_60&ixlib_rb-4.1.0&ixid_M3wxMjA3fDB8MHxzZWFyY2h8MXx8bGVhcm5pbmclMjB3b3Jkc3xlbnwwfHwwfHx8MA%3D%3D.png" 
+              src="https://images.unsplash.com/photo-1604882737206-8a000c03d8fe?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fHJlYWRpbmd8ZW58MHx8MHx8fDA%3D" 
               alt="An empty storybook with a curious child peeking"
               layout="fill"
               objectFit="cover"

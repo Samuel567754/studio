@@ -311,7 +311,7 @@ export default function FillInTheBlankPage() {
         <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
           <div className="relative h-80 md:h-96 w-full">
             <Image 
-              src="/assets/images/red_crystal_cluster_illustration.png" 
+              src="https://images.unsplash.com/photo-1621243545234-a6b0bae02a68?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHJlYWFpJTIwd29yZCUyMGdhbWVzfGVufDB8fDB8fHww" 
               alt="AI brain generating word puzzle"
               layout="fill"
               objectFit="cover"
