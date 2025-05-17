@@ -19,7 +19,8 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAppSettingsStore } from '@/stores/app-settings-store';
-// Removed local CoinsEarnedPopup and CoinsLostPopup imports
+import { CoinsEarnedPopup } from '@/components/points-earned-popup';
+import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 
 type DifficultyLevel = 'easy' | 'medium' | 'hard';
@@ -34,13 +35,12 @@ interface QuestionState {
 const STORIES_PER_SESSION = 3;
 const POINTS_PER_CORRECT_QUESTION = 1;
 const POINTS_DEDUCTED_PER_WRONG_ANSWER = 1;
-const SESSION_COMPLETION_BONUS = 5;
+const SESSION_COMPLETION_BONUS_BASE = 5; 
 const PENALTY_PER_WRONG_FOR_BONUS = 1; 
 
 export const AiStoryProblemGameUI = () => {
   const [currentStoryProblem, setCurrentStoryProblem] = useState<GenerateMathStoryProblemOutput | null>(null);
   const [questionStates, setQuestionStates] = useState<QuestionState[]>([]);
-  // const [currentStoryScore, setCurrentStoryScore] = useState(0); // Score per story - now managed in sessionOverallCorrectAnswers
   const [storiesCompletedInSession, setStoriesCompletedInSession] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState<number | null>(null);
@@ -50,8 +50,12 @@ export const AiStoryProblemGameUI = () => {
 
   const [sessionOverallCorrectAnswers, setSessionOverallCorrectAnswers] = useState(0);
   const [sessionOverallAttemptedQuestions, setSessionOverallAttemptedQuestions] = useState(0);
+  
+  const [showCoinsEarnedPopup, setShowCoinsEarnedPopup] = useState(false);
+  const [lastAwardedCoins, setLastAwardedCoins] = useState(0);
+  const [showCoinsLostPopup, setShowCoinsLostPopup] = useState(false);
+  const [lastDeductedCoins, setLastDeductedCoins] = useState(0);
 
-  // Removed local popup states
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -64,7 +68,6 @@ export const AiStoryProblemGameUI = () => {
     setIsLoading(true);
     setQuestionStates([]);
     setCurrentStoryProblem(null);
-    // setCurrentStoryScore(0); // Reset for each new story
     if (!isNewSessionStart && soundEffectsEnabled) playNotificationSound();
 
     try {
@@ -81,7 +84,10 @@ export const AiStoryProblemGameUI = () => {
         const storyText = `Story time! ${storyData.overallTheme ? `The theme is ${storyData.overallTheme}.` : ''} ${storyData.storyProblemText}`;
         speakText(storyText, undefined, () => {
           if (storyData.questions && storyData.questions.length > 0 && soundEffectsEnabled) {
-            speakText(`Question 1: ${storyData.questions[0].questionText}`);
+            // Speak first question only if it's a new story, not on every fetch
+            if (storiesCompletedInSession === 0 || isNewSessionStart) {
+                 speakText(`Question 1: ${storyData.questions[0].questionText}`);
+            }
           }
         });
       }
@@ -96,10 +102,9 @@ export const AiStoryProblemGameUI = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [difficulty, customTopics, favoriteTopics, username, toast, soundEffectsEnabled, sessionCompleted]);
+  }, [difficulty, customTopics, favoriteTopics, username, toast, soundEffectsEnabled, sessionCompleted, storiesCompletedInSession]);
 
   const startNewSession = useCallback(() => {
-    // setCurrentStoryScore(0); // Redundant if we track overall
     setStoriesCompletedInSession(0);
     setSessionOverallCorrectAnswers(0);
     setSessionOverallAttemptedQuestions(0);
@@ -111,11 +116,13 @@ export const AiStoryProblemGameUI = () => {
   const handleSessionCompletion = useCallback(() => {
     setSessionCompleted(true);
     const totalWrongAnswersInSession = sessionOverallAttemptedQuestions - sessionOverallCorrectAnswers;
-    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS - (totalWrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
+    const calculatedBonus = Math.max(0, SESSION_COMPLETION_BONUS_BASE - (totalWrongAnswersInSession * PENALTY_PER_WRONG_FOR_BONUS));
 
     if (calculatedBonus > 0) {
-      addGoldenCoins(calculatedBonus); // This will trigger popup via store/ClientRootFeatures
-      if (soundEffectsEnabled) playCoinsEarnedSound();
+      addGoldenCoins(calculatedBonus);
+      setLastAwardedCoins(calculatedBonus);
+      setShowCoinsEarnedPopup(true);
+      // sound handled by popup trigger
     }
 
     const completionMessage = username ? `Fantastic, ${username}!` : 'Session Complete!';
@@ -161,8 +168,7 @@ export const AiStoryProblemGameUI = () => {
 
     let feedbackText: string | JSX.Element;
     let speechTextSegment: string;
-    // let newCurrentStoryScore = currentStoryScore; // Story-specific score removed
-
+   
     const animateInput = (type: 'success' | 'error') => {
         setQuestionStates(prev => prev.map((qs, i) => i === questionIndex ? { ...qs, inputAnimation: type } : qs));
         setTimeout(() => {
@@ -172,41 +178,26 @@ export const AiStoryProblemGameUI = () => {
 
     if (isCorrect) {
       feedbackText = `${username ? username + ", y" : "Y"}ou got it right! The answer is ${question.numericalAnswer}.`;
-      speechTextSegment = `Correct! The answer to: ${question.questionText} is ${question.numericalAnswer}.`;
-      if(questionStates[questionIndex].isCorrect === null) { // Only add points if not already marked correct
-         // newCurrentStoryScore = currentStoryScore + 1;
-         // setCurrentStoryScore(newCurrentStoryScore);
-         addGoldenCoins(POINTS_PER_CORRECT_QUESTION); // This will trigger popup
+      speechTextSegment = `Correct! The answer to: ${question.questionText.replace(/_+/g, 'blank')} is ${question.numericalAnswer}.`;
+      if(questionStates[questionIndex].isCorrect === null) {
+         addGoldenCoins(POINTS_PER_CORRECT_QUESTION);
+         setLastAwardedCoins(POINTS_PER_CORRECT_QUESTION);
+         setShowCoinsEarnedPopup(true);
          setSessionOverallCorrectAnswers(prev => prev + 1);
-         if (soundEffectsEnabled) playCoinsEarnedSound();
-         toast({
-          variant: "success",
-          title: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> +{POINTS_PER_CORRECT_QUESTION} Golden Coins!</div>,
-          description: "Well done!",
-          duration: 2000,
-         });
       }
-      // if (soundEffectsEnabled) playSuccessSound(); // Sound is now handled by addGoldenCoins effect
       animateInput('success');
     } else {
       feedbackText = (
         <>
-          Not quite{username ? `, ${username}` : ''}. The correct answer for "{question.questionText}" was <strong>{question.numericalAnswer}</strong>.
-          {question.explanation && <p className="mt-1 text-xs"><em>Explanation: {question.explanation}</em></p>}
+          Not quite{username ? `, ${username}` : ''}. The correct answer for "{question.questionText.replace(/_+/g, 'blank')}" was <strong>{question.numericalAnswer}</strong>.
+          {/* Explanation removed from immediate feedback, will be spoken if AI provides it */}
         </>
       );
-      speechTextSegment = `Oops! The correct answer for "${question.questionText}" was ${question.numericalAnswer}.`;
-      // if (soundEffectsEnabled) playErrorSound(); // Sound is now handled by deductGoldenCoins effect
-      if(questionStates[questionIndex].isCorrect === null) { // Only deduct if not already marked incorrect
+      speechTextSegment = `Oops! The correct answer for "${question.questionText.replace(/_+/g, 'blank')}" was ${question.numericalAnswer}.`;
+      if(questionStates[questionIndex].isCorrect === null) {
         deductGoldenCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
-        // No local popup for deduction
-        if (soundEffectsEnabled) playCoinsDeductedSound();
-        toast({
-          variant: "destructive",
-          title: <div className="flex items-center gap-1"><XCircle className="h-5 w-5" /> Oops!</div>,
-          description: <div className="flex items-center gap-1"><Image src="/assets/images/coin_with_dollar_sign_artwork.png" alt="Coin" width={16} height={16} /> -{POINTS_DEDUCTED_PER_WRONG_ANSWER} Golden Coin.</div>,
-          duration: 2000,
-        });
+        setLastDeductedCoins(POINTS_DEDUCTED_PER_WRONG_ANSWER);
+        setShowCoinsLostPopup(true);
       }
       animateInput('error');
     }
@@ -214,7 +205,7 @@ export const AiStoryProblemGameUI = () => {
     const updatedQuestionStates = questionStates.map((qs, i) => i === questionIndex ? { ...qs, feedback: { type: isCorrect ? 'success' : 'error', message: feedbackText }, isCorrect: isCorrect, isSubmitted: true } : qs);
     setQuestionStates(updatedQuestionStates);
 
-    if(questionStates[questionIndex].isCorrect === null) { // Count attempt only once
+    if(questionStates[questionIndex].isCorrect === null) { 
         setSessionOverallAttemptedQuestions(prev => prev + 1);
     }
 
@@ -222,12 +213,11 @@ export const AiStoryProblemGameUI = () => {
 
     const afterSpeechCallback = () => {
       if (allCurrentStoryQuestionsAnswered && !sessionCompleted) {
-        // Story score already accumulated in sessionOverallCorrectAnswers
         const newStoriesCompletedCount = storiesCompletedInSession + 1;
         setStoriesCompletedInSession(newStoriesCompletedCount);
 
         if (newStoriesCompletedCount >= STORIES_PER_SESSION) {
-          handleSessionCompletion(); // Uses sessionOverallCorrectAnswers and sessionOverallAttemptedQuestions
+          handleSessionCompletion();
         } else {
            toast({
              variant: "info",
@@ -248,15 +238,19 @@ export const AiStoryProblemGameUI = () => {
            }
         }
       } else if (!allCurrentStoryQuestionsAnswered && soundEffectsEnabled && questionIndex + 1 < currentStoryProblem.questions.length) {
-        speakText(`Next question: ${currentStoryProblem.questions[questionIndex + 1].questionText}`);
+        speakText(`Next question: ${currentStoryProblem.questions[questionIndex + 1].questionText.replace(/_+/g, 'blank')}`);
       }
     };
 
     if (soundEffectsEnabled) {
-      const utterance = speakText(speechTextSegment, undefined, afterSpeechCallback);
+      let fullSpeech = speechTextSegment;
+      if (!isCorrect && question.explanation) {
+        fullSpeech += ` Explanation: ${question.explanation}`;
+      }
+      const utterance = speakText(fullSpeech, undefined, afterSpeechCallback);
       if (!utterance) setTimeout(afterSpeechCallback, isCorrect ? 1500 : 2500);
     } else {
-      afterSpeechCallback();
+      setTimeout(afterSpeechCallback, isCorrect ? 1200: 2000);
     }
 
   }, [currentStoryProblem, questionStates, username, toast, soundEffectsEnabled, storiesCompletedInSession, handleSessionCompletion, sessionCompleted, fetchNewStoryProblem, addGoldenCoins, deductGoldenCoins]);
@@ -357,7 +351,8 @@ export const AiStoryProblemGameUI = () => {
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-500 relative">
-      {/* Popups are now handled by ClientRootFeatures */}
+      {showCoinsEarnedPopup && lastAwardedCoins > 0 && <CoinsEarnedPopup coins={lastAwardedCoins} show={showCoinsEarnedPopup} onComplete={() => setShowCoinsEarnedPopup(false)} />}
+      {showCoinsLostPopup && lastDeductedCoins > 0 && <CoinsLostPopup coins={lastDeductedCoins} show={showCoinsLostPopup} onComplete={() => setShowCoinsLostPopup(false)} />}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center">
           <BookOpen className="mr-2 h-6 w-6" /> AI Math Story Time!
@@ -428,8 +423,8 @@ export const AiStoryProblemGameUI = () => {
                  <span
                     role="button"
                     tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); handleSpeak(`Story time! ${currentStoryProblem.overallTheme ? `The theme is ${currentStoryProblem.overallTheme}.` : ''} ${currentStoryProblem.storyProblemText}`); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleSpeak(`Story time! ${currentStoryProblem.overallTheme ? `The theme is ${currentStoryProblem.overallTheme}.` : ''} ${currentStoryProblem.storyProblemText}`); }}}
+                    onClick={(e) => { e.stopPropagation(); handleSpeak(`Story time! ${currentStoryProblem.overallTheme ? `The theme is ${currentStoryProblem.overallTheme}.` : ''} ${currentStoryProblem.storyProblemText.replace(/_+/g, 'blank')}`); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleSpeak(`Story time! ${currentStoryProblem.overallTheme ? `The theme is ${currentStoryProblem.overallTheme}.` : ''} ${currentStoryProblem.storyProblemText.replace(/_+/g, 'blank')}`); }}}
                     aria-label="Read story aloud"
                     className={cn("ml-auto p-1.5 rounded-full hover:bg-primary/10 focus:outline-none focus:ring-1 focus:ring-primary", (!soundEffectsEnabled) && "opacity-50 cursor-not-allowed")}
                 >
@@ -456,8 +451,8 @@ export const AiStoryProblemGameUI = () => {
                        <span
                         role="button"
                         tabIndex={0}
-                        onClick={(e) => { e.stopPropagation(); handleSpeak(q.questionText); }}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleSpeak(q.questionText); }}}
+                        onClick={(e) => { e.stopPropagation(); handleSpeak(q.questionText.replace(/_+/g, 'blank')); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleSpeak(q.questionText.replace(/_+/g, 'blank')); }}}
                         aria-label={`Read question ${index + 1} aloud`}
                         className={cn(
                             "p-1.5 rounded-full hover:bg-primary/10 focus:outline-none focus:ring-1 focus:ring-primary flex-shrink-0 self-start sm:self-center",
@@ -466,7 +461,7 @@ export const AiStoryProblemGameUI = () => {
                        >
                         <Volume2 className="h-4 w-4" />
                        </span>
-                        <div className="flex-1 min-w-0 text-left">
+                        <div className="flex-1 min-w-0 text-left overflow-hidden">
                             <span className="font-semibold">Question {index + 1}: </span>
                             <span className="break-words">{q.questionText}</span>
                         </div>
@@ -535,17 +530,35 @@ export const AiStoryProblemGameUI = () => {
             if (soundEffectsEnabled) playNotificationSound();
             if (sessionCompleted) {
               startNewSession();
+            } else if (currentStoryProblem && !allQuestionsAnsweredForCurrentStory) {
+                // If current story is not finished, this button skips the current story and fetches a new one within the session
+                const newStoriesCompletedCount = storiesCompletedInSession + 1;
+                if (newStoriesCompletedCount >= STORIES_PER_SESSION) {
+                    handleSessionCompletion(); // This might need adjustment if skipping should not count as a full story completion for bonus
+                } else {
+                    setStoriesCompletedInSession(newStoriesCompletedCount); // Mark current story as 'done' by skipping
+                    fetchNewStoryProblem(); // Fetch next story in the set
+                     toast({
+                        variant: "info",
+                        title: "Story Skipped!",
+                        description: `Loading the next story... (${newStoriesCompletedCount + 1}/${STORIES_PER_SESSION})`,
+                        duration: 2000,
+                    });
+                }
             } else {
-              fetchNewStoryProblem();
+                // If current story IS finished, or no story, treat as fetching new problem set/story
+                fetchNewStoryProblem();
             }
           }}
           className="w-full btn-glow"
-          disabled={isLoading || (!!isListening && !allQuestionsAnsweredForCurrentStory && !!currentStoryProblem)}
+          disabled={isLoading || (!!isListening && !allQuestionsAnsweredForCurrentStory && !!currentStoryProblem && !sessionCompleted)}
         >
           <RefreshCcw className="mr-2 h-4 w-4" />
-          {sessionCompleted ? "Start New Session" : "Skip Story / Next Problem Set"}
+          {sessionCompleted ? "Start New Session" : (currentStoryProblem && !allQuestionsAnsweredForCurrentStory ? "Skip Current Story" : "Next Problem Set")}
         </Button>
       </CardFooter>
     </Card>
   );
 };
+
+    

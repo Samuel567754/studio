@@ -30,7 +30,7 @@ export function FloatingGoldenCoins() { // Renamed component
     <div
       className={cn(
         "fixed top-[calc(var(--main-nav-height,64px)_+_0.75rem)] left-4 z-50 flex items-center gap-2 p-2.5 rounded-full shadow-xl transition-all duration-300 ease-out",
-        "bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 text-white", 
+        "bg-gradient-to-br from-yellow-600 via-amber-600 to-orange-700 text-white", 
         "border-2 border-yellow-300/70",
         "md:left-5" 
       )}
