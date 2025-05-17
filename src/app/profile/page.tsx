@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import { useState, useEffect, type FormEvent, useCallback } from 'react'; // Added useCallback
+import { useState, useEffect, type FormEvent, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,7 @@ import {
 import { useUserProfileStore, ACHIEVEMENTS_CONFIG, type Achievement } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Trash2, ShieldAlert, Award as AwardIconLucide, Eye, Trophy } from 'lucide-react';
+import { Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Trash2, ShieldAlert, Award as AwardIconLucide, Eye, Trophy } from 'lucide-react'; // Added Trophy
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,8 @@ import {
 import { cn } from '@/lib/utils';
 import { AchievementUnlockedModal } from '@/components/achievement-unlocked-modal';
 
-const ITEMS_PER_LOAD = 6; // Number of achievements to load at a time
+const INITIAL_ITEMS_PER_LOAD = 4;
+const ITEMS_PER_LOAD_INCREMENT = 4;
 
 export default function ProfilePage() {
   const [profileStats, setProfileStats] = useState<{
@@ -69,10 +70,11 @@ export default function ProfilePage() {
   const [viewingAchievement, setViewingAchievement] = useState<Achievement | null>(null);
   const [isViewingModalOpen, setIsViewingModalOpen] = useState(false);
 
-  const [displayedAchievementsCount, setDisplayedAchievementsCount] = useState(ITEMS_PER_LOAD);
+  const [displayedAchievementsCount, setDisplayedAchievementsCount] = useState(INITIAL_ITEMS_PER_LOAD);
 
   const earnedAchievementsToDisplay = React.useMemo(() => {
-    return ACHIEVEMENTS_CONFIG.filter(ach => isAchievementUnlocked(ach.id));
+    return ACHIEVEMENTS_CONFIG.filter(ach => isAchievementUnlocked(ach.id))
+                              .sort((a, b) => a.pointsRequired - b.pointsRequired);
   }, [unlockedAchievements, isAchievementUnlocked]);
 
 
@@ -136,7 +138,7 @@ export default function ProfilePage() {
             variant: "destructive"
         });
         playErrorSound();
-        window.location.href = '/introduction'; 
+        window.location.href = '/introduction';
     }
     setIsConfirmResetOpen(false);
   };
@@ -148,7 +150,12 @@ export default function ProfilePage() {
   };
 
   const handleLoadMoreAchievements = useCallback(() => {
-    setDisplayedAchievementsCount(prev => prev + ITEMS_PER_LOAD);
+    setDisplayedAchievementsCount(prev => prev + ITEMS_PER_LOAD_INCREMENT);
+    playNotificationSound();
+  }, []);
+
+  const handleLoadLessAchievements = useCallback(() => {
+    setDisplayedAchievementsCount(INITIAL_ITEMS_PER_LOAD);
     playNotificationSound();
   }, []);
 
@@ -297,7 +304,7 @@ export default function ProfilePage() {
                 width={32}
                 height={32}
                 className="mr-3 drop-shadow-sm"
-              /> My Coin Collection & Trophies
+              /> My Trophies & Badges
           </CardTitle>
           <CardDescription>Celebrate your learning milestones by collecting Golden Coins and earning badges! Tap a badge to see details.</CardDescription>
         </CardHeader>
@@ -324,7 +331,7 @@ export default function ProfilePage() {
                       alt={ach.iconAlt || ach.name}
                       width={64}
                       height={64}
-                      className="mb-3 drop-shadow-lg animate-achievement-image-rotate" // Keep existing rotation for badge images
+                      className="mb-3 drop-shadow-lg animate-achievement-image-rotate"
                     />
                     <h3 className={cn("text-lg font-semibold mb-1", ach.color || "text-foreground")}>{ach.name}</h3>
                     <p className="text-xs text-muted-foreground">{ach.description}</p>
@@ -332,15 +339,26 @@ export default function ProfilePage() {
                   </Button>
                 ))}
               </div>
-              {displayedAchievementsCount < earnedAchievementsToDisplay.length && (
-                <Button
-                  onClick={handleLoadMoreAchievements}
-                  variant="outline"
-                  className="w-full mt-6 md:col-span-2 lg:col-span-3 text-base py-3"
-                >
-                  Load More Achievements
-                </Button>
-              )}
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                {displayedAchievementsCount < earnedAchievementsToDisplay.length && (
+                  <Button
+                    onClick={handleLoadMoreAchievements}
+                    variant="outline"
+                    className="w-full sm:flex-1 text-base py-3"
+                  >
+                    Load More Achievements
+                  </Button>
+                )}
+                {displayedAchievementsCount > INITIAL_ITEMS_PER_LOAD && earnedAchievementsToDisplay.length > INITIAL_ITEMS_PER_LOAD && (
+                  <Button
+                    onClick={handleLoadLessAchievements}
+                    variant="outline"
+                    className="w-full sm:flex-1 text-base py-3"
+                  >
+                    Show Fewer
+                  </Button>
+                )}
+              </div>
             </>
           ) : (
             <Alert variant="info" className="animate-in fade-in-0 zoom-in-95 duration-300">
