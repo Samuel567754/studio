@@ -8,13 +8,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
+  DialogFooter, // DialogDescription was not used, DialogClose is part of DialogContent now
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useUserProfileStore, type Achievement } from "@/stores/user-profile-store";
+import { useUserProfileStore, type Achievement, ACHIEVEMENTS_CONFIG } from "@/stores/user-profile-store";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 
@@ -24,13 +22,17 @@ interface AchievementsDisplayModalProps {
 }
 
 export function AchievementsDisplayModal({ isOpen, onClose }: AchievementsDisplayModalProps) {
-  const { unlockedAchievements, ACHIEVEMENTS_CONFIG } = useUserProfileStore();
+  const { unlockedAchievements } = useUserProfileStore();
 
   const earnedAchievements = React.useMemo(() => {
+    // Guard clause to prevent error if ACHIEVEMENTS_CONFIG is not yet available
+    if (!ACHIEVEMENTS_CONFIG || !unlockedAchievements) {
+      return [];
+    }
     return ACHIEVEMENTS_CONFIG
       .filter(ach => unlockedAchievements.includes(ach.id))
       .sort((a, b) => a.pointsRequired - b.pointsRequired);
-  }, [unlockedAchievements, ACHIEVEMENTS_CONFIG]);
+  }, [unlockedAchievements]); // ACHIEVEMENTS_CONFIG is a constant and doesn't need to be in deps array
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -48,12 +50,7 @@ export function AchievementsDisplayModal({ isOpen, onClose }: AchievementsDispla
               My Achievements
             </DialogTitle>
           </div>
-          <DialogClose asChild>
-            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
-              <X className="h-5 w-5" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </DialogClose>
+          {/* DialogClose is now part of DialogContent itself via the X button, so not explicitly here */}
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh]">
@@ -108,11 +105,9 @@ export function AchievementsDisplayModal({ isOpen, onClose }: AchievementsDispla
         </ScrollArea>
 
         <DialogFooter className="p-4 border-t border-border/20 bg-muted/30 sm:justify-center">
-          <DialogClose asChild>
-            <Button type="button" variant="outline" className="w-full sm:w-auto">
-              Close
-            </Button>
-          </DialogClose>
+          <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
+            Close
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
