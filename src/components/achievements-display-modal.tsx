@@ -15,8 +15,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUserProfileStore, type Achievement, ACHIEVEMENTS_CONFIG } from "@/stores/user-profile-store";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
-import { playNotificationSound } from "@/lib/audio"; // Import sound effect
-import { AchievementUnlockedModal } from "@/components/achievement-unlocked-modal"; // For viewing details
+import { playNotificationSound } from "@/lib/audio";
+import { AchievementUnlockedModal } from "@/components/achievement-unlocked-modal";
 
 interface AchievementsDisplayModalProps {
   isOpen: boolean;
@@ -29,7 +29,6 @@ export function AchievementsDisplayModal({ isOpen, onClose }: AchievementsDispla
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
 
   const earnedAchievements = React.useMemo(() => {
-    // Guard clause to prevent error if ACHIEVEMENTS_CONFIG is not yet available
     if (!ACHIEVEMENTS_CONFIG || !unlockedAchievements) {
       return [];
     }
@@ -61,7 +60,7 @@ export function AchievementsDisplayModal({ isOpen, onClose }: AchievementsDispla
                 My Achievements
               </DialogTitle>
             </div>
-            {/* Close button is part of DialogContent via Radix UI */}
+            {/* Radix Dialog.Close is automatically added and styled by shadcn */}
           </DialogHeader>
 
           <ScrollArea className="max-h-[60vh]">
@@ -80,14 +79,16 @@ export function AchievementsDisplayModal({ isOpen, onClose }: AchievementsDispla
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {earnedAchievements.map((achievement) => (
+                  {earnedAchievements.map((achievement, index) => (
                     <button
                       key={achievement.id}
                       onClick={() => handleViewAchievementDetail(achievement)}
                       className={cn(
                         "p-4 rounded-lg border flex flex-col items-center text-center transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background",
-                        "bg-card/70 backdrop-blur-sm border-border/30 hover:border-accent/70 w-full text-left" // Make it behave like a button
+                        "bg-card/70 backdrop-blur-sm border-border/30 hover:border-accent/70 w-full text-left",
+                        "animate-in fade-in-0 zoom-in-90" // Added entrance animation
                       )}
+                      style={{ animationDelay: `${index * 100}ms` }} // Staggered delay
                       aria-label={`View details for ${achievement.name}`}
                     >
                       <div className="relative w-20 h-20 mb-3">
@@ -125,12 +126,11 @@ export function AchievementsDisplayModal({ isOpen, onClose }: AchievementsDispla
         </DialogContent>
       </Dialog>
 
-      {/* Modal for viewing a specific achievement's details */}
       {achievementToView && (
         <AchievementUnlockedModal
           achievement={achievementToView}
           isOpen={isDetailModalOpen}
-          onClaim={() => setIsDetailModalOpen(false)} // "onClaim" here acts as "onClose"
+          onClaim={() => setIsDetailModalOpen(false)}
         />
       )}
     </>
