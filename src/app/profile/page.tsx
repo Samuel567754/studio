@@ -16,7 +16,7 @@ import {
 import { useUserProfileStore, ACHIEVEMENTS_CONFIG, type Achievement } from '@/stores/user-profile-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Trash2, ShieldAlert, Award as AwardIconLucide, Eye, Trophy } from 'lucide-react'; // Added Trophy
+import { Settings2, ListChecks, CheckSquare, Edit, Save, Smile, Heart, Trash2, ShieldAlert, Eye, Trophy, Sigma, Star, BookOpen } from 'lucide-react'; // Added Sigma, Star, BookOpen
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -49,12 +49,13 @@ export default function ProfilePage() {
     readingLevel: string;
     wordLength: number;
   } | null>(null);
+  const [practiceWordsList, setPracticeWordsList] = useState<string[]>([]);
+  const [masteredWordsList, setMasteredWordsList] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const {
     username,
     favoriteTopics,
     goldenCoins,
-    unlockedAchievements,
     isAchievementUnlocked,
     setUsername: setStoreUsername,
     setFavoriteTopics: setStoreFavoriteTopics,
@@ -72,12 +73,6 @@ export default function ProfilePage() {
 
   const [displayedAchievementsCount, setDisplayedAchievementsCount] = useState(INITIAL_ITEMS_PER_LOAD);
 
-  const earnedAchievementsToDisplay = React.useMemo(() => {
-    return ACHIEVEMENTS_CONFIG.filter(ach => isAchievementUnlocked(ach.id))
-                              .sort((a, b) => a.pointsRequired - b.pointsRequired);
-  }, [unlockedAchievements, isAchievementUnlocked]);
-
-
   useEffect(() => {
     loadUserProfileFromStorage();
     const practiceList = getStoredWordList();
@@ -91,6 +86,8 @@ export default function ProfilePage() {
       readingLevel: level,
       wordLength: length,
     });
+    setPracticeWordsList(practiceList);
+    setMasteredWordsList(masteredList);
     setIsMounted(true);
   }, [loadUserProfileFromStorage]);
 
@@ -149,6 +146,13 @@ export default function ProfilePage() {
     playNotificationSound();
   };
 
+  const earnedAchievementsToDisplay = React.useMemo(() => {
+    if (!ACHIEVEMENTS_CONFIG) return []; // Guard against undefined
+    return ACHIEVEMENTS_CONFIG
+      .filter(ach => isAchievementUnlocked(ach.id))
+      .sort((a, b) => a.pointsRequired - b.pointsRequired);
+  }, [isAchievementUnlocked]);
+
   const handleLoadMoreAchievements = useCallback(() => {
     setDisplayedAchievementsCount(prev => prev + ITEMS_PER_LOAD_INCREMENT);
     playNotificationSound();
@@ -186,7 +190,7 @@ export default function ProfilePage() {
         <div className="relative z-10 text-white">
           <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-yellow-400/70 mb-4">
               <Image
-                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D"
+                  src="https://images.unsplash.com/photo-1690743300330-d190ad8f97dc?w=200&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTE1fHxhcHAlMjBiYWNrZ3JvdW5kc3xlbnwwfHwwfHx8MA%3D%3D" 
                   alt={username ? `${username}'s profile avatar - abstract colorful lights` : "User profile avatar - abstract colorful lights"}
                   layout="fill"
                   objectFit="cover"
@@ -194,7 +198,7 @@ export default function ProfilePage() {
                   data-ai-hint="app background settings"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent flex items-end justify-center p-2">
-                   <AwardIconLucide className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
+                   <Trophy className="h-10 w-10 text-white/90 drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
               </div>
           </div>
           <h1 className="text-4xl font-bold text-gradient-primary-accent drop-shadow-md">
@@ -295,12 +299,61 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-yellow-500/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-300">
+      {/* Restored Practice Words List */}
+      <Card className="shadow-lg border-blue-500/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-250">
+        <CardHeader>
+          <CardTitle className="flex items-center text-2xl font-semibold text-blue-500">
+            <BookOpen className="mr-3 h-6 w-6" aria-hidden="true" />
+            Practice Words
+          </CardTitle>
+          <CardDescription>Words you are currently learning.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {practiceWordsList.length > 0 ? (
+            <ScrollArea className="h-40">
+              <div className="flex flex-wrap gap-2">
+                {practiceWordsList.map((word, index) => (
+                  <Badge key={`practice-${index}`} variant="secondary" className="text-base px-3 py-1">{word}</Badge>
+                ))}
+              </div>
+            </ScrollArea>
+          ) : (
+            <p className="text-muted-foreground">Your practice list is empty. Go to "Learn Words" to add some!</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Restored Mastered Words List */}
+      <Card className="shadow-lg border-green-500/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-300">
+        <CardHeader>
+          <CardTitle className="flex items-center text-2xl font-semibold text-green-500">
+            <CheckSquare className="mr-3 h-6 w-6" aria-hidden="true" />
+            Mastered Words
+          </CardTitle>
+          <CardDescription>Words you've successfully spelled and learned.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {masteredWordsList.length > 0 ? (
+            <ScrollArea className="h-40">
+              <div className="flex flex-wrap gap-2">
+                {masteredWordsList.map((word, index) => (
+                  <Badge key={`mastered-${index}`} variant="default" className="bg-green-500/80 hover:bg-green-500/90 text-white text-base px-3 py-1">{word}</Badge>
+                ))}
+              </div>
+            </ScrollArea>
+          ) : (
+            <p className="text-muted-foreground">No words mastered yet. Keep practicing!</p>
+          )}
+        </CardContent>
+      </Card>
+
+
+      <Card className="shadow-lg border-yellow-500/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-350">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-yellow-500">
              <Image
                 src="/assets/images/trophy_cup_illustration.png"
-                alt="My Coin Collection & Trophies"
+                alt="My Trophies & Badges"
                 width={32}
                 height={32}
                 className="mr-3 drop-shadow-sm"
@@ -311,7 +364,7 @@ export default function ProfilePage() {
         <CardContent>
           {earnedAchievementsToDisplay.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" style={{ perspective: '1000px' }}>
                 {earnedAchievementsToDisplay.slice(0, displayedAchievementsCount).map((ach, index) => (
                   <Button
                     key={ach.id}
@@ -320,7 +373,7 @@ export default function ProfilePage() {
                       "h-auto p-4 rounded-lg border flex flex-col items-center text-center transition-all duration-300 hover:shadow-xl hover:scale-105 focus:scale-105 focus:ring-2 focus:ring-offset-2",
                       "bg-gradient-to-br from-card via-card/90 to-secondary/10 dark:from-card dark:via-card/90 dark:to-secondary/5",
                       ach.color ? `border-${ach.color.split('-')[1]}-500/50 focus:ring-${ach.color.split('-')[1]}-500` : "border-yellow-500/50 focus:ring-yellow-500",
-                      "animate-in fade-in-0 zoom-in-90"
+                      "animate-in fade-in-0 zoom-in-90 animate-achievement-list-item-motion"
                     )}
                     style={{ animationDelay: `${index * 100}ms` }}
                     onClick={() => handleViewAchievement(ach)}
@@ -374,7 +427,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-accent/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-300">
+      <Card className="shadow-lg border-accent/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-400">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-accent">
             <Settings2 className="mr-3 h-6 w-6" aria-hidden="true" />
@@ -383,7 +436,7 @@ export default function ProfilePage() {
           <CardDescription>Your current settings for word suggestions. You can change these on the "Learn Words" or "Settings" page.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-lg">
-          <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg animate-in fade-in-0 zoom-in-95 duration-300 delay-400">
+          <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg animate-in fade-in-0 zoom-in-95 duration-300 delay-450">
             <span className="text-foreground font-medium" id="reading-level-label">Reading Level:</span>
             <Badge variant="outline" className="text-base px-3 py-1 capitalize" aria-labelledby="reading-level-label">{profileStats.readingLevel}</Badge>
           </div>
@@ -406,7 +459,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-destructive/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-600">
+      <Card className="shadow-lg border-destructive/30 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-550">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-destructive">
             <Trash2 className="mr-3 h-6 w-6" aria-hidden="true" />
@@ -461,6 +514,4 @@ export default function ProfilePage() {
     </div>
   );
 }
-    
-   
-    
+
