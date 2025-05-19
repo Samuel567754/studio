@@ -23,18 +23,14 @@ export default function RootLayout({
       <head>
         {/* Manifest Link - Crucial for PWA */}
         <link rel="manifest" href="/manifest.json" />
-
         {/* Theme Color for Browser UI - Should match manifest.json theme_color */}
         <meta name="theme_color" content="#64B5F6" />
-        
         {/* Apple Touch Icon */}
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-
         {/* Favicons */}
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.ico" sizes="any" /> {/* Fallback ICO */}
         <link rel="icon" href="/icons/favicon-96x96.png" type="image/png" sizes="96x96" />
-        
       </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased font-sans`}>
         <ThemeProvider
