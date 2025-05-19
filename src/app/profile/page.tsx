@@ -269,14 +269,14 @@ export default function ProfilePage() {
       <Card className="shadow-lg border-primary/20 animate-in fade-in-0 slide-in-from-bottom-5 duration-500 ease-out delay-200">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-semibold text-primary">
-            <Image src="/assets/images/gold_star_icon.png" alt="Golden Coins" width={32} height={32} className="mr-3 drop-shadow-sm" />
+            <Image src="/assets/images/three_yellow_stars_on_orange_ribbon_clipart.png" alt="Golden Coins" width={32} height={32} className="mr-3 drop-shadow-sm" />
             Progress Overview
           </CardTitle>
           <CardDescription>Key metrics about your learning journey.</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg">
           <div className="flex items-center space-x-3 p-4 bg-secondary/30 rounded-lg shadow-sm animate-in fade-in-0 slide-in-from-left-5 duration-500 ease-out delay-300">
-             <Image src="/assets/images/gold_star_icon.png" alt="Golden Coins Earned" width={32} height={32} className="drop-shadow-sm" />
+             <Image src="/assets/images/gold-medal-red-ribbon-star.png" alt="Golden Coins Earned" width={32} height={32} className="drop-shadow-sm" />
             <div>
               <p className="font-semibold text-foreground">{goldenCoins}</p>
               <p className="text-sm text-muted-foreground">Golden Coins Earned</p>
@@ -384,7 +384,7 @@ export default function ProfilePage() {
                       alt={ach.iconAlt || ach.name}
                       width={64}
                       height={64}
-                      className="mb-3 drop-shadow-lg animate-achievement-image-rotate"
+                      className="mb-3 drop-shadow-lg animate-bounce animate-achievement-image-rotate"
                     />
                     <h3 className={cn("text-lg font-semibold mb-1", ach.color || "text-foreground")}>{ach.name}</h3>
                     <p className="text-xs text-muted-foreground">{ach.description}</p>
