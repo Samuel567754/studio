@@ -3,11 +3,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import Link from 'next/link'; 
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { generateReadingPassage, type GenerateReadingPassageInput } from '@/ai/flows/generate-reading-passage';
-import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy, Smile, Sparkles, Palette, ArrowLeft } from 'lucide-react'; 
+import { Loader2, BookMarked, RefreshCcw, Info, Play, Pause, StopCircle, CheckCircle2, XCircle, ClipboardCopy, Smile, Sparkles, Palette, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { playSuccessSound, playErrorSound, playNotificationSound, speakText } from '@/lib/audio';
@@ -26,10 +26,10 @@ export default function FunReadingPage() {
   const [passage, setPassage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isPaused, setIsPaused] = useState(false); 
+  const [isPaused, setIsPaused] = useState(false);
   const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
   const [currentSpokenWordInfo, setCurrentSpokenWordInfo] = useState<SpokenWordInfo | null>(null);
-  
+
   const [wordList, setWordList] = useState<string[]>([]);
   const [masteredWords, setMasteredWords] = useState<string[]>([]);
   const [readingLevel, setReadingLevel] = useState<string>('beginner');
@@ -48,9 +48,9 @@ export default function FunReadingPage() {
   useEffect(() => {
     loadPracticeData();
     setIsMounted(true);
-    
+
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'sightwords_wordList_v1' || 
+      if (event.key === 'sightwords_wordList_v1' ||
           event.key === 'sightwords_readingLevel_v1' ||
           event.key === 'sightwords_masteredWords_v1') {
         loadPracticeData();
@@ -74,7 +74,7 @@ export default function FunReadingPage() {
 
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel(); 
+      window.speechSynthesis.cancel();
     }
     resetSpeechState();
   }, [resetSpeechState]);
@@ -89,57 +89,58 @@ export default function FunReadingPage() {
     if (event.name === 'word' && event.charLength > 0) {
       setCurrentSpokenWordInfo({ charIndex: event.charIndex, charLength: event.charLength });
     }
-  }, []); 
+  }, []);
 
   const handleSpeechEnd = useCallback(() => {
     resetSpeechState();
   }, [resetSpeechState]);
-  
+
   const handleSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
     if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
         console.error("Speech synthesis error on Fun Reading Page:", event.error, passage?.substring(event.charIndex));
         toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, description: `Could not play audio: ${event.error}.` });
-        playErrorSound();
+        if (soundEffectsEnabled) playErrorSound();
     }
-    resetSpeechState(); 
-  }, [toast, passage, resetSpeechState]);
+    resetSpeechState();
+  }, [toast, passage, resetSpeechState, soundEffectsEnabled]);
 
   const fetchPassage = useCallback(async () => {
     if (wordList.length === 0 && isMounted) {
       toast({ variant: "info", title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />No Words</div>, description: "Add words to your practice list to generate a story." });
-      setPassage("Please add words to your practice list first, then generate a story!");
+      // Set a default message if no passage is generated due to no words
+      setPassage(null); // Keep passage null to trigger the "Ready for an Adventure?" alert
       return;
     }
 
     setIsLoading(true);
-    resetStateForNewPassage(); // Call this to stop any ongoing speech.
+    resetStateForNewPassage();
 
     try {
-      const input: GenerateReadingPassageInput = { 
-        words: wordList, 
-        readingLevel, 
+      const input: GenerateReadingPassageInput = {
+        words: wordList,
+        readingLevel,
         masteredWords,
-        favoriteTopics: favoriteTopics || undefined 
+        favoriteTopics: favoriteTopics || undefined
       };
       const result = await generateReadingPassage(input);
       if (result.passage) {
         setPassage(result.passage);
         toast({ variant: "success", title: <div className="flex items-center gap-2"><Smile className="h-5 w-5" />Story Time!</div>, description: "Your fun reading passage is ready!" });
-        playSuccessSound();
+        if (soundEffectsEnabled) playSuccessSound();
       } else {
         setPassage("Could not generate a passage. Try different words or settings.");
         toast({ variant: "info", title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />No Passage</div>, description: "Try again or adjust your word list." });
-        playNotificationSound(); 
+        if (soundEffectsEnabled) playNotificationSound();
       }
     } catch (error) {
       console.error("Error generating passage for fun reading:", error);
       setPassage("An error occurred. Please try again.");
       toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Error</div>, description: "Failed to generate passage." });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
     } finally {
       setIsLoading(false);
     }
-  }, [wordList, readingLevel, masteredWords, favoriteTopics, toast, stopSpeech, isMounted]); // Added stopSpeech and isMounted
+  }, [wordList, readingLevel, masteredWords, favoriteTopics, toast, resetStateForNewPassage, isMounted, soundEffectsEnabled]);
 
   const toggleSpeech = useCallback(() => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis || !passage) {
@@ -150,38 +151,32 @@ export default function FunReadingPage() {
     }
 
     const speech = window.speechSynthesis;
-    if (currentUtterance && isSpeaking) { 
-      if (isPaused) { 
-        speech.resume(); setIsPaused(false); playNotificationSound();
-      } else { 
-        speech.pause(); setIsPaused(true); playNotificationSound();
-      }
-    } else { 
+    if (currentUtterance && isSpeaking) {
+      if (isPaused) { speech.resume(); setIsPaused(false); if(soundEffectsEnabled) playNotificationSound(); }
+      else { speech.pause(); setIsPaused(true); if(soundEffectsEnabled) playNotificationSound(); }
+    } else {
       const utterance = speakText(passage, handleSpeechBoundary, handleSpeechEnd, handleSpeechError);
-      if (utterance) {
-        setCurrentUtterance(utterance); setIsSpeaking(true); setIsPaused(false);
-      } else {
-        resetSpeechState(); 
-      }
+      if (utterance) { setCurrentUtterance(utterance); setIsSpeaking(true); setIsPaused(false); }
+      else { resetSpeechState(); }
     }
   }, [passage, isSpeaking, isPaused, soundEffectsEnabled, handleSpeechBoundary, handleSpeechEnd, handleSpeechError, resetSpeechState, toast, currentUtterance]);
-  
+
   const handleCopyPassage = useCallback(() => {
     if (passage && navigator.clipboard) {
       navigator.clipboard.writeText(passage)
         .then(() => {
           toast({ variant: "success", title: <div className="flex items-center gap-2"><ClipboardCopy className="h-5 w-5" />Copied!</div>, description: "Passage copied to clipboard." });
-          playSuccessSound();
+          if(soundEffectsEnabled) playSuccessSound();
         })
         .catch(err => {
           console.error("Failed to copy passage: ", err);
           toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Copy Failed</div>, description: "Could not copy passage." });
-          playErrorSound();
+          if(soundEffectsEnabled) playErrorSound();
         });
     } else if (!navigator.clipboard) {
        toast({ variant: "info", title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Not Supported</div>, description: "Clipboard API not available." });
     }
-  }, [passage, toast]);
+  }, [passage, toast, soundEffectsEnabled]);
 
   const renderHighlightedPassage = (): React.ReactNode[] => {
     if (!passage) return [];
@@ -207,14 +202,14 @@ export default function FunReadingPage() {
       }
     };
 
-    if (isSpeaking && currentSpokenWordInfo && passage) { 
+    if (isSpeaking && currentSpokenWordInfo && passage) {
       const { charIndex, charLength } = currentSpokenWordInfo;
       const validCharIndex = Math.max(0, charIndex);
       const validCharLength = Math.max(0, charLength);
 
       if (validCharIndex < passage.length) {
         processSegment(passage.substring(0, validCharIndex), false);
-        processSegment(passage.substring(validCharIndex, Math.min(passage.length, validCharIndex + validCharLength)), true); 
+        processSegment(passage.substring(validCharIndex, Math.min(passage.length, validCharIndex + validCharLength)), true);
         processSegment(passage.substring(Math.min(passage.length, validCharIndex + validCharLength)), false);
       } else {
         processSegment(passage, false);
@@ -241,15 +236,15 @@ export default function FunReadingPage() {
       </div>
       <header className="text-center space-y-4 animate-in fade-in-0 slide-in-from-top-10 duration-700 ease-out">
         <div className="relative w-full max-w-md mx-auto h-48 md:h-64 rounded-lg overflow-hidden shadow-lg">
-          <Image 
+          <Image
             src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGZ1biUyMHJlYWRpbmd8ZW58MHx8MHx8fDA%3D"
             alt="Kids having fun reading a storybook"
             layout="fill"
             objectFit="cover"
             className="rounded-lg"
-            data-ai-hint="fun reading kids" 
+            data-ai-hint="fun reading kids"
           />
-          <div className="absolute inset-0 bg-black/60" /> 
+          <div className="absolute inset-0 bg-black/60" />
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
             <Sparkles className="h-12 w-12 md:h-16 md:w-16 text-primary drop-shadow-lg animate-in fade-in zoom-in-50 duration-1000 delay-200" aria-hidden="true" />
             <h1 className="text-3xl md:text-4xl font-bold text-gradient-primary-accent mt-2 drop-shadow-md">Fun AI Reading Time!</h1>
@@ -269,10 +264,10 @@ export default function FunReadingPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              onClick={fetchPassage} 
-              disabled={isLoading || (wordList.length === 0 && isMounted)} 
-              className="w-full sm:flex-1 btn-glow" 
+            <Button
+              onClick={fetchPassage}
+              disabled={isLoading || (wordList.length === 0 && isMounted)}
+              className="w-full sm:flex-1 btn-glow"
               size="lg"
               aria-label={isLoading ? "Generating new story" : "Generate new story"}
             >
@@ -281,19 +276,20 @@ export default function FunReadingPage() {
             {passage && !isLoading && (
               <>
                 {soundEffectsEnabled && (
-                  <Button 
-                    onClick={toggleSpeech} 
-                    variant="outline" 
-                    size="lg" 
-                    className="w-full sm:w-auto" 
+                  <Button
+                    onClick={toggleSpeech}
+                    variant="outline"
+                    size="lg"
+                    className="w-full sm:w-auto"
                     aria-label={isSpeaking && !isPaused ? "Pause reading" : "Read story aloud"}
                     aria-pressed={isSpeaking && !isPaused}
+                    disabled={!passage}
                   >
                     {isSpeaking && !isPaused ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
                     {isSpeaking && !isPaused ? 'Pause' : (isSpeaking && isPaused ? 'Resume' : 'Read Aloud')}
                   </Button>
                 )}
-                {isSpeaking && ( 
+                {isSpeaking && (
                   <Button onClick={stopSpeech} variant="destructive" size="lg" className="w-full sm:w-auto" aria-label="Stop reading">
                     <StopCircle className="mr-2 h-5 w-5" /> Stop
                   </Button>
@@ -301,7 +297,7 @@ export default function FunReadingPage() {
               </>
             )}
           </div>
-          
+
           {isLoading && (
             <div className="flex flex-col justify-center items-center p-8 min-h-[200px] bg-muted/30 rounded-lg">
               <Loader2 className="h-10 w-10 animate-spin text-primary mb-3" />
@@ -310,13 +306,29 @@ export default function FunReadingPage() {
           )}
 
           {!passage && !isLoading && wordList.length === 0 && isMounted && (
-            <Alert variant="info" className="bg-card">
-                <Info className="h-5 w-5" />
-                <AlertTitle>Ready for an Adventure?</AlertTitle>
-                <AlertDescription>
-                Please add some words to your practice list on the <Link href="/learn" className="font-semibold text-primary hover:underline">Learn Words</Link> page. Then, come back here to generate a fun story!
-                </AlertDescription>
-            </Alert>
+            <Card className="w-full max-w-xl mx-auto shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-500 rounded-lg">
+              <div className="relative h-80 md:h-96 w-full">
+                <Image
+                  src="https://images.unsplash.com/photo-1676411237170-ddca6e4c158a?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8ODB8fGFpfGVufDB8fDB8fHww"
+                  alt="Abstract AI generated art for empty state"
+                  layout="fill"
+                  objectFit="cover"
+                  className="absolute inset-0"
+                  data-ai-hint="AI art abstract"
+                />
+                <div className="absolute inset-0 bg-black/70" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-white">
+                    <Info className="h-12 w-12 text-primary mb-4" aria-hidden="true" />
+                    <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready for an Adventure?</h2>
+                    <p className="text-lg md:text-xl text-gray-200 mb-6 max-w-md">
+                    Please add some words to your practice list on the <Link href="/learn" className="font-semibold text-primary hover:underline">Learn Words</Link> page. Then, come back here to generate a fun story!
+                    </p>
+                    <Button asChild variant="secondary" size="lg" className="btn-glow text-base md:text-lg px-6 py-3">
+                        <Link href="/learn">Go to Learn Words</Link>
+                    </Button>
+                </div>
+              </div>
+            </Card>
           )}
           {!passage && !isLoading && wordList.length > 0 && isMounted && (
             <Alert variant="info" className="bg-card">
@@ -351,7 +363,7 @@ export default function FunReadingPage() {
         {passage && !isLoading && (
           <CardFooter className="border-t pt-4">
               <p className="text-xs text-muted-foreground">
-                Passage generated by AI. Words from your practice list are <strong className="text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2">highlighted like this</strong>. 
+                Passage generated by AI. Words from your practice list are <strong className="text-primary font-semibold underline decoration-primary/50 decoration-wavy underline-offset-2">highlighted like this</strong>.
                 {soundEffectsEnabled && " Spoken words get a temporary background."}
               </p>
           </CardFooter>

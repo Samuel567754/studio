@@ -29,7 +29,7 @@ export interface Achievement {
 // Define ACHIEVEMENTS_CONFIG directly here
 export const ACHIEVEMENTS_CONFIG: Achievement[] = [
   { id: "first_sparkle", name: "First Sparkle", description: "Earned your first 10 Golden Coins!", pointsRequired: 10, imageSrc: "/assets/images/star_emoji_illustration.png", iconAlt: "Star Emoji", bonusCoins: 2 },
-  { id: "sparkling_start", name: "Sparkling Start", description: "Collected 20 Golden Coins!", pointsRequired: 20, imageSrc: "/assets/images/golden_glittery_sparkles.png.png", iconAlt: "Golden Glittery Sparkles", bonusCoins: 3 },
+  { id: "sparkling_start", name: "Sparkling Start", description: "Collected 20 Golden Coins!", pointsRequired: 20, imageSrc: "/assets/images/sparkle_starter.png", iconAlt: "Golden Glittery Sparkles", bonusCoins: 3 },
   { id: "star_cadet", name: "Star Cadet", description: "Collected 30 Golden Coins!", pointsRequired: 30, imageSrc: "/assets/images/cute_smiling_star_illustration.png", iconAlt: "Cute Smiling Star", bonusCoins: 5 },
   { id: "coin_dabbler", name: "Coin Dabbler", description: "Gathered 40 Golden Coins!", pointsRequired: 40, imageSrc: "/assets/images/three_golden_coins_sparkling.png.png", iconAlt: "Three Golden Coins Sparkling", bonusCoins: 3 },
   { id: "bronze_coin_collector", name: "Bronze Coin Collector", description: "Reached 50 Golden Coins!", pointsRequired: 50, imageSrc: "/assets/images/coin_with_clover_design.png", iconAlt: "Bronze Coin with Clover", bonusCoins: 5 },
@@ -48,6 +48,7 @@ export const ACHIEVEMENTS_CONFIG: Achievement[] = [
   { id: "treasure_chest_unlocker", name: "Treasure Chest Unlocker", description: "Unlocked a Treasure Chest with 400 Golden Coins!", pointsRequired: 400, imageSrc: "/assets/images/treasure_chest_with_gold_and_jewels.png", iconAlt: "Treasure Chest with Gold and Jewels", bonusCoins: 25 },
   { id: "gold_splash", name: "Golden Splash", description: "Made a splash with 450 Coins!", pointsRequired: 450, imageSrc: "/assets/images/golden_coins_splash.png", iconAlt: "Golden Coins Splash", bonusCoins: 25 },
   { id: "chilllearn_tycoon", name: "ChillLearn Tycoon", description: "Achieved 500 Golden Coins! You're a tycoon!", pointsRequired: 500, imageSrc: "/assets/images/gold_trophy_with_laurel_wreath.png", iconAlt: "Gold Trophy with Laurel Wreath", bonusCoins: 30 },
+  { id: "Potion Magic", name: "Potion Magic", description: "Collected 625 Golden Coins!", pointsRequired: 625, imageSrc: "/assets/images/posion_magic.png", iconAlt: "Potion Magic", bonusCoins: 3 },
   { id: "mystical_egg", name: "Mystical Egg Finder", description: "Found a Shiny Blue Mystical Egg at 600 Coins!", pointsRequired: 600, imageSrc: "/assets/images/shiny_blue_mystical_egg.png", iconAlt: "Shiny Blue Mystical Egg", bonusCoins: 35 },
   { id: "purple_geode", name: "Purple Geode Hunter", description: "Discovered a Purple Geode at 700 Coins!", pointsRequired: 700, imageSrc: "/assets/images/purple_geode_watercolor_painting.png", iconAlt: "Purple Geode Watercolor Painting", bonusCoins: 40 },
   { id: "grand_trophy", name: "Grand Trophy Winner", description: "Won a Grand Trophy at 850 Coins!", pointsRequired: 850, imageSrc: "/assets/images/golden_trophy_with_stars_illustration.png", iconAlt: "Golden Trophy with Stars", bonusCoins: 50 },

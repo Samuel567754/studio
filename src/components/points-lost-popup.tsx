@@ -44,7 +44,7 @@ export function CoinsLostPopup({ coins, show, onComplete }: CoinsLostPopupProps)
         -{coins}
       </span>
       <Image
-        src="/assets/images/red_crystal_cluster_illustration.png"
+        src="/assets/images/golden_coin_two_group.png"
         alt="Coins Lost!"
         width={48} // Slightly smaller image for a more compact oval
         height={48}
