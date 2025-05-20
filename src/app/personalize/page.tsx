@@ -45,11 +45,12 @@ export default function PersonalizePage() {
     const personalizationCompleted = getHasCompletedPersonalization();
 
     if (!introSeen) {
-        router.replace('/introduction');
+        router.replace('/introduction'); // Must see intro first
         return;
     }
+    // No explicit check for theme selection here, assuming linear flow from /select-theme
     if (personalizationCompleted) {
-        router.replace('/'); 
+        router.replace('/'); // Already personalized, go to home
         return;
     }
 
@@ -132,7 +133,7 @@ export default function PersonalizePage() {
                   alt="Abstract colorful background for app personalization"
                   layout="fill"
                   objectFit="cover"
-                  data-ai-hint="app background"
+                  data-ai-hint="app background settings"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent flex items-center justify-center p-2">
                    <UserCog className="h-10 w-10 text-white/90 drop-shadow-lg" aria-hidden="true" />
@@ -142,7 +143,7 @@ export default function PersonalizePage() {
             Make it Yours!
           </CardTitle>
           <CardDescription className="text-base text-muted-foreground px-2">
-            Help us tailor ChillLearn AI for you. This is optional and can be updated later in your profile.
+            Help us tailor ChillLearn AI for you, {username || 'learner'}. This is optional and can be updated later in your profile.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -200,3 +201,5 @@ export default function PersonalizePage() {
     </div>
   );
 }
+
+    

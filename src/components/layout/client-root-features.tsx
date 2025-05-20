@@ -16,7 +16,7 @@ import { FloatingGoldenCoins } from '@/components/floating-sparkle-points';
 import { tutorialStepsData as walkthroughGuideSteps } from '@/components/tutorial/tutorial-data';
 import { AchievementUnlockedModal } from '@/components/achievement-unlocked-modal';
 import { CoinsEarnedPopup } from '@/components/points-earned-popup';
-import { CoinsLostPopup } from '@/components/points-lost-popup'; // Import CoinsLostPopup
+import { CoinsLostPopup } from '@/components/points-lost-popup';
 
 export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const {
@@ -36,8 +36,8 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     clearLastBonusAwarded,
     lastGameCoinsAwarded,
     clearLastGameCoinsAwarded,
-    lastCoinsDeducted, // Get new state
-    clearLastCoinsDeducted, // Get new action
+    lastCoinsDeducted,
+    clearLastCoinsDeducted,
   } = useUserProfileStore();
 
   const [isClientMounted, setIsClientMounted] = useState(false);
@@ -52,8 +52,8 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
   const [showGameCoinsPopup, setShowGameCoinsPopup] = useState(false);
   const [currentGameCoinsAmount, setCurrentGameCoinsAmount] = useState(0);
 
-  const [showCoinsLostPopupDisplay, setShowCoinsLostPopupDisplay] = useState(false); // New state for CoinsLostPopup
-  const [currentCoinsLostAmount, setCurrentCoinsLostAmount] = useState(0); // New state for CoinsLostPopup
+  const [showCoinsLostPopupDisplay, setShowCoinsLostPopupDisplay] = useState(false);
+  const [currentCoinsLostAmount, setCurrentCoinsLostAmount] = useState(0);
 
   useEffect(() => {
     setIsClientMounted(true);
@@ -90,14 +90,16 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
 
       if (!introSeen && pathname !== '/introduction') {
         router.replace('/introduction');
-      } else if (introSeen && !personalizationCompleted && pathname !== '/personalize' && pathname !== '/introduction') {
-        router.replace('/personalize');
+      } else if (introSeen && !personalizationCompleted && 
+                 pathname !== '/introduction' && pathname !== '/select-theme' && pathname !== '/personalize') {
+        router.replace('/select-theme'); // If intro done but not personalized, next is theme selection
       }
     }
   }, [isClientMounted, pathname, router]);
 
   useEffect(() => {
-    if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && pathname !== '/introduction' && pathname !== '/personalize' && typeof window !== 'undefined') {
+    if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && 
+        pathname !== '/introduction' && pathname !== '/select-theme' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
         if (!isWalkthroughOpen && pendingClaimAchievements.length === 0 && !showAchievementBonusPopup && !showGameCoinsPopup && !showCoinsLostPopupDisplay) {
           setCurrentStepIndex(0);
@@ -124,7 +126,6 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     }
   }, [lastGameCoinsAwarded, clearLastGameCoinsAwarded]);
 
-  // Effect for CoinsLostPopup
   useEffect(() => {
     if (lastCoinsDeducted && lastCoinsDeducted.amount > 0) {
       setCurrentCoinsLostAmount(lastCoinsDeducted.amount);
@@ -142,11 +143,15 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  if ((pathname === '/introduction' || pathname === '/personalize') && !actualIntroductionSeen && !actualPersonalizationCompleted) {
+  // Allow access to intro, theme select, and personalize if previous steps are done or current path matches
+  if (pathname === '/introduction' || 
+      (pathname === '/select-theme' && actualIntroductionSeen) ||
+      (pathname === '/personalize' && actualIntroductionSeen)) {
      return <>{children}</>;
   }
   
-  if (!actualIntroductionSeen && pathname !== '/introduction') {
+  // Enforce flow for other pages
+  if (!actualIntroductionSeen) {
      return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -155,11 +160,11 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  if (actualIntroductionSeen && !actualPersonalizationCompleted && pathname !== '/personalize' && pathname !== '/introduction') {
+  if (!actualPersonalizationCompleted) {
      return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        <p className="sr-only">Redirecting to personalization...</p>
+        <p className="sr-only">Redirecting to onboarding...</p>
       </div>
     );
   }
@@ -187,7 +192,8 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
           isOpen={isWalkthroughOpen}
           onClose={() => { 
             closeWalkthrough();
-            setHasCompletedWalkthrough(true); // Mark as complete if user closes it manually
+            // Only set as completed if user explicitly finishes, not on manual close/skip
+            // setHasCompletedWalkthrough(true); 
           }}
           onFinish={() => { 
             setHasCompletedWalkthrough(true);
@@ -218,7 +224,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
           onComplete={() => setShowGameCoinsPopup(false)}
         />
       )}
-      {showCoinsLostPopupDisplay && currentCoinsLostAmount > 0 && ( // Render CoinsLostPopup
+      {showCoinsLostPopupDisplay && currentCoinsLostAmount > 0 && (
         <CoinsLostPopup
           coins={currentCoinsLostAmount}
           show={showCoinsLostPopupDisplay}
@@ -228,3 +234,5 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     </div>
   );
 };
+
+    
