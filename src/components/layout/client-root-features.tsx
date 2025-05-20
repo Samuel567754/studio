@@ -24,7 +24,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     openWalkthrough,
     isWalkthroughOpen,
     closeWalkthrough,
-    setHasCompletedWalkthrough,
+    setHasCompletedWalkthrough, // Ensure this is being used
     setCurrentStepIndex,
   } = useWalkthroughStore();
 
@@ -71,9 +71,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       if (event.key === useUserProfileStore.persist.getOptions().name) {
         loadUserProfileFromStorage();
       }
-      if (event.key === useWalkthroughStore.persist.getOptions().name) {
-        // Zustand handles re-hydration
-      }
+      // Walkthrough store updates automatically via persist middleware
     };
     window.addEventListener('storage', handleStorageChange);
     return () => {
@@ -90,25 +88,27 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
 
       if (!introSeen && pathname !== '/introduction') {
         router.replace('/introduction');
-      } else if (introSeen && !personalizationCompleted && 
+      } else if (introSeen && !personalizationCompleted &&
                  pathname !== '/introduction' && pathname !== '/select-theme' && pathname !== '/personalize') {
-        router.replace('/select-theme'); // If intro done but not personalized, next is theme selection
+        router.replace('/select-theme');
       }
     }
   }, [isClientMounted, pathname, router]);
 
   useEffect(() => {
-    if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough && 
+    if (isClientMounted && actualIntroductionSeen && actualPersonalizationCompleted && !hasCompletedWalkthrough &&
         pathname !== '/introduction' && pathname !== '/select-theme' && pathname !== '/personalize' && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
+        // Only open if conditions are met AND no achievement modal is pending
         if (!isWalkthroughOpen && pendingClaimAchievements.length === 0 && !showAchievementBonusPopup && !showGameCoinsPopup && !showCoinsLostPopupDisplay) {
           setCurrentStepIndex(0);
           openWalkthrough();
         }
-      }, 2000);
+      }, 2000); // Adjusted delay
       return () => clearTimeout(timer);
     }
   }, [isClientMounted, actualIntroductionSeen, actualPersonalizationCompleted, hasCompletedWalkthrough, openWalkthrough, pathname, isWalkthroughOpen, setCurrentStepIndex, pendingClaimAchievements, showAchievementBonusPopup, showGameCoinsPopup, showCoinsLostPopupDisplay]);
+
 
   useEffect(() => {
     if (lastBonusAwarded && lastBonusAwarded.amount > 0) {
@@ -143,14 +143,12 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  // Allow access to intro, theme select, and personalize if previous steps are done or current path matches
-  if (pathname === '/introduction' || 
+  if (pathname === '/introduction' ||
       (pathname === '/select-theme' && actualIntroductionSeen) ||
       (pathname === '/personalize' && actualIntroductionSeen)) {
      return <>{children}</>;
   }
-  
-  // Enforce flow for other pages
+
   if (!actualIntroductionSeen) {
      return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -168,7 +166,7 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       </div>
     );
   }
-  
+
   const currentAchievementToClaim = pendingClaimAchievements.length > 0 ? pendingClaimAchievements[0] : null;
 
   return (
@@ -190,12 +188,11 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
         <WalkthroughGuide
           steps={walkthroughGuideSteps}
           isOpen={isWalkthroughOpen}
-          onClose={() => { 
+          onClose={() => { // This onClose is triggered by Skip or X
             closeWalkthrough();
-            // Only set as completed if user explicitly finishes, not on manual close/skip
-            // setHasCompletedWalkthrough(true); 
+            setHasCompletedWalkthrough(true); // Mark as completed if skipped/closed
           }}
-          onFinish={() => { 
+          onFinish={() => { // This onFinish is triggered by the "Finish" button on the last step
             setHasCompletedWalkthrough(true);
             closeWalkthrough();
           }}
@@ -204,9 +201,9 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
       {currentAchievementToClaim && (
         <AchievementUnlockedModal
           achievement={currentAchievementToClaim}
-          isOpen={true} 
+          isOpen={true}
           onClaim={() => {
-            claimNextPendingAchievement(); 
+            claimNextPendingAchievement();
           }}
         />
       )}
@@ -234,5 +231,3 @@ export const ClientRootFeatures: FC<PropsWithChildren> = ({ children }) => {
     </div>
   );
 };
-
-    
