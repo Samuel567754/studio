@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getHasSeenIntroduction, getHasCompletedPersonalization } from '@/lib/storage';
-import { Sun, Moon, Laptop, ArrowRight, Palette, Volume2, Pause, XCircle } from 'lucide-react';
+import { Sun, Moon, Laptop, ArrowRight, Palette, Volume2, Pause, Play as PlayIcon, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { playNotificationSound, speakText, playErrorSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
@@ -23,8 +23,9 @@ export default function SelectThemePage() {
   const { soundEffectsEnabled } = useAppSettingsStore();
   const { toast } = useToast();
 
-  const [isThemeAudioPlaying, setIsThemeAudioPlaying] = useState(false);
-  const [currentThemeUtterance, setCurrentThemeUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isAudioPaused, setIsAudioPaused] = useState(false);
+  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -41,60 +42,94 @@ export default function SelectThemePage() {
     }
   }, [router]);
 
-  const stopCurrentThemeSpeech = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis && currentThemeUtterance) {
-      window.speechSynthesis.cancel();
-    }
-    setIsThemeAudioPlaying(false);
-    setCurrentThemeUtterance(null);
-  }, [currentThemeUtterance]);
-
-  useEffect(() => {
-    return () => {
-      stopCurrentThemeSpeech();
-    };
-  }, [stopCurrentThemeSpeech]);
-
-  const handleThemeSpeechEnd = useCallback(() => {
-    setIsThemeAudioPlaying(false);
-    setCurrentThemeUtterance(null);
+  const handleSpeechEnd = useCallback(() => {
+    setIsAudioPlaying(false);
+    setIsAudioPaused(false);
+    setCurrentUtterance(null);
   }, []);
 
-  const handleThemeSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
+  const handleSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
     if (event.error !== 'interrupted' && event.error !== 'canceled') {
       console.error("Theme page speech error:", event.error);
       toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, description: "Could not play audio for theme selection." });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
     }
-    handleThemeSpeechEnd();
-  }, [toast, handleThemeSpeechEnd]);
+    handleSpeechEnd();
+  }, [toast, handleSpeechEnd, soundEffectsEnabled]);
 
-  const playThemePageAudio = useCallback(() => {
-    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
-    
-    if (currentThemeUtterance && isThemeAudioPlaying) {
-      stopCurrentThemeSpeech();
-    } else {
+  const stopCurrentSpeech = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis && currentUtterance) {
+      window.speechSynthesis.cancel();
+    }
+    handleSpeechEnd();
+  }, [currentUtterance, handleSpeechEnd]);
+
+  const playPageAudio = useCallback(() => {
+    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) {
+      if(soundEffectsEnabled) { // Only toast if sound was intended
+         toast({ variant: "info", title: "Audio Disabled", description: "Speech synthesis not available or sound is off." });
+      }
+      return;
+    }
+
+    if (currentUtterance) {
+      if (isAudioPlaying && !isAudioPaused) { // Currently playing, so pause
+        window.speechSynthesis.pause();
+        setIsAudioPaused(true);
+        // isAudioPlaying remains true as it's active but paused
+      } else if (isAudioPaused) { // Currently paused, so resume
+        window.speechSynthesis.resume();
+        setIsAudioPaused(false);
+      } else { // Was stopped or finished, replay
+        stopCurrentSpeech(); // Clear any remnants
+        const text = `Choose Your Look. Select a theme that feels right for you, ${username || 'learner'}. You can always change this later in settings.`;
+        const utterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
+        if (utterance) {
+          setCurrentUtterance(utterance);
+          setIsAudioPlaying(true);
+          setIsAudioPaused(false);
+        } else {
+          handleSpeechEnd();
+        }
+      }
+    } else { // No current utterance, start fresh
       const text = `Choose Your Look. Select a theme that feels right for you, ${username || 'learner'}. You can always change this later in settings.`;
-      const utterance = speakText(text, undefined, handleThemeSpeechEnd, handleThemeSpeechError);
+      const utterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
       if (utterance) {
-        setCurrentThemeUtterance(utterance);
-        setIsThemeAudioPlaying(true);
+        setCurrentUtterance(utterance);
+        setIsAudioPlaying(true);
+        setIsAudioPaused(false);
       } else {
-        handleThemeSpeechEnd();
+        handleSpeechEnd();
       }
     }
-  }, [soundEffectsEnabled, username, stopCurrentThemeSpeech, currentThemeUtterance, isThemeAudioPlaying, handleThemeSpeechEnd, handleThemeSpeechError]);
+  }, [soundEffectsEnabled, username, currentUtterance, isAudioPlaying, isAudioPaused, handleSpeechEnd, handleSpeechError, stopCurrentSpeech, toast]);
 
+  useEffect(() => {
+    if (isMounted && soundEffectsEnabled) {
+      // Delay slightly to ensure page is settled before audio starts
+      const timer = setTimeout(() => {
+         playPageAudio();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, soundEffectsEnabled]); // playPageAudio is memoized, adding it here might cause loops if not careful
+
+  useEffect(() => {
+    return () => {
+      stopCurrentSpeech(); // Cleanup on unmount
+    };
+  }, [stopCurrentSpeech]);
 
   const handleThemeSelection = (selectedTheme: string) => {
     setTheme(selectedTheme);
-    playNotificationSound();
+    if (soundEffectsEnabled) playNotificationSound();
   };
 
   const handleContinue = () => {
-    stopCurrentThemeSpeech();
-    playNotificationSound();
+    stopCurrentSpeech();
+    if (soundEffectsEnabled) playNotificationSound();
     router.push('/personalize');
   };
 
@@ -111,6 +146,12 @@ export default function SelectThemePage() {
     { value: "dark", label: "Dark", icon: Moon },
     { value: "system", label: "System", icon: Laptop },
   ];
+
+  const getButtonIcon = () => {
+    if (isAudioPlaying && !isAudioPaused) return <Pause className="h-6 w-6" />;
+    if (isAudioPaused) return <PlayIcon className="h-6 w-6" />;
+    return <Volume2 className="h-6 w-6" />;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
@@ -134,8 +175,8 @@ export default function SelectThemePage() {
               Choose Your Look
             </CardTitle>
             {soundEffectsEnabled && (
-              <Button onClick={playThemePageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={isThemeAudioPlaying ? "Stop audio" : "Play page description"}>
-                {isThemeAudioPlaying ? <Pause className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+              <Button onClick={playPageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={isAudioPlaying && !isAudioPaused ? "Pause audio" : (isAudioPaused ? "Resume audio" : "Play page description")}>
+                {getButtonIcon()}
               </Button>
             )}
           </div>

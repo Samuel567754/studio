@@ -12,7 +12,7 @@ import { useUserProfileStore } from '@/stores/user-profile-store';
 import { setHasCompletedPersonalization, getHasCompletedPersonalization, getHasSeenIntroduction } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { playSuccessSound, playNotificationSound, speakText, playErrorSound } from '@/lib/audio';
-import { UserPlus, ArrowRight, Sparkles, Heart, Check, UserCog, Info, Volume2, Pause, XCircle } from 'lucide-react'; 
+import { UserPlus, ArrowRight, Sparkles, Heart, UserCog, Info, Volume2, Pause, Play as PlayIcon, XCircle } from 'lucide-react'; 
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
@@ -39,8 +39,9 @@ export default function PersonalizePage() {
   const { toast } = useToast();
   const { soundEffectsEnabled } = useAppSettingsStore();
 
-  const [isPersonalizeAudioPlaying, setIsPersonalizeAudioPlaying] = useState(false);
-  const [currentPersonalizeUtterance, setCurrentPersonalizeUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isAudioPaused, setIsAudioPaused] = useState(false);
+  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -57,7 +58,6 @@ export default function PersonalizePage() {
         router.replace('/');
         return;
     }
-
   }, [router, loadUserProfileFromStorage]);
   
   useEffect(() => {
@@ -67,51 +67,83 @@ export default function PersonalizePage() {
     }
   }, [username, favoriteTopics, isMounted]);
 
-  const stopCurrentPersonalizeSpeech = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis && currentPersonalizeUtterance) {
-      window.speechSynthesis.cancel();
-    }
-    setIsPersonalizeAudioPlaying(false);
-    setCurrentPersonalizeUtterance(null);
-  }, [currentPersonalizeUtterance]);
-
-  useEffect(() => {
-    return () => {
-      stopCurrentPersonalizeSpeech();
-    };
-  }, [stopCurrentPersonalizeSpeech]);
-
-  const handlePersonalizeSpeechEnd = useCallback(() => {
-    setIsPersonalizeAudioPlaying(false);
-    setCurrentPersonalizeUtterance(null);
+  const handleSpeechEnd = useCallback(() => {
+    setIsAudioPlaying(false);
+    setIsAudioPaused(false);
+    setCurrentUtterance(null);
   }, []);
 
-  const handlePersonalizeSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
+  const handleSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
     if (event.error !== 'interrupted' && event.error !== 'canceled') {
       console.error("Personalize page speech error:", event.error);
       toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, description: "Could not play audio for personalization." });
-      playErrorSound();
+      if (soundEffectsEnabled) playErrorSound();
     }
-    handlePersonalizeSpeechEnd();
-  }, [toast, handlePersonalizeSpeechEnd]);
+    handleSpeechEnd();
+  }, [toast, handleSpeechEnd, soundEffectsEnabled]);
+  
+  const stopCurrentSpeech = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis && currentUtterance) {
+      window.speechSynthesis.cancel();
+    }
+    handleSpeechEnd();
+  }, [currentUtterance, handleSpeechEnd]);
 
-  const playPersonalizePageAudio = useCallback(() => {
-    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
-    
-    if (currentPersonalizeUtterance && isPersonalizeAudioPlaying) {
-      stopCurrentPersonalizeSpeech();
+  const playPageAudio = useCallback(() => {
+    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) {
+       if(soundEffectsEnabled) {
+         toast({ variant: "info", title: "Audio Disabled", description: "Speech synthesis not available or sound is off." });
+       }
+      return;
+    }
+
+    if (currentUtterance) {
+      if (isAudioPlaying && !isAudioPaused) {
+        window.speechSynthesis.pause();
+        setIsAudioPaused(true);
+      } else if (isAudioPaused) {
+        window.speechSynthesis.resume();
+        setIsAudioPaused(false);
+      } else {
+        stopCurrentSpeech();
+        const text = `Make it Yours! Help us tailor ChillLearn AI for you, ${username || 'learner'}. This is optional and can be updated later in your profile.`;
+        const utterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
+        if (utterance) {
+          setCurrentUtterance(utterance);
+          setIsAudioPlaying(true);
+          setIsAudioPaused(false);
+        } else {
+          handleSpeechEnd();
+        }
+      }
     } else {
       const text = `Make it Yours! Help us tailor ChillLearn AI for you, ${username || 'learner'}. This is optional and can be updated later in your profile.`;
-      const utterance = speakText(text, undefined, handlePersonalizeSpeechEnd, handlePersonalizeSpeechError);
+      const utterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
       if (utterance) {
-        setCurrentPersonalizeUtterance(utterance);
-        setIsPersonalizeAudioPlaying(true);
+        setCurrentUtterance(utterance);
+        setIsAudioPlaying(true);
+        setIsAudioPaused(false);
       } else {
-        handlePersonalizeSpeechEnd();
+        handleSpeechEnd();
       }
     }
-  }, [soundEffectsEnabled, username, stopCurrentPersonalizeSpeech, currentPersonalizeUtterance, isPersonalizeAudioPlaying, handlePersonalizeSpeechEnd, handlePersonalizeSpeechError]);
+  }, [soundEffectsEnabled, username, currentUtterance, isAudioPlaying, isAudioPaused, handleSpeechEnd, handleSpeechError, stopCurrentSpeech, toast]);
 
+  useEffect(() => {
+    if (isMounted && soundEffectsEnabled) {
+      const timer = setTimeout(() => {
+        playPageAudio();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, soundEffectsEnabled]);
+
+  useEffect(() => {
+    return () => {
+      stopCurrentSpeech();
+    };
+  }, [stopCurrentSpeech]);
 
   const handleTopicChange = (topic: string) => {
     setSelectedTopics(prev => 
@@ -121,7 +153,7 @@ export default function PersonalizePage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    stopCurrentPersonalizeSpeech();
+    stopCurrentSpeech();
     const trimmedUsername = usernameInput.trim();
     const topicsString = selectedTopics.join(', ');
     
@@ -135,14 +167,14 @@ export default function PersonalizePage() {
         title: <div className="flex items-center gap-2"><Sparkles className="h-5 w-5" />Welcome, {trimmedUsername}!</div>,
         description: "Your experience is now personalized. Let's get started!",
       });
-      playSuccessSound();
+      if (soundEffectsEnabled) playSuccessSound();
     } else {
        toast({
         variant: "info",
         title: <div className="flex items-center gap-2"><Info className="h-5 w-5" />Personalization Complete</div>,
         description: "You can set your details later in your profile. Let's get started!",
       });
-      playNotificationSound();
+      if (soundEffectsEnabled) playNotificationSound();
     }
     router.replace('/'); 
   };
@@ -172,6 +204,11 @@ export default function PersonalizePage() {
     );
   }
 
+  const getButtonIcon = () => {
+    if (isAudioPlaying && !isAudioPaused) return <Pause className="h-6 w-6" />;
+    if (isAudioPaused) return <PlayIcon className="h-6 w-6" />;
+    return <Volume2 className="h-6 w-6" />;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
@@ -194,8 +231,8 @@ export default function PersonalizePage() {
               Make it Yours!
             </CardTitle>
             {soundEffectsEnabled && (
-              <Button onClick={playPersonalizePageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={isPersonalizeAudioPlaying ? "Stop audio" : "Play page description"}>
-                {isPersonalizeAudioPlaying ? <Pause className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+              <Button onClick={playPageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={isAudioPlaying && !isAudioPaused ? "Pause audio" : (isAudioPaused ? "Resume audio" : "Play page description")}>
+                {getButtonIcon()}
               </Button>
             )}
           </div>
