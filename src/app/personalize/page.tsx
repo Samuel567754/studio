@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { setHasCompletedPersonalization, getHasCompletedPersonalization, getHasSeenIntroduction } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
-import { playSuccessSound, playNotificationSound } from '@/lib/audio';
-import { UserPlus, ArrowRight, Sparkles, Heart, Check, UserCog, Info } from 'lucide-react'; 
+import { playSuccessSound, playNotificationSound, speakText, playErrorSound } from '@/lib/audio';
+import { UserPlus, ArrowRight, Sparkles, Heart, Check, UserCog, Info, Volume2, Pause, XCircle } from 'lucide-react'; 
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
 
 const availableTopics = [
   "Animals", "Space", "Dinosaurs", "Adventures", "Fairy Tales", 
@@ -36,6 +37,10 @@ export default function PersonalizePage() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const { soundEffectsEnabled } = useAppSettingsStore();
+
+  const [isPersonalizeAudioPlaying, setIsPersonalizeAudioPlaying] = useState(false);
+  const [currentPersonalizeUtterance, setCurrentPersonalizeUtterance] = useState<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -45,12 +50,11 @@ export default function PersonalizePage() {
     const personalizationCompleted = getHasCompletedPersonalization();
 
     if (!introSeen) {
-        router.replace('/introduction'); // Must see intro first
+        router.replace('/introduction');
         return;
     }
-    // No explicit check for theme selection here, assuming linear flow from /select-theme
     if (personalizationCompleted) {
-        router.replace('/'); // Already personalized, go to home
+        router.replace('/');
         return;
     }
 
@@ -63,6 +67,51 @@ export default function PersonalizePage() {
     }
   }, [username, favoriteTopics, isMounted]);
 
+  const stopCurrentPersonalizeSpeech = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis && currentPersonalizeUtterance) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPersonalizeAudioPlaying(false);
+    setCurrentPersonalizeUtterance(null);
+  }, [currentPersonalizeUtterance]);
+
+  useEffect(() => {
+    return () => {
+      stopCurrentPersonalizeSpeech();
+    };
+  }, [stopCurrentPersonalizeSpeech]);
+
+  const handlePersonalizeSpeechEnd = useCallback(() => {
+    setIsPersonalizeAudioPlaying(false);
+    setCurrentPersonalizeUtterance(null);
+  }, []);
+
+  const handlePersonalizeSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
+    if (event.error !== 'interrupted' && event.error !== 'canceled') {
+      console.error("Personalize page speech error:", event.error);
+      toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, description: "Could not play audio for personalization." });
+      playErrorSound();
+    }
+    handlePersonalizeSpeechEnd();
+  }, [toast, handlePersonalizeSpeechEnd]);
+
+  const playPersonalizePageAudio = useCallback(() => {
+    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
+    
+    if (currentPersonalizeUtterance && isPersonalizeAudioPlaying) {
+      stopCurrentPersonalizeSpeech();
+    } else {
+      const text = `Make it Yours! Help us tailor ChillLearn AI for you, ${username || 'learner'}. This is optional and can be updated later in your profile.`;
+      const utterance = speakText(text, undefined, handlePersonalizeSpeechEnd, handlePersonalizeSpeechError);
+      if (utterance) {
+        setCurrentPersonalizeUtterance(utterance);
+        setIsPersonalizeAudioPlaying(true);
+      } else {
+        handlePersonalizeSpeechEnd();
+      }
+    }
+  }, [soundEffectsEnabled, username, stopCurrentPersonalizeSpeech, currentPersonalizeUtterance, isPersonalizeAudioPlaying, handlePersonalizeSpeechEnd, handlePersonalizeSpeechError]);
+
 
   const handleTopicChange = (topic: string) => {
     setSelectedTopics(prev => 
@@ -72,6 +121,7 @@ export default function PersonalizePage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    stopCurrentPersonalizeSpeech();
     const trimmedUsername = usernameInput.trim();
     const topicsString = selectedTopics.join(', ');
     
@@ -139,9 +189,16 @@ export default function PersonalizePage() {
                    <UserCog className="h-10 w-10 text-white/90 drop-shadow-lg" aria-hidden="true" />
               </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-gradient-primary-accent">
-            Make it Yours!
-          </CardTitle>
+          <div className="flex items-center justify-center gap-2">
+            <CardTitle className="text-3xl font-bold text-gradient-primary-accent">
+              Make it Yours!
+            </CardTitle>
+            {soundEffectsEnabled && (
+              <Button onClick={playPersonalizePageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={isPersonalizeAudioPlaying ? "Stop audio" : "Play page description"}>
+                {isPersonalizeAudioPlaying ? <Pause className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+              </Button>
+            )}
+          </div>
           <CardDescription className="text-base text-muted-foreground px-2">
             Help us tailor ChillLearn AI for you, {username || 'learner'}. This is optional and can be updated later in your profile.
           </CardDescription>
@@ -201,5 +258,3 @@ export default function PersonalizePage() {
     </div>
   );
 }
-
-    

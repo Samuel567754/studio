@@ -8,16 +8,23 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getHasSeenIntroduction, getHasCompletedPersonalization } from '@/lib/storage';
-import { Sun, Moon, Laptop, ArrowRight, Palette } from 'lucide-react';
+import { Sun, Moon, Laptop, ArrowRight, Palette, Volume2, Pause, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { playNotificationSound } from '@/lib/audio';
+import { playNotificationSound, speakText, playErrorSound } from '@/lib/audio';
 import { useUserProfileStore } from '@/stores/user-profile-store';
+import { useAppSettingsStore } from '@/stores/app-settings-store';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SelectThemePage() {
   const router = useRouter();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
   const { username } = useUserProfileStore();
+  const { soundEffectsEnabled } = useAppSettingsStore();
+  const { toast } = useToast();
+
+  const [isThemeAudioPlaying, setIsThemeAudioPlaying] = useState(false);
+  const [currentThemeUtterance, setCurrentThemeUtterance] = useState<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -29,10 +36,56 @@ export default function SelectThemePage() {
       return;
     }
     if (personalizationCompleted) {
-      router.replace('/'); // Already personalized, go to home
+      router.replace('/');
       return;
     }
   }, [router]);
+
+  const stopCurrentThemeSpeech = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis && currentThemeUtterance) {
+      window.speechSynthesis.cancel();
+    }
+    setIsThemeAudioPlaying(false);
+    setCurrentThemeUtterance(null);
+  }, [currentThemeUtterance]);
+
+  useEffect(() => {
+    return () => {
+      stopCurrentThemeSpeech();
+    };
+  }, [stopCurrentThemeSpeech]);
+
+  const handleThemeSpeechEnd = useCallback(() => {
+    setIsThemeAudioPlaying(false);
+    setCurrentThemeUtterance(null);
+  }, []);
+
+  const handleThemeSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
+    if (event.error !== 'interrupted' && event.error !== 'canceled') {
+      console.error("Theme page speech error:", event.error);
+      toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, description: "Could not play audio for theme selection." });
+      playErrorSound();
+    }
+    handleThemeSpeechEnd();
+  }, [toast, handleThemeSpeechEnd]);
+
+  const playThemePageAudio = useCallback(() => {
+    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
+    
+    if (currentThemeUtterance && isThemeAudioPlaying) {
+      stopCurrentThemeSpeech();
+    } else {
+      const text = `Choose Your Look. Select a theme that feels right for you, ${username || 'learner'}. You can always change this later in settings.`;
+      const utterance = speakText(text, undefined, handleThemeSpeechEnd, handleThemeSpeechError);
+      if (utterance) {
+        setCurrentThemeUtterance(utterance);
+        setIsThemeAudioPlaying(true);
+      } else {
+        handleThemeSpeechEnd();
+      }
+    }
+  }, [soundEffectsEnabled, username, stopCurrentThemeSpeech, currentThemeUtterance, isThemeAudioPlaying, handleThemeSpeechEnd, handleThemeSpeechError]);
+
 
   const handleThemeSelection = (selectedTheme: string) => {
     setTheme(selectedTheme);
@@ -40,6 +93,7 @@ export default function SelectThemePage() {
   };
 
   const handleContinue = () => {
+    stopCurrentThemeSpeech();
     playNotificationSound();
     router.push('/personalize');
   };
@@ -75,9 +129,16 @@ export default function SelectThemePage() {
                 <Palette className="h-10 w-10 text-white/90 drop-shadow-lg" aria-hidden="true" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-gradient-primary-accent">
-            Choose Your Look
-          </CardTitle>
+          <div className="flex items-center justify-center gap-2">
+            <CardTitle className="text-3xl font-bold text-gradient-primary-accent">
+              Choose Your Look
+            </CardTitle>
+            {soundEffectsEnabled && (
+              <Button onClick={playThemePageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={isThemeAudioPlaying ? "Stop audio" : "Play page description"}>
+                {isThemeAudioPlaying ? <Pause className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+              </Button>
+            )}
+          </div>
           <CardDescription className="text-base text-muted-foreground px-2">
             Select a theme that feels right for you, {username || 'learner'}. You can always change this later in settings.
           </CardDescription>
@@ -121,5 +182,3 @@ export default function SelectThemePage() {
     </div>
   );
 }
-
-    
