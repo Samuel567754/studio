@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { setHasSeenIntroduction, getHasSeenIntroduction } from '@/lib/storage';
-import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon, SkipForward, Palette, FileType2, Puzzle, Brain, PencilLine, BookOpen, BarChartHorizontal, SlidersHorizontal, Info, GraduationCap, Map, Compass, Volume2, Pause } from 'lucide-react';
+import { setHasSeenIntroduction, getHasSeenIntroduction, getHasCompletedPersonalization } from '@/lib/storage';
+import { Lightbulb, Edit3, Target, BookMarked, Sigma, User, SettingsIcon, HelpCircle, Sparkles, ArrowRight, HomeIcon, SkipForward, Palette, FileType2, Puzzle, Brain, PencilLine, BookOpen, BarChartHorizontal, SlidersHorizontal, Info, GraduationCap, Map, Compass, Volume2, Pause, Play as PlayIcon, XCircle } from 'lucide-react';
 import { playNotificationSound, speakText, playErrorSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -28,7 +28,7 @@ const features = [
   { icon: Map, title: (username?: string | null) => "Interactive Guides", description: "Easy-to-follow tutorials and walkthroughs.", imageSrc: "https://plus.unsplash.com/premium_photo-1722156533662-f58d3e13c07c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NjV8fGFwcCUyMHdhbGslMjB0aHJvdWdofGVufDB8fDB8fHww", aiHint: "app walkthrough guide" },
 ];
 
-const AUTOPLAY_INTERVAL = 5000;
+const AUTOPLAY_INTERVAL = 7000; // Increased interval for more reading time
 
 export default function IntroductionPage() {
   const router = useRouter();
@@ -44,73 +44,83 @@ export default function IntroductionPage() {
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
   const minSwipeDistance = 50;
 
-  const [isIntroAudioPlaying, setIsIntroAudioPlaying] = useState(false);
-  const [currentIntroUtterance, setCurrentIntroUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isAudioPaused, setIsAudioPaused] = useState(false);
+  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
 
+  const handleSpeechEnd = useCallback(() => {
+    setIsAudioPlaying(false);
+    setIsAudioPaused(false);
+    setCurrentUtterance(null);
+  }, []);
+
+  const handleSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
+    if (event.error !== 'interrupted' && event.error !== 'canceled') {
+      console.error("Intro speech error:", event.error);
+      toast({ variant: "destructive", title: <div className="flex items-center gap-2"><XCircle className="h-5 w-5" />Audio Error</div>, description: "Could not play welcome audio." });
+      if (soundEffectsEnabled) playErrorSound();
+    }
+    handleSpeechEnd();
+  }, [toast, handleSpeechEnd, soundEffectsEnabled]);
+
+  const stopCurrentSpeech = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    handleSpeechEnd();
+  }, [handleSpeechEnd]);
+
+  const playIntroAudio = useCallback(() => {
+    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) {
+      if(soundEffectsEnabled && isMounted) toast({ variant: "info", title: "Audio Disabled", description: "Speech synthesis not available or sound is off." });
+      return;
+    }
+    const synth = window.speechSynthesis;
+    if (currentUtterance && synth.speaking) {
+      if (!synth.paused) { synth.pause(); setIsAudioPaused(true); setIsAudioPlaying(false); }
+      else { synth.resume(); setIsAudioPaused(false); setIsAudioPlaying(true); }
+    } else {
+      stopCurrentSpeech();
+      const titleText = `Welcome to ChillLearn${username ? `, ${username}` : ''}!`;
+      const descriptionText = "Discover a fun and interactive way to learn. Let's explore what you can do!";
+      const fullText = `${titleText} ${descriptionText}`;
+      const newUtterance = speakText(fullText, undefined, handleSpeechEnd, handleSpeechError);
+      if (newUtterance) {
+        setCurrentUtterance(newUtterance);
+        setIsAudioPlaying(true);
+        setIsAudioPaused(false);
+      } else {
+        handleSpeechEnd();
+      }
+    }
+  }, [soundEffectsEnabled, username, currentUtterance, handleSpeechEnd, handleSpeechError, stopCurrentSpeech, toast, isMounted]);
 
   useEffect(() => {
     setIsMounted(true);
-    if (getHasSeenIntroduction()) {
-        router.replace('/select-theme'); // Go to theme selection if intro seen
+    const introSeen = getHasSeenIntroduction();
+    const personalizationDone = getHasCompletedPersonalization();
+
+    if (introSeen && personalizationDone) {
+        // Only redirect to home if ALL onboarding (intro + personalization) is complete
+        router.replace('/');
     }
+    // Auto-play logic for audio is now handled by feature card change effect
   }, [router]);
 
-  const stopCurrentSpeech = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis && currentIntroUtterance) {
-      window.speechSynthesis.cancel();
-    }
-    setIsIntroAudioPlaying(false);
-    setCurrentIntroUtterance(null);
-  }, [currentIntroUtterance]);
-
-  const handleIntroSpeechEnd = useCallback(() => {
-    setIsIntroAudioPlaying(false);
-    setCurrentIntroUtterance(null);
-  }, []);
-
-  const handleIntroSpeechError = useCallback((event: SpeechSynthesisErrorEvent) => {
-    if (event.error !== 'interrupted' && event.error !== 'canceled') {
-      console.error("Intro speech error:", event.error);
-      toast({ variant: "destructive", title: <div className="flex items-center gap-2"><Sparkles className="h-5 w-5" />Audio Error</div>, description: "Could not play welcome audio." });
-      playErrorSound();
-    }
-    handleIntroSpeechEnd();
-  }, [toast, handleIntroSpeechEnd]);
-
-  const playIntroAudio = useCallback(() => {
-    if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
-    
-    stopCurrentSpeech();
-
-    const titleText = `Welcome to ChillLearn${username ? `, ${username}` : ''}!`;
-    const descriptionText = "Discover a fun and interactive way to learn. Let's explore what you can do!";
-    const fullText = `${titleText} ${descriptionText}`;
-
-    const utterance = speakText(fullText, undefined, handleIntroSpeechEnd, handleIntroSpeechError);
-    if (utterance) {
-      setCurrentIntroUtterance(utterance);
-      setIsIntroAudioPlaying(true);
-    } else {
-      handleIntroSpeechEnd();
-    }
-  }, [soundEffectsEnabled, username, stopCurrentSpeech, handleIntroSpeechEnd, handleIntroSpeechError]);
-
   useEffect(() => {
-    if (isMounted && !getHasSeenIntroduction()) {
-      playIntroAudio();
-    }
     return () => {
       stopCurrentSpeech();
+      if (autoplayIntervalRef.current) {
+        clearInterval(autoplayIntervalRef.current);
+      }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMounted]); // Play only on initial mount if intro not seen
+  }, [stopCurrentSpeech]);
 
-  const completeIntroduction = useCallback((skipToApp: boolean = false) => {
+  const completeIntroduction = useCallback(() => {
     stopCurrentSpeech();
-    setIsAutoplayActive(false); 
     setHasSeenIntroduction(true);
     playNotificationSound();
-    router.push('/select-theme'); // Always go to theme selection next
+    router.push('/select-theme'); 
   },[router, stopCurrentSpeech]);
 
   const selectFeature = useCallback((newIndex: number, manualInteraction: boolean = true) => {
@@ -120,13 +130,9 @@ export default function IntroductionPage() {
         playNotificationSound();
       }
     }
-
     let targetIndex = newIndex;
-    if (targetIndex >= features.length) {
-      targetIndex = 0; 
-    } else if (targetIndex < 0) {
-      targetIndex = features.length - 1; 
-    }
+    if (targetIndex >= features.length) targetIndex = 0; 
+    else if (targetIndex < 0) targetIndex = features.length - 1; 
     
     if (targetIndex !== currentFeatureIndex) {
       setCurrentFeatureIndex(targetIndex);
@@ -134,7 +140,7 @@ export default function IntroductionPage() {
   }, [currentFeatureIndex, soundEffectsEnabled]); 
 
   useEffect(() => {
-    const stopAutoplayInterval = () => {
+    const stopAutoplay = () => {
       if (autoplayIntervalRef.current) {
         clearInterval(autoplayIntervalRef.current);
         autoplayIntervalRef.current = null;
@@ -142,24 +148,20 @@ export default function IntroductionPage() {
     };
 
     if (isAutoplayActive && isMounted) {
-      stopAutoplayInterval(); 
+      stopAutoplay(); 
       autoplayIntervalRef.current = setInterval(() => {
-        setCurrentFeatureIndex(prevIndex => {
-          const nextIndex = prevIndex + 1;
-          return nextIndex >= features.length ? 0 : nextIndex;
-        });
+        setCurrentFeatureIndex(prevIndex => (prevIndex + 1) % features.length);
       }, AUTOPLAY_INTERVAL);
     } else {
-      stopAutoplayInterval();
+      stopAutoplay();
     }
-
-    return () => stopAutoplayInterval();
+    return () => stopAutoplay();
   }, [isAutoplayActive, isMounted]);
 
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     setTouchEndX(null); 
     setTouchStartX(e.targetTouches[0].clientX);
-    setIsAutoplayActive(false); // Stop autoplay on touch
+    setIsAutoplayActive(false); 
   };
 
   const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
@@ -171,16 +173,20 @@ export default function IntroductionPage() {
     const distance = touchStartX - touchEndX;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
-      selectFeature((currentFeatureIndex + 1) % features.length, true);
-    } else if (isRightSwipe) {
-      selectFeature((currentFeatureIndex - 1 + features.length) % features.length, true);
-    }
-
+    if (isLeftSwipe) selectFeature((currentFeatureIndex + 1) % features.length, true);
+    else if (isRightSwipe) selectFeature((currentFeatureIndex - 1 + features.length) % features.length, true);
     setTouchStartX(null);
     setTouchEndX(null);
   };
+
+  useEffect(() => {
+    if (isMounted && soundEffectsEnabled && currentFeatureIndex === 0 && !currentUtterance) { // Play for first card on mount
+      setTimeout(() => {
+        if (!currentUtterance && !(window.speechSynthesis?.speaking)) playIntroAudio();
+      }, 300);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, soundEffectsEnabled]); // Only on initial mount for first card
 
   if (!isMounted) {
       return <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5 flex items-center justify-center"><Sparkles className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -188,6 +194,18 @@ export default function IntroductionPage() {
 
   const currentFeature = features[currentFeatureIndex];
   const FeatureIcon = currentFeature.icon;
+
+  const getButtonIcon = () => {
+    if (isAudioPlaying) return <Pause className="h-6 w-6 sm:h-7 sm:w-7" />;
+    if (isAudioPaused) return <PlayIcon className="h-6 w-6 sm:h-7 sm:w-7" />;
+    return <Volume2 className="h-6 w-6 sm:h-7 sm:w-7" />;
+  };
+  const getAriaLabelForAudioButton = () => {
+    if (isAudioPlaying) return "Pause welcome message";
+    if (isAudioPaused) return "Resume welcome message";
+    return "Play welcome message";
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
@@ -200,8 +218,8 @@ export default function IntroductionPage() {
               Welcome to ChillLearn{username ? `, ${username}` : '!'}
             </h1>
              {soundEffectsEnabled && (
-              <Button onClick={playIntroAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10 sm:h-12 sm:w-12" aria-label={isIntroAudioPlaying ? "Stop welcome message" : "Play welcome message"}>
-                {isIntroAudioPlaying ? <Pause className="h-6 w-6 sm:h-7 sm:w-7" /> : <Volume2 className="h-6 w-6 sm:h-7 sm:w-7" />}
+              <Button onClick={playIntroAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10 sm:h-12 sm:w-12" aria-label={getAriaLabelForAudioButton()}>
+                {getButtonIcon()}
               </Button>
             )}
           </div>
@@ -275,7 +293,7 @@ export default function IntroductionPage() {
         <div className="animate-in fade-in-0 slide-in-from-bottom-10 duration-700 delay-[400ms] pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button
             size="lg"
-            onClick={() => completeIntroduction(false)}
+            onClick={completeIntroduction}
             className="px-8 py-5 text-lg sm:text-xl font-semibold btn-glow shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 ease-in-out w-full sm:w-auto"
             aria-label="Get started with ChillLearn AI"
           >
@@ -284,7 +302,7 @@ export default function IntroductionPage() {
           <Button
             variant="outline"
             size="lg"
-            onClick={() => completeIntroduction(true)}
+            onClick={completeIntroduction} // Both buttons now lead to the same next step
             className="px-8 py-5 text-lg sm:text-xl font-medium w-full sm:w-auto hover:bg-primary/10 hover:text-primary transition-colors duration-200"
             aria-label="Skip introduction and go to app"
           >
