@@ -37,6 +37,8 @@ export default function SelectThemePage() {
       return;
     }
     if (personalizationCompleted) {
+      // If personalization is already done, but they land here,
+      // redirect to home. This might happen if they use browser back button.
       router.replace('/');
       return;
     }
@@ -56,69 +58,65 @@ export default function SelectThemePage() {
     }
     handleSpeechEnd();
   }, [toast, handleSpeechEnd, soundEffectsEnabled]);
-
+  
   const stopCurrentSpeech = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis && currentUtterance) {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
     handleSpeechEnd();
-  }, [currentUtterance, handleSpeechEnd]);
+  }, [handleSpeechEnd]);
 
   const playPageAudio = useCallback(() => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) {
-      if(soundEffectsEnabled) { // Only toast if sound was intended
+       if(soundEffectsEnabled) {
          toast({ variant: "info", title: "Audio Disabled", description: "Speech synthesis not available or sound is off." });
-      }
+       }
       return;
     }
 
-    if (currentUtterance) {
-      if (isAudioPlaying && !isAudioPaused) { // Currently playing, so pause
-        window.speechSynthesis.pause();
+    const synth = window.speechSynthesis;
+
+    if (currentUtterance && synth.speaking) {
+      if (!synth.paused) { // Currently playing, so pause
+        synth.pause();
         setIsAudioPaused(true);
-        // isAudioPlaying remains true as it's active but paused
-      } else if (isAudioPaused) { // Currently paused, so resume
-        window.speechSynthesis.resume();
+        // isAudioPlaying remains true because it's active but paused
+      } else { // Currently paused, so resume
+        synth.resume();
         setIsAudioPaused(false);
-      } else { // Was stopped or finished, replay
-        stopCurrentSpeech(); // Clear any remnants
-        const text = `Choose Your Look. Select a theme that feels right for you, ${username || 'learner'}. You can always change this later in settings.`;
-        const utterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
-        if (utterance) {
-          setCurrentUtterance(utterance);
-          setIsAudioPlaying(true);
-          setIsAudioPaused(false);
-        } else {
-          handleSpeechEnd();
-        }
+        // isAudioPlaying remains true
       }
-    } else { // No current utterance, start fresh
+    } else { // No current utterance, or utterance finished/stopped, start fresh
+      stopCurrentSpeech(); 
       const text = `Choose Your Look. Select a theme that feels right for you, ${username || 'learner'}. You can always change this later in settings.`;
-      const utterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
-      if (utterance) {
-        setCurrentUtterance(utterance);
+      const newUtterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
+      if (newUtterance) {
+        setCurrentUtterance(newUtterance);
         setIsAudioPlaying(true);
         setIsAudioPaused(false);
       } else {
-        handleSpeechEnd();
+        handleSpeechEnd(); 
       }
     }
-  }, [soundEffectsEnabled, username, currentUtterance, isAudioPlaying, isAudioPaused, handleSpeechEnd, handleSpeechError, stopCurrentSpeech, toast]);
+  }, [soundEffectsEnabled, username, currentUtterance, handleSpeechEnd, handleSpeechError, stopCurrentSpeech, toast]);
 
   useEffect(() => {
-    if (isMounted && soundEffectsEnabled) {
-      // Delay slightly to ensure page is settled before audio starts
-      const timer = setTimeout(() => {
-         playPageAudio();
+    let autoplayTimer: NodeJS.Timeout;
+    if (isMounted && soundEffectsEnabled && !currentUtterance && !window.speechSynthesis?.speaking) {
+      autoplayTimer = setTimeout(() => {
+        if (!currentUtterance && !(window.speechSynthesis?.speaking)) { 
+          playPageAudio();
+        }
       }, 300);
-      return () => clearTimeout(timer);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMounted, soundEffectsEnabled]); // playPageAudio is memoized, adding it here might cause loops if not careful
+    return () => {
+      clearTimeout(autoplayTimer);
+    };
+  }, [isMounted, soundEffectsEnabled, playPageAudio, currentUtterance]);
 
   useEffect(() => {
     return () => {
-      stopCurrentSpeech(); // Cleanup on unmount
+      stopCurrentSpeech();
     };
   }, [stopCurrentSpeech]);
 
@@ -148,9 +146,15 @@ export default function SelectThemePage() {
   ];
 
   const getButtonIcon = () => {
-    if (isAudioPlaying && !isAudioPaused) return <Pause className="h-6 w-6" />;
-    if (isAudioPaused) return <PlayIcon className="h-6 w-6" />;
+    if (currentUtterance && window.speechSynthesis?.speaking && !window.speechSynthesis?.paused) return <Pause className="h-6 w-6" />;
+    if (currentUtterance && window.speechSynthesis?.speaking && window.speechSynthesis?.paused) return <PlayIcon className="h-6 w-6" />;
     return <Volume2 className="h-6 w-6" />;
+  };
+  
+  const getAriaLabelForAudioButton = () => {
+    if (currentUtterance && window.speechSynthesis?.speaking && !window.speechSynthesis?.paused) return "Pause audio";
+    if (currentUtterance && window.speechSynthesis?.speaking && window.speechSynthesis?.paused) return "Resume audio";
+    return "Play page description";
   };
 
   return (
@@ -175,7 +179,7 @@ export default function SelectThemePage() {
               Choose Your Look
             </CardTitle>
             {soundEffectsEnabled && (
-              <Button onClick={playPageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={isAudioPlaying && !isAudioPaused ? "Pause audio" : (isAudioPaused ? "Resume audio" : "Play page description")}>
+              <Button onClick={playPageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={getAriaLabelForAudioButton()}>
                 {getButtonIcon()}
               </Button>
             )}

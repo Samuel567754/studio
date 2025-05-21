@@ -83,11 +83,11 @@ export default function PersonalizePage() {
   }, [toast, handleSpeechEnd, soundEffectsEnabled]);
   
   const stopCurrentSpeech = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis && currentUtterance) {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
     handleSpeechEnd();
-  }, [currentUtterance, handleSpeechEnd]);
+  }, [handleSpeechEnd]);
 
   const playPageAudio = useCallback(() => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) {
@@ -97,47 +97,43 @@ export default function PersonalizePage() {
       return;
     }
 
-    if (currentUtterance) {
-      if (isAudioPlaying && !isAudioPaused) {
-        window.speechSynthesis.pause();
+    const synth = window.speechSynthesis;
+
+    if (currentUtterance && synth.speaking) {
+      if (!synth.paused) { 
+        synth.pause();
         setIsAudioPaused(true);
-      } else if (isAudioPaused) {
-        window.speechSynthesis.resume();
+      } else { 
+        synth.resume();
         setIsAudioPaused(false);
-      } else {
-        stopCurrentSpeech();
-        const text = `Make it Yours! Help us tailor ChillLearn AI for you, ${username || 'learner'}. This is optional and can be updated later in your profile.`;
-        const utterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
-        if (utterance) {
-          setCurrentUtterance(utterance);
-          setIsAudioPlaying(true);
-          setIsAudioPaused(false);
-        } else {
-          handleSpeechEnd();
-        }
       }
-    } else {
+    } else { 
+      stopCurrentSpeech(); 
       const text = `Make it Yours! Help us tailor ChillLearn AI for you, ${username || 'learner'}. This is optional and can be updated later in your profile.`;
-      const utterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
-      if (utterance) {
-        setCurrentUtterance(utterance);
+      const newUtterance = speakText(text, undefined, handleSpeechEnd, handleSpeechError);
+      if (newUtterance) {
+        setCurrentUtterance(newUtterance);
         setIsAudioPlaying(true);
         setIsAudioPaused(false);
       } else {
-        handleSpeechEnd();
+        handleSpeechEnd(); 
       }
     }
-  }, [soundEffectsEnabled, username, currentUtterance, isAudioPlaying, isAudioPaused, handleSpeechEnd, handleSpeechError, stopCurrentSpeech, toast]);
+  }, [soundEffectsEnabled, username, currentUtterance, handleSpeechEnd, handleSpeechError, stopCurrentSpeech, toast]);
 
   useEffect(() => {
-    if (isMounted && soundEffectsEnabled) {
-      const timer = setTimeout(() => {
-        playPageAudio();
+    let autoplayTimer: NodeJS.Timeout;
+    if (isMounted && soundEffectsEnabled && !currentUtterance && !window.speechSynthesis?.speaking) {
+      autoplayTimer = setTimeout(() => {
+        if (!currentUtterance && !(window.speechSynthesis?.speaking)) {
+          playPageAudio();
+        }
       }, 300);
-      return () => clearTimeout(timer);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMounted, soundEffectsEnabled]);
+    return () => {
+      clearTimeout(autoplayTimer);
+    };
+  }, [isMounted, soundEffectsEnabled, playPageAudio, currentUtterance]);
 
   useEffect(() => {
     return () => {
@@ -176,7 +172,7 @@ export default function PersonalizePage() {
       });
       if (soundEffectsEnabled) playNotificationSound();
     }
-    router.replace('/'); 
+    router.push('/'); 
   };
   
   if (!isMounted) {
@@ -205,10 +201,17 @@ export default function PersonalizePage() {
   }
 
   const getButtonIcon = () => {
-    if (isAudioPlaying && !isAudioPaused) return <Pause className="h-6 w-6" />;
-    if (isAudioPaused) return <PlayIcon className="h-6 w-6" />;
+    if (currentUtterance && window.speechSynthesis?.speaking && !window.speechSynthesis?.paused) return <Pause className="h-6 w-6" />;
+    if (currentUtterance && window.speechSynthesis?.speaking && window.speechSynthesis?.paused) return <PlayIcon className="h-6 w-6" />;
     return <Volume2 className="h-6 w-6" />;
   };
+
+  const getAriaLabelForAudioButton = () => {
+    if (currentUtterance && window.speechSynthesis?.speaking && !window.speechSynthesis?.paused) return "Pause audio";
+    if (currentUtterance && window.speechSynthesis?.speaking && window.speechSynthesis?.paused) return "Resume audio";
+    return "Play page description";
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
@@ -231,7 +234,7 @@ export default function PersonalizePage() {
               Make it Yours!
             </CardTitle>
             {soundEffectsEnabled && (
-              <Button onClick={playPageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={isAudioPlaying && !isAudioPaused ? "Pause audio" : (isAudioPaused ? "Resume audio" : "Play page description")}>
+              <Button onClick={playPageAudio} variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10" aria-label={getAriaLabelForAudioButton()}>
                 {getButtonIcon()}
               </Button>
             )}
