@@ -1,18 +1,19 @@
 
 "use client";
 
-import { useState, useEffect, type FormEvent, useCallback } from 'react';
+import { useState, useEffect, type FormEvent, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { useUserProfileStore } from '@/stores/user-profile-store';
 import { setHasCompletedPersonalization, getHasCompletedPersonalization, getHasSeenIntroduction } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import { playSuccessSound, playNotificationSound, speakText, playErrorSound } from '@/lib/audio';
-import { UserPlus, ArrowRight, Sparkles, Heart, UserCog, Info, Volume2, Pause, Play as PlayIcon, XCircle } from 'lucide-react'; 
+import { UserPlus, ArrowRight, Sparkles, Heart, UserCog, Info, Volume2, Pause, Play as PlayIcon, XCircle, ArrowLeft } from 'lucide-react'; 
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAppSettingsStore } from '@/stores/app-settings-store';
@@ -42,6 +43,7 @@ export default function PersonalizePage() {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isAudioPaused, setIsAudioPaused] = useState(false);
   const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [hasAutoplayedThisLoad, setHasAutoplayedThisLoad] = useState(false); // New state for one-time autoplay
 
   useEffect(() => {
     setIsMounted(true);
@@ -54,10 +56,8 @@ export default function PersonalizePage() {
         router.replace('/introduction');
         return;
     }
-    if (personalizationCompleted) {
-        router.replace('/');
-        return;
-    }
+    // If personalization is already done, but they land here (e.g. back button), allow it but home is next.
+    // If not completed, they should be here after /select-theme.
   }, [router, loadUserProfileFromStorage]);
   
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function PersonalizePage() {
 
   const playPageAudio = useCallback(() => {
     if (!soundEffectsEnabled || typeof window === 'undefined' || !window.speechSynthesis) {
-       if(soundEffectsEnabled) {
+       if(soundEffectsEnabled && isMounted) {
          toast({ variant: "info", title: "Audio Disabled", description: "Speech synthesis not available or sound is off." });
        }
       return;
@@ -119,21 +119,22 @@ export default function PersonalizePage() {
         handleSpeechEnd(); 
       }
     }
-  }, [soundEffectsEnabled, username, currentUtterance, handleSpeechEnd, handleSpeechError, stopCurrentSpeech, toast]);
+  }, [soundEffectsEnabled, username, currentUtterance, handleSpeechEnd, handleSpeechError, stopCurrentSpeech, toast, isMounted]);
 
   useEffect(() => {
     let autoplayTimer: NodeJS.Timeout;
-    if (isMounted && soundEffectsEnabled && !currentUtterance && !window.speechSynthesis?.speaking) {
+    if (isMounted && soundEffectsEnabled && !currentUtterance && !window.speechSynthesis?.speaking && !hasAutoplayedThisLoad) {
       autoplayTimer = setTimeout(() => {
-        if (!currentUtterance && !(window.speechSynthesis?.speaking)) {
+        if (!currentUtterance && !(window.speechSynthesis?.speaking) && !hasAutoplayedThisLoad) {
           playPageAudio();
+          setHasAutoplayedThisLoad(true); // Mark as autoplayed
         }
       }, 300);
     }
     return () => {
       clearTimeout(autoplayTimer);
     };
-  }, [isMounted, soundEffectsEnabled, playPageAudio, currentUtterance]);
+  }, [isMounted, soundEffectsEnabled, playPageAudio, currentUtterance, hasAutoplayedThisLoad]);
 
   useEffect(() => {
     return () => {
@@ -142,6 +143,7 @@ export default function PersonalizePage() {
   }, [stopCurrentSpeech]);
 
   const handleTopicChange = (topic: string) => {
+    stopCurrentSpeech(); // Stop audio if user interacts
     setSelectedTopics(prev => 
       prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic]
     );
@@ -201,20 +203,28 @@ export default function PersonalizePage() {
   }
 
   const getButtonIcon = () => {
-    if (currentUtterance && window.speechSynthesis?.speaking && !window.speechSynthesis?.paused) return <Pause className="h-6 w-6" />;
-    if (currentUtterance && window.speechSynthesis?.speaking && window.speechSynthesis?.paused) return <PlayIcon className="h-6 w-6" />;
+    if (isAudioPlaying && !isAudioPaused) return <Pause className="h-6 w-6" />;
+    if (isAudioPlaying && isAudioPaused) return <PlayIcon className="h-6 w-6" />;
     return <Volume2 className="h-6 w-6" />;
   };
-
+  
   const getAriaLabelForAudioButton = () => {
-    if (currentUtterance && window.speechSynthesis?.speaking && !window.speechSynthesis?.paused) return "Pause audio";
-    if (currentUtterance && window.speechSynthesis?.speaking && window.speechSynthesis?.paused) return "Resume audio";
+    if (isAudioPlaying && !isAudioPaused) return "Pause audio";
+    if (isAudioPlaying && isAudioPaused) return "Resume audio";
     return "Play page description";
   };
 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-primary/5 text-foreground flex flex-col items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-md mb-4">
+        <Button asChild variant="outline" className="group" onClick={stopCurrentSpeech}>
+          <Link href="/select-theme">
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to Theme Selection
+          </Link>
+        </Button>
+      </div>
       <Card className="w-full max-w-md shadow-2xl border-primary/20 animate-in fade-in-0 zoom-in-95 duration-700 ease-out">
         <CardHeader className="text-center items-center space-y-3">
           <div className="relative w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full overflow-hidden shadow-lg border-4 border-accent/30 mb-3">
@@ -254,7 +264,7 @@ export default function PersonalizePage() {
                 id="username"
                 type="text"
                 value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
+                onChange={(e) => { stopCurrentSpeech(); setUsernameInput(e.target.value); }}
                 placeholder="E.g., Alex (optional)"
                 className="text-xl p-4 h-14 shadow-sm focus:ring-2 focus:ring-primary border-border/50"
                 aria-label="Enter your name"
